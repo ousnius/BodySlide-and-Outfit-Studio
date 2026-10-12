@@ -1599,6 +1599,110 @@
 			</object>
 		</object>
 	</object>
+	<object class="wxDialog" name="dlgCopyMask">
+		<style>wxCAPTION|wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER</style>
+		<title>Copy Mask</title>
+		<centered>1</centered>
+		<object class="wxBoxSizer">
+			<orient>wxVERTICAL</orient>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>10</border>
+				<object class="wxStaticText" name="copyMaskDescription">
+					<label>Copies the current mask of the source shape to the target shapes. Each target vertex takes the mask of the closest part of the source surface, so the shapes can have different vertices but should overlap where the mask is needed.</label>
+					<wrap>400</wrap>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND|wxLEFT|wxRIGHT</flag>
+				<border>10</border>
+				<object class="wxFlexGridSizer">
+					<rows>0</rows>
+					<cols>2</cols>
+					<vgap>5</vgap>
+					<hgap>8</hgap>
+					<growablecols>1</growablecols>
+					<object class="sizeritem">
+						<flag>wxALIGN_CENTER_VERTICAL</flag>
+						<object class="wxStaticText" name="sourceLabel">
+							<label>Source</label>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<flag>wxEXPAND|wxALIGN_CENTER_VERTICAL</flag>
+						<object class="wxChoice" name="sourceChoice">
+							<content />
+						</object>
+					</object>
+					<object class="sizeritem">
+						<flag>wxALIGN_CENTER_VERTICAL</flag>
+						<object class="wxStaticText" name="maxDistanceLabel">
+							<label>Max Distance</label>
+							<tooltip>Target vertices farther than this from the source surface don't get any mask from it. Keep it low so that unrelated nearby geometry isn't masked.</tooltip>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<flag>wxALIGN_CENTER_VERTICAL</flag>
+						<object class="wxTextCtrl" name="maxDistance">
+							<size>70,-1</size>
+							<value translate="0">1.00000</value>
+							<tooltip>Target vertices farther than this from the source surface don't get any mask from it. Keep it low so that unrelated nearby geometry isn't masked.</tooltip>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxLEFT|wxRIGHT|wxTOP</flag>
+				<border>10</border>
+				<object class="wxStaticText" name="targetLabel">
+					<label>Targets</label>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxEXPAND|wxLEFT|wxRIGHT|wxTOP</flag>
+				<border>10</border>
+				<object class="wxCheckListBox" name="targetList">
+					<size>-1,150</size>
+					<content />
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxLEFT|wxRIGHT|wxTOP</flag>
+				<border>10</border>
+				<object class="wxCheckBox" name="addToMask">
+					<label>Add to the existing mask</label>
+					<tooltip>Keeps the current mask of the target shapes and only adds the copied mask to it. Otherwise the target mask is replaced.</tooltip>
+					<checked>0</checked>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND|wxALL</flag>
+				<border>5</border>
+				<object class="wxStdDialogButtonSizer">
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_OK">
+							<label>&amp;OK</label>
+						</object>
+					</object>
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_CANCEL">
+							<label>&amp;Cancel</label>
+						</object>
+					</object>
+				</object>
+			</object>
+		</object>
+	</object>
 	<object class="wxDialog" name="dlgVertexAsym">
 		<style>wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER</style>
 		<size>423,155</size>

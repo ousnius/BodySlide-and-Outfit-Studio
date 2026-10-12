@@ -380,6 +380,7 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/components/ArchiveIndex.cpp
 	src/components/UndoHistory.cpp
 	src/components/WeightNorm.cpp
+	src/components/MaskTransfer.cpp
 	src/files/FBXWrangler.cpp
 	src/files/MaskFile.cpp
 	src/files/ObjFile.cpp
@@ -473,6 +474,7 @@ if(BSOS_BUILD_TESTS)
 		tests/ArchiveIndexTest.cpp
 		tests/ArchiveTest.cpp
 		tests/HkxFileTest.cpp
+		tests/MaskTransferTest.cpp
 		tests/SFMaterialDatabaseTest.cpp
 		tests/SFLayeredMaterialTest.cpp
 		tests/SFMaterialFileTest.cpp
@@ -480,6 +482,7 @@ if(BSOS_BUILD_TESTS)
 		tests/SFResourceHashTest.cpp
 		tests/StarfieldSpaceTest.cpp
 		src/components/ArchiveIndex.cpp
+		src/components/MaskTransfer.cpp
 		src/files/HkxFile.cpp
 		src/files/SFMaterialDatabase.cpp
 		src/files/SFMaterialFile.cpp
@@ -487,6 +490,7 @@ if(BSOS_BUILD_TESTS)
 		src/files/SFLayeredMaterial.cpp
 		src/files/SFMorphFile.cpp
 		src/files/SFResourceHash.cpp
+		src/utils/AABBTree.cpp
 		src/utils/PlatformUtil.cpp
 		src/utils/StringStuff.cpp
 		lib/FSEngine/FSBSA.cpp

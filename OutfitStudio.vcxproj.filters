@@ -742,6 +742,9 @@
     <ClInclude Include="src\components\WeightNorm.h">
       <Filter>Components</Filter>
     </ClInclude>
+    <ClInclude Include="src\components\MaskTransfer.h">
+      <Filter>Components</Filter>
+    </ClInclude>
     <ClInclude Include="src\components\Automorph.h">
       <Filter>Components</Filter>
     </ClInclude>
@@ -2128,6 +2131,9 @@
       <Filter>Components</Filter>
     </ClCompile>
     <ClCompile Include="src\components\WeightNorm.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\MaskTransfer.cpp">
       <Filter>Components</Filter>
     </ClCompile>
     <ClCompile Include="src\components\Automorph.cpp">

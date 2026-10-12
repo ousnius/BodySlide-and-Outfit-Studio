@@ -826,6 +826,7 @@
     <ClInclude Include="src\components\UndoState.h" />
     <ClInclude Include="src\components\UndoHistory.h" />
     <ClInclude Include="src\components\WeightNorm.h" />
+    <ClInclude Include="src\components\MaskTransfer.h" />
     <ClInclude Include="src\files\FBXWrangler.h" />
     <ClInclude Include="src\files\GameDataStream.h" />
     <ClInclude Include="src\files\MaterialFile.h" />
@@ -956,6 +957,7 @@
     <ClCompile Include="src\components\TweakBrush.cpp" />
     <ClCompile Include="src\components\UndoHistory.cpp" />
     <ClCompile Include="src\components\WeightNorm.cpp" />
+    <ClCompile Include="src\components\MaskTransfer.cpp" />
     <ClCompile Include="src\files\FBXWrangler.cpp" />
     <ClCompile Include="src\files\GameDataStream.cpp" />
     <ClCompile Include="src\files\MaterialFile.cpp" />

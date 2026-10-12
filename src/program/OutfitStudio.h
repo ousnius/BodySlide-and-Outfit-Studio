@@ -1898,6 +1898,7 @@ private:
 	void OnDeleteMask(wxCommandEvent& event);
 	void OnExportMask(wxCommandEvent& event);
 	void OnImportMask(wxCommandEvent& event);
+	void OnCopyMask(wxCommandEvent& event);
 	void OnPaneCollapse(wxCollapsiblePaneEvent& event);
 	void OnBottomPanelResize(wxSizeEvent& event);
 	// Re-lays out the bottom panel, capping the scrolled tool area so the

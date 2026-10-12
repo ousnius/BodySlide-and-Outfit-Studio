@@ -57,6 +57,9 @@
     <ClInclude Include="src\components\ArchiveIndex.h">
       <Filter>Components</Filter>
     </ClInclude>
+    <ClInclude Include="src\components\MaskTransfer.h">
+      <Filter>Components</Filter>
+    </ClInclude>
     <ClInclude Include="src\components\StarfieldSpace.h">
       <Filter>Components</Filter>
     </ClInclude>
@@ -65,6 +68,9 @@
     </ClInclude>
     <ClInclude Include="src\files\SFMorphFile.h">
       <Filter>Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\AABBTree.h">
+      <Filter>Utilities</Filter>
     </ClInclude>
     <ClInclude Include="src\utils\PlatformUtil.h">
       <Filter>Utilities</Filter>
@@ -110,6 +116,9 @@
     <ClCompile Include="tests\HkxFileTest.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
+    <ClCompile Include="tests\MaskTransferTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
     <ClCompile Include="tests\SFMorphFileTest.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
@@ -119,11 +128,17 @@
     <ClCompile Include="src\components\ArchiveIndex.cpp">
       <Filter>Components</Filter>
     </ClCompile>
+    <ClCompile Include="src\components\MaskTransfer.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
     <ClCompile Include="src\files\HkxFile.cpp">
       <Filter>Files</Filter>
     </ClCompile>
     <ClCompile Include="src\files\SFMorphFile.cpp">
       <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\AABBTree.cpp">
+      <Filter>Utilities</Filter>
     </ClCompile>
     <ClCompile Include="src\utils\PlatformUtil.cpp">
       <Filter>Utilities</Filter>

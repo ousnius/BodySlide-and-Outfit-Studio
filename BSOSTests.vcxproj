@@ -216,9 +216,11 @@
     <ClInclude Include="lib\LZ4F\xxhash.h" />
     <ClInclude Include="lib\nifly\include\Object3d.hpp" />
     <ClInclude Include="src\components\ArchiveIndex.h" />
+    <ClInclude Include="src\components\MaskTransfer.h" />
     <ClInclude Include="src\components\StarfieldSpace.h" />
     <ClInclude Include="src\files\HkxFile.h" />
     <ClInclude Include="src\files\SFMorphFile.h" />
+    <ClInclude Include="src\utils\AABBTree.h" />
     <ClInclude Include="src\utils\PlatformUtil.h" />
   </ItemGroup>
   <ItemGroup>
@@ -235,11 +237,14 @@
     <ClCompile Include="tests\ArchiveIndexTest.cpp" />
     <ClCompile Include="tests\ArchiveTest.cpp" />
     <ClCompile Include="tests\HkxFileTest.cpp" />
+    <ClCompile Include="tests\MaskTransferTest.cpp" />
     <ClCompile Include="tests\SFMorphFileTest.cpp" />
     <ClCompile Include="tests\StarfieldSpaceTest.cpp" />
     <ClCompile Include="src\components\ArchiveIndex.cpp" />
+    <ClCompile Include="src\components\MaskTransfer.cpp" />
     <ClCompile Include="src\files\HkxFile.cpp" />
     <ClCompile Include="src\files\SFMorphFile.cpp" />
+    <ClCompile Include="src\utils\AABBTree.cpp" />
     <ClCompile Include="src\utils\PlatformUtil.cpp" />
     <ClCompile Include="lib\FSEngine\FSBSA.cpp" />
     <ClCompile Include="lib\LZ4F\lz4.c" />

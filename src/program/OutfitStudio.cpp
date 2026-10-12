@@ -37,6 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "SliderDataImportDialog.h"
 #include "AutomationDialog.h"
 #include "../components/ClippingFixer.h"
+#include "../components/MaskTransfer.h"
 #include "../utils/ProjectUtil.h"
 #include "../utils/GameUtil.h"
 #include "../utils/StackTrace.h"
@@ -198,6 +199,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_BUTTON(XRCID("deleteMask"), OutfitStudioFrame::OnDeleteMask)
 	EVT_BUTTON(XRCID("exportMask"), OutfitStudioFrame::OnExportMask)
 	EVT_BUTTON(XRCID("importMask"), OutfitStudioFrame::OnImportMask)
+	EVT_BUTTON(XRCID("copyMask"), OutfitStudioFrame::OnCopyMask)
 
 	EVT_COLLAPSIBLEPANE_CHANGED(XRCID("posePane"), OutfitStudioFrame::OnPaneCollapse)
 	EVT_COLLAPSIBLEPANE_CHANGED(XRCID("physicsPane"), OutfitStudioFrame::OnPaneCollapse)
@@ -13433,6 +13435,133 @@ void OutfitStudioFrame::OnImportMask(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	glView->Render();
+}
+
+void OutfitStudioFrame::OnCopyMask(wxCommandEvent& WXUNUSED(event)) {
+	std::vector<std::string> shapeList = GetShapeList();
+	if (shapeList.size() < 2) {
+		wxMessageBox(_("Copying a mask needs at least two shapes."), _("Copy Mask"), wxICON_INFORMATION);
+		return;
+	}
+
+	wxDialog dlg;
+	if (!wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgCopyMask"))
+		return;
+
+	wxChoice* sourceChoice = XRCCTRL(dlg, "sourceChoice", wxChoice);
+	wxCheckListBox* targetList = XRCCTRL(dlg, "targetList", wxCheckListBox);
+	if (!sourceChoice || !targetList)
+		return;
+
+	CloseBrushSettings();
+
+	std::unordered_set<std::string> selectedShapes;
+	for (auto& s : selectedItems)
+		selectedShapes.insert(s->GetShape()->name.get());
+
+	auto hasMask = [this](const std::string& shapeName) {
+		std::unordered_map<uint16_t, float> mask;
+		glView->GetShapeMask(mask, shapeName);
+		return !mask.empty();
+	};
+
+	// Prefer a masked shape that isn't selected as the source, the reference shape first
+	std::string sourceShapeName;
+	NiShape* baseShape = project->GetBaseShape();
+	if (baseShape && !selectedShapes.count(baseShape->name.get()) && hasMask(baseShape->name.get()))
+		sourceShapeName = baseShape->name.get();
+
+	for (int pass = 0; pass < 2 && sourceShapeName.empty(); pass++) {
+		for (const std::string& shape : shapeList) {
+			if ((pass == 1 || !selectedShapes.count(shape)) && hasMask(shape)) {
+				sourceShapeName = shape;
+				break;
+			}
+		}
+	}
+
+	for (const std::string& shape : shapeList) {
+		sourceChoice->Append(wxString::FromUTF8(shape));
+		targetList->Append(wxString::FromUTF8(shape));
+		if (shape == sourceShapeName)
+			sourceChoice->SetSelection(sourceChoice->GetCount() - 1);
+	}
+
+	if (sourceChoice->GetSelection() == wxNOT_FOUND)
+		sourceChoice->SetSelection(0);
+
+	for (unsigned int i = 0; i < shapeList.size(); i++)
+		targetList->Check(i, selectedShapes.count(shapeList[i]) && static_cast<int>(i) != sourceChoice->GetSelection());
+
+	// The source can't also be a target
+	sourceChoice->Bind(wxEVT_CHOICE, [sourceChoice, targetList](wxCommandEvent&) { targetList->Check(sourceChoice->GetSelection(), false); });
+	targetList->Bind(wxEVT_CHECKLISTBOX, [sourceChoice, targetList](wxCommandEvent& evt) {
+		if (evt.GetInt() == sourceChoice->GetSelection())
+			targetList->Check(evt.GetInt(), false);
+	});
+
+	ConfigDialogUtil::LoadDialogTextFloat(OutfitStudioConfig, dlg, "CopyMask", "maxDistance");
+	ConfigDialogUtil::LoadDialogCheckBox(OutfitStudioConfig, dlg, "CopyMask", "addToMask");
+
+	dlg.SetSize(dlg.GetBestSize());
+	if (dlg.ShowModal() != wxID_OK)
+		return;
+
+	float maxDistance = ConfigDialogUtil::SetFloatFromDialogTextControl(OutfitStudioConfig, dlg, "CopyMask", "maxDistance");
+	bool addToMask = ConfigDialogUtil::SetBoolFromDialogCheckbox(OutfitStudioConfig, dlg, "CopyMask", "addToMask");
+
+	sourceShapeName = shapeList[sourceChoice->GetSelection()];
+	Mesh* source = glView->GetMesh(sourceShapeName);
+	if (!source || !source->mask)
+		return;
+
+	std::vector<Vector3> sourceVerts(source->verts.get(), source->verts.get() + source->nVerts);
+	std::vector<Triangle> sourceTris(source->tris.get(), source->tris.get() + source->nTris);
+	std::vector<float> sourceMask(source->mask.get(), source->mask.get() + source->nVerts);
+
+	UndoStateProject* usp = glView->GetUndoHistory()->PushState();
+	usp->undoType = UndoType::Mask;
+
+	for (unsigned int i = 0; i < shapeList.size(); i++) {
+		if (!targetList->IsChecked(i) || shapeList[i] == sourceShapeName)
+			continue;
+
+		Mesh* target = glView->GetMesh(shapeList[i]);
+		if (!target || !target->mask)
+			continue;
+
+		std::vector<Vector3> targetVerts(target->verts.get(), target->verts.get() + target->nVerts);
+		std::vector<float> copiedMask;
+		std::vector<bool> matched;
+		MaskTransfer::CopyMask(sourceVerts, sourceTris, sourceMask, targetVerts, maxDistance, copiedMask, matched);
+
+		usp->usss.emplace_back();
+		UndoStateShape& uss = usp->usss.back();
+		uss.shapeName = target->shapeName;
+
+		int nMatched = 0;
+		for (int vi = 0; vi < target->nVerts; vi++) {
+			if (matched[vi])
+				nMatched++;
+
+			uss.pointStartState[vi].x = target->mask[vi];
+			uss.pointEndState[vi].x = addToMask ? std::max(target->mask[vi], copiedMask[vi]) : copiedMask[vi];
+		}
+
+		wxLogMessage("Copied mask from '%s' to '%s' (%d of %d vertices within distance %g).", sourceShapeName, target->shapeName, nMatched, target->nVerts, maxDistance);
+	}
+
+	if (usp->usss.empty()) {
+		glView->GetUndoHistory()->PopState();
+		return;
+	}
+
+	glView->ApplyUndoState(usp, false);
+
+	if (!Config.GetBoolValue("Input/MaskHistory"))
+		glView->GetUndoHistory()->PopState();
+
+	UpdateUndoTools();
 }
 
 void OutfitStudioFrame::OnPaneCollapse(wxCollapsiblePaneEvent& WXUNUSED(event)) {
