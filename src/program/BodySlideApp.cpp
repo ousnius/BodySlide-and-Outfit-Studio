@@ -1553,12 +1553,11 @@ bool BodySlideApp::WriteSFMorphFile(const std::string& morphFolder, SliderSet& s
 
 	auto zapRanges = FindContinuousRanges(shapeZapIndices);
 
-	std::vector<Vector3> baseVerts;
-	std::vector<Vector2> baseUVs;
-	std::vector<Triangle> baseTris;
-	nif.GetVertsForShape(shape, baseVerts);
-	nif.GetUvsForShape(shape, baseUVs);
-	shape->GetTriangles(baseTris);
+	SFMorphNormalSettings normalSettings;
+	normalSettings.smoothSeamNormals = sliderSet.GetSmoothSeamNormals(targetShapeName);
+	normalSettings.smoothSeamNormalsAngle = sliderSet.GetSmoothSeamNormalsAngle(targetShapeName);
+	normalSettings.lockNormals = sliderSet.GetLockNormals(targetShapeName);
+	const SFMorphShape morphShape = SFMorphShape::FromShape(nif, shape, normalSettings);
 
 	SFMorphFile morphFile;
 	morphFile.SetVertexCount(shapeVertCount - static_cast<int>(shapeZapIndices.size()));
@@ -1592,62 +1591,12 @@ bool BodySlideApp::WriteSFMorphFile(const std::string& morphFolder, SliderSet& s
 		if (morphOffsets.empty())
 			continue;
 
-		std::unordered_map<uint16_t, Vector3> morphNormals;
-		std::unordered_map<uint16_t, Vector3> morphTangents;
-
-		std::vector<Vector3> morphedVerts = baseVerts;
-
-		if (morphedVerts.size() == diffs.size()) {
-			for (size_t v = 0; v < morphedVerts.size(); v++)
-				morphedVerts[v] += diffs[v];
-		}
-
-		int nVerts = static_cast<int>(morphedVerts.size());
-		int nTris = static_cast<int>(baseTris.size());
-
-		if (nVerts > 0 && nTris > 0) {
-			Mesh tmpMesh{};
-			tmpMesh.nVerts = nVerts;
-			tmpMesh.nTris = nTris;
-			tmpMesh.verts = std::make_unique<Vector3[]>(nVerts);
-			tmpMesh.norms = std::make_unique<Vector3[]>(nVerts);
-			tmpMesh.tangents = std::make_unique<Vector3[]>(nVerts);
-			tmpMesh.bitangents = std::make_unique<Vector3[]>(nVerts);
-			tmpMesh.texcoord = std::make_unique<Vector2[]>(nVerts);
-
-			if (nTris > 0)
-				tmpMesh.tris = std::make_unique<Triangle[]>(nTris);
-
-			for (int v = 0; v < nVerts; v++)
-				tmpMesh.verts[v] = Mesh::TransformPosNifToMesh(morphedVerts[v]);
-
-			if (!baseUVs.empty()) {
-				for (int v = 0; v < nVerts && v < static_cast<int>(baseUVs.size()); v++) {
-					tmpMesh.texcoord[v].u = baseUVs[v].u;
-					tmpMesh.texcoord[v].v = baseUVs[v].v;
-				}
-			}
-
-			for (int t = 0; t < nTris; t++)
-				tmpMesh.tris[t] = baseTris[t];
-
-			tmpMesh.SmoothNormals();
-
-			for (const auto& morphOffset : morphOffsets) {
-				const int v = morphOffset.first;
-				if (v >= 0 && v < nVerts) {
-					morphNormals[v] = Mesh::TransformDirMeshToNif(tmpMesh.norms[v]);
-					morphTangents[v] = Mesh::TransformDirMeshToNif(tmpMesh.tangents[v]);
-				}
-			}
-		}
-
 		if (morphFile.morphOffsetsCache.size() >= SFMaxShapeKeys) {
 			wxLogWarning("Starfield morph.dat supports at most 128 morphs; '%s' and any remaining morphs were skipped.", sliderSet[s].name);
 			break;
 		}
 
-		morphFile.AddMorph(sliderSet[s].name, morphOffsets, {}, morphNormals, morphTangents);
+		morphShape.AddMorph(morphFile, sliderSet[s].name, morphOffsets);
 	}
 
 	if (morphFile.morphOffsetsCache.empty()) {

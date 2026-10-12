@@ -17,10 +17,12 @@
 #include <filesystem>
 #include <fstream>
 #include <limits>
+#include <map>
 #include <memory>
 #include <numeric>
 #include <sstream>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 #include <vector>
 
@@ -492,6 +494,181 @@ TEST_CASE("Vanilla Starfield morph normals are deltas from the base normals", "[
 		REQUIRE(deltaMatch > 0.99);
 		REQUIRE(deltaMatch > baseMatch);
 		REQUIRE(absoluteMatch < 0.5);
+	}
+}
+
+TEST_CASE("Starfield morph exports derive the normal deltas vanilla morphs store", "[starfield][gamedata][SFMorphFile]") {
+	const VanillaMesh& mesh = GENERATE(std::cref(Body()), std::cref(Swimsuit()));
+	INFO(mesh.label);
+
+	auto nif = LoadWithGeometry(mesh);
+	NiShape* shape = nif->GetShapes()[0];
+	const SFMorphShape morphShape = SFMorphShape::FromShape(*nif, shape);
+
+	const std::vector<Vector3> fileNormals = *nif->GetNormalsForShape(shape);
+	const std::vector<Vector3> fileTangents = *nif->GetTangentsForShape(shape);
+
+	// Exported again from nothing but the vanilla position offsets
+	SFMorphFile vanilla = ReadMorphs(mesh.morphPath);
+	for (size_t m = 0; m < vanilla.morphOffsetsCache.size(); m++) {
+		INFO("morph " << m);
+		const auto& offsets = vanilla.morphOffsetsCache[m];
+
+		std::unordered_map<uint16_t, Vector3> normals, tangents;
+		morphShape.CalcNormalDeltas(offsets, normals, tangents);
+		REQUIRE(normals.size() == offsets.size());
+		REQUIRE(tangents.size() == offsets.size());
+
+		// Applied to the shape's own normals, both deltas give the same morphed normal
+		auto agreement = [&](const std::vector<Vector3>& base, const std::unordered_map<uint16_t, Vector3>& ours, const std::unordered_map<uint16_t, Vector3>& theirs) {
+			double sum = 0.0;
+			for (auto& [vertex, delta] : ours) {
+				Vector3 a = base[vertex] + delta;
+				Vector3 b = base[vertex] + theirs.at(vertex);
+				a.Normalize();
+				b.Normalize();
+				sum += a.dot(b);
+			}
+			return sum / static_cast<double>(ours.size());
+		};
+
+		std::unordered_map<uint16_t, Vector3> unchanged;
+		for (auto& [vertex, delta] : normals)
+			unchanged[vertex] = Vector3();
+
+		const double normalAgreement = agreement(fileNormals, normals, vanilla.morphNormalsCache[m]);
+		const double tangentAgreement = agreement(fileTangents, tangents, vanilla.morphTangentsCache[m]);
+		const double unchangedNormalAgreement = agreement(fileNormals, unchanged, vanilla.morphNormalsCache[m]);
+		INFO("normals " << normalAgreement << " (unchanged " << unchangedNormalAgreement << "), tangents " << tangentAgreement);
+
+		// The body matches closely. The swimsuit's vanilla normals were made a little differently
+		// (they don't come from the nearest body vertices either), but still much closer than
+		// leaving the normals as they are.
+		REQUIRE(normalAgreement > unchangedNormalAgreement);
+		if (&mesh == &Body()) {
+			REQUIRE(normalAgreement > 0.99);
+			REQUIRE(tangentAgreement > 0.99);
+		}
+		else {
+			REQUIRE(normalAgreement > 0.97);
+			REQUIRE(tangentAgreement > 0.95);
+		}
+	}
+}
+
+TEST_CASE("Starfield morph normal deltas follow the shape's seam smoothing and locked normals", "[starfield][gamedata][SFMorphFile]") {
+	const VanillaMesh& body = Body();
+	auto nif = LoadWithGeometry(body);
+	NiShape* shape = nif->GetShapes()[0];
+	const SFMorphFile morphs = ReadMorphs(body.morphPath);
+	const auto& offsets = morphs.morphOffsetsCache[0];
+
+	auto deltas = [&](const SFMorphNormalSettings& settings) {
+		std::unordered_map<uint16_t, Vector3> normals, tangents;
+		SFMorphShape::FromShape(*nif, shape, settings).CalcNormalDeltas(offsets, normals, tangents);
+		REQUIRE(normals.size() == offsets.size());
+		REQUIRE(tangents.size() == offsets.size());
+		return std::make_pair(normals, tangents);
+	};
+
+	// Morphed vertices split along seams, that moved together
+	const std::vector<Vector3> verts = *nif->GetVertsForShape(shape);
+	std::map<std::tuple<float, float, float>, std::vector<uint16_t>> byPosition;
+	for (auto& [vertex, offset] : offsets)
+		byPosition[std::make_tuple(verts[vertex].x, verts[vertex].y, verts[vertex].z)].push_back(vertex);
+
+	std::vector<std::pair<uint16_t, uint16_t>> seamPairs;
+	for (auto& [position, group] : byPosition)
+		if (group.size() > 1 && offsets.at(group[0]) == offsets.at(group[1]))
+			seamPairs.emplace_back(group[0], group[1]);
+	REQUIRE(seamPairs.size() > 10);
+
+	SFMorphNormalSettings settings;
+	auto countSameAcrossSeams = [&](const std::unordered_map<uint16_t, Vector3>& normals) {
+		size_t same = 0;
+		for (auto& [a, b] : seamPairs)
+			if (normals.at(a).IsNearlyEqualTo(normals.at(b)))
+				same++;
+		return same;
+	};
+
+	SECTION("seams smoothed at any angle change the same on both sides") {
+		settings.smoothSeamNormalsAngle = 180.0f;
+		REQUIRE(countSameAcrossSeams(deltas(settings).first) == seamPairs.size());
+	}
+
+	SECTION("without seam smoothing, both sides change on their own") {
+		settings.smoothSeamNormals = false;
+		const auto unsmoothed = deltas(settings).first;
+		REQUIRE(countSameAcrossSeams(unsmoothed) < seamPairs.size());
+
+		// A zero angle smooths nothing either
+		settings.smoothSeamNormals = true;
+		settings.smoothSeamNormalsAngle = 0.0f;
+		for (auto& [vertex, delta] : deltas(settings).first)
+			REQUIRE(delta.IsNearlyEqualTo(unsmoothed.at(vertex)));
+	}
+
+	SECTION("locked normals of the shape don't change") {
+		settings.lockNormals = true;
+		const auto [normals, tangents] = deltas(settings);
+		for (auto& [vertex, delta] : normals) {
+			REQUIRE(delta.IsZero());
+			REQUIRE(tangents.at(vertex).IsZero());
+		}
+	}
+
+	SECTION("locked vertex normals don't change") {
+		for (auto& [vertex, offset] : offsets)
+			if (vertex % 2 == 0)
+				settings.lockedNormals.insert(vertex);
+
+		const auto [normals, tangents] = deltas(settings);
+		size_t changed = 0;
+		for (auto& [vertex, delta] : normals) {
+			if (vertex % 2 == 0) {
+				REQUIRE(delta.IsZero());
+				REQUIRE(tangents.at(vertex).IsZero());
+			}
+			else if (!delta.IsZero(true))
+				changed++;
+		}
+		REQUIRE(changed > normals.size() / 4);
+	}
+}
+
+TEST_CASE("Starfield morph exports keep the vertex colors like vanilla morphs", "[starfield][gamedata][SFMorphFile]") {
+	const VanillaMesh& mesh = GENERATE(std::cref(Body()), std::cref(Swimsuit()));
+	INFO(mesh.label);
+
+	auto nif = LoadWithGeometry(mesh);
+	const SFMorphShape morphShape = SFMorphShape::FromShape(*nif, nif->GetShapes()[0]);
+
+	SFMorphFile vanilla = ReadMorphs(mesh.morphPath);
+	SFMorphFile exported;
+	exported.SetVertexCount(mesh.vertCount);
+	const auto names = vanilla.GetMorphNames();
+	for (size_t m = 0; m < names.size(); m++)
+		REQUIRE(morphShape.AddMorph(exported, names[m], vanilla.morphOffsetsCache[m]));
+	exported.CacheToFileData();
+
+	TempDir temp("bsos_sf_morph_export");
+	const std::string outPath = (temp.path / "morph.dat").u8string();
+	REQUIRE(exported.Write(outPath));
+
+	// The color of the body is stored as its vertex color, the swimsuit has none and stores black
+	SFMorphFile reloaded = ReadMorphs(outPath);
+	REQUIRE(reloaded.GetMorphNames() == names);
+	for (size_t m = 0; m < names.size(); m++) {
+		INFO("morph " << m);
+		REQUIRE(reloaded.morphOffsetsCache[m] == vanilla.morphOffsetsCache[m]);
+		REQUIRE(reloaded.morphColorsCache[m].size() == vanilla.morphColorsCache[m].size());
+		for (auto& [vertex, color] : vanilla.morphColorsCache[m]) {
+			const Color3& ours = reloaded.morphColorsCache[m].at(vertex);
+			REQUIRE(ours.r == color.r);
+			REQUIRE(ours.g == color.g);
+			REQUIRE(ours.b == color.b);
+		}
 	}
 }
 

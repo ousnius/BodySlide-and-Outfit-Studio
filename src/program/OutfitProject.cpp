@@ -1803,6 +1803,12 @@ bool OutfitProject::WriteSFMorphs(nifly::NiShape* shape, const std::string& morp
 
 	morphFile.SetVertexCount(shapeVertCount);
 
+	SFMorphNormalSettings normalSettings;
+	normalSettings.smoothSeamNormals = activeSet.GetSmoothSeamNormals(shapeName);
+	normalSettings.smoothSeamNormalsAngle = activeSet.GetSmoothSeamNormalsAngle(shapeName);
+	normalSettings.lockNormals = activeSet.GetLockNormals(shapeName);
+	const SFMorphShape morphShape = SFMorphShape::FromShape(workNif, shape, normalSettings);
+
 	for (size_t s = 0; s < activeSet.size(); s++) {
 		if (!activeSet[s].bClamp && !activeSet[s].bZap) {
 			std::string morphName = activeSet[s].name;
@@ -1829,61 +1835,9 @@ bool OutfitProject::WriteSFMorphs(nifly::NiShape* shape, const std::string& morp
 				i++;
 			}
 
-			if (morphOffsets.size() > 0) {
-				std::unordered_map<uint16_t, nifly::Vector3> morphNormals;
-				std::unordered_map<uint16_t, nifly::Vector3> morphTangents;
-
-				std::vector<Vector3> shapeVerts;
-				std::vector<Vector2> shapeUVs;
-				std::vector<Triangle> shapeTris;
-				if (workNif.GetVertsForShape(shape, shapeVerts) && workNif.GetUvsForShape(shape, shapeUVs) && shape->GetTriangles(shapeTris)) {
-					// Apply diff to base positions
-					if (shapeVerts.size() == diffs.size()) {
-						for (int v = 0; v < shapeVertCount; v++)
-							shapeVerts[v] += diffs[v];
-					}
-
-					// Use temporary mesh to calculate normals and tangents for the morph
-					// TODO: Allow storing these normals and importing custom normals for a slider?
-					Mesh tmpMesh{};
-					tmpMesh.nVerts = static_cast<int>(shapeVerts.size());
-					tmpMesh.nTris = static_cast<int>(shapeTris.size());
-
-					if (tmpMesh.nVerts > 0) {
-						tmpMesh.verts = std::make_unique<Vector3[]>(tmpMesh.nVerts);
-						tmpMesh.norms = std::make_unique<Vector3[]>(tmpMesh.nVerts);
-						tmpMesh.tangents = std::make_unique<Vector3[]>(tmpMesh.nVerts);
-						tmpMesh.bitangents = std::make_unique<Vector3[]>(tmpMesh.nVerts);
-						tmpMesh.texcoord = std::make_unique<Vector2[]>(tmpMesh.nVerts);
-					}
-
-					if (tmpMesh.nTris > 0)
-						tmpMesh.tris = std::make_unique<Triangle[]>(tmpMesh.nTris);
-
-					for (int v = 0; v < tmpMesh.nVerts; v++)
-						tmpMesh.verts[v] = Mesh::TransformPosNifToMesh(shapeVerts[v]);
-
-					if (!shapeUVs.empty()) {
-						for (int v = 0; v < tmpMesh.nVerts; v++) {
-							tmpMesh.texcoord[v].u = shapeUVs[v].u;
-							tmpMesh.texcoord[v].v = shapeUVs[v].v;
-						}
-					}
-
-					for (int t = 0; t < tmpMesh.nTris; t++)
-						tmpMesh.tris[t] = shapeTris[t];
-
-					tmpMesh.SmoothNormals();
-
-					for (int v = 0; v < tmpMesh.nVerts; v++) {
-						morphNormals[v] = Mesh::TransformDirMeshToNif(tmpMesh.norms[v]);
-						morphTangents[v] = Mesh::TransformDirMeshToNif(tmpMesh.tangents[v]);
-					}
-				}
-
-				// TODO: Store and pass target vertex colors?
-				morphFile.AddMorph(morphName, morphOffsets, {}, morphNormals, morphTangents);
-			}
+			// TODO: Allow storing custom normals for a slider?
+			if (morphOffsets.size() > 0)
+				morphShape.AddMorph(morphFile, morphName, morphOffsets);
 		}
 	}
 

@@ -6,11 +6,13 @@ See the included LICENSE file
 #include "SFMorphFile.h"
 #include "../utils/PlatformUtil.h"
 
+#include "NifFile.hpp"
 #include "half.hpp"
 
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <tuple>
 
 using namespace nifly;
 
@@ -377,4 +379,207 @@ uint32_t SFMorphFile::GetMorphCount() {
 
 std::vector<std::string> SFMorphFile::GetMorphNames() {
 	return morphNames;
+}
+
+SFMorphShape::SFMorphShape(const std::vector<Vector3>& verts,
+						   const std::vector<Triangle>& tris,
+						   const std::vector<Vector2>& uvs,
+						   const std::vector<Color4>& colors,
+						   const SFMorphNormalSettings& settings)
+	: verts(verts)
+	, tris(tris)
+	, uvs(uvs)
+	, colors(colors)
+	, settings(settings) {
+	if (settings.smoothSeamNormals) {
+		std::map<std::tuple<float, float, float>, std::vector<uint32_t>> byPosition;
+		for (uint32_t i = 0; i < static_cast<uint32_t>(verts.size()); i++)
+			byPosition[std::make_tuple(verts[i].x, verts[i].y, verts[i].z)].push_back(i);
+
+		for (auto& position : byPosition)
+			if (position.second.size() > 1)
+				weldGroups.push_back(std::move(position.second));
+	}
+
+	baseFaceNormals = CalcFaceNormals(verts);
+	CalcNormals(verts, baseFaceNormals, baseNormals, baseTangents);
+}
+
+SFMorphShape SFMorphShape::FromShape(NifFile& nif, NiShape* shape, SFMorphNormalSettings settings) {
+	std::vector<Vector3> verts;
+	std::vector<Triangle> tris;
+	std::vector<Vector2> uvs;
+	std::vector<Color4> colors;
+	nif.GetVertsForShape(shape, verts);
+	nif.GetUvsForShape(shape, uvs);
+	shape->GetTriangles(tris);
+
+	if (auto meshData = dynamic_cast<BSGeometryMeshData*>(nif.GetGeometryData(shape))) {
+		colors.reserve(meshData->vColors.size());
+		for (auto& c : meshData->vColors)
+			colors.emplace_back(c.r / 255.0f, c.g / 255.0f, c.b / 255.0f, c.a / 255.0f);
+	}
+	else
+		nif.GetColorsForShape(shape, colors);
+
+	for (auto& extraDataRef : shape->extraDataRefs) {
+		auto integersExtraData = nif.GetHeader().GetBlock<NiIntegersExtraData>(extraDataRef);
+		if (integersExtraData && integersExtraData->name == "LOCKEDNORM")
+			for (auto& i : integersExtraData->integersData)
+				settings.lockedNormals.insert(i);
+	}
+
+	return SFMorphShape(verts, tris, uvs, colors, settings);
+}
+
+std::vector<Vector3> SFMorphShape::CalcFaceNormals(const std::vector<Vector3>& positions) const {
+	const size_t numVerts = positions.size();
+	std::vector<Vector3> normals(numVerts);
+
+	for (const Triangle& t : tris) {
+		if (t.p1 >= numVerts || t.p2 >= numVerts || t.p3 >= numVerts)
+			continue;
+
+		// Area weighted
+		const Vector3 normal = t.trinormal(positions);
+		normals[t.p1] += normal;
+		normals[t.p2] += normal;
+		normals[t.p3] += normal;
+	}
+
+	for (auto& n : normals)
+		n.Normalize();
+
+	return normals;
+}
+
+void SFMorphShape::CalcNormals(const std::vector<Vector3>& positions,
+							   std::vector<Vector3> faceNormals,
+							   std::vector<Vector3>& outNormals,
+							   std::vector<Vector3>& outTangents) const {
+	const size_t numVerts = positions.size();
+	outNormals = std::move(faceNormals);
+	outTangents.assign(numVerts, Vector3());
+
+	// Smooth across split vertices unless they form a hard edge. Locked normals keep theirs.
+	const float smoothAngle = settings.smoothSeamNormalsAngle * DEG2RAD;
+	std::vector<Vector3> smoothed;
+	for (const auto& group : weldGroups) {
+		smoothed.resize(group.size());
+		for (size_t j = 0; j < group.size(); j++) {
+			const Vector3& n = outNormals[group[j]];
+			Vector3 sum = n;
+			if (!IsLocked(group[j])) {
+				for (size_t k = 0; k < group.size(); k++)
+					if (k != j && n.angle(outNormals[group[k]]) < smoothAngle)
+						sum += outNormals[group[k]];
+
+				sum.Normalize();
+			}
+			smoothed[j] = sum;
+		}
+
+		for (size_t j = 0; j < group.size(); j++)
+			outNormals[group[j]] = smoothed[j];
+	}
+
+	if (uvs.size() == numVerts) {
+		for (const Triangle& t : tris) {
+			if (t.p1 >= numVerts || t.p2 >= numVerts || t.p3 >= numVerts)
+				continue;
+
+			const Vector3 e1 = positions[t.p2] - positions[t.p1];
+			const Vector3 e2 = positions[t.p3] - positions[t.p1];
+			const float s1 = uvs[t.p2].u - uvs[t.p1].u;
+			const float s2 = uvs[t.p3].u - uvs[t.p1].u;
+			const float t1 = uvs[t.p2].v - uvs[t.p1].v;
+			const float t2 = uvs[t.p3].v - uvs[t.p1].v;
+			const float r = (s1 * t2 - s2 * t1) >= 0.0f ? 1.0f : -1.0f;
+
+			Vector3 uDir = (e1 * t2 - e2 * t1) * r;
+			uDir.Normalize();
+			outTangents[t.p1] += uDir;
+			outTangents[t.p2] += uDir;
+			outTangents[t.p3] += uDir;
+		}
+	}
+
+	// Perpendicular to the normal
+	for (size_t i = 0; i < numVerts; i++) {
+		const Vector3& n = outNormals[i];
+		Vector3& tangent = outTangents[i];
+		tangent -= n * n.dot(tangent);
+
+		if (tangent.IsZero(true)) {
+			tangent = n.cross(std::fabs(n.x) < 0.9f ? Vector3(1.0f, 0.0f, 0.0f) : Vector3(0.0f, 1.0f, 0.0f));
+			if (tangent.IsZero(true))
+				continue;
+		}
+
+		tangent.Normalize();
+	}
+}
+
+void SFMorphShape::CalcNormalDeltas(const std::unordered_map<uint16_t, Vector3>& offsets,
+									std::unordered_map<uint16_t, Vector3>& outNormals,
+									std::unordered_map<uint16_t, Vector3>& outTangents) const {
+	if (settings.lockNormals) {
+		for (auto& offset : offsets) {
+			if (offset.first >= verts.size())
+				continue;
+
+			outNormals[offset.first] = Vector3();
+			outTangents[offset.first] = Vector3();
+		}
+		return;
+	}
+
+	std::vector<Vector3> morphed = verts;
+	for (auto& [vertex, offset] : offsets)
+		if (vertex < morphed.size())
+			morphed[vertex] += offset;
+
+	// Locked normals stay as they are, and seams smooth across them unchanged
+	std::vector<Vector3> faceNormals = CalcFaceNormals(morphed);
+	for (uint32_t vertex : settings.lockedNormals)
+		if (vertex < faceNormals.size())
+			faceNormals[vertex] = baseFaceNormals[vertex];
+
+	std::vector<Vector3> normals;
+	std::vector<Vector3> tangents;
+	CalcNormals(morphed, std::move(faceNormals), normals, tangents);
+
+	for (auto& offset : offsets) {
+		const uint16_t vertex = offset.first;
+		if (vertex >= morphed.size())
+			continue;
+
+		if (IsLocked(vertex)) {
+			outNormals[vertex] = Vector3();
+			outTangents[vertex] = Vector3();
+			continue;
+		}
+
+		outNormals[vertex] = normals[vertex] - baseNormals[vertex];
+		outTangents[vertex] = tangents[vertex] - baseTangents[vertex];
+	}
+}
+
+std::unordered_map<uint16_t, Color3> SFMorphShape::TargetColors(const std::unordered_map<uint16_t, Vector3>& offsets) const {
+	std::unordered_map<uint16_t, Color3> targetColors;
+	for (auto& offset : offsets) {
+		const uint16_t vertex = offset.first;
+		if (vertex < colors.size())
+			targetColors[vertex] = Color3(colors[vertex].r, colors[vertex].g, colors[vertex].b);
+		else
+			targetColors[vertex] = Color3(0.0f, 0.0f, 0.0f);
+	}
+	return targetColors;
+}
+
+bool SFMorphShape::AddMorph(SFMorphFile& file, const std::string& morphName, const std::unordered_map<uint16_t, Vector3>& offsets) const {
+	std::unordered_map<uint16_t, Vector3> normals;
+	std::unordered_map<uint16_t, Vector3> tangents;
+	CalcNormalDeltas(offsets, normals, tangents);
+	return file.AddMorph(morphName, offsets, TargetColors(offsets), normals, tangents);
 }

@@ -14,7 +14,13 @@ See the included LICENSE file
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
+
+namespace nifly {
+class NifFile;
+class NiShape;
+}
 
 enum SFMorphKey : uint32_t {
 	None = 0,
@@ -121,3 +127,71 @@ public:
 				  const std::unordered_map<uint16_t, nifly::Vector3>& morphTangents);
 };
 
+// How a shape's normals are recalculated, from its project settings and NIF
+struct SFMorphNormalSettings {
+	// Normals of vertices split along seams are smoothed across them below this angle in degrees
+	bool smoothSeamNormals = true;
+	float smoothSeamNormalsAngle = 60.0f;
+	// The shape's normals stay as they are, so morphs don't change them either
+	bool lockNormals = false;
+	// Vertices whose normals stay as they are (LOCKEDNORM extra data)
+	std::unordered_set<uint32_t> lockedNormals;
+};
+
+// The shape a morph.dat belongs to. Besides its position offset, every entry of a morph stores how
+// much the vertex normal and tangent change and the vertex color the morph blends to. This derives
+// them from the shape for morphs that only come with position offsets.
+class SFMorphShape {
+public:
+	// Vertex positions and normals in the same (NIF) space as the morph offsets. Tangents follow
+	// the first UV channel's U direction like those of Starfield meshes. Colors may be empty.
+	SFMorphShape(const std::vector<nifly::Vector3>& verts,
+				 const std::vector<nifly::Triangle>& tris,
+				 const std::vector<nifly::Vector2>& uvs,
+				 const std::vector<nifly::Color4>& colors,
+				 const SFMorphNormalSettings& settings = SFMorphNormalSettings());
+
+	// The current geometry of a shape. Starfield shapes keep their vertex colors only in their
+	// mesh data, which NifFile::GetColorsForShape doesn't return. The shape's LOCKEDNORM extra data
+	// adds to the locked normals of the settings.
+	static SFMorphShape FromShape(nifly::NifFile& nif, nifly::NiShape* shape, SFMorphNormalSettings settings = SFMorphNormalSettings());
+
+	// morph.dat stores normals and tangents as deltas. They are the difference between the normals
+	// and tangents recalculated for the morphed and for the base positions, so that only the change
+	// applies to the shape's own normals and its split edges and seams stay as they are. Locked
+	// normals don't change.
+	void CalcNormalDeltas(const std::unordered_map<uint16_t, nifly::Vector3>& offsets,
+						  std::unordered_map<uint16_t, nifly::Vector3>& outNormals,
+						  std::unordered_map<uint16_t, nifly::Vector3>& outTangents) const;
+
+	// Morphs keep the vertex colors, which vanilla morph.dat files store as the shape's own vertex
+	// color. Shapes without vertex colors store black.
+	std::unordered_map<uint16_t, nifly::Color3> TargetColors(const std::unordered_map<uint16_t, nifly::Vector3>& offsets) const;
+
+	// Adds a morph with these normal deltas and target colors to the file
+	bool AddMorph(SFMorphFile& file, const std::string& morphName, const std::unordered_map<uint16_t, nifly::Vector3>& offsets) const;
+
+private:
+	std::vector<nifly::Vector3> verts;
+	std::vector<nifly::Triangle> tris;
+	std::vector<nifly::Vector2> uvs;
+	std::vector<nifly::Color4> colors;
+	SFMorphNormalSettings settings;
+
+	// Vertices sharing a position (split along seams or hard edges), smoothed across where the angle allows
+	std::vector<std::vector<uint32_t>> weldGroups;
+
+	// Per vertex face normals before smoothing seams, which locked normals keep when morphed
+	std::vector<nifly::Vector3> baseFaceNormals;
+	std::vector<nifly::Vector3> baseNormals;
+	std::vector<nifly::Vector3> baseTangents;
+
+	bool IsLocked(const uint32_t vertex) const { return settings.lockedNormals.count(vertex) != 0; }
+
+	// Face normals summed per vertex, before smoothing seams
+	std::vector<nifly::Vector3> CalcFaceNormals(const std::vector<nifly::Vector3>& positions) const;
+	void CalcNormals(const std::vector<nifly::Vector3>& positions,
+					 std::vector<nifly::Vector3> faceNormals,
+					 std::vector<nifly::Vector3>& outNormals,
+					 std::vector<nifly::Vector3>& outTangents) const;
+};
