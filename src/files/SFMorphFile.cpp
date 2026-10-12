@@ -8,7 +8,9 @@ See the included LICENSE file
 
 #include "half.hpp"
 
+#include <algorithm>
 #include <array>
+#include <cmath>
 
 using namespace nifly;
 
@@ -36,30 +38,44 @@ static Vector3 DecodeUDEC3(const uint32_t data) {
 	return vec;
 }
 
+// Rounds to the nearest of the 1024 steps DecodeUDEC3 maps to, so that decoded values encode
+// back to the same bits. Truncating instead drops values one step whenever the float math lands
+// just below a step, and casting a negative value to unsigned is undefined.
+static uint32_t EncodeUDEC3Component(const float value) {
+	const long step = std::lround((static_cast<double>(value) + 1.0) * 511.5);
+	return static_cast<uint32_t>(std::clamp(step, 0L, 1023L));
+}
+
 static uint32_t EncodeUDEC3(const Vector3& vec) {
 	uint32_t data = 0;
-	data |= static_cast<std::uint32_t>((vec.x + 1.0f) * 511.5f) & 1023;
-	data |= (static_cast<std::uint32_t>((vec.y + 1.0f) * 511.5f) & 1023) << 10;
-	data |= (static_cast<std::uint32_t>((vec.z + 1.0f) * 511.5f) & 1023) << 20;
+	data |= EncodeUDEC3Component(vec.x);
+	data |= EncodeUDEC3Component(vec.y) << 10;
+	data |= EncodeUDEC3Component(vec.z) << 20;
 
 	data |= static_cast<uint8_t>(1.0f) << 30;
 	return data;
 }
 
-static std::uint16_t EncodeRGB565(uint8_t r, uint8_t g, uint8_t b) {
+// Rounds each channel to the nearest of its 32 or 64 steps. Vanilla morph.dat files store the
+// vertex color 192 of a shape as 23 (of 31), which shifting the 8 bit value down would make 24.
+static std::uint16_t EncodeRGB565(const Color3& color) {
+	auto channel = [](const float value, const long maxStep) {
+		return static_cast<uint16_t>(std::lround(std::clamp(value, 0.0f, 1.0f) * maxStep));
+	};
+
 	uint16_t rgb565 = 0;
-
-	rgb565 |= (r >> 3) << 11;
-	rgb565 |= (g >> 2) << 5;
-	rgb565 |= (b >> 3) << 0;
-
+	rgb565 |= channel(color.r, 31) << 11;
+	rgb565 |= channel(color.g, 63) << 5;
+	rgb565 |= channel(color.b, 31) << 0;
 	return rgb565;
 }
 
+// Spreads the steps over the full 0-255 range, so that white stays white and EncodeRGB565 gives
+// back the same bits
 static void DecodeRGB565(uint16_t rgb565, uint8_t& r, uint8_t& g, uint8_t& b) {
-	r = (rgb565 >> 11) << 3;
-	g = ((rgb565 >> 5) & 0x3F) << 2;
-	b = (rgb565 & 0x1F) << 3;
+	r = static_cast<uint8_t>(std::lround((rgb565 >> 11) * 255.0 / 31.0));
+	g = static_cast<uint8_t>(std::lround(((rgb565 >> 5) & 0x3F) * 255.0 / 63.0));
+	b = static_cast<uint8_t>(std::lround((rgb565 & 0x1F) * 255.0 / 31.0));
 }
 
 bool SFMorphFile::Read(const std::string& fileName) {
@@ -247,20 +263,8 @@ void SFMorphFile::CacheToFileData() {
 						morphData.offset[2] = *reinterpret_cast<uint16_t*>(&hz);
 
 						auto morphColorIt = morphColors.find(i);
-						if (morphColorIt != morphColors.end()) {
-							nifly::ByteColor3 color;
-
-							float f = std::max(0.0f, std::min(1.0f, morphColorIt->second.r));
-							color.r = static_cast<uint8_t>(std::floor(f == 1.0f ? 255 : f * 256.0));
-
-							f = std::max(0.0f, std::min(1.0f, morphColorIt->second.g));
-							color.g = static_cast<uint8_t>(std::floor(f == 1.0f ? 255 : f * 256.0));
-
-							f = std::max(0.0f, std::min(1.0f, morphColorIt->second.b));
-							color.b = static_cast<uint8_t>(std::floor(f == 1.0f ? 255 : f * 256.0));
-
-							morphData.targetVertColor = EncodeRGB565(color.r, color.g, color.b);
-						}
+						if (morphColorIt != morphColors.end())
+							morphData.targetVertColor = EncodeRGB565(morphColorIt->second);
 
 						auto morphNormalIt = morphNormals.find(i);
 						if (morphNormalIt != morphNormals.end())
