@@ -1810,7 +1810,8 @@ bool OutfitProject::WriteSFMorphs(nifly::NiShape* shape, const std::string& morp
 	const SFMorphShape morphShape = SFMorphShape::FromShape(workNif, shape, normalSettings);
 
 	for (size_t s = 0; s < activeSet.size(); s++) {
-		if (!activeSet[s].bClamp && !activeSet[s].bZap) {
+		// morph.dat has no UV morphs
+		if (!activeSet[s].bClamp && !activeSet[s].bZap && !activeSet[s].bUV) {
 			std::string morphName = activeSet[s].name;
 			std::unordered_map<uint16_t, Vector3> morphOffsets;
 
