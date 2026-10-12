@@ -75,9 +75,11 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)'=='Win32'">
     <VcpkgTriplet>x86-windows-static</VcpkgTriplet>
+    <WxLibraryDirectory>..\wxWidgets\lib\vc_lib;</WxLibraryDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)'=='x64'">
     <VcpkgTriplet>x64-windows-static</VcpkgTriplet>
+    <WxLibraryDirectory>..\wxWidgets\lib\vc_x64_lib;</WxLibraryDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(SolutionDir)build\$(Configuration)\$(Platform)\</OutDir>
@@ -105,8 +107,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(Catch2IncludeDirectories)src;lib\nlohmannjson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(Catch2IncludeDirectories)..\wxWidgets\include\msvc;..\wxWidgets\include;src;lib;lib\nifly\include;lib\nifly\external;lib\nlohmannjson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;BSOS_TEST_DATA_DIR="tests/data";WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -119,7 +121,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>Catch2Maind.lib;Catch2d.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(Catch2DebugLibraryDirectories)$(VcpkgCatch2DebugLibraryDirectories)%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(WxLibraryDirectory)$(Catch2DebugLibraryDirectories)$(VcpkgCatch2DebugLibraryDirectories)%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
@@ -129,8 +131,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(Catch2IncludeDirectories)src;lib\nlohmannjson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN64;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(Catch2IncludeDirectories)..\wxWidgets\include\msvc;..\wxWidgets\include;src;lib;lib\nifly\include;lib\nifly\external;lib\nlohmannjson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN64;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;BSOS_TEST_DATA_DIR="tests/data";WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -143,7 +145,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>Catch2Maind.lib;Catch2d.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(Catch2DebugLibraryDirectories)$(VcpkgCatch2DebugLibraryDirectories)%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(WxLibraryDirectory)$(Catch2DebugLibraryDirectories)$(VcpkgCatch2DebugLibraryDirectories)%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
@@ -154,8 +156,8 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(Catch2IncludeDirectories)src;lib\nlohmannjson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(Catch2IncludeDirectories)..\wxWidgets\include\msvc;..\wxWidgets\include;src;lib;lib\nifly\include;lib\nifly\external;lib\nlohmannjson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;BSOS_TEST_DATA_DIR="tests/data";WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>Level4</WarningLevel>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -167,7 +169,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>Catch2Main.lib;Catch2.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(Catch2ReleaseLibraryDirectories)$(VcpkgCatch2ReleaseLibraryDirectories)%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(WxLibraryDirectory)$(Catch2ReleaseLibraryDirectories)$(VcpkgCatch2ReleaseLibraryDirectories)%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -179,8 +181,8 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(Catch2IncludeDirectories)src;lib\nlohmannjson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN64;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(Catch2IncludeDirectories)..\wxWidgets\include\msvc;..\wxWidgets\include;src;lib;lib\nifly\include;lib\nifly\external;lib\nlohmannjson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN64;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;BSOS_TEST_DATA_DIR="tests/data";WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>Level4</WarningLevel>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -192,7 +194,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>Catch2Main.lib;Catch2.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(Catch2ReleaseLibraryDirectories)$(VcpkgCatch2ReleaseLibraryDirectories)%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(WxLibraryDirectory)$(Catch2ReleaseLibraryDirectories)$(VcpkgCatch2ReleaseLibraryDirectories)%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -207,6 +209,17 @@
     <ClInclude Include="src\files\SFMaterialGraph.h" />
     <ClInclude Include="src\files\SFResourceHash.h" />
     <ClInclude Include="src\utils\StringStuff.h" />
+    <ClInclude Include="lib\FSEngine\FSBSA.h" />
+    <ClInclude Include="lib\LZ4F\lz4.h" />
+    <ClInclude Include="lib\LZ4F\lz4frame.h" />
+    <ClInclude Include="lib\LZ4F\lz4hc.h" />
+    <ClInclude Include="lib\LZ4F\xxhash.h" />
+    <ClInclude Include="lib\nifly\include\Object3d.hpp" />
+    <ClInclude Include="src\components\ArchiveIndex.h" />
+    <ClInclude Include="src\components\StarfieldSpace.h" />
+    <ClInclude Include="src\files\HkxFile.h" />
+    <ClInclude Include="src\files\SFMorphFile.h" />
+    <ClInclude Include="src\utils\PlatformUtil.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="tests\SFMaterialDatabaseTest.cpp" />
@@ -219,6 +232,21 @@
     <ClCompile Include="src\files\SFMaterialGraph.cpp" />
     <ClCompile Include="src\files\SFResourceHash.cpp" />
     <ClCompile Include="src\utils\StringStuff.cpp" />
+    <ClCompile Include="tests\ArchiveIndexTest.cpp" />
+    <ClCompile Include="tests\ArchiveTest.cpp" />
+    <ClCompile Include="tests\HkxFileTest.cpp" />
+    <ClCompile Include="tests\SFMorphFileTest.cpp" />
+    <ClCompile Include="tests\StarfieldSpaceTest.cpp" />
+    <ClCompile Include="src\components\ArchiveIndex.cpp" />
+    <ClCompile Include="src\files\HkxFile.cpp" />
+    <ClCompile Include="src\files\SFMorphFile.cpp" />
+    <ClCompile Include="src\utils\PlatformUtil.cpp" />
+    <ClCompile Include="lib\FSEngine\FSBSA.cpp" />
+    <ClCompile Include="lib\LZ4F\lz4.c" />
+    <ClCompile Include="lib\LZ4F\lz4frame.c" />
+    <ClCompile Include="lib\LZ4F\lz4hc.c" />
+    <ClCompile Include="lib\LZ4F\xxhash.c" />
+    <ClCompile Include="lib\nifly\src\Object3d.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

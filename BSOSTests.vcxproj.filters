@@ -10,6 +10,12 @@
     <Filter Include="Utilities">
       <UniqueIdentifier>{7648bcdb-ae61-45de-b574-4caa0d137f28}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Components">
+      <UniqueIdentifier>{5d0a7f3e-2b8c-4c1e-9f6a-8e3b1c2d4a70}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Libraries">
+      <UniqueIdentifier>{a8c4e2d1-6f3b-4e9a-b7c5-1d2e3f4a5b61}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\files\SFMaterialDatabase.h">
@@ -28,6 +34,39 @@
       <Filter>Files</Filter>
     </ClInclude>
     <ClInclude Include="src\utils\StringStuff.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\FSEngine\FSBSA.h">
+      <Filter>Libraries</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\LZ4F\lz4.h">
+      <Filter>Libraries</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\LZ4F\lz4frame.h">
+      <Filter>Libraries</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\LZ4F\lz4hc.h">
+      <Filter>Libraries</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\LZ4F\xxhash.h">
+      <Filter>Libraries</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\nifly\include\Object3d.hpp">
+      <Filter>Libraries</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\ArchiveIndex.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\StarfieldSpace.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\files\HkxFile.h">
+      <Filter>Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\files\SFMorphFile.h">
+      <Filter>Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\PlatformUtil.h">
       <Filter>Utilities</Filter>
     </ClInclude>
   </ItemGroup>
@@ -61,6 +100,51 @@
     </ClCompile>
     <ClCompile Include="src\utils\StringStuff.cpp">
       <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\ArchiveIndexTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\ArchiveTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\HkxFileTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\SFMorphFileTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\StarfieldSpaceTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\ArchiveIndex.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\files\HkxFile.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\files\SFMorphFile.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\PlatformUtil.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\FSEngine\FSBSA.cpp">
+      <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\LZ4F\lz4.c">
+      <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\LZ4F\lz4frame.c">
+      <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\LZ4F\lz4hc.c">
+      <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\LZ4F\xxhash.c">
+      <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\nifly\src\Object3d.cpp">
+      <Filter>Libraries</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
