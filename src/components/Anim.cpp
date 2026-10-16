@@ -623,6 +623,29 @@ bool AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 		if (!shape)
 			continue;
 
+		const bool isSFShape = isSF && shape->HasType<BSGeometry>();
+		if (isSFShape) {
+			// Starfield binds by SkinAttach names, so editor skeleton bones are optional.
+			// Require matching exported names/transforms and cached skinning instead.
+			std::vector<std::string> exportedBones;
+			nif->GetShapeBoneList(shape, exportedBones);
+			auto skin = nif->GetHeader().GetBlock<BSSkinInstance>(shape->SkinInstanceRef());
+			auto data = skin ? nif->GetHeader().GetBlock(skin->dataRef) : nullptr;
+			auto skinning = shapeSkinning.find(shapeBoneList.first);
+			bool complete = exportedBones == shapeBoneList.second && data
+				&& data->nBones == exportedBones.size() && data->boneXforms.size() == exportedBones.size()
+				&& skinning != shapeSkinning.end();
+			for (size_t i = 0; complete && i < exportedBones.size(); ++i) {
+				complete = !exportedBones[i].empty()
+					&& GetShapeBoneIndex(shapeBoneList.first, exportedBones[i]) == static_cast<int>(i)
+					&& skinning->second.boneWeights.count(static_cast<int>(i)) != 0;
+			}
+			if (!complete) {
+				incomplete = true;
+				continue;
+			}
+		}
+
 		// BSGeometry (Starfield) stores per-vertex weights inline (like BSTriShape's vertex data). so we want to make sure they get updated.
 		bool isBSShape = shape->HasType<BSTriShape>() || shape->HasType<BSGeometry>();
 
@@ -638,7 +661,7 @@ bool AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 					vertWeights[vw.first].Add(bid, vw.second);
 
 			nif->SetShapeTransformSkinToBone(shape, bid, bw.xformSkinToBone);
-			if (!bptr)
+			if (!bptr && !isSFShape)
 				incomplete = true;
 			if (!isFO)
 				nif->SetShapeBoneWeights(shapeBoneList.first, bid, bw.weights);
