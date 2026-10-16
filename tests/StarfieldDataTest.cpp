@@ -139,9 +139,13 @@ void RequireMeshletsCoverTriangles(const BSGeometryMeshData& meshData) {
 	REQUIRE(meshData.cullDataList.size() == meshData.meshletList.size());
 
 	size_t primitives = 0;
+	uint32_t primitiveOffset = 0;
 	for (auto& meshlet : meshData.meshletList) {
 		REQUIRE(meshlet.vertCount <= 128);
 		REQUIRE(meshlet.primCount <= 128);
+		// Three local indices per primitive; each meshlet's range is aligned to four.
+		REQUIRE(meshlet.primOffset == primitiveOffset);
+		primitiveOffset += (meshlet.primCount * 3 + 3) & ~3u;
 		primitives += meshlet.primCount;
 	}
 	REQUIRE(primitives == meshData.tris.size());
