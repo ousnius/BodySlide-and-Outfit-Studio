@@ -644,3 +644,36 @@ OpResult ProjectOperations::AnalyzeWeights(NiShape* shape, MeshAnalysis::WeightS
 	outStats = MeshAnalysis::AnalyzeWeights(shape->GetNumVertices(), boneWeights, influenceLimit);
 	return OpResult();
 }
+
+void ProjectOperations::FillWeightColors(const std::string& bone, const std::vector<NiShape*>& shapes) {
+	auto fillFromBone = [&](NiShape* shape) {
+		Mesh* m = GetMesh(shape->name.get());
+		if (!m)
+			return;
+
+		m->WeightFill(0.0f);
+		if (auto weights = project.GetWorkAnim()->GetWeightsPtr(shape->name.get(), bone))
+			for (auto& bw : *weights)
+				m->weight[bw.first] = bw.second;
+
+		m->QueueUpdate(Mesh::UpdateType::Weight);
+	};
+
+	for (auto& s : project.GetWorkNif()->GetShapes()) {
+		if (Mesh* m = GetMesh(s->name.get())) {
+			m->WeightFill(0.0f);
+			m->QueueUpdate(Mesh::UpdateType::Weight);
+		}
+	}
+
+	if (bone.empty())
+		return;
+
+	for (auto* shape : shapes)
+		if (!project.IsBaseShape(shape))
+			fillFromBone(shape);
+
+	// The weights of the reference are always shown, for comparison
+	if (NiShape* baseShape = project.GetBaseShape())
+		fillFromBone(baseShape);
+}

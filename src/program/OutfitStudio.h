@@ -1035,6 +1035,16 @@ private:
 	bool interactive = true;
 };
 
+// How a shape is shown in the view, the same as the states of the shape list items
+enum class ShapeDisplayMode { Visible = 0, Hidden = 1, Ghost = 2 };
+
+// Everything about how the view looks, to change it for a render and restore it afterwards
+struct ViewState {
+	GLSurface::CameraState camera;
+	GLSurface::DisplaySettings display;
+	std::map<std::string, ShapeDisplayMode> shapes;
+};
+
 class OutfitStudioFrame : public wxFrame {
 public:
 	OutfitStudioFrame(const wxPoint& pos, const wxSize& size);
@@ -1236,6 +1246,17 @@ public:
 	wxSliderPanel* GetSliderPanel(const std::string& sliderName);
 
 	void SelectShape(const std::string& shapeName);
+	// Selects the shapes by name, the first one becomes the active shape.
+	// Returns false without changing the selection if a shape doesn't exist.
+	bool SelectShapes(const std::vector<std::string>& shapeNames);
+	std::vector<std::string> GetSelectedShapeNames();
+
+	bool GetShapeDisplayMode(const std::string& shapeName, ShapeDisplayMode& outMode);
+	bool SetShapeDisplayMode(const std::string& shapeName, ShapeDisplayMode mode);
+
+	ViewState GetViewState();
+	// Also updates the menu and toolbar items of the display toggles
+	void SetViewState(const ViewState& state);
 	std::vector<std::string> GetShapeList();
 
 	void UpdateShapeSource(nifly::NiShape* shape);

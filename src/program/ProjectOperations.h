@@ -156,6 +156,10 @@ public:
 	// sliders mode fixes the morph of each slider (all non-zap, non-UV sliders without names).
 	OpResult FixClipping(const std::vector<nifly::NiShape*>& shapes, ClippingFixMode mode, float strength, const std::vector<std::string>& sliderNames = {});
 
+	// Shows the weights of a bone as weight colors on the meshes of the shapes and of the reference.
+	// The other meshes are cleared. Weight colors have to be turned on to see them.
+	void FillWeightColors(const std::string& bone, const std::vector<nifly::NiShape*>& shapes);
+
 	// Bones for painting weights of the active bone, optionally mirrored to xMirrorBone
 	WeightBrushBones GetWeightBrushBones(const std::string& xMirrorBone);
 

@@ -488,6 +488,33 @@ public:
 
 	bool GetWeightColors() const { return bWeightColors; }
 
+	// The display toggles as a whole, to change them for a render and restore them afterwards
+	struct DisplaySettings {
+		bool wireframe = false;
+		bool lighting = true;
+		bool textures = true;
+		bool mask = true;
+		bool weightColors = false;
+		bool vertexColors = false;
+	};
+
+	DisplaySettings GetDisplaySettings() const { return {bWireframe, bLighting, bTextured, bMaskVisible, bWeightColors, bVertexColors}; }
+
+	void SetDisplaySettings(const DisplaySettings& settings) {
+		bWireframe = settings.wireframe;
+		bLighting = settings.lighting;
+		bTextured = settings.textures;
+		bMaskVisible = settings.mask;
+		bWeightColors = settings.weightColors;
+		bVertexColors = settings.vertexColors;
+
+		for (auto& m : meshes)
+			UpdateShaders(m);
+
+		for (auto& o : overlays)
+			UpdateShaders(o);
+	}
+
 	void SetVertexColors(bool bVisible = true) {
 		bVertexColors = bVisible;
 
