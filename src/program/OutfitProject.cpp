@@ -548,7 +548,6 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 		host->OnAnimationChanged();
 
 		NifFile clone(workNif);
-		ChooseClothData(clone);
 		ChoosePhysicsData(clone);
 
 		if (!copyRef && baseShape) {
@@ -559,6 +558,8 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 		}
 		else
 			WriteAnimToNif(clone);
+
+		ChooseClothData(clone);
 
 		for (auto& s : clone.GetShapes())
 			clone.UpdateSkinPartitions(s);
@@ -3177,12 +3178,7 @@ int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::stri
 		deletedShapes.push_back(shapeName);
 	}
 
-	// Add cloth data block of NIF to the list
-	std::vector<BSClothExtraData*> clothDataBlocks = refNif.GetChildren<BSClothExtraData>(nullptr, true);
-	for (auto& cloth : clothDataBlocks)
-		clothData[fileName] = cloth->Clone();
-
-	refNif.GetHeader().DeleteBlockByType("BSClothExtraData");
+	clothData.Capture(refNif, fileName, {refShape});
 
 	// Record physics XML links of the reference before it is merged in
 	CaptureRootPhysicsData(refNif);
@@ -3312,12 +3308,7 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 		deletedShapes.push_back(shape);
 	}
 
-	// Add cloth data block of NIF to the list
-	std::vector<BSClothExtraData*> clothDataBlocks = refNif.GetChildren<BSClothExtraData>(nullptr, true);
-	for (auto& cloth : clothDataBlocks)
-		clothData[refFile] = cloth->Clone();
-
-	refNif.GetHeader().DeleteBlockByType("BSClothExtraData");
+	clothData.Capture(refNif, refFile, {refShape});
 
 	// Record physics XML links of the reference before it is merged in
 	CaptureRootPhysicsData(refNif);
@@ -4079,6 +4070,9 @@ bool OutfitProject::PrepareDeleteVerts(NiShape* shape, const std::unordered_map<
 }
 
 void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, std::vector<float>& mask, const UndoStateShape& uss, bool bUndo) {
+	if (uss.hasClothSources)
+		clothData.SetShapeSources(shape->name.get(), bUndo ? uss.clothSourcesBefore : uss.clothSourcesAfter);
+
 	const std::vector<UndoStateVertex>& delVerts = bUndo ? uss.addVerts : uss.delVerts;
 	const std::vector<UndoStateVertex>& addVerts = bUndo ? uss.delVerts : uss.addVerts;
 	const std::vector<UndoStateTriangle>& delTris = bUndo ? uss.addTris : uss.delTris;
@@ -5347,6 +5341,14 @@ void OutfitProject::PrepareCopyGeo(NiShape* source, NiShape* target, UndoStateSh
 		ApplyShapeTransformToGeometry(target);
 	}
 
+	uss.hasClothSources = true;
+	uss.clothSourcesBefore = clothData.GetShapeSources(target->name.get());
+	uss.clothSourcesAfter = uss.clothSourcesBefore;
+	for (const auto& sourceName : clothData.GetShapeSources(source->name.get())) {
+		if (std::find(uss.clothSourcesAfter.begin(), uss.clothSourcesAfter.end(), sourceName) == uss.clothSourcesAfter.end())
+			uss.clothSourcesAfter.push_back(sourceName);
+	}
+
 	uint16_t snVerts = source->GetNumVertices();
 	uint16_t tnVerts = target->GetNumVertices();
 	uint32_t snTris = source->GetNumTriangles();
@@ -5392,6 +5394,8 @@ NiShape* OutfitProject::DuplicateShape(NiShape* sourceShape, const std::string& 
 	workAnim.CloneShape(&workNif, sourceShape, destShapeName);
 
 	auto newShape = workNif.CloneShape(sourceShape, destShapeName);
+	if (newShape)
+		clothData.SetShapeSources(destShapeName, clothData.GetShapeSources(sourceShape->name.get()));
 
 	std::string shapeName = sourceShape->name.get();
 	std::string srcTarget = ShapeToTarget(shapeName);
@@ -5448,6 +5452,7 @@ void OutfitProject::DeleteShape(NiShape* shape) {
 	shapeMaterialFiles.erase(shapeName);
 	shapeSFMaterials.erase(shapeName);
 	shapePhysicsFiles.erase(shapeName);
+	clothData.RemoveShape(shapeName);
 
 	if (IsBaseShape(shape)) {
 		morpher.UnlinkRefDiffData();
@@ -5654,6 +5659,7 @@ void OutfitProject::CaptureShapeDeleteState(NiShape* shape, UndoStateShapeDelete
 
 	state.shapeName = shape->name.get();
 	state.wasBaseShape = IsBaseShape(shape);
+	state.clothSources = clothData.GetShapeSources(state.shapeName);
 
 	// Capture reference info so it can be restored on undo
 	if (state.wasBaseShape) {
@@ -5735,6 +5741,8 @@ NiShape* OutfitProject::RestoreDeletedShape(UndoStateShapeDelete& state) {
 	if (!restoredShape)
 		return nullptr;
 
+	clothData.SetShapeSources(restoreName, state.clothSources);
+
 	// Reload bone weights from the cloned NIF blocks
 	workAnim.LoadFromNif(&workNif, restoredShape);
 
@@ -5779,6 +5787,7 @@ void OutfitProject::RenameShape(NiShape* shape, const std::string& newShapeName)
 	std::string oldTarget = ShapeToTarget(shapeName);
 
 	workNif.RenameShape(shape, newShapeName);
+	clothData.RenameShape(shapeName, newShapeName);
 	workAnim.RenameShape(shapeName, newShapeName);
 
 	auto refSource = shapeRefSources.find(shapeName);
@@ -6793,12 +6802,7 @@ int OutfitProject::ImportNIF(std::istream& fileStream, const std::string& fileNa
 		}
 	}
 
-	// Add cloth data block of NIF to the list
-	std::vector<BSClothExtraData*> clothDataBlocks = nif.GetChildren<BSClothExtraData>(nullptr, true);
-	for (auto& cloth : clothDataBlocks)
-		clothData[fileName] = cloth->Clone();
-
-	nif.GetHeader().DeleteBlockByType("BSClothExtraData");
+	clothData.Capture(nif, fileName, nif.GetShapes());
 
 	// Record physics XML links of all shapes before they are merged in
 	CaptureRootPhysicsData(nif);
@@ -6827,7 +6831,6 @@ int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<Mesh
 	host->OnAnimationChanged();
 
 	NifFile clone(workNif);
-	ChooseClothData(clone);
 	ChoosePhysicsData(clone);
 
 	std::vector<Vector3> liveVerts;
@@ -6865,6 +6868,8 @@ int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<Mesh
 	else
 		WriteAnimToNif(clone);
 
+	ChooseClothData(clone);
+
 	for (auto& s : clone.GetShapes())
 		clone.UpdateSkinPartitions(s);
 
@@ -6897,38 +6902,31 @@ void OutfitProject::WriteAnimToNif(NifFile& nif, const std::string& shapeExcepti
 }
 
 void OutfitProject::ChooseClothData(NifFile& nif) {
-	if (!clothData.empty()) {
-		wxArrayString clothFileNames;
-		for (auto& cloth : clothData)
-			clothFileNames.Add(wxString::FromUTF8(cloth.first));
-
-		wxArrayInt sel;
+	// NIF imports are automatic. Only standalone HKX imports need a choice,
+	// because they have no source shapes to associate them with.
+	ClothData::Sources additional;
+	const auto& manual = clothData.GetManualSources();
+	if (!manual.empty()) {
 		if (!host->IsInteractive()) {
-			// Unattended runs get the default answer of "all origins"
-			for (size_t i = 0; i < clothFileNames.GetCount(); i++)
-				sel.Add(static_cast<int>(i));
+			// Unattended runs get the default answer of "all additional sources"
+			additional = manual;
 		}
 		else {
-			if (!host->ChooseMany(_("There was cloth physics data loaded at some point (BSClothExtraData). Please choose all the origins to use in the output."),
-								  _("Choose cloth data"),
-								  clothFileNames,
-								  sel))
-				return;
-		}
+			wxArrayString names;
+			for (const auto& source : manual)
+				names.Add(wxString::FromUTF8(source));
 
-		for (size_t i = 0; i < sel.Count(); i++) {
-			std::string selString{clothFileNames[sel[i]].ToUTF8()};
-			if (!selString.empty()) {
-				auto clothBlock = clothData[selString]->Clone();
-				uint32_t id = nif.GetHeader().AddBlock(std::move(clothBlock));
-				if (id != 0xFFFFFFFF) {
-					auto root = nif.GetRootNode();
-					if (root)
-						root->extraDataRefs.AddBlockRef(id);
-				}
+			wxArrayInt sel;
+			if (host->ChooseMany(_("The original cloth data of the exported shapes is preserved automatically. Choose any additional imported HKX data to include."),
+								 _("Choose additional cloth data"),
+								 names,
+								 sel)) {
+				for (size_t i = 0; i < sel.Count(); i++)
+					additional.push_back(manual[sel[i]]);
 			}
 		}
 	}
+	clothData.Apply(nif, additional);
 }
 
 void OutfitProject::ChoosePhysicsData(NifFile& nif) {
@@ -6982,7 +6980,6 @@ int OutfitProject::ExportShapeNIF(const std::string& fileName, const std::vector
 	workAnim.CleanupBones();
 
 	NifFile clone(workNif);
-	ChooseClothData(clone);
 	ChoosePhysicsData(clone);
 
 	clone.SetShapeOrder(GetShapeOrder());
@@ -6992,6 +6989,8 @@ int OutfitProject::ExportShapeNIF(const std::string& fileName, const std::vector
 			clone.DeleteShape(s);
 
 	WriteAnimToNif(clone);
+
+	ChooseClothData(clone);
 
 	for (auto& s : clone.GetShapes())
 		clone.UpdateSkinPartitions(s);

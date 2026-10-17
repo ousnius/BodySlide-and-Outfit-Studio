@@ -385,6 +385,7 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/components/UndoHistory.cpp
 	src/components/WeightNorm.cpp
 	src/components/MaskTransfer.cpp
+	src/components/ClothData.cpp
 	src/files/FBXWrangler.cpp
 	src/files/MaskFile.cpp
 	src/files/ObjFile.cpp
@@ -480,6 +481,7 @@ if(BSOS_BUILD_TESTS)
 
 	add_executable(BSOSTests
 		tests/AnimTest.cpp
+		tests/ClothDataTest.cpp
 		tests/ArchiveIndexTest.cpp
 		tests/AutomationJsonTest.cpp
 		tests/ArchiveTest.cpp
@@ -499,6 +501,7 @@ if(BSOS_BUILD_TESTS)
 		src/components/Automation.cpp
 		src/components/AutomationJson.cpp
 		src/components/ClippingFixer.cpp
+		src/components/ClothData.cpp
 		src/components/MaskTransfer.cpp
 		src/components/MeshAnalysis.cpp
 		src/files/HkxFile.cpp

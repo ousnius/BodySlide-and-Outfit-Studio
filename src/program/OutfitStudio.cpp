@@ -5918,8 +5918,7 @@ void OutfitStudioFrame::OnImportPhysicsData(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	auto& physicsData = project->GetClothData();
-	physicsData[fileName.ToUTF8().data()] = std::move(physicsBlock);
+	project->AddClothData(fileName.ToUTF8().data(), std::move(physicsBlock));
 
 	SetPendingChanges();
 }
@@ -5947,7 +5946,7 @@ void OutfitStudioFrame::OnExportPhysicsData(wxCommandEvent& WXUNUSED(event)) {
 		if (fileName.IsEmpty())
 			return;
 
-		if (!physicsData[selString]->ToHKX(fileName.ToUTF8().data())) {
+		if (!physicsData.at(selString)->ToHKX(fileName.ToUTF8().data())) {
 			wxLogError("Failed to save physics data file '%s'!", fileName);
 			wxMessageBox(wxString::Format(_("Failed to save physics data file '%s'!"), fileName), _("Export Error"), wxICON_ERROR);
 		}

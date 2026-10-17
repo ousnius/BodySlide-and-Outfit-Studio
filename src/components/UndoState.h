@@ -98,6 +98,8 @@ struct UndoStateShape {
 	nifly::NiVector<nifly::BSDismemberSkinInstance::PartitionInfo> partitionInfoBefore;
 	nifly::NiVector<nifly::BSDismemberSkinInstance::PartitionInfo> partitionInfoAfter;
 	bool hadVertexColors = false;
+	bool hasClothSources = false;
+	std::vector<std::string> clothSourcesBefore, clothSourcesAfter;
 };
 
 struct UndoStateShapeSliderDiff {
@@ -115,6 +117,7 @@ struct UndoStateShapeDelete {
 	std::optional<MaterialFile> materialFile;
 	std::shared_ptr<const SFLayeredMaterial> sfMaterial;
 	std::vector<std::string> physicsFiles;
+	std::vector<std::string> clothSources;
 	// Reference info captured when wasBaseShape, restored on undo
 	std::string refProjectFile;
 	std::string refProjectName;
