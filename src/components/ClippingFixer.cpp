@@ -9,6 +9,8 @@ See the included LICENSE file
 
 #include "../utils/ParallelFor.h"
 
+#include <cfloat>
+
 #include <algorithm>
 #include <array>
 #include <cstdint>
@@ -170,6 +172,77 @@ void ClippingFixer::BarycentricCoords(const Vector3& p,
 
 std::vector<std::vector<int>> ClippingFixer::BuildAdjacency(int nVerts, const std::vector<Triangle>& tris) {
 	return BuildTopology(nVerts, tris).adjacency;
+}
+
+std::vector<float> ClippingFixer::SignedDistancesToBody(const std::vector<Vector3>& bodyVerts,
+													 const std::vector<Triangle>& bodyTris,
+													 const std::vector<Vector3>& points,
+													 float searchRadius) {
+	std::vector<float> distances(points.size(), FLT_MAX);
+	if (bodyVerts.empty() || bodyTris.empty() || points.empty())
+		return distances;
+
+	// Same outward direction as FixClipping: most faces have to point away from the centroid
+	Vector3 bodyCentroid;
+	for (auto& bv : bodyVerts)
+		bodyCentroid += bv;
+	bodyCentroid /= static_cast<float>(bodyVerts.size());
+
+	int outwardCount = 0;
+	int inwardCount = 0;
+	for (auto& tri : bodyTris) {
+		if (tri.p1 >= bodyVerts.size() || tri.p2 >= bodyVerts.size() || tri.p3 >= bodyVerts.size())
+			continue;
+		Vector3 triCenter = (bodyVerts[tri.p1] + bodyVerts[tri.p2] + bodyVerts[tri.p3]) / 3.0f;
+		if ((triCenter - bodyCentroid).dot(tri.trinormal(bodyVerts.data())) > 0.0f)
+			outwardCount++;
+		else
+			inwardCount++;
+	}
+	float normalSign = (outwardCount >= inwardCount) ? 1.0f : -1.0f;
+
+	std::vector<Vector3> bodyNormals = ComputeVertexNormals(bodyVerts, bodyTris);
+	for (auto& n : bodyNormals)
+		n = n * normalSign;
+
+	AABBTree bodyBVH(const_cast<Vector3*>(bodyVerts.data()), const_cast<Triangle*>(bodyTris.data()), static_cast<uint32_t>(bodyTris.size()), 100, 2);
+	std::vector<AABBTriangleDistanceData> bodyTriangleDistanceData;
+	AABBTree::BuildTriangleDistanceData(bodyVerts.data(), bodyTris.data(), static_cast<uint32_t>(bodyTris.size()), bodyTriangleDistanceData);
+
+	ParallelFor(points.size(), clippingQueryMinItemsPerWorker, [&](size_t startIndex, size_t endIndex) {
+		for (size_t i = startIndex; i < endIndex; i++) {
+			uint32_t facet = 0;
+			Vector3 closestPoint;
+			Vector3 point = points[i];
+			if (!bodyBVH.ClosestFacetInSphere(point, searchRadius, facet, &closestPoint, &bodyTriangleDistanceData) || facet >= bodyTris.size())
+				continue;
+
+			const Triangle& tri = bodyTris[facet];
+			if (tri.p1 >= bodyVerts.size() || tri.p2 >= bodyVerts.size() || tri.p3 >= bodyVerts.size())
+				continue;
+
+			float bu, bv, bw;
+			BarycentricCoords(closestPoint, bodyVerts[tri.p1], bodyVerts[tri.p2], bodyVerts[tri.p3], bu, bv, bw);
+			bu = std::max(0.0f, bu);
+			bv = std::max(0.0f, bv);
+			bw = std::max(0.0f, bw);
+			float bsum = bu + bv + bw;
+			if (bsum > 0.0f) {
+				bu /= bsum;
+				bv /= bsum;
+				bw /= bsum;
+			}
+
+			Vector3 outward = bodyNormals[tri.p1] * bu + bodyNormals[tri.p2] * bv + bodyNormals[tri.p3] * bw;
+			if (outward.IsZero(true))
+				outward = tri.trinormal(bodyVerts.data()) * normalSign;
+			outward.Normalize();
+
+			distances[i] = (point - closestPoint).dot(outward);
+		}
+	});
+
+	return distances;
 }
 
 void ClippingFixer::FixClipping(const std::vector<Vector3>& bodyVerts,

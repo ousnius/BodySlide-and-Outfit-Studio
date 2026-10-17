@@ -31,6 +31,13 @@ public:
 							const std::vector<nifly::Triangle>& outfitTris,
 							const ClippingFixOptions& options);
 
+	// Signed distance of each point from the body surface along the body's outward normal.
+	// Negative values are inside the body. Points with no body surface within searchRadius get FLT_MAX.
+	static std::vector<float> SignedDistancesToBody(const std::vector<nifly::Vector3>& bodyVerts,
+											   const std::vector<nifly::Triangle>& bodyTris,
+											   const std::vector<nifly::Vector3>& points,
+											   float searchRadius);
+
 private:
 	// Compute per-vertex normals for a mesh by averaging face normals.
 	static std::vector<nifly::Vector3> ComputeVertexNormals(const std::vector<nifly::Vector3>& verts,

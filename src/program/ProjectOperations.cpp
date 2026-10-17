@@ -595,3 +595,48 @@ void ProjectOperations::UpdateShapeFromMesh(NiShape* shape) {
 	if (!liveVerts.empty())
 		project.GetWorkNif()->SetVertsForShape(shape, liveVerts);
 }
+
+OpResult ProjectOperations::AnalyzeSlider(NiShape* shape, const std::string& sliderName, MeshAnalysis::MorphStats& outStats) {
+	std::vector<Vector3> deltas;
+	OpResult result = GetSliderDeltas(shape, sliderName, deltas);
+	if (!result.ok)
+		return result;
+
+	std::vector<Triangle> tris;
+	shape->GetTriangles(tris);
+	outStats = MeshAnalysis::AnalyzeMorph(tris, deltas);
+	return result;
+}
+
+OpResult ProjectOperations::AnalyzeClipping(NiShape* shape, MeshAnalysis::PenetrationStats& outStats, float nearDistance) {
+	NiShape* baseShape = project.GetBaseShape();
+	if (!baseShape)
+		return OpResult::Fail("No reference shape is loaded.");
+	if (!shape || shape == baseShape)
+		return OpResult::Fail("Choose a shape other than the reference.");
+
+	std::vector<Vector3> bodyVerts, outfitVerts;
+	project.GetLiveVerts(baseShape, bodyVerts);
+	project.GetLiveVerts(shape, outfitVerts);
+
+	std::vector<Triangle> bodyTris;
+	baseShape->GetTriangles(bodyTris);
+
+	outStats = MeshAnalysis::AnalyzePenetration(outfitVerts, bodyVerts, bodyTris, nearDistance);
+	return OpResult();
+}
+
+OpResult ProjectOperations::AnalyzeWeights(NiShape* shape, MeshAnalysis::WeightStats& outStats, int influenceLimit) {
+	if (!shape)
+		return OpResult::Fail("Shape doesn't exist.");
+
+	AnimInfo& workAnim = *project.GetWorkAnim();
+	std::string shapeName = shape->name.get();
+
+	std::vector<const std::unordered_map<uint16_t, float>*> boneWeights;
+	for (auto& bone : workAnim.shapeBones[shapeName])
+		boneWeights.push_back(workAnim.GetWeightsPtr(shapeName, bone));
+
+	outStats = MeshAnalysis::AnalyzeWeights(shape->GetNumVertices(), boneWeights, influenceLimit);
+	return OpResult();
+}

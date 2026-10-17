@@ -811,6 +811,7 @@
     <ClInclude Include="src\components\StarfieldSpace.h" />
     <ClInclude Include="src\components\ClippingFixer.h" />
     <ClInclude Include="src\components\MaskOps.h" />
+    <ClInclude Include="src\components\MeshAnalysis.h" />
     <ClInclude Include="src\components\DiffData.h" />
     <ClInclude Include="src\components\Mesh.h" />
     <ClInclude Include="src\components\NormalGenLayers.h" />
@@ -950,6 +951,7 @@
     <ClCompile Include="src\components\Automorph.cpp" />
     <ClCompile Include="src\components\ClippingFixer.cpp" />
     <ClCompile Include="src\components\MaskOps.cpp" />
+    <ClCompile Include="src\components\MeshAnalysis.cpp" />
     <ClCompile Include="src\components\DiffData.cpp" />
     <ClCompile Include="src\components\Mesh.cpp" />
     <ClCompile Include="src\components\NormalGenLayers.cpp" />

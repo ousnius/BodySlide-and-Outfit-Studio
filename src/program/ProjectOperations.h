@@ -7,6 +7,7 @@ See the included LICENSE file
 
 #include "EditorState.h"
 #include "OutfitProject.h"
+#include "../components/MeshAnalysis.h"
 #include "../components/PoseData.h"
 
 #include <cstdint>
@@ -131,6 +132,15 @@ public:
 	RefreshFlags ClearPreviewPose();
 	// Returns all bones of the skeleton to their unposed transforms
 	void ResetPose();
+
+	// Morph quality of one slider on a shape, measured with only that slider applied
+	OpResult AnalyzeSlider(nifly::NiShape* shape, const std::string& sliderName, MeshAnalysis::MorphStats& outStats);
+
+	// How far a shape goes into the reference shape with the current slider values. Like the
+	// clipping fix, this compares the shapes in NIF coordinates.
+	OpResult AnalyzeClipping(nifly::NiShape* shape, MeshAnalysis::PenetrationStats& outStats, float nearDistance = 0.1f);
+
+	OpResult AnalyzeWeights(nifly::NiShape* shape, MeshAnalysis::WeightStats& outStats, int influenceLimit = 4);
 
 	std::unique_ptr<EditSnapshot> CaptureSnapshot();
 
