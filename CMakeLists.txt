@@ -359,6 +359,7 @@ set(BSOS_COMMON_SOURCES
 	src/render/GLHDRiEnvironment.cpp
 	src/render/GLMaterial.cpp
 	src/render/GLOffscreenBuffer.cpp
+	src/render/MeshBuffers.cpp
 	src/render/GLShader.cpp
 	src/render/GLSurface.cpp
 	src/ui/wxStateButton.cpp
@@ -486,6 +487,7 @@ if(BSOS_BUILD_TESTS)
 		tests/MainThreadDispatcherTest.cpp
 		tests/MaskTransferTest.cpp
 		tests/MeshAnalysisTest.cpp
+		tests/OutfitProjectTest.cpp
 		tests/SFMaterialDatabaseTest.cpp
 		tests/SFLayeredMaterialTest.cpp
 		tests/SFMaterialFileTest.cpp
@@ -499,6 +501,28 @@ if(BSOS_BUILD_TESTS)
 		src/components/ClippingFixer.cpp
 		src/components/MaskTransfer.cpp
 		src/components/MeshAnalysis.cpp
+		src/components/Anim.cpp
+		src/components/Automorph.cpp
+		src/components/DiffData.cpp
+		src/components/MaskOps.cpp
+		src/components/Mesh.cpp
+		src/components/NormalGenLayers.cpp
+		src/components/SliderData.cpp
+		src/components/SliderSet.cpp
+		src/components/WeightNorm.cpp
+		src/files/MaterialFile.cpp
+		src/files/ObjFile.cpp
+		src/files/TriFile.cpp
+		src/program/OutfitProject.cpp
+		src/program/ProjectHost.cpp
+		src/program/ProjectOperations.cpp
+		src/program/BrushStrokeController.cpp
+		src/components/TweakBrush.cpp
+		src/components/PoseData.cpp
+		src/components/PoseDataJson.cpp
+		src/components/PoseDataYaml.cpp
+		src/components/UndoHistory.cpp
+		src/utils/ProjectUtil.cpp
 		src/files/HkxFile.cpp
 		src/files/GameDataStream.cpp
 		src/files/SFMaterialDatabase.cpp
@@ -539,6 +563,8 @@ if(BSOS_BUILD_TESTS)
 	target_include_directories(BSOSTests PRIVATE
 		${CMAKE_CURRENT_SOURCE_DIR}/src
 		${CMAKE_CURRENT_SOURCE_DIR}/lib
+		${CMAKE_CURRENT_SOURCE_DIR}/lib/gli
+		${CMAKE_CURRENT_SOURCE_DIR}/lib/fkYAML/include
 		${CMAKE_CURRENT_SOURCE_DIR}/lib/nlohmannjson/include
 		${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/include
 		${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/external

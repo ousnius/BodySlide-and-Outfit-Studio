@@ -2343,6 +2343,9 @@
     <ClCompile Include="src\render\GLOffscreenBuffer.cpp">
       <Filter>Rendering</Filter>
     </ClCompile>
+    <ClCompile Include="src\render\MeshBuffers.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
     <ClCompile Include="src\components\NormalGenLayers.cpp">
       <Filter>Components</Filter>
     </ClCompile>

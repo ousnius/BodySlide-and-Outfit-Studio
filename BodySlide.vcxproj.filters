@@ -1914,6 +1914,9 @@
     <ClCompile Include="src\render\GLOffscreenBuffer.cpp">
       <Filter>Rendering</Filter>
     </ClCompile>
+    <ClCompile Include="src\render\MeshBuffers.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
     <ClCompile Include="src\program\NormalsGenDialog.cpp">
       <Filter>Program</Filter>
     </ClCompile>
