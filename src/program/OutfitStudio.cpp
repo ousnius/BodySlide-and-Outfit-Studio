@@ -2849,9 +2849,9 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName,
 		glView->Cleanup();
 		glView->GetUndoHistory()->ClearHistory();
 
-		activeSlider.clear();
-		lastActiveSlider.clear();
-		bEditSlider = false;
+		editor.activeSlider.clear();
+		editor.lastActiveSlider.clear();
+		editor.bEditSlider = false;
 		MenuExitSliderEdit();
 
 		ShutdownPhysics();
@@ -3125,7 +3125,7 @@ void OutfitStudioFrame::UpdateActiveShape() {
 		CreateSegmentTree();
 		CreatePartitionTree();
 		outfitBones->UnselectAll();
-		lastSelectedBones.clear();
+		editor.lastSelectedBones.clear();
 
 		menuBar->Enable(XRCID("btnSmoothSeams"), false);
 		enableSmoothSeamsAngle = false;
@@ -3242,7 +3242,7 @@ void OutfitStudioFrame::GetNormalizeBones(std::vector<std::string>* normBones, s
 	project->GetActiveBones(activeBones);
 
 	for (auto& boneName : activeBones) {
-		if (lastNormalizeBones.find(boneName) != lastNormalizeBones.end()) {
+		if (editor.lastNormalizeBones.find(boneName) != editor.lastNormalizeBones.end()) {
 			if (normBones)
 				normBones->push_back(boneName);
 		}
@@ -3259,7 +3259,7 @@ std::vector<std::string> OutfitStudioFrame::GetSelectedBones() {
 
 	std::vector<std::string> boneList;
 
-	for (auto& selBone : lastSelectedBones) {
+	for (auto& selBone : editor.lastSelectedBones) {
 		if (std::find(activeBones.begin(), activeBones.end(), selBone) != activeBones.end()) {
 			boneList.push_back(selBone);
 		}
@@ -3271,9 +3271,9 @@ std::vector<std::string> OutfitStudioFrame::GetSelectedBones() {
 void OutfitStudioFrame::CalcAutoXMirrorBone() {
 	// Note that there is very similar code to this in OutfitProject::MatchSymmetricBoneNames.
 
-	autoXMirrorBone.clear();
+	editor.autoXMirrorBone.clear();
 
-	const size_t abLen = activeBone.length();
+	const size_t abLen = editor.activeBone.length();
 	std::vector<std::string> bones;
 	project->GetActiveBones(bones);
 
@@ -3285,7 +3285,7 @@ void OutfitStudioFrame::CalcAutoXMirrorBone() {
 		int flips = 0;
 		bool nomatch = false;
 		for (size_t i = 0; i < abLen && !nomatch; ++i) {
-			char abc = ToLower(activeBone[i]);
+			char abc = ToLower(editor.activeBone[i]);
 			char bc = ToLower(b[i]);
 			if (abc == 'l') {
 				if (bc == 'r')
@@ -3309,13 +3309,13 @@ void OutfitStudioFrame::CalcAutoXMirrorBone() {
 			continue;
 
 		bestFlips = flips;
-		autoXMirrorBone = b;
+		editor.autoXMirrorBone = b;
 	}
 
-	if (autoXMirrorBone.empty())
+	if (editor.autoXMirrorBone.empty())
 		cXMirrorBone->SetString(1, "Auto: None");
 	else
-		cXMirrorBone->SetString(1, "Auto: " + autoXMirrorBone);
+		cXMirrorBone->SetString(1, "Auto: " + editor.autoXMirrorBone);
 }
 
 std::string OutfitStudioFrame::GetXMirrorBone() {
@@ -3323,7 +3323,7 @@ std::string OutfitStudioFrame::GetXMirrorBone() {
 	if (xMChoice == 0)
 		return std::string();
 	else if (xMChoice == 1)
-		return autoXMirrorBone;
+		return editor.autoXMirrorBone;
 	else
 		return cXMirrorBone->GetString(xMChoice).ToStdString();
 }
@@ -3657,7 +3657,7 @@ void OutfitStudioFrame::ClearSelected(NiShape* shape) {
 }
 
 std::string OutfitStudioFrame::GetActiveBone() {
-	return activeBone;
+	return editor.activeBone;
 }
 
 void OutfitStudioFrame::HideSliderPanel(wxSliderPanel* sliderPanel) {
@@ -3693,17 +3693,17 @@ void OutfitStudioFrame::EnterSliderEdit(const std::string& sliderName) {
 	std::string sliderNameEdit = sliderName;
 
 	if (sliderNameEdit.empty()) {
-		if (lastActiveSlider.empty())
+		if (editor.lastActiveSlider.empty())
 			sliderNameEdit = project->GetSliderName(0);
 		else
-			sliderNameEdit = lastActiveSlider;
+			sliderNameEdit = editor.lastActiveSlider;
 	}
 
 	if (sliderNameEdit.empty())
 		return;
 
-	if (bEditSlider) {
-		wxSliderPanel* sliderPanel = GetSliderPanel(activeSlider);
+	if (editor.bEditSlider) {
+		wxSliderPanel* sliderPanel = GetSliderPanel(editor.activeSlider);
 		if (sliderPanel) {
 			sliderPanel->sliderCheck->Enable(true);
 			sliderPanel->btnSliderProp->Hide();
@@ -3717,13 +3717,13 @@ void OutfitStudioFrame::EnterSliderEdit(const std::string& sliderName) {
 	if (!sliderPanel)
 		return;
 
-	activeSlider = sliderNameEdit;
-	lastActiveSlider = activeSlider;
-	bEditSlider = true;
+	editor.activeSlider = sliderNameEdit;
+	editor.lastActiveSlider = editor.activeSlider;
+	editor.bEditSlider = true;
 
 	sliderPanel->slider->SetValue(100);
-	SetSliderValue(activeSlider, 100);
-	ShowSliderEffect(activeSlider, true);
+	SetSliderValue(editor.activeSlider, 100);
+	ShowSliderEffect(editor.activeSlider, true);
 
 	sliderPanel->sliderCheck->Enable(false);
 	sliderPanel->btnSliderProp->Show();
@@ -3732,31 +3732,31 @@ void OutfitStudioFrame::EnterSliderEdit(const std::string& sliderName) {
 	sliderPanel->Layout();
 	MenuEnterSliderEdit();
 
-	HighlightSlider(activeSlider);
+	HighlightSlider(editor.activeSlider);
 	ApplySliders();
 }
 
 void OutfitStudioFrame::ExitSliderEdit() {
-	if (!activeSlider.empty()) {
-		wxSliderPanel* sliderPanel = GetSliderPanel(activeSlider);
+	if (!editor.activeSlider.empty()) {
+		wxSliderPanel* sliderPanel = GetSliderPanel(editor.activeSlider);
 		if (sliderPanel) {
 			sliderPanel->sliderCheck->Enable(true);
 			sliderPanel->slider->SetValue(0);
-			SetSliderValue(activeSlider, 0);
-			ShowSliderEffect(activeSlider, true);
+			SetSliderValue(editor.activeSlider, 0);
+			ShowSliderEffect(editor.activeSlider, true);
 			sliderPanel->btnSliderProp->Hide();
 			sliderPanel->btnMinus->Hide();
 			sliderPanel->btnPlus->Hide();
 			sliderPanel->Layout();
 		}
 
-		activeSlider.clear();
+		editor.activeSlider.clear();
 	}
 
-	bEditSlider = false;
+	editor.bEditSlider = false;
 	MenuExitSliderEdit();
 
-	HighlightSlider(activeSlider);
+	HighlightSlider(editor.activeSlider);
 	ApplySliders();
 }
 
@@ -3779,9 +3779,9 @@ void OutfitStudioFrame::MenuExitSliderEdit() {
 }
 
 void OutfitStudioFrame::ScrollToActiveSlider() {
-	if (!activeSlider.empty()) {
+	if (!editor.activeSlider.empty()) {
 		for (auto& sliderPanel : sliderPanels) {
-			if (sliderPanel.first == activeSlider) {
+			if (sliderPanel.first == editor.activeSlider) {
 				ScrollWindowIntoView(sliderScroll, sliderPanel.second);
 			}
 		}
@@ -4141,15 +4141,15 @@ bool OutfitStudioFrame::CheckEditableState() {
 	if (activeTool == ToolID::MaskBrush || activeTool == ToolID::WeightBrush || activeTool == ToolID::ColorBrush || activeTool == ToolID::AlphaBrush)
 		return true;
 
-	if (bEditSlider) {
-		if (project->SliderValue(activeSlider) == 0.0) {
+	if (editor.bEditSlider) {
+		if (project->SliderValue(editor.activeSlider) == 0.0) {
 			int response = wxMessageBox(_("You are trying to edit a slider's morph with that slider set to zero.  Do you wish to set the slider to one now?"),
 										wxMessageBoxCaptionStr,
 										wxYES_NO,
 										this);
 
 			if (response == wxYES) {
-				SetSliderValue(activeSlider, 100);
+				SetSliderValue(editor.activeSlider, 100);
 				ApplySliders();
 			}
 
@@ -4161,7 +4161,7 @@ bool OutfitStudioFrame::CheckEditableState() {
 			if (item)
 				shapes.push_back(item->GetShape());
 
-		if (!ConfirmSliderDataLocalForEdit(shapes, std::vector<std::string>{activeSlider}))
+		if (!ConfirmSliderDataLocalForEdit(shapes, std::vector<std::string>{editor.activeSlider}))
 			return false;
 
 		return true;
@@ -4330,9 +4330,9 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	glView->Cleanup();
 	glView->GetUndoHistory()->ClearHistory();
 
-	activeSlider.clear();
-	lastActiveSlider.clear();
-	bEditSlider = false;
+	editor.activeSlider.clear();
+	editor.lastActiveSlider.clear();
+	editor.bEditSlider = false;
 	MenuExitSliderEdit();
 
 	ShutdownPhysics();
@@ -4472,7 +4472,7 @@ void OutfitStudioFrame::OnAddProject(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
-	if (bEditSlider) {
+	if (editor.bEditSlider) {
 		wxMessageBox(_("You're currently editing slider data, please exit the slider's edit mode (pencil button) and try again."));
 		return;
 	}
@@ -4583,7 +4583,7 @@ void OutfitStudioFrame::OnConvertBodyReference(wxCommandEvent& WXUNUSED(event)) 
 		return;
 	}
 
-	if (bEditSlider) {
+	if (editor.bEditSlider) {
 		wxMessageBox(_("You're currently editing slider data, please exit the slider's edit mode (pencil button) and try again."));
 		return;
 	}
@@ -4598,7 +4598,7 @@ void OutfitStudioFrame::OnConvertBodyReference(wxCommandEvent& WXUNUSED(event)) 
 }
 
 void OutfitStudioFrame::OnRunAutomation(wxCommandEvent& WXUNUSED(event)) {
-	if (bEditSlider) {
+	if (editor.bEditSlider) {
 		wxMessageBox(_("You're currently editing slider data, please exit the slider's edit mode (pencil button) and try again."));
 		return;
 	}
@@ -4787,9 +4787,9 @@ void OutfitStudioFrame::ResetProject() {
 	glView->Cleanup();
 	glView->GetUndoHistory()->ClearHistory();
 
-	activeSlider.clear();
-	lastActiveSlider.clear();
-	bEditSlider = false;
+	editor.activeSlider.clear();
+	editor.lastActiveSlider.clear();
+	editor.bEditSlider = false;
 	MenuExitSliderEdit();
 
 	CreateSetSliders();
@@ -4836,8 +4836,8 @@ void OutfitStudioFrame::ClearProject() {
 	activeSegment.Unset();
 
 	lastCheckedSlider.clear();
-	lastSelectedBones.clear();
-	lastNormalizeBones.clear();
+	editor.lastSelectedBones.clear();
+	editor.lastNormalizeBones.clear();
 
 	if (currentTabButton)
 		currentTabButton->SetPendingChanges(false);
@@ -5024,8 +5024,8 @@ void OutfitStudioFrame::UpdateAnimationGUI() {
 	if (poseBoneSel != wxNOT_FOUND)
 		poseBone = cPoseBone->GetString(poseBoneSel).ToStdString();
 
-	if (lastSelectedBones.count(activeBone) == 0)
-		activeBone.clear();
+	if (editor.lastSelectedBones.count(editor.activeBone) == 0)
+		editor.activeBone.clear();
 
 	UpdateBoneTree();
 
@@ -5114,7 +5114,7 @@ void OutfitStudioFrame::UpdateBoneItemState(const wxTreeItemId& item, const std:
 		if (shape && project->GetWorkNif()->IsValid() && project->GetWorkNif()->GetBlockID(shape) != nifly::NIF_NPOS)
 			badBone = project->GetWorkAnim()->BoneHasInconsistentTransforms(shape->name.get(), boneName);
 	}
-	outfitBones->SetItemState(item, (lastNormalizeBones.count(boneName) != 0 ? 1 : 0) + (badBone ? 2 : 0));
+	outfitBones->SetItemState(item, (editor.lastNormalizeBones.count(boneName) != 0 ? 1 : 0) + (badBone ? 2 : 0));
 }
 
 void OutfitStudioFrame::UpdateBoneTree() {
@@ -5143,10 +5143,10 @@ void OutfitStudioFrame::UpdateBoneTree() {
 		wxTreeItemId item = outfitBones->AppendItem(bonesRoot, boneStr);
 		UpdateBoneItemState(item, bone);
 
-		if (lastSelectedBones.count(bone) != 0) {
+		if (editor.lastSelectedBones.count(bone) != 0) {
 			outfitBones->SelectItem(item);
-			if (activeBone.empty())
-				activeBone = bone;
+			if (editor.activeBone.empty())
+				editor.activeBone = bone;
 		}
 	}
 
@@ -5293,13 +5293,13 @@ void OutfitStudioFrame::SetBaseShape() {
 		UpdateShapeSource(s);
 
 	ZeroSliders();
-	if (!activeSlider.empty()) {
-		bEditSlider = false;
-		auto it = sliderPanels.find(activeSlider);
+	if (!editor.activeSlider.empty()) {
+		editor.bEditSlider = false;
+		auto it = sliderPanels.find(editor.activeSlider);
 		if (it != sliderPanels.end() && it->second)
 			it->second->slider->SetFocus();
 		HighlightSlider("");
-		activeSlider.clear();
+		editor.activeSlider.clear();
 	}
 }
 
@@ -5703,7 +5703,7 @@ void OutfitStudioFrame::OnImportTRIHead(wxCommandEvent& WXUNUSED(event)) {
 	sliderScroll->Freeze();
 	MenuExitSliderEdit();
 	sliderScroll->FitInside();
-	activeSlider.clear();
+	editor.activeSlider.clear();
 
 	for (auto& fn : fileNames) {
 		wxFileName fileName(fn);
@@ -5874,9 +5874,9 @@ void OutfitStudioFrame::OnMakeConvRef(wxCommandEvent& WXUNUSED(event)) {
 	glView->GetUndoHistory()->ClearHistory();
 	UpdateUndoTools();
 
-	activeSlider.clear();
-	lastActiveSlider.clear();
-	bEditSlider = false;
+	editor.activeSlider.clear();
+	editor.lastActiveSlider.clear();
+	editor.bEditSlider = false;
 	MenuExitSliderEdit();
 
 	CreateSetSliders();
@@ -6078,9 +6078,9 @@ void OutfitStudioFrame::ToggleBoneState(wxTreeItemId item) {
 
 	std::string boneName = outfitBones->GetItemText(item).ToStdString();
 	if ((outfitBones->GetItemState(item) & 1) != 0)
-		lastNormalizeBones.erase(boneName);
+		editor.lastNormalizeBones.erase(boneName);
 	else
-		lastNormalizeBones.insert(boneName);
+		editor.lastNormalizeBones.insert(boneName);
 	UpdateBoneItemState(item, boneName);
 }
 
@@ -6097,11 +6097,11 @@ void OutfitStudioFrame::RefreshGUIWeightColors() {
 			m->WeightFill(0.0f);
 	}
 
-	if (!activeBone.empty()) {
+	if (!editor.activeBone.empty()) {
 		// Show weights of selected shapes without reference
 		for (auto& s : selectedItems) {
 			if (!project->IsBaseShape(s->GetShape())) {
-				auto weights = project->GetWorkAnim()->GetWeightsPtr(s->GetShape()->name.get(), activeBone);
+				auto weights = project->GetWorkAnim()->GetWeightsPtr(s->GetShape()->name.get(), editor.activeBone);
 
 				Mesh* m = glView->GetMesh(s->GetShape()->name.get());
 				if (m) {
@@ -6117,7 +6117,7 @@ void OutfitStudioFrame::RefreshGUIWeightColors() {
 		// Always show weights of reference shape
 		NiShape* baseShape = project->GetBaseShape();
 		if (baseShape) {
-			auto weights = project->GetWorkAnim()->GetWeightsPtr(baseShape->name.get(), activeBone);
+			auto weights = project->GetWorkAnim()->GetWeightsPtr(baseShape->name.get(), editor.activeBone);
 
 			Mesh* m = glView->GetMesh(baseShape->name.get());
 			if (m) {
@@ -6144,19 +6144,19 @@ void OutfitStudioFrame::OnBoneSelect(wxTreeEvent& event) {
 	wxArrayTreeItemIds selected;
 	outfitBones->GetSelections(selected);
 
-	activeBone.clear();
+	editor.activeBone.clear();
 	std::string selBone = outfitBones->GetItemText(item).ToStdString();
 
 	if (!outfitBones->IsSelected(item)) {
 		if (!selected.IsEmpty()) {
 			std::string frontBone = outfitBones->GetItemText(selected.front()).ToStdString();
-			activeBone = frontBone;
+			editor.activeBone = frontBone;
 		}
 	}
 	else {
-		activeBone = selBone;
+		editor.activeBone = selBone;
 		if (selected.GetCount() == 1)
-			lastSelectedBones.clear();
+			editor.lastSelectedBones.clear();
 	}
 
 	wxTreeItemIdValue cookie;
@@ -6164,16 +6164,16 @@ void OutfitStudioFrame::OnBoneSelect(wxTreeEvent& event) {
 	while (itemTree.IsOk()) {
 		std::string boneName = outfitBones->GetItemText(itemTree).ToStdString();
 		if (outfitBones->IsSelected(itemTree))
-			lastSelectedBones.insert(boneName);
+			editor.lastSelectedBones.insert(boneName);
 		else
-			lastSelectedBones.erase(boneName);
+			editor.lastSelectedBones.erase(boneName);
 
 		itemTree = outfitBones->GetNextChild(bonesRoot, cookie);
 	}
 
 	// Sync with pose panel choice if the active bone exists there
-	if (!activeBone.empty() && cPoseBone) {
-		wxString activeBoneStr = wxString::FromUTF8(activeBone);
+	if (!editor.activeBone.empty() && cPoseBone) {
+		wxString activeBoneStr = wxString::FromUTF8(editor.activeBone);
 		for (unsigned int i = 0; i < cPoseBone->GetCount(); ++i) {
 			if (cPoseBone->GetString(i) == activeBoneStr) {
 				cPoseBone->SetSelection(i);
@@ -6325,8 +6325,8 @@ void OutfitStudioFrame::OnShapeDrop(wxTreeEvent& event) {
 void OutfitStudioFrame::OnBoneContext(wxTreeEvent& WXUNUSED(event)) {
 	wxMenu* menu = wxXmlResource::Get()->LoadMenu("menuBoneContext");
 	if (menu) {
-		if (!activeBone.empty() && activeItem && project->GetWorkAnim()->BoneHasInconsistentTransforms(activeItem->GetShape()->name.get(), activeBone)) {
-			if (AnimSkeleton::getInstance().GetBonePtr(activeBone)->isStandardBone)
+		if (!editor.activeBone.empty() && activeItem && project->GetWorkAnim()->BoneHasInconsistentTransforms(activeItem->GetShape()->name.get(), editor.activeBone)) {
+			if (AnimSkeleton::getInstance().GetBonePtr(editor.activeBone)->isStandardBone)
 				menu->Enable(XRCID("setBoneNode"), false);
 		}
 		else
@@ -8142,13 +8142,13 @@ void OutfitStudioFrame::OnClickSliderButton(wxCommandEvent& event) {
 		for (auto& i : selectedItems)
 			shapes.push_back(i->GetShape());
 
-		if (!ConfirmSliderDataLocalForEdit(shapes, std::vector<std::string>{activeSlider}))
+		if (!ConfirmSliderDataLocalForEdit(shapes, std::vector<std::string>{editor.activeSlider}))
 			return;
 
 		for (auto& i : selectedItems) {
 			auto shape = i->GetShape();
 			std::vector<Vector3> verts;
-			project->ScaleMorphResult(shape, activeSlider, scale);
+			project->ScaleMorphResult(shape, editor.activeSlider, scale);
 			project->GetLiveVerts(shape, verts);
 			glView->UpdateMeshVertices(shape->name.get(), &verts);
 		}
@@ -8160,7 +8160,7 @@ void OutfitStudioFrame::OnClickSliderButton(wxCommandEvent& event) {
 		return;
 	}
 
-	if (activeSlider != clickedName)
+	if (editor.activeSlider != clickedName)
 		EnterSliderEdit(clickedName);
 	else
 		ExitSliderEdit();
@@ -9092,7 +9092,7 @@ void OutfitStudioFrame::OnSliderImportNIF(wxCommandEvent& WXUNUSED(event)) {
 	if (!ShapeSelectionCheck())
 		return;
 
-	if (!bEditSlider) {
+	if (!editor.bEditSlider) {
 		wxMessageBox(_("There is no slider in edit mode to import data to!"), _("Error"));
 		return;
 	}
@@ -9101,11 +9101,11 @@ void OutfitStudioFrame::OnSliderImportNIF(wxCommandEvent& WXUNUSED(event)) {
 	if (fn.IsEmpty())
 		return;
 
-	if (!ConfirmSliderDataLocalForEdit(activeItem->GetShape(), activeSlider))
+	if (!ConfirmSliderDataLocalForEdit(activeItem->GetShape(), editor.activeSlider))
 		return;
 
-	wxLogMessage("Importing slider to '%s' for shape '%s' from NIF file '%s'...", activeSlider, activeItem->GetShape()->name.get(), fn);
-	if (!project->SetSliderFromNIF(activeSlider, activeItem->GetShape(), fn.ToUTF8().data())) {
+	wxLogMessage("Importing slider to '%s' for shape '%s' from NIF file '%s'...", editor.activeSlider, activeItem->GetShape()->name.get(), fn);
+	if (!project->SetSliderFromNIF(editor.activeSlider, activeItem->GetShape(), fn.ToUTF8().data())) {
 		wxLogError("No mesh found in the .nif file that matches currently selected shape!");
 		wxMessageBox(_("No mesh found in the .nif file that matches currently selected shape!"), _("Error"), wxICON_ERROR);
 		return;
@@ -9120,7 +9120,7 @@ void OutfitStudioFrame::OnSliderImportBSD(wxCommandEvent& WXUNUSED(event)) {
 	if (!ShapeSelectionCheck())
 		return;
 
-	if (!bEditSlider) {
+	if (!editor.bEditSlider) {
 		wxMessageBox(_("There is no slider in edit mode to import data to!"), _("Error"));
 		return;
 	}
@@ -9129,11 +9129,11 @@ void OutfitStudioFrame::OnSliderImportBSD(wxCommandEvent& WXUNUSED(event)) {
 	if (fn.IsEmpty())
 		return;
 
-	if (!ConfirmSliderDataLocalForEdit(activeItem->GetShape(), activeSlider))
+	if (!ConfirmSliderDataLocalForEdit(activeItem->GetShape(), editor.activeSlider))
 		return;
 
-	wxLogMessage("Importing slider to '%s' for shape '%s' from BSD file '%s'...", activeSlider, activeItem->GetShape()->name.get(), fn);
-	project->SetSliderFromBSD(activeSlider, activeItem->GetShape(), fn.ToUTF8().data());
+	wxLogMessage("Importing slider to '%s' for shape '%s' from BSD file '%s'...", editor.activeSlider, activeItem->GetShape()->name.get(), fn);
+	project->SetSliderFromBSD(editor.activeSlider, activeItem->GetShape(), fn.ToUTF8().data());
 
 	SetPendingChanges();
 	ApplySliders();
@@ -9144,7 +9144,7 @@ void OutfitStudioFrame::OnSliderImportOBJ(wxCommandEvent& WXUNUSED(event)) {
 	if (!ShapeSelectionCheck())
 		return;
 
-	if (!bEditSlider) {
+	if (!editor.bEditSlider) {
 		wxMessageBox(_("There is no slider in edit mode to import data to!"), _("Error"));
 		return;
 	}
@@ -9153,11 +9153,11 @@ void OutfitStudioFrame::OnSliderImportOBJ(wxCommandEvent& WXUNUSED(event)) {
 	if (fn.IsEmpty())
 		return;
 
-	if (!ConfirmSliderDataLocalForEdit(activeItem->GetShape(), activeSlider))
+	if (!ConfirmSliderDataLocalForEdit(activeItem->GetShape(), editor.activeSlider))
 		return;
 
-	wxLogMessage("Importing slider to '%s' for shape '%s' from OBJ file '%s'...", activeSlider, activeItem->GetShape()->name.get(), fn);
-	if (!project->SetSliderFromOBJ(activeSlider, activeItem->GetShape(), fn.ToUTF8().data())) {
+	wxLogMessage("Importing slider to '%s' for shape '%s' from OBJ file '%s'...", editor.activeSlider, activeItem->GetShape()->name.get(), fn);
+	if (!project->SetSliderFromOBJ(editor.activeSlider, activeItem->GetShape(), fn.ToUTF8().data())) {
 		wxLogError("Vertex count of .obj file mesh does not match currently selected shape!");
 		wxMessageBox(_("Vertex count of .obj file mesh does not match currently selected shape!"), _("Error"), wxICON_ERROR);
 		return;
@@ -9248,8 +9248,8 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 
 		MenuExitSliderEdit();
 		sliderScroll->FitInside();
-		activeSlider.clear();
-		lastActiveSlider.clear();
+		editor.activeSlider.clear();
+		editor.lastActiveSlider.clear();
 	}
 
 	std::unordered_set<NiShape*> addedShapes;
@@ -9362,8 +9362,8 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 
 		MenuExitSliderEdit();
 		sliderScroll->FitInside();
-		activeSlider.clear();
-		lastActiveSlider.clear();
+		editor.activeSlider.clear();
+		editor.lastActiveSlider.clear();
 	}
 
 	wxString addedMorphs;
@@ -9497,8 +9497,8 @@ void OutfitStudioFrame::OnSliderImportMorphsSF(wxCommandEvent& WXUNUSED(event)) 
 
 		MenuExitSliderEdit();
 		sliderScroll->FitInside();
-		activeSlider.clear();
-		lastActiveSlider.clear();
+		editor.activeSlider.clear();
+		editor.lastActiveSlider.clear();
 	}
 
 	// Check if the shape is selected
@@ -9546,7 +9546,7 @@ void OutfitStudioFrame::OnSliderImportFBX(wxCommandEvent& WXUNUSED(event)) {
 	if (!ShapeSelectionCheck())
 		return;
 
-	if (!bEditSlider) {
+	if (!editor.bEditSlider) {
 		wxMessageBox(_("There is no slider in edit mode to import data to!"), _("Error"));
 		return;
 	}
@@ -9555,11 +9555,11 @@ void OutfitStudioFrame::OnSliderImportFBX(wxCommandEvent& WXUNUSED(event)) {
 	if (fn.IsEmpty())
 		return;
 
-	if (!ConfirmSliderDataLocalForEdit(activeItem->GetShape(), activeSlider))
+	if (!ConfirmSliderDataLocalForEdit(activeItem->GetShape(), editor.activeSlider))
 		return;
 
-	wxLogMessage("Importing slider to '%s' for shape '%s' from FBX file '%s'...", activeSlider, activeItem->GetShape()->name.get(), fn);
-	if (!project->SetSliderFromFBX(activeSlider, activeItem->GetShape(), fn.ToUTF8().data())) {
+	wxLogMessage("Importing slider to '%s' for shape '%s' from FBX file '%s'...", editor.activeSlider, activeItem->GetShape()->name.get(), fn);
+	if (!project->SetSliderFromFBX(editor.activeSlider, activeItem->GetShape(), fn.ToUTF8().data())) {
 		wxLogError("Vertex count of .obj file mesh does not match currently selected shape!");
 		wxMessageBox(_("Vertex count of .obj file mesh does not match currently selected shape!"), _("Error"), wxICON_ERROR);
 		return;
@@ -9577,7 +9577,7 @@ void OutfitStudioFrame::OnSliderExportNIF(wxCommandEvent& WXUNUSED(event)) {
 	if (!ShapeSelectionCheck())
 		return;
 
-	if (!bEditSlider) {
+	if (!editor.bEditSlider) {
 		wxMessageBox(_("There is no slider in edit mode to export data from!"), _("Error"));
 		return;
 	}
@@ -9588,9 +9588,9 @@ void OutfitStudioFrame::OnSliderExportNIF(wxCommandEvent& WXUNUSED(event)) {
 			return;
 
 		for (auto& i : selectedItems) {
-			std::string targetFile = std::string(dir.ToUTF8()) + PathSepStr + i->GetShape()->name.get() + "_" + activeSlider + ".nif";
-			wxLogMessage("Exporting NIF slider data of '%s' for shape '%s' to '%s'...", activeSlider, i->GetShape()->name.get(), targetFile);
-			project->SaveSliderNIF(activeSlider, i->GetShape(), targetFile);
+			std::string targetFile = std::string(dir.ToUTF8()) + PathSepStr + i->GetShape()->name.get() + "_" + editor.activeSlider + ".nif";
+			wxLogMessage("Exporting NIF slider data of '%s' for shape '%s' to '%s'...", editor.activeSlider, i->GetShape()->name.get(), targetFile);
+			project->SaveSliderNIF(editor.activeSlider, i->GetShape(), targetFile);
 		}
 	}
 	else {
@@ -9598,8 +9598,8 @@ void OutfitStudioFrame::OnSliderExportNIF(wxCommandEvent& WXUNUSED(event)) {
 		if (fn.IsEmpty())
 			return;
 
-		wxLogMessage("Exporting NIF slider data of '%s' for shape '%s' to '%s'...", activeSlider, activeItem->GetShape()->name.get(), fn);
-		if (project->SaveSliderNIF(activeSlider, activeItem->GetShape(), fn.ToUTF8().data())) {
+		wxLogMessage("Exporting NIF slider data of '%s' for shape '%s' to '%s'...", editor.activeSlider, activeItem->GetShape()->name.get(), fn);
+		if (project->SaveSliderNIF(editor.activeSlider, activeItem->GetShape(), fn.ToUTF8().data())) {
 			wxLogError("Failed to export NIF file '%s'!", fn);
 			wxMessageBox(_("Failed to export NIF file!"), _("Error"), wxICON_ERROR);
 		}
@@ -9612,7 +9612,7 @@ void OutfitStudioFrame::OnSliderExportBSD(wxCommandEvent& WXUNUSED(event)) {
 	if (!ShapeSelectionCheck())
 		return;
 
-	if (!bEditSlider) {
+	if (!editor.bEditSlider) {
 		wxMessageBox(_("There is no slider in edit mode to export data from!"), _("Error"));
 		return;
 	}
@@ -9623,9 +9623,9 @@ void OutfitStudioFrame::OnSliderExportBSD(wxCommandEvent& WXUNUSED(event)) {
 			return;
 
 		for (auto& i : selectedItems) {
-			std::string targetFile = std::string(dir.ToUTF8()) + PathSepStr + i->GetShape()->name.get() + "_" + activeSlider + ".bsd";
-			wxLogMessage("Exporting BSD slider data of '%s' for shape '%s' to '%s'...", activeSlider, i->GetShape()->name.get(), targetFile);
-			project->SaveSliderBSD(activeSlider, i->GetShape(), targetFile);
+			std::string targetFile = std::string(dir.ToUTF8()) + PathSepStr + i->GetShape()->name.get() + "_" + editor.activeSlider + ".bsd";
+			wxLogMessage("Exporting BSD slider data of '%s' for shape '%s' to '%s'...", editor.activeSlider, i->GetShape()->name.get(), targetFile);
+			project->SaveSliderBSD(editor.activeSlider, i->GetShape(), targetFile);
 		}
 	}
 	else {
@@ -9633,8 +9633,8 @@ void OutfitStudioFrame::OnSliderExportBSD(wxCommandEvent& WXUNUSED(event)) {
 		if (fn.IsEmpty())
 			return;
 
-		wxLogMessage("Exporting BSD slider data of '%s' for shape '%s' to '%s'...", activeSlider, activeItem->GetShape()->name.get(), fn);
-		project->SaveSliderBSD(activeSlider, activeItem->GetShape(), fn.ToUTF8().data());
+		wxLogMessage("Exporting BSD slider data of '%s' for shape '%s' to '%s'...", editor.activeSlider, activeItem->GetShape()->name.get(), fn);
+		project->SaveSliderBSD(editor.activeSlider, activeItem->GetShape(), fn.ToUTF8().data());
 	}
 
 	ApplySliders();
@@ -9644,7 +9644,7 @@ void OutfitStudioFrame::OnSliderExportOBJ(wxCommandEvent& WXUNUSED(event)) {
 	if (!ShapeSelectionCheck())
 		return;
 
-	if (!bEditSlider) {
+	if (!editor.bEditSlider) {
 		wxMessageBox(_("There is no slider in edit mode to export data from!"), _("Error"));
 		return;
 	}
@@ -9655,9 +9655,9 @@ void OutfitStudioFrame::OnSliderExportOBJ(wxCommandEvent& WXUNUSED(event)) {
 			return;
 
 		for (auto& i : selectedItems) {
-			std::string targetFile = std::string(dir.ToUTF8()) + PathSepStr + i->GetShape()->name.get() + "_" + activeSlider + ".obj";
-			wxLogMessage("Exporting OBJ slider data of '%s' for shape '%s' to '%s'...", activeSlider, i->GetShape()->name.get(), targetFile);
-			project->SaveSliderOBJ(activeSlider, i->GetShape(), targetFile);
+			std::string targetFile = std::string(dir.ToUTF8()) + PathSepStr + i->GetShape()->name.get() + "_" + editor.activeSlider + ".obj";
+			wxLogMessage("Exporting OBJ slider data of '%s' for shape '%s' to '%s'...", editor.activeSlider, i->GetShape()->name.get(), targetFile);
+			project->SaveSliderOBJ(editor.activeSlider, i->GetShape(), targetFile);
 		}
 	}
 	else {
@@ -9665,8 +9665,8 @@ void OutfitStudioFrame::OnSliderExportOBJ(wxCommandEvent& WXUNUSED(event)) {
 		if (fn.IsEmpty())
 			return;
 
-		wxLogMessage("Exporting OBJ slider data of '%s' for shape '%s' to '%s'...", activeSlider, activeItem->GetShape()->name.get(), fn);
-		if (project->SaveSliderOBJ(activeSlider, activeItem->GetShape(), fn.ToUTF8().data())) {
+		wxLogMessage("Exporting OBJ slider data of '%s' for shape '%s' to '%s'...", editor.activeSlider, activeItem->GetShape()->name.get(), fn);
+		if (project->SaveSliderOBJ(editor.activeSlider, activeItem->GetShape(), fn.ToUTF8().data())) {
 			wxLogError("Failed to export OBJ file '%s'!", fn);
 			wxMessageBox(_("Failed to export OBJ file!"), _("Error"), wxICON_ERROR);
 		}
@@ -9782,13 +9782,13 @@ void OutfitStudioFrame::OnClearSlider(wxCommandEvent& WXUNUSED(event)) {
 		shapes.push_back(i->GetShape());
 
 	std::vector<std::string> sliderNames;
-	if (!bEditSlider) {
+	if (!editor.bEditSlider) {
 		for (auto& sliderPanel : sliderPanels)
 			if (sliderPanel.second->sliderCheck->Get3StateValue() == wxCheckBoxState::wxCHK_CHECKED)
 				sliderNames.push_back(sliderPanel.first);
 	}
 	else
-		sliderNames.push_back(activeSlider);
+		sliderNames.push_back(editor.activeSlider);
 
 	if (!ConfirmSliderDataLocalForEdit(shapes, sliderNames))
 		return;
@@ -9805,15 +9805,15 @@ void OutfitStudioFrame::OnClearSlider(wxCommandEvent& WXUNUSED(event)) {
 		}
 	};
 
-	if (!bEditSlider) {
+	if (!editor.bEditSlider) {
 		wxLogMessage("Clearing slider data of the checked sliders for the selected shapes.");
 		for (auto& sliderPanel : sliderPanels)
 			if (sliderPanel.second->sliderCheck->Get3StateValue() == wxCheckBoxState::wxCHK_CHECKED)
 				clearSlider(sliderPanel.first);
 	}
 	else {
-		wxLogMessage("Clearing slider data of '%s' for the selected shapes.", activeSlider);
-		clearSlider(activeSlider);
+		wxLogMessage("Clearing slider data of '%s' for the selected shapes.", editor.activeSlider);
+		clearSlider(editor.activeSlider);
 	}
 
 	SetPendingChanges();
@@ -9885,12 +9885,12 @@ void OutfitStudioFrame::OnNewCombinedSlider(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnSliderClone(wxCommandEvent& WXUNUSED(event)) {
-	if (!bEditSlider) {
+	if (!editor.bEditSlider) {
 		wxMessageBox(_("There is no slider in edit mode to clone!"), _("Error"));
 		return;
 	}
 
-	wxLogMessage("Cloning slider '%s'.", activeSlider);
+	wxLogMessage("Cloning slider '%s'.", editor.activeSlider);
 
 	std::string baseName = "Cloned Slider";
 
@@ -9909,7 +9909,7 @@ void OutfitStudioFrame::OnSliderClone(wxCommandEvent& WXUNUSED(event)) {
 
 	wxLogMessage("Creating cloned slider '%s'.", sliderName);
 
-	project->CloneSlider(activeSlider, sliderName);
+	project->CloneSlider(editor.activeSlider, sliderName);
 	createSliderGUI(sliderName, sliderScroll, sliderScroll->GetSizer());
 
 	sliderScroll->FitInside();
@@ -9921,7 +9921,7 @@ void OutfitStudioFrame::OnSliderNegate(wxCommandEvent& WXUNUSED(event)) {
 	if (!ShapeSelectionCheck())
 		return;
 
-	if (!bEditSlider) {
+	if (!editor.bEditSlider) {
 		wxMessageBox(_("There is no slider in edit mode to negate!"), _("Error"));
 		return;
 	}
@@ -9930,12 +9930,12 @@ void OutfitStudioFrame::OnSliderNegate(wxCommandEvent& WXUNUSED(event)) {
 	for (auto& i : selectedItems)
 		shapes.push_back(i->GetShape());
 
-	if (!ConfirmSliderDataLocalForEdit(shapes, std::vector<std::string>{activeSlider}))
+	if (!ConfirmSliderDataLocalForEdit(shapes, std::vector<std::string>{editor.activeSlider}))
 		return;
 
-	wxLogMessage("Negating slider '%s' for the selected shapes.", activeSlider);
+	wxLogMessage("Negating slider '%s' for the selected shapes.", editor.activeSlider);
 	for (auto& i : selectedItems)
-		project->NegateSlider(activeSlider, i->GetShape());
+		project->NegateSlider(editor.activeSlider, i->GetShape());
 
 	SetPendingChanges();
 }
@@ -9944,14 +9944,14 @@ void OutfitStudioFrame::OnMaskAffected(wxCommandEvent& WXUNUSED(event)) {
 	if (!ShapeSelectionCheck())
 		return;
 
-	if (!bEditSlider) {
+	if (!editor.bEditSlider) {
 		wxMessageBox(_("There is no slider in edit mode to create a mask from!"), _("Error"));
 		return;
 	}
 
-	wxLogMessage("Creating mask for affected vertices of the slider '%s'.", activeSlider);
+	wxLogMessage("Creating mask for affected vertices of the slider '%s'.", editor.activeSlider);
 	for (auto& i : selectedItems)
-		project->MaskAffected(activeSlider, i->GetShape());
+		project->MaskAffected(editor.activeSlider, i->GetShape());
 }
 
 void OutfitStudioFrame::OnDeleteSlider(wxCommandEvent& WXUNUSED(event)) {
@@ -9982,7 +9982,7 @@ void OutfitStudioFrame::DeleteSliders(bool keepSliders, bool keepZaps) {
 		project->DeleteSlider(sliderName);
 	};
 
-	if (!bEditSlider) {
+	if (!editor.bEditSlider) {
 		for (auto it = sliderPanels.begin(); it != sliderPanels.end();) {
 			if (it->second->sliderCheck->Get3StateValue() == wxCheckBoxState::wxCHK_CHECKED) {
 				if ((keepZaps && project->activeSet[it->first].bZap) || (keepSliders && !project->activeSet[it->first].bZap)) {
@@ -9997,15 +9997,15 @@ void OutfitStudioFrame::DeleteSliders(bool keepSliders, bool keepZaps) {
 		}
 	}
 	else {
-		wxLogMessage("Deleting slider '%s'.", activeSlider);
+		wxLogMessage("Deleting slider '%s'.", editor.activeSlider);
 
-		deleteSlider(activeSlider);
-		sliderPanels.erase(activeSlider);
+		deleteSlider(editor.activeSlider);
+		sliderPanels.erase(editor.activeSlider);
 
 		MenuExitSliderEdit();
-		activeSlider.clear();
-		lastActiveSlider.clear();
-		bEditSlider = false;
+		editor.activeSlider.clear();
+		editor.lastActiveSlider.clear();
+		editor.bEditSlider = false;
 	}
 
 	SetPendingChanges();
@@ -10062,7 +10062,7 @@ void OutfitStudioFrame::ShowSliderProperties(const std::string& sliderName) {
 		long loVal = (int)(project->SliderDefault(curSlider, false));
 		long hiVal = (int)(project->SliderDefault(curSlider, true));
 
-		edSliderName->SetValue(wxString::FromUTF8(activeSlider));
+		edSliderName->SetValue(wxString::FromUTF8(editor.activeSlider));
 		edValLo->SetValue(wxString::Format("%d", loVal));
 		edValHi->SetValue(wxString::Format("%d", hiVal));
 
@@ -10206,8 +10206,8 @@ void OutfitStudioFrame::ShowSliderProperties(const std::string& sliderName) {
 					d->sliderName->SetLabel(sn);
 				}
 
-				if (sliderName == activeSlider)
-					activeSlider = std::move(newSliderName);
+				if (sliderName == editor.activeSlider)
+					editor.activeSlider = std::move(newSliderName);
 			}
 
 			SetPendingChanges();
@@ -10216,12 +10216,12 @@ void OutfitStudioFrame::ShowSliderProperties(const std::string& sliderName) {
 }
 
 void OutfitStudioFrame::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
-	if (!bEditSlider) {
+	if (!editor.bEditSlider) {
 		wxMessageBox(_("There is no slider in edit mode to show properties for!"), _("Error"));
 		return;
 	}
 
-	ShowSliderProperties(activeSlider);
+	ShowSliderProperties(editor.activeSlider);
 }
 
 void OutfitStudioFrame::OnSliderDataLocations(wxCommandEvent& WXUNUSED(event)) {
@@ -10294,7 +10294,7 @@ void OutfitStudioFrame::FixClippingForShape(const std::vector<Vector3>& bodyVert
 }
 
 void OutfitStudioFrame::OnSliderFixClipping(wxCommandEvent& WXUNUSED(event)) {
-	if (!bEditSlider) {
+	if (!editor.bEditSlider) {
 		wxMessageBox(_("You must be in slider edit mode to fix clipping for a slider."), _("Fix Clipping"), wxICON_WARNING);
 		return;
 	}
@@ -10315,7 +10315,7 @@ void OutfitStudioFrame::OnSliderFixClipping(wxCommandEvent& WXUNUSED(event)) {
 	UndoStateProject* usp = glView->GetUndoHistory()->PushState();
 	usp->undoType = UndoType::VertexPosition;
 
-	float sliderscale = project->SliderValue(activeSlider);
+	float sliderscale = project->SliderValue(editor.activeSlider);
 	if (sliderscale == 0.0)
 		sliderscale = 1.0;
 
@@ -10329,7 +10329,7 @@ void OutfitStudioFrame::OnSliderFixClipping(wxCommandEvent& WXUNUSED(event)) {
 
 		// Only process shapes that have a diff for the active slider
 		size_t sliderIndex = 0;
-		if (!project->SliderIndexFromName(activeSlider, sliderIndex))
+		if (!project->SliderIndexFromName(editor.activeSlider, sliderIndex))
 			continue;
 
 		TargetDataDiffs* diffSet = project->GetDiffSet(project->activeSet[sliderIndex], shape);
@@ -10352,7 +10352,7 @@ void OutfitStudioFrame::OnSliderFixClipping(wxCommandEvent& WXUNUSED(event)) {
 		}
 
 		TargetDataDiffs morphDiffs;
-		project->CalcSliderClippingCorrection(shape, activeSlider, options.strength, morphDiffs, allowedVerts);
+		project->CalcSliderClippingCorrection(shape, editor.activeSlider, options.strength, morphDiffs, allowedVerts);
 		if (morphDiffs.empty())
 			continue;
 
@@ -10381,7 +10381,7 @@ void OutfitStudioFrame::OnSliderFixClipping(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	usp->sliderName = activeSlider;
+	usp->sliderName = editor.activeSlider;
 	usp->sliderscale = sliderscale;
 
 	glView->ApplyUndoState(usp, false);
@@ -10863,10 +10863,10 @@ void OutfitStudioFrame::OnMoveShape(wxCommandEvent& WXUNUSED(event)) {
 				usp->usss.push_back(std::move(uss));
 			}
 
-			if (bEditSlider) {
-				usp->sliderName = activeSlider;
+			if (editor.bEditSlider) {
+				usp->sliderName = editor.activeSlider;
 
-				float sliderscale = project->SliderValue(activeSlider);
+				float sliderscale = project->SliderValue(editor.activeSlider);
 				if (sliderscale == 0.0)
 					sliderscale = 1.0;
 
@@ -11022,10 +11022,10 @@ void OutfitStudioFrame::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 				usp->usss.push_back(std::move(uss));
 			}
 
-			if (bEditSlider) {
-				usp->sliderName = activeSlider;
+			if (editor.bEditSlider) {
+				usp->sliderName = editor.activeSlider;
 
-				float sliderscale = project->SliderValue(activeSlider);
+				float sliderscale = project->SliderValue(editor.activeSlider);
 				if (sliderscale == 0.0)
 					sliderscale = 1.0;
 
@@ -11204,10 +11204,10 @@ void OutfitStudioFrame::OnRotateShape(wxCommandEvent& WXUNUSED(event)) {
 				usp->usss.push_back(std::move(uss));
 			}
 
-			if (bEditSlider) {
-				usp->sliderName = activeSlider;
+			if (editor.bEditSlider) {
+				usp->sliderName = editor.activeSlider;
 
-				float sliderscale = project->SliderValue(activeSlider);
+				float sliderscale = project->SliderValue(editor.activeSlider);
 				if (sliderscale == 0.0)
 					sliderscale = 1.0;
 
@@ -11359,10 +11359,10 @@ void OutfitStudioFrame::OnInflateShape(wxCommandEvent& WXUNUSED(event)) {
 				usp->usss.push_back(std::move(uss));
 			}
 
-			if (bEditSlider) {
-				usp->sliderName = activeSlider;
+			if (editor.bEditSlider) {
+				usp->sliderName = editor.activeSlider;
 
-				float sliderscale = project->SliderValue(activeSlider);
+				float sliderscale = project->SliderValue(editor.activeSlider);
 				if (sliderscale == 0.0)
 					sliderscale = 1.0;
 
@@ -11458,7 +11458,7 @@ void OutfitStudioFrame::OnInflateShape(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnFixClippingShape(wxCommandEvent& event) {
-	if (bEditSlider) {
+	if (editor.bEditSlider) {
 		OnSliderFixClipping(event);
 		return;
 	}
@@ -11532,7 +11532,7 @@ void OutfitStudioFrame::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
 	if (!ShapeSelectionCheck())
 		return;
 
-	if (bEditSlider) {
+	if (editor.bEditSlider) {
 		wxMessageBox(_("You're currently editing slider data, please exit the slider's edit mode (pencil button) and try again."));
 		return;
 	}
@@ -11589,7 +11589,7 @@ void OutfitStudioFrame::OnSeparateVerts(wxCommandEvent& WXUNUSED(event)) {
 	if (!ShapeSelectionCheck())
 		return;
 
-	if (bEditSlider) {
+	if (editor.bEditSlider) {
 		wxMessageBox(_("You're currently editing slider data, please exit the slider's edit mode (pencil button) and try again."));
 		return;
 	}
@@ -11695,7 +11695,7 @@ MergeCheckErrors OutfitStudioFrame::CheckCopyGeo(wxDialog& dlg) {
 }
 
 void OutfitStudioFrame::OnCopyGeo(wxCommandEvent& WXUNUSED(event)) {
-	if (bEditSlider) {
+	if (editor.bEditSlider) {
 		wxMessageBox(_("You're currently editing slider data, please exit the slider's edit mode (pencil button) and try again."));
 		return;
 	}
@@ -11823,7 +11823,7 @@ void OutfitStudioFrame::OnRefineMesh(wxCommandEvent& WXUNUSED(event)) {
 
 	glView->gls.DeleteOverlay("refineErrorEdges");
 
-	if (bEditSlider) {
+	if (editor.bEditSlider) {
 		wxMessageBox(_("You're currently editing slider data, please exit the slider's edit mode (pencil button) and try again."));
 		return;
 	}
@@ -11913,7 +11913,7 @@ void OutfitStudioFrame::OnRefineMesh(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudioFrame::OnDeleteShape(wxCommandEvent& WXUNUSED(event)) {
 	if (currentTabButton == meshTabButton) {
-		if (bEditSlider) {
+		if (editor.bEditSlider) {
 			wxMessageBox(_("Can't delete shape while in slider edit mode.  Use CTRL+Delete to delete sliders instead."), _("Error"));
 			return;
 		}
@@ -11995,7 +11995,7 @@ void OutfitStudioFrame::OnDeleteShape(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudioFrame::OnSetBoneSkin(wxCommandEvent& WXUNUSED(event)) {
 	std::string shape = activeItem->GetShape()->name.get();
-	project->GetWorkAnim()->RecalcXFormSkinToBone(shape, activeBone);
+	project->GetWorkAnim()->RecalcXFormSkinToBone(shape, editor.activeBone);
 
 	glView->UpdateBones();
 	HighlightBoneNamesWithWeights();
@@ -12005,7 +12005,7 @@ void OutfitStudioFrame::OnSetBoneSkin(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudioFrame::OnSetBoneNode(wxCommandEvent& WXUNUSED(event)) {
 	std::string shape = activeItem->GetShape()->name.get();
-	project->GetWorkAnim()->RecalcCustomBoneXFormsFromSkin(shape, activeBone);
+	project->GetWorkAnim()->RecalcCustomBoneXFormsFromSkin(shape, editor.activeBone);
 
 	glView->UpdateBones();
 	HighlightBoneNamesWithWeights();
@@ -12030,7 +12030,7 @@ void OutfitStudioFrame::OnAddBone(wxCommandEvent& WXUNUSED(event)) {
 			if (!cb->boneName.empty()) {
 				auto newItem = boneTree->AppendItem(treeParent, cb->boneName);
 				fAddBoneChildren(newItem, cb);
-				if (cb->boneName == activeBone)
+				if (cb->boneName == editor.activeBone)
 					boneTree->SelectItem(newItem);
 			}
 			else
@@ -12123,7 +12123,7 @@ void OutfitStudioFrame::OnAddCustomBone(wxCommandEvent& WXUNUSED(event)) {
 	CloseBrushSettings();
 
 	dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudioFrame::OnEnterClose, this);
-	FillParentBoneChoice(dlg, activeBone);
+	FillParentBoneChoice(dlg, editor.activeBone);
 
 	if (dlg.ShowModal() != wxID_OK)
 		return;
@@ -12204,7 +12204,7 @@ void OutfitStudioFrame::OnAddCustomBone(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnEditBone(wxCommandEvent& WXUNUSED(event)) {
-	AnimBone* bPtr = AnimSkeleton::getInstance().GetBonePtr(activeBone);
+	AnimBone* bPtr = AnimSkeleton::getInstance().GetBonePtr(editor.activeBone);
 	if (!bPtr)
 		return;
 
@@ -12274,11 +12274,11 @@ void OutfitStudioFrame::OnDeleteBone(wxCommandEvent& WXUNUSED(event)) {
 
 		std::string bone = boneText.ToStdString();
 		project->DeleteBone(bone);
-		activeBone.clear();
+		editor.activeBone.clear();
 
 		outfitBones->Delete(selItems[i]);
-		lastSelectedBones.erase(bone);
-		lastNormalizeBones.erase(bone);
+		editor.lastSelectedBones.erase(bone);
+		editor.lastNormalizeBones.erase(bone);
 
 		int idxMirrorBone = cXMirrorBone->FindString(boneText);
 		if (idxMirrorBone != wxNOT_FOUND)
@@ -12481,7 +12481,7 @@ int OutfitStudioFrame::CopyBoneWeightForShapes(std::vector<NiShape*> shapes, boo
 	CalcCopySkinTransOption(options);
 	AnimInfo& workAnim = *project->GetWorkAnim();
 
-	WeightCopyDialog dlg(this, project, glView, poseDataCollection, lastNormalizeBones, shapes, options, silent);
+	WeightCopyDialog dlg(this, project, glView, poseDataCollection, editor.lastNormalizeBones, shapes, options, silent);
 	if (dlg.GetResult()) {
 		StartProgress(_("Copying bone weights..."));
 
@@ -13396,10 +13396,10 @@ void OutfitStudioFrame::OnEditUV(wxCommandEvent& WXUNUSED(event)) {
 	auto shape = activeItem->GetShape();
 	Mesh* m = glView->GetMesh(shape->name.get());
 	if (shape && m) {
-		if (bEditSlider && !ConfirmSliderDataLocalForEdit(shape, activeSlider))
+		if (editor.bEditSlider && !ConfirmSliderDataLocalForEdit(shape, editor.activeSlider))
 			return;
 
-		editUV = new EditUV(this, project->GetWorkNif(), shape, m, activeSlider);
+		editUV = new EditUV(this, project->GetWorkNif(), shape, m, editor.activeSlider);
 
 		editUV->Bind(wxEVT_CLOSE_WINDOW, [&](wxCloseEvent& event) {
 			editUV = nullptr;
@@ -15291,6 +15291,10 @@ wxGLPanel::~wxGLPanel() {
 	gls.RenderOneFrame();
 }
 
+UndoHistory* wxGLPanel::GetUndoHistory() {
+	return &os->editor.undoHistory;
+}
+
 void wxGLPanel::OnShown() {
 	if (!context->IsOK()) {
 		wxLogError("Outfit Studio: OpenGL context is not OK.");
@@ -15645,7 +15649,7 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 						newPos.z = atof(XRCCTRL(dlg, "posZ", wxTextCtrl)->GetValue().c_str());
 
 						// Move vertex in shape directly
-						if (!os->bEditSlider)
+						if (!os->editor.bEditSlider)
 							os->project->MoveVertex(shape, newPos, vertIndex);
 
 						// To mesh coordinates
@@ -15662,10 +15666,10 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 						usp->undoType = UndoType::VertexPosition;
 						usp->usss.push_back(std::move(uss));
 
-						if (os->bEditSlider) {
-							usp->sliderName = os->activeSlider;
+						if (os->editor.bEditSlider) {
+							usp->sliderName = os->editor.activeSlider;
 
-							float sliderscale = os->project->SliderValue(os->activeSlider);
+							float sliderscale = os->project->SliderValue(os->editor.activeSlider);
 							if (sliderscale == 0.0)
 								sliderscale = 1.0;
 
@@ -15703,7 +15707,7 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 			os->SelectTool(ToolID::AlphaBrush);
 		else if (event.GetKeyCode() == WXK_SPACE) {
 			if (event.ControlDown()) {
-				if (!os->activeSlider.empty()) {
+				if (!os->editor.activeSlider.empty()) {
 					os->ExitSliderEdit();
 				}
 				else {
@@ -15896,11 +15900,11 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 		}
 	}
 
-	activeStroke = std::make_unique<TweakStroke>(gls.GetActiveMeshes(), activeBrush, *undoHistory.PushState());
+	activeStroke = std::make_unique<TweakStroke>(gls.GetActiveMeshes(), activeBrush, *os->editor.undoHistory.PushState());
 
-	if (os->bEditSlider) {
-		activeStroke->usp.sliderName = os->activeSlider;
-		float sliderscale = os->project->SliderValue(os->activeSlider);
+	if (os->editor.bEditSlider) {
+		activeStroke->usp.sliderName = os->editor.activeSlider;
+		float sliderscale = os->project->SliderValue(os->editor.activeSlider);
 		if (sliderscale == 0.0)
 			sliderscale = 1.0;
 
@@ -16021,7 +16025,7 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 		if (activeBrush->Type() == TweakBrush::BrushType::Weight) {
 			std::string selectedBone = os->GetActiveBone();
 			if (!selectedBone.empty()) {
-				os->ActiveShapesUpdated(undoHistory.GetCurState(), false);
+				os->ActiveShapesUpdated(os->editor.undoHistory.GetCurState(), false);
 			}
 		}
 
@@ -16041,7 +16045,7 @@ void wxGLPanel::EndBrushStroke() {
 
 		TweakBrush::BrushType brushType = activeStroke->BrushType();
 		if (brushType != TweakBrush::BrushType::Mask) {
-			os->ActiveShapesUpdated(undoHistory.GetCurState());
+			os->ActiveShapesUpdated(os->editor.undoHistory.GetCurState());
 
 			if (brushType == TweakBrush::BrushType::Weight) {
 				std::string selectedBone = os->GetActiveBone();
@@ -16051,9 +16055,9 @@ void wxGLPanel::EndBrushStroke() {
 				}
 			}
 
-			if (!os->bEditSlider && brushType != TweakBrush::BrushType::Weight && brushType != TweakBrush::BrushType::Color && brushType != TweakBrush::BrushType::Alpha) {
+			if (!os->editor.bEditSlider && brushType != TweakBrush::BrushType::Weight && brushType != TweakBrush::BrushType::Color && brushType != TweakBrush::BrushType::Alpha) {
 				{
-					UndoStateProject* usp = undoHistory.GetCurState();
+					UndoStateProject* usp = os->editor.undoHistory.GetCurState();
 					for (auto& uss : usp->usss) {
 						auto shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(uss.shapeName);
 						if (shape)
@@ -16074,7 +16078,7 @@ void wxGLPanel::EndBrushStroke() {
 					}
 				}
 			}
-			else if (os->bEditSlider && os->project->bPose && brushType != TweakBrush::BrushType::Weight && brushType != TweakBrush::BrushType::Color && brushType != TweakBrush::BrushType::Alpha) {
+			else if (os->editor.bEditSlider && os->project->bPose && brushType != TweakBrush::BrushType::Weight && brushType != TweakBrush::BrushType::Color && brushType != TweakBrush::BrushType::Alpha) {
 				for (auto& s : os->project->GetWorkNif()->GetShapes()) {
 					std::vector<Vector3> verts;
 					os->project->GetLiveVerts(s, verts);
@@ -16085,7 +16089,7 @@ void wxGLPanel::EndBrushStroke() {
 
 		if (brushType == TweakBrush::BrushType::Mask) {
 			if (!Config.GetBoolValue("Input/MaskHistory"))
-				undoHistory.PopState();
+				os->editor.undoHistory.PopState();
 		}
 
 		activeStroke = nullptr;
@@ -16187,12 +16191,12 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 		return false;
 
 	if (!nodesMode && !bonesMode) {
-		activeStroke = std::make_unique<TweakStroke>(gls.GetActiveMeshes(), &translateBrush, *undoHistory.PushState());
+		activeStroke = std::make_unique<TweakStroke>(gls.GetActiveMeshes(), &translateBrush, *os->editor.undoHistory.PushState());
 
-		if (os->bEditSlider) {
-			activeStroke->usp.sliderName = os->activeSlider;
+		if (os->editor.bEditSlider) {
+			activeStroke->usp.sliderName = os->editor.activeSlider;
 
-			float sliderscale = os->project->SliderValue(os->activeSlider);
+			float sliderscale = os->project->SliderValue(os->editor.activeSlider);
 			if (sliderscale == 0.0)
 				sliderscale = 1.0;
 
@@ -16270,7 +16274,7 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 
 			// Push an undo state.  nodeEndXformToParent is filled in in
 			// EndTransform; until then it equals nodeStartXformToParent.
-			UndoStateProject* usp = undoHistory.PushState();
+			UndoStateProject* usp = os->editor.undoHistory.PushState();
 			usp->undoType = UndoType::NodeTransform;
 			usp->boneName = activeBone;
 			usp->nodeStartXformToParent = xformInitialLocalToParent;
@@ -16421,7 +16425,7 @@ void wxGLPanel::UpdateTransform(const wxPoint& screenPos) {
 
 	// Record the end state on the open undo entry so an in-progress drag is
 	// already undo-able if the stroke is canceled.
-	if (UndoStateProject* usp = undoHistory.GetCurState()) {
+	if (UndoStateProject* usp = os->editor.undoHistory.GetCurState()) {
 		if (usp->undoType == UndoType::NodeTransform && usp->boneName == activeBone)
 			usp->nodeEndXformToParent = newToParent;
 	}
@@ -16445,10 +16449,10 @@ void wxGLPanel::EndTransform() {
 		activeStroke->endStroke();
 		activeStroke = nullptr;
 
-		os->ActiveShapesUpdated(undoHistory.GetCurState());
-		if (!os->bEditSlider) {
+		os->ActiveShapesUpdated(os->editor.undoHistory.GetCurState());
+		if (!os->editor.bEditSlider) {
 			{
-				UndoStateProject* usp = undoHistory.GetCurState();
+				UndoStateProject* usp = os->editor.undoHistory.GetCurState();
 				for (auto& uss : usp->usss) {
 					auto shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(uss.shapeName);
 					if (shape)
@@ -16528,7 +16532,7 @@ bool wxGLPanel::StartPivotPosition(const wxPoint& screenPos) {
 		return false;
 
 	std::vector<Mesh*> strokeMeshes{hitMesh};
-	activeStroke = std::make_unique<TweakStroke>(strokeMeshes, &translateBrush, *undoHistory.PushState());
+	activeStroke = std::make_unique<TweakStroke>(strokeMeshes, &translateBrush, *os->editor.undoHistory.PushState());
 	activeStroke->beginStroke(tpi);
 
 	XPivotMesh->bVisible = false;
@@ -16778,11 +16782,11 @@ bool wxGLPanel::StartEdgeSlide(const wxPoint& WXUNUSED(screenPos)) {
 	edgeSlideStartUV = Vector2();
 	edgeSlideCurrentEdge = Edge();
 	edgeSlideTarget = -1;
-	edgeSlideHasUV = !os->bEditSlider && GetToolOptionEdgeSlideUVCorrection() && m->texcoord != nullptr;
+	edgeSlideHasUV = !os->editor.bEditSlider && GetToolOptionEdgeSlideUVCorrection() && m->texcoord != nullptr;
 	if (edgeSlideHasUV)
 		edgeSlideStartUV = m->texcoord[mouseDownPoint];
 
-	UndoStateProject* usp = undoHistory.PushState();
+	UndoStateProject* usp = os->editor.undoHistory.PushState();
 	usp->undoType = UndoType::VertexPosition;
 	usp->usss.emplace_back();
 	usp->usss[0].shapeName = mouseDownMeshName;
@@ -16790,9 +16794,9 @@ bool wxGLPanel::StartEdgeSlide(const wxPoint& WXUNUSED(screenPos)) {
 	if (edgeSlideHasUV)
 		usp->usss[0].uvEndState[mouseDownPoint] = usp->usss[0].uvStartState[mouseDownPoint] = edgeSlideStartUV;
 
-	if (os->bEditSlider) {
-		usp->sliderName = os->activeSlider;
-		float sliderscale = os->project->SliderValue(os->activeSlider);
+	if (os->editor.bEditSlider) {
+		usp->sliderName = os->editor.activeSlider;
+		float sliderscale = os->project->SliderValue(os->editor.activeSlider);
 		if (sliderscale == 0.0)
 			sliderscale = 1.0;
 
@@ -16811,7 +16815,7 @@ void wxGLPanel::UpdateEdgeSlide(const wxPoint& screenPos) {
 	if (!m || mouseDownPoint < 0)
 		return;
 
-	UndoStateProject* usp = undoHistory.GetCurState();
+	UndoStateProject* usp = os->editor.undoHistory.GetCurState();
 	if (!usp)
 		return;
 
@@ -16849,7 +16853,7 @@ void wxGLPanel::UpdateEdgeSlide(const wxPoint& screenPos) {
 
 void wxGLPanel::EndEdgeSlide() {
 	isSlidingEdge = false;
-	UndoStateProject* usp = undoHistory.GetCurState();
+	UndoStateProject* usp = os->editor.undoHistory.GetCurState();
 	if (!usp)
 		return;
 
@@ -16866,7 +16870,7 @@ void wxGLPanel::EndEdgeSlide() {
 		return;
 	}
 
-	if (!os->bEditSlider) {
+	if (!os->editor.bEditSlider) {
 		NiShape* shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(mouseDownMeshName);
 		if (shape)
 			os->project->ComputeUndoRestDiffs(shape, uss);
@@ -16880,12 +16884,12 @@ void wxGLPanel::EndEdgeSlide() {
 }
 
 void wxGLPanel::CancelEdgeSlide() {
-	UndoStateProject* usp = undoHistory.GetCurState();
+	UndoStateProject* usp = os->editor.undoHistory.GetCurState();
 	if (!usp)
 		return;
 
 	ApplyUndoState(usp, true);
-	undoHistory.PopState();
+	os->editor.undoHistory.PopState();
 	gls.HideSegCursor();
 }
 
@@ -17129,7 +17133,7 @@ bool wxGLPanel::StartMoveVertex(const wxPoint& screenPos) {
 	if (snapDistance > elen)
 		snapDistance = elen;
 
-	UndoStateProject* usp = undoHistory.PushState();
+	UndoStateProject* usp = os->editor.undoHistory.PushState();
 	usp->usss.emplace_back();
 	usp->usss[0].shapeName = mouseDownMeshName;
 	usp->usss[0].pointEndState[mouseDownPoint] = usp->usss[0].pointStartState[mouseDownPoint] = lastHitResult.hoverMeshCoord;
@@ -17137,9 +17141,9 @@ bool wxGLPanel::StartMoveVertex(const wxPoint& screenPos) {
 	if (mouseDownMirrorPoint != -1)
 		usp->usss[0].pointEndState[mouseDownMirrorPoint] = usp->usss[0].pointStartState[mouseDownMirrorPoint] = m->verts[mouseDownMirrorPoint];
 
-	if (os->bEditSlider) {
-		usp->sliderName = os->activeSlider;
-		float sliderscale = os->project->SliderValue(os->activeSlider);
+	if (os->editor.bEditSlider) {
+		usp->sliderName = os->editor.activeSlider;
+		float sliderscale = os->project->SliderValue(os->editor.activeSlider);
 		if (sliderscale == 0.0)
 			sliderscale = 1.0;
 
@@ -17162,7 +17166,7 @@ void wxGLPanel::UpdateMoveVertex(const wxPoint& screenPos) {
 	if (!m || mouseDownPoint < 0)
 		return;
 
-	UndoStateProject* usp = undoHistory.GetCurState();
+	UndoStateProject* usp = os->editor.undoHistory.GetCurState();
 	if (!usp)
 		return;
 	UndoStateShape& uss = usp->usss[0];
@@ -17293,7 +17297,7 @@ void wxGLPanel::UpdateMoveVertex(const wxPoint& screenPos) {
 
 void wxGLPanel::EndMoveVertex() {
 	isMovingVertex = false;
-	UndoStateProject* usp = undoHistory.GetCurState();
+	UndoStateProject* usp = os->editor.undoHistory.GetCurState();
 	if (!usp)
 		return;
 
@@ -17348,12 +17352,12 @@ void wxGLPanel::EndMoveVertex() {
 }
 
 void wxGLPanel::CancelMoveVertex() {
-	UndoStateProject* usp = undoHistory.GetCurState();
+	UndoStateProject* usp = os->editor.undoHistory.GetCurState();
 	if (!usp)
 		return;
 
 	ApplyUndoState(usp, true);
-	undoHistory.PopState();
+	os->editor.undoHistory.PopState();
 }
 
 bool wxGLPanel::StartPickEdge() {
@@ -17545,11 +17549,11 @@ void wxGLPanel::ClearMask() {
 bool wxGLPanel::RestoreMode(UndoStateProject* usp) {
 	bool modeChanged = false;
 	UndoType undoType = usp->undoType;
-	if (undoType == UndoType::VertexPosition && os->activeSlider != usp->sliderName) {
+	if (undoType == UndoType::VertexPosition && os->editor.activeSlider != usp->sliderName) {
 		os->EnterSliderEdit(usp->sliderName);
 		modeChanged = true;
 	}
-	if ((undoType != UndoType::VertexPosition || usp->sliderName.empty()) && os->bEditSlider) {
+	if ((undoType != UndoType::VertexPosition || usp->sliderName.empty()) && os->editor.bEditSlider) {
 		os->ExitSliderEdit();
 		modeChanged = true;
 	}
@@ -17857,12 +17861,12 @@ void wxGLPanel::ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender) 
 }
 
 bool wxGLPanel::UndoStroke() {
-	UndoStateProject* curState = undoHistory.GetCurState();
+	UndoStateProject* curState = os->editor.undoHistory.GetCurState();
 	if (!curState)
 		return false;
 	if (RestoreMode(curState))
 		return true;
-	if (!undoHistory.BackStepHistory())
+	if (!os->editor.undoHistory.BackStepHistory())
 		return false;
 
 	ApplyUndoState(curState, true);
@@ -17871,12 +17875,12 @@ bool wxGLPanel::UndoStroke() {
 }
 
 bool wxGLPanel::RedoStroke() {
-	UndoStateProject* curState = undoHistory.GetNextState();
+	UndoStateProject* curState = os->editor.undoHistory.GetNextState();
 	if (!curState)
 		return false;
 	if (RestoreMode(curState))
 		return true;
-	if (!undoHistory.ForwardStepHistory())
+	if (!os->editor.undoHistory.ForwardStepHistory())
 		return false;
 
 	ApplyUndoState(curState, false);
@@ -18418,7 +18422,7 @@ void wxGLPanel::OnMouseWheel(wxMouseEvent& event) {
 	const bool playing = os && os->IsAnimationPlaying();
 
 	if (!playing && event.ControlDown()) {
-		std::string sliderName = os->lastActiveSlider;
+		std::string sliderName = os->editor.lastActiveSlider;
 
 		if (sliderName.empty())
 			sliderName = os->project->GetSliderName(0);
@@ -18426,7 +18430,7 @@ void wxGLPanel::OnMouseWheel(wxMouseEvent& event) {
 		if (sliderName.empty())
 			return;
 
-		if (!os->activeSlider.empty())
+		if (!os->editor.activeSlider.empty())
 			os->ExitSliderEdit();
 
 		size_t sliderCount = os->project->SliderCount();

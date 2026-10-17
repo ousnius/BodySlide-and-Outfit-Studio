@@ -31,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../utils/ConfigurationManager.h"
 #include "../utils/Log.h"
 #include "../utils/TargetGame.h"
+#include "EditorState.h"
 #include "OutfitProject.h"
 
 #include "FSEngine/FSEngine.h"
@@ -212,7 +213,7 @@ public:
 	void SetActiveShapes(const std::vector<std::string>& shapeNames);
 	void SetSelectedShape(const std::string& shapeName);
 
-	UndoHistory* GetUndoHistory() { return &undoHistory; }
+	UndoHistory* GetUndoHistory();
 
 	void SetActiveTool(ToolID brushID);
 	ToolID GetActiveTool() { return activeTool; }
@@ -861,7 +862,6 @@ private:
 	TB_XForm translateBrush;
 
 	std::unique_ptr<TweakStroke> activeStroke;
-	UndoHistory undoHistory;
 
 	Mesh* RotationCenterMesh = nullptr;
 	Mesh* RotationCenterMeshRingX = nullptr;
@@ -1094,18 +1094,14 @@ public:
 	ArchiveBrowser* archiveBrowser = nullptr;
 	OutfitStudioProjectHost projectHost{this};
 	OutfitProject* project = nullptr;
+	EditorState editor;
 	ShapeItemData* activeItem = nullptr;
-	std::string activeSlider;
-	std::string lastActiveSlider;
-	bool bEditSlider = false;
 	bool autoFrameSelected = false;
 	std::vector<int> triParts;	// the partition index for each triangle, or -1 for none
 	std::vector<int> triSParts; // the segment partition index for each triangle, or -1 for none
 
 	std::deque<ProjectHistoryEntry> projectHistory;
 
-	std::unordered_set<std::string> lastSelectedBones;
-	std::unordered_set<std::string> lastNormalizeBones;
 
 	PoseDataCollection poseDataCollection;
 	wxSliderPanelPool sliderPool;
@@ -1417,8 +1413,6 @@ private:
 	bool selectionLocked = false;
 	std::vector<ShapeItemData*> selectedItems;
 	bool recursingUI = false;
-	std::string activeBone;
-	std::string autoXMirrorBone;
 	wxTreeItemId activeSegment;
 	wxTreeItemId activePartition;
 	std::string lastCheckedSlider;

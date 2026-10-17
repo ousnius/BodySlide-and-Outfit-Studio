@@ -878,6 +878,7 @@
     <ClInclude Include="src\program\ObjImportDialog.h" />
     <ClInclude Include="src\program\OutfitProject.h" />
     <ClInclude Include="src\program\ProjectHost.h" />
+    <ClInclude Include="src\program\EditorState.h" />
     <ClInclude Include="src\program\BadBonesDialog.h" />
     <ClInclude Include="src\program\OutfitStudio.h" />
     <ClInclude Include="src\program\PresetSaveDialog.h" />

@@ -892,6 +892,9 @@
     <ClInclude Include="src\program\ProjectHost.h">
       <Filter>Program</Filter>
     </ClInclude>
+    <ClInclude Include="src\program\EditorState.h">
+      <Filter>Program</Filter>
+    </ClInclude>
     <ClInclude Include="src\program\BadBonesDialog.h">
       <Filter>Program</Filter>
     </ClInclude>
