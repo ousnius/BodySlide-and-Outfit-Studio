@@ -151,9 +151,7 @@ public:
 				 const std::vector<nifly::Color4>& colors,
 				 const SFMorphNormalSettings& settings = SFMorphNormalSettings());
 
-	// The current geometry of a shape. Starfield shapes keep their vertex colors only in their
-	// mesh data, which NifFile::GetColorsForShape doesn't return. The shape's LOCKEDNORM extra data
-	// adds to the locked normals of the settings.
+	// The current geometry of a shape. The shape's LOCKEDNORM extra data adds to the locked normals of the settings.
 	static SFMorphShape FromShape(nifly::NifFile& nif, nifly::NiShape* shape, SFMorphNormalSettings settings = SFMorphNormalSettings());
 
 	// morph.dat stores normals and tangents as deltas. They are the difference between the normals
