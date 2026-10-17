@@ -5915,6 +5915,7 @@ void OutfitStudioFrame::OnImportPhysicsData(wxCommandEvent& WXUNUSED(event)) {
 	if (!physicsBlock->FromHKX(fileName.ToUTF8().data())) {
 		wxLogError("Failed to import physics data file '%s'!", fileName);
 		wxMessageBox(wxString::Format(_("Failed to import physics data file '%s'!"), fileName), _("Import Error"), wxICON_ERROR);
+		return;
 	}
 
 	auto& physicsData = project->GetClothData();
