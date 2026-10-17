@@ -279,7 +279,7 @@ void RemapExtraDataStrings(NifFile& nif, NiExtraData* extraData) {
 
 }
 
-OutfitProject::OutfitProject(IProjectHost* inHost) {
+OutfitProject::OutfitProject(IProjectHost* inHost, bool loadSkeleton) {
 	host = inHost;
 	if (!host) {
 		ownHost = std::make_unique<NonInteractiveHost>();
@@ -288,7 +288,8 @@ OutfitProject::OutfitProject(IProjectHost* inHost) {
 
 	workAnim.SetRefNif(&workNif);
 
-	LoadDefaultSkeletonReference();
+	if (loadSkeleton)
+		LoadDefaultSkeletonReference();
 
 	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 	if (targetGame == SKYRIM || targetGame == SKYRIMSE || targetGame == SKYRIMVR)
@@ -3389,7 +3390,10 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 	return 0;
 }
 
-int OutfitProject::LoadFromSliderSet(const std::string& fileName, const std::string& sliderSetName, std::vector<std::string>* origShapeOrder) {
+int OutfitProject::LoadFromSliderSet(const std::string& fileName,
+									 const std::string& sliderSetName,
+									 std::vector<std::string>* origShapeOrder,
+									 const std::string& shapeDataPath) {
 	host->StartProgress(_("Loading slider set..."));
 	SliderSetFile InSS(fileName);
 	if (InSS.fail()) {
@@ -3403,7 +3407,7 @@ int OutfitProject::LoadFromSliderSet(const std::string& fileName, const std::str
 		return 3;
 	}
 
-	activeSet.SetBaseDataPath(ProjectUtil::GetProjectPath() + PathSepStr + "ShapeData");
+	activeSet.SetBaseDataPath(shapeDataPath.empty() ? ProjectUtil::GetProjectPath() + PathSepStr + "ShapeData" : shapeDataPath);
 
 	std::string inputNif = activeSet.GetInputFileName();
 

@@ -137,3 +137,19 @@ TEST_CASE("Delta comparison reports mean, max and RMS error", "[MeshAnalysis]") 
 	CHECK(cmp.maxError == Catch::Approx(2.0f));
 	CHECK(cmp.rmsError == Catch::Approx(std::sqrt(5.0f / 4.0f)));
 }
+
+TEST_CASE("Heatmap colors run from blue to red", "[MeshAnalysis]") {
+	auto low = MeshAnalysis::HeatmapColor(0.0f);
+	auto mid = MeshAnalysis::HeatmapColor(0.5f);
+	auto high = MeshAnalysis::HeatmapColor(1.0f);
+
+	CHECK(low.x == 0.0f);
+	CHECK(low.z == 1.0f);
+	CHECK(mid.y == Catch::Approx(1.0f));
+	CHECK(high.x == 1.0f);
+	CHECK(high.y == 0.0f);
+
+	// Out of range values are clamped
+	CHECK(MeshAnalysis::HeatmapColor(-3.0f).z == 1.0f);
+	CHECK(MeshAnalysis::HeatmapColor(7.0f).x == 1.0f);
+}

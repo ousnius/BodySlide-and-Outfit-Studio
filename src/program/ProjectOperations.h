@@ -29,6 +29,7 @@ enum class RefreshFlags : uint32_t {
 	Anim = 1 << 6,			 // Bones or weights changed
 	Pose = 1 << 7,			 // The preview pose changed
 	WeightDisplay = 1 << 8,	 // Which bones have weights, and how many
+	Shaders = 1 << 9,		 // What the mesh shaders show changed
 };
 
 inline RefreshFlags operator|(RefreshFlags a, RefreshFlags b) {
@@ -89,6 +90,64 @@ struct WeightBrushBones {
 	}
 };
 
+// Where to load a reference shape from: a NIF, a set of a slider set file, or a reference template
+struct ReferenceSource {
+	std::string file;
+	// The set of a slider set file. Without a set the file is used as a reference template.
+	std::string set;
+	std::string shape;
+	// Templates only: load all shapes of the set, not only the reference shape
+	bool loadAll = false;
+	// Keep the existing sliders or zaps and add the reference's data to them
+	bool mergeSliders = false;
+	bool mergeZaps = false;
+	bool appendNewSliders = false;
+};
+
+struct SaveProjectOptions {
+	std::string displayName;
+	std::string sliderSetFile;   // Relative to the SliderSets folder
+	std::string shapeDataFolder; // Relative to the ShapeData folder
+	std::string shapeDataFile;
+	std::string outputDataPath;  // Game path of the meshes BodySlide builds
+	std::string outputFileName;
+	bool genWeights = true;
+	bool copyReference = true;
+	std::string sfMorphPath;
+	std::string sfMorphTargetShape;
+};
+
+struct ExportOptions {
+	// NIF, OBJ and FBX: include the reference shape
+	bool withReference = false;
+	// OBJ and FBX: positions in global space instead of the space of each shape
+	bool global = false;
+};
+
+// Differences between the shapes of the open project and the same shapes in another project
+struct ProjectComparison {
+	struct SliderDifference {
+		std::string shape;
+		std::string slider;
+		bool onlyHere = false;  // The other project has no data for it, compared with no morph
+		bool onlyThere = false; // This project has no data for it
+		MeshAnalysis::DeltaComparison deltas;
+	};
+
+	struct WeightDifference {
+		std::string shape;
+		std::string bone;
+		size_t vertices = 0; // Vertices weighted to the bone in either project
+		float meanError = 0.0f;
+		float maxError = 0.0f;
+	};
+
+	std::vector<SliderDifference> sliders;
+	std::vector<WeightDifference> weights;
+	// Shapes that couldn't be compared, with the reason
+	std::vector<std::pair<std::string, std::string>> skippedShapes;
+};
+
 // Project data and shape masks, to return to after trying out a change
 struct EditSnapshot {
 	std::unique_ptr<OutfitProject::Snapshot> project;
@@ -109,6 +168,13 @@ public:
 
 	// Splits the bones of the selected shapes by whether they take part in weight normalization
 	void GetNormalizeBones(std::vector<std::string>* normBones, std::vector<std::string>* notNormBones);
+
+	OpResult LoadReference(const ReferenceSource& source);
+	// Adds the shapes and sliders of a set of a slider set file to the project
+	OpResult AddProject(const std::string& file, const std::string& set, bool appendNewSliders);
+	OpResult SaveProject(const SaveProjectOptions& options);
+	// The format comes from the extension: nif, obj, fbx, osd (slider data) or tri (morphs)
+	OpResult ExportFile(const std::string& fileName, const ExportOptions& options);
 
 	// Sets all sliders that aren't clamped to zero
 	RefreshFlags ZeroSliders();
@@ -142,6 +208,14 @@ public:
 
 	OpResult AnalyzeWeights(nifly::NiShape* shape, MeshAnalysis::WeightStats& outStats, int influenceLimit = 4);
 
+	// Compares the slider data and weights of the outfit shapes with a set of a slider set file, e.g. a
+	// finished conversion of the same outfit. shapeMap maps names of this project to the other one, other
+	// shapes are matched by name. Shapes are only compared when their vertex counts match.
+	OpResult CompareToProject(const std::string& file,
+							  const std::string& set,
+							  const std::map<std::string, std::string>& shapeMap,
+							  ProjectComparison& outComparison);
+
 	std::unique_ptr<EditSnapshot> CaptureSnapshot();
 
 	// Restores the project data. The shape meshes have to be rebuilt afterwards, then RestoreMasks applies the masks.
@@ -155,6 +229,15 @@ public:
 	// Pushes the shapes out of the reference shape. Shapes mode fixes the base geometry,
 	// sliders mode fixes the morph of each slider (all non-zap, non-UV sliders without names).
 	OpResult FixClipping(const std::vector<nifly::NiShape*>& shapes, ClippingFixMode mode, float strength, const std::vector<std::string>& sliderNames = {});
+
+	// Shows the weights of a bone as weight colors on the meshes of the shapes and of the reference.
+	// The other meshes are cleared. Weight colors have to be turned on to see them.
+	void FillWeightColors(const std::string& bone, const std::vector<nifly::NiShape*>& shapes);
+
+	// Colors the mesh of a shape by one value per vertex, from minValue (blue) to maxValue (red).
+	// Vertices with FLT_MAX get grey. Shows with vertex colors turned on; the window's FillVertexColors
+	// puts the shape's own colors back.
+	OpResult ShowHeatmap(nifly::NiShape* shape, const std::vector<float>& values, float minValue, float maxValue);
 
 	// Bones for painting weights of the active bone, optionally mirrored to xMirrorBone
 	WeightBrushBones GetWeightBrushBones(const std::string& xMirrorBone);

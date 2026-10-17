@@ -914,6 +914,7 @@
     <ClInclude Include="src\utils\GameUtil.h" />
     <ClInclude Include="src\utils\StackTrace.h" />
     <ClInclude Include="src\utils\StringStuff.h" />
+    <ClInclude Include="src\utils\MainThreadDispatcher.h" />
     <ClInclude Include="src\utils\TargetGame.h" />
   </ItemGroup>
   <ItemGroup>
@@ -1046,6 +1047,7 @@
     <ClCompile Include="src\utils\GameUtil.cpp" />
     <ClCompile Include="src\utils\StackTrace.cpp" />
     <ClCompile Include="src\utils\StringStuff.cpp" />
+    <ClCompile Include="src\utils\MainThreadDispatcher.cpp" />
     <ClCompile Include="src\utils\WxBuildConfigCheck.cpp" />
   </ItemGroup>
   <ItemGroup>

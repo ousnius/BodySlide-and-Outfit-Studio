@@ -75,4 +75,7 @@ struct DeltaComparison {
 // Per-vertex distance between two sets of deltas of the same vertex count
 DeltaComparison CompareDeltas(const std::vector<nifly::Vector3>& a, const std::vector<nifly::Vector3>& b);
 
+// Color for a value between 0 and 1 on a blue, cyan, green, yellow, red ramp. Values outside are clamped.
+nifly::Vector3 HeatmapColor(float t);
+
 } // namespace MeshAnalysis

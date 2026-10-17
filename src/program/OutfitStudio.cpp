@@ -882,10 +882,15 @@ int OutfitStudio::RunAutomationFromCmdLine() {
 	return code;
 }
 
-int OutfitStudio::OnExit() {
-	int base = wxApp::OnExit();
-	// In automation mode propagate the script's exit code; otherwise keep wx's.
+int OutfitStudio::OnRun() {
+	int base = wxApp::OnRun();
+	// The process exit code comes from here, wx ignores what OnExit returns.
+	// In automation mode it is the script's exit code.
 	return cmdAutomation.IsEmpty() ? base : automationExitCode;
+}
+
+int OutfitStudio::OnExit() {
+	return wxApp::OnExit();
 }
 
 bool OutfitStudio::OnExceptionInMainLoop() {
@@ -1320,6 +1325,9 @@ void ToolBarButtonHider::Show(int toolId, bool show) {
 
 
 OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
+	// Other threads wake the dispatcher through the event queue, which wx makes thread safe
+	dispatcher = std::make_unique<MainThreadDispatcher>([this]() { CallAfter([this]() { dispatcher->ProcessPending(); }); });
+
 	wxLogMessage("Loading Outfit Studio frame at X:%d Y:%d with W:%d H:%d...", pos.x, pos.y, size.GetWidth(), size.GetHeight());
 
 	wxXmlResource* xrc = wxXmlResource::Get();
@@ -3353,6 +3361,185 @@ void OutfitStudioFrame::SelectShape(const std::string& shapeName) {
 	}
 }
 
+namespace {
+
+wxTreeItemId FindShapeItem(wxTreeCtrl* tree, const wxTreeItemId& root, const std::string& shapeName) {
+	if (!root.IsOk())
+		return wxTreeItemId();
+
+	wxTreeItemIdValue cookie;
+	for (wxTreeItemId child = tree->GetFirstChild(root, cookie); child.IsOk(); child = tree->GetNextChild(root, cookie))
+		if (tree->GetItemText(child).ToUTF8().data() == shapeName)
+			return child;
+
+	return wxTreeItemId();
+}
+
+} // namespace
+
+bool OutfitStudioFrame::SelectShapes(const std::vector<std::string>& shapeNames) {
+	std::vector<wxTreeItemId> items;
+	for (auto& shapeName : shapeNames) {
+		wxTreeItemId item = FindShapeItem(outfitShapes, outfitRoot, shapeName);
+		if (!item.IsOk())
+			return false;
+		items.push_back(item);
+	}
+
+	outfitShapes->UnselectAll();
+
+	// The item selected last becomes the active shape
+	for (size_t i = items.size(); i > 1; i--)
+		outfitShapes->SelectItem(items[i - 1]);
+
+	if (!items.empty()) {
+		outfitShapes->SelectItem(items[0]);
+		outfitShapes->EnsureVisible(items[0]);
+	}
+
+	return true;
+}
+
+std::vector<std::string> OutfitStudioFrame::GetSelectedShapeNames() {
+	std::vector<std::string> names;
+	for (auto& item : selectedItems)
+		names.push_back(item->GetShape()->name.get());
+	return names;
+}
+
+bool OutfitStudioFrame::GetShapeDisplayMode(const std::string& shapeName, ShapeDisplayMode& outMode) {
+	wxTreeItemId item = FindShapeItem(outfitShapes, outfitRoot, shapeName);
+	if (!item.IsOk())
+		return false;
+
+	int state = outfitShapes->GetItemState(item);
+	outMode = state == 1 ? ShapeDisplayMode::Hidden : (state == 2 ? ShapeDisplayMode::Ghost : ShapeDisplayMode::Visible);
+	return true;
+}
+
+bool OutfitStudioFrame::SetShapeDisplayMode(const std::string& shapeName, ShapeDisplayMode mode) {
+	wxTreeItemId item = FindShapeItem(outfitShapes, outfitRoot, shapeName);
+	if (!item.IsOk())
+		return false;
+
+	glView->SetShapeGhostMode(shapeName, mode == ShapeDisplayMode::Ghost);
+	glView->ShowShape(shapeName, mode != ShapeDisplayMode::Hidden);
+	outfitShapes->SetItemState(item, static_cast<int>(mode));
+	return true;
+}
+
+bool OutfitStudioFrame::FrameShapes(const std::vector<std::string>& shapeNames) {
+	std::vector<Vector3> points;
+	for (auto& shapeName : shapeNames) {
+		Mesh* m = glView->GetMesh(shapeName);
+		if (!m)
+			continue;
+
+		for (int i = 0; i < m->nVerts; i++)
+			points.push_back(m->TransformPosMeshToModel(m->verts[i]));
+	}
+
+	if (points.empty())
+		return false;
+
+	glView->gls.FrameModelPoints(points);
+	glView->Render();
+	return true;
+}
+
+bool OutfitStudioFrame::FrameVertices(const std::string& shapeName, const std::vector<int>& vertices) {
+	Mesh* m = glView->GetMesh(shapeName);
+	if (!m)
+		return false;
+
+	std::vector<Vector3> points;
+	for (int v : vertices)
+		if (v >= 0 && v < m->nVerts)
+			points.push_back(m->TransformPosMeshToModel(m->verts[v]));
+
+	if (points.empty())
+		return false;
+
+	glView->gls.FrameModelPoints(points);
+	glView->Render();
+	return true;
+}
+
+bool OutfitStudioFrame::FrameBone(const std::string& boneName, float minWeight) {
+	std::vector<Vector3> points;
+	for (auto& shapeName : project->GetWorkNif()->GetShapeNames()) {
+		Mesh* m = glView->GetMesh(shapeName);
+		auto weights = project->GetWorkAnim()->GetWeightsPtr(shapeName, boneName);
+		if (!m || !weights)
+			continue;
+
+		for (auto& w : *weights)
+			if (w.second >= minWeight && w.first < m->nVerts)
+				points.push_back(m->TransformPosMeshToModel(m->verts[w.first]));
+	}
+
+	if (points.empty())
+		return false;
+
+	glView->gls.FrameModelPoints(points);
+	glView->Render();
+	return true;
+}
+
+ViewState OutfitStudioFrame::GetViewState() {
+	ViewState state;
+	state.camera = glView->gls.GetCamera();
+	state.display = glView->gls.GetDisplaySettings();
+
+	for (auto& shapeName : project->GetWorkNif()->GetShapeNames()) {
+		ShapeDisplayMode mode;
+		if (GetShapeDisplayMode(shapeName, mode))
+			state.shapes[shapeName] = mode;
+	}
+
+	return state;
+}
+
+void OutfitStudioFrame::SetViewState(const ViewState& state) {
+	glView->gls.SetCamera(state.camera);
+	glView->gls.SetDisplaySettings(state.display);
+
+	menuBar->Check(XRCID("btnShowWireframe"), state.display.wireframe);
+	menuBar->Check(XRCID("btnEnableLighting"), state.display.lighting);
+	menuBar->Check(XRCID("btnEnableTextures"), state.display.textures);
+	menuBar->Check(XRCID("btnEnableVertexColors"), state.display.vertexColors);
+
+	for (auto& shape : state.shapes)
+		SetShapeDisplayMode(shape.first, shape.second);
+
+	glView->Render();
+}
+
+std::string OutfitStudioFrame::GetBusyReason() {
+#ifdef __WXMSW__
+	// Modal dialogs and native message boxes disable the window they belong to
+	if (!::IsWindowEnabled(static_cast<HWND>(GetHandle())))
+		return "A dialog or message box is open.";
+#endif
+
+	for (wxWindow* window : wxTopLevelWindows) {
+		auto dialog = dynamic_cast<wxDialog*>(window);
+		if (dialog && dialog->IsModal())
+			return "The dialog '" + std::string(dialog->GetTitle().ToUTF8().data()) + "' is open.";
+	}
+
+	if (glView && glView->IsStrokeActive())
+		return "A brush stroke or transform is in progress.";
+
+	if (IsAnimationPlaying())
+		return "An animation is playing.";
+
+	if (!progressStack.empty())
+		return "Another operation is running.";
+
+	return {};
+}
+
 void OutfitStudioProjectHost::StartProgress(const wxString& msg) {
 	frame->StartProgress(msg);
 }
@@ -3536,6 +3723,9 @@ void OutfitStudioFrame::ApplyRefresh(RefreshFlags flags) {
 
 	if (HasRefresh(flags, RefreshFlags::Anim))
 		UpdateAnimationGUI();
+
+	if (HasRefresh(flags, RefreshFlags::Shaders))
+		glView->gls.SetDisplaySettings(glView->gls.GetDisplaySettings());
 
 	if (HasRefresh(flags, RefreshFlags::WeightDisplay)) {
 		HighlightBoneNamesWithWeights();
@@ -5156,6 +5346,14 @@ void OutfitStudioFrame::FillVertexColors() {
 				m->valpha[v] = vcolors->at(v).a;
 			}
 		}
+
+		m->QueueUpdate(Mesh::UpdateType::VertexColors);
+		m->QueueUpdate(Mesh::UpdateType::VertexAlpha);
+
+		if (m->overrideVertexColors) {
+			m->overrideVertexColors = false;
+			glView->gls.UpdateShaders(m);
+		}
 	}
 }
 
@@ -6013,46 +6211,11 @@ void OutfitStudioFrame::OnBoneStateToggle(wxTreeEvent& event) {
 }
 
 void OutfitStudioFrame::RefreshGUIWeightColors() {
-	// Clear weight color of all shapes
-	for (auto& s : project->GetWorkNif()->GetShapeNames()) {
-		Mesh* m = glView->GetMesh(s);
-		if (m)
-			m->WeightFill(0.0f);
-	}
+	std::vector<NiShape*> shapes;
+	for (auto& s : selectedItems)
+		shapes.push_back(s->GetShape());
 
-	if (!editor.activeBone.empty()) {
-		// Show weights of selected shapes without reference
-		for (auto& s : selectedItems) {
-			if (!project->IsBaseShape(s->GetShape())) {
-				auto weights = project->GetWorkAnim()->GetWeightsPtr(s->GetShape()->name.get(), editor.activeBone);
-
-				Mesh* m = glView->GetMesh(s->GetShape()->name.get());
-				if (m) {
-					m->WeightFill(0.0f);
-					if (weights) {
-						for (auto& bw : *weights)
-							m->weight[bw.first] = bw.second;
-					}
-				}
-			}
-		}
-
-		// Always show weights of reference shape
-		NiShape* baseShape = project->GetBaseShape();
-		if (baseShape) {
-			auto weights = project->GetWorkAnim()->GetWeightsPtr(baseShape->name.get(), editor.activeBone);
-
-			Mesh* m = glView->GetMesh(baseShape->name.get());
-			if (m) {
-				m->WeightFill(0.0f);
-				if (weights) {
-					for (auto& bw : *weights)
-						m->weight[bw.first] = bw.second;
-				}
-			}
-		}
-	}
-
+	ProjectOperations(*project, editor).FillWeightColors(editor.activeBone, shapes);
 	glView->Refresh();
 }
 
@@ -15097,6 +15260,10 @@ bool wxGLPanel::SaveViewImage(const wxString& fileName, int width, int height) {
 
 	wxImage image(width, height, rgb);
 	return image.SaveFile(fileName, wxBITMAP_TYPE_PNG);
+}
+
+bool wxGLPanel::IsStrokeActive() const {
+	return activeStroke || (brushStroke && brushStroke->IsActive());
 }
 
 UndoHistory* wxGLPanel::GetUndoHistory() {

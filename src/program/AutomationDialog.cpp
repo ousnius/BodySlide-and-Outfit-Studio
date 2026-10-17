@@ -376,6 +376,20 @@ AutomationStep::TexturePath MakeDefaultTexturePath(const AutomationTexturePathDe
 	return path;
 }
 
+// Batch exports are named after the batch item, in the configured folder. If the configured path ends
+// with a file name that has an export extension, its folder is used and the extension picks the format.
+std::string BatchExportPath(const std::string& configured, const wxString& itemName, const wxString& defaultExt) {
+	wxFileName configuredFn(wxString::FromUTF8(configured));
+	wxString ext = configuredFn.GetExt().Lower();
+	bool hasExportExt = ext == "nif" || ext == "obj" || ext == "fbx" || ext == "osd" || ext == "tri";
+
+	wxFileName exportFn;
+	exportFn.SetPath(hasExportExt ? configuredFn.GetPath() : wxString::FromUTF8(configured));
+	exportFn.SetName(itemName);
+	exportFn.SetExt(hasExportExt ? ext : defaultExt);
+	return exportFn.GetFullPath().ToUTF8().data();
+}
+
 int ColorByte(float value) {
 	value = std::max(0.0f, std::min(1.0f, value));
 	return static_cast<int>(value * 255.0f + 0.5f);
@@ -3852,11 +3866,7 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 						step.exportFilePath = filePath;
 					}
 					else if (!step.exportFilePath.empty()) {
-						// In batch mode, exportFilePath is a folder - construct full path
-						wxFileName exportFn;
-						exportFn.SetPath(wxString::FromUTF8(step.exportFilePath));
-						exportFn.SetFullName(fn.GetFullName());
-						step.exportFilePath = exportFn.GetFullPath().ToUTF8().data();
+						step.exportFilePath = BatchExportPath(step.exportFilePath, fn.GetName(), fn.GetExt());
 					}
 				}
 			}
@@ -4039,12 +4049,7 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 						wxLogWarning("Automation: ExportFile - original-path export is only supported for folder scan batches; using configured export folder.");
 					}
 					if (!step.exportFilePath.empty()) {
-						// In batch mode, exportFilePath is a folder - construct full path
-						wxFileName exportFn;
-						exportFn.SetPath(wxString::FromUTF8(step.exportFilePath));
-						exportFn.SetName(wxString::FromUTF8(setName));
-						exportFn.SetExt("nif");
-						step.exportFilePath = exportFn.GetFullPath().ToUTF8().data();
+						step.exportFilePath = BatchExportPath(step.exportFilePath, wxString::FromUTF8(setName), "nif");
 					}
 				}
 			}

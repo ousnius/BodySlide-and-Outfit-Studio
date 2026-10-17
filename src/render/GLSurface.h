@@ -408,6 +408,13 @@ public:
 		float fov = 90.0f;
 	};
 
+	// Turns the camera to a named view: front, back, left, right, top or bottom. Keeps what it looks at.
+	bool SetViewPreset(const std::string& name);
+
+	// Looks at the center of the points, in model space, from far enough away that all of them fit.
+	// Keeps the camera rotation.
+	void FrameModelPoints(const std::vector<nifly::Vector3>& points, float margin = 1.1f);
+
 	CameraState GetCamera() const { return {camPos, camOffset, camRot, camRotOffset, perspective, mFov}; }
 	void SetCamera(const CameraState& camera) {
 		camPos = camera.camPos;
@@ -487,6 +494,33 @@ public:
 	}
 
 	bool GetWeightColors() const { return bWeightColors; }
+
+	// The display toggles as a whole, to change them for a render and restore them afterwards
+	struct DisplaySettings {
+		bool wireframe = false;
+		bool lighting = true;
+		bool textures = true;
+		bool mask = true;
+		bool weightColors = false;
+		bool vertexColors = false;
+	};
+
+	DisplaySettings GetDisplaySettings() const { return {bWireframe, bLighting, bTextured, bMaskVisible, bWeightColors, bVertexColors}; }
+
+	void SetDisplaySettings(const DisplaySettings& settings) {
+		bWireframe = settings.wireframe;
+		bLighting = settings.lighting;
+		bTextured = settings.textures;
+		bMaskVisible = settings.mask;
+		bWeightColors = settings.weightColors;
+		bVertexColors = settings.vertexColors;
+
+		for (auto& m : meshes)
+			UpdateShaders(m);
+
+		for (auto& o : overlays)
+			UpdateShaders(o);
+	}
 
 	void SetVertexColors(bool bVisible = true) {
 		bVertexColors = bVisible;

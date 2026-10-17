@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../ui/wxStateButton.h"
 #include "../utils/ConfigurationManager.h"
 #include "../utils/Log.h"
+#include "../utils/MainThreadDispatcher.h"
 #include "../utils/TargetGame.h"
 #include "EditorState.h"
 #include "OutfitProject.h"
@@ -216,6 +217,8 @@ public:
 	void SetSelectedShape(const std::string& shapeName);
 
 	UndoHistory* GetUndoHistory();
+	// A brush stroke or a transform is in progress
+	bool IsStrokeActive() const;
 	// Renders the view offscreen at the given size and saves it as a PNG
 	bool SaveViewImage(const wxString& fileName, int width, int height);
 
@@ -935,6 +938,7 @@ public:
 	virtual ~OutfitStudio();
 
 	virtual bool OnInit();
+	virtual int OnRun() override;
 	virtual int OnExit() override;
 	virtual void OnInitCmdLine(wxCmdLineParser& parser);
 	virtual bool OnCmdLineParsed(wxCmdLineParser& parser);
@@ -1035,10 +1039,51 @@ private:
 	bool interactive = true;
 };
 
+// How a shape is shown in the view, the same as the states of the shape list items
+enum class ShapeDisplayMode { Visible = 0, Hidden = 1, Ghost = 2 };
+
+// Everything about how the view looks, to change it for a render and restore it afterwards
+struct ViewState {
+	GLSurface::CameraState camera;
+	GLSurface::DisplaySettings display;
+	std::map<std::string, ShapeDisplayMode> shapes;
+};
+
+// While it exists, the project host answers prompts with their defaults. Collects the messages
+// of that time, so a caller can report what happened during an operation.
+class UnattendedScope {
+public:
+	explicit UnattendedScope(OutfitStudioProjectHost& inHost)
+		: host(inHost)
+		, wasInteractive(inHost.IsInteractive())
+		, firstMessage(inHost.GetMessages().size()) {
+		host.SetInteractive(false);
+	}
+
+	~UnattendedScope() { host.SetInteractive(wasInteractive); }
+
+	std::vector<HostMessage> Messages() const {
+		const auto& all = host.GetMessages();
+		return std::vector<HostMessage>(all.begin() + std::min(firstMessage, all.size()), all.end());
+	}
+
+private:
+	OutfitStudioProjectHost& host;
+	bool wasInteractive = true;
+	size_t firstMessage = 0;
+};
+
 class OutfitStudioFrame : public wxFrame {
 public:
 	OutfitStudioFrame(const wxPoint& pos, const wxSize& size);
 	~OutfitStudioFrame() {}
+
+	// Runs work on this window's thread for callers on other threads, like an external API
+	MainThreadDispatcher& GetDispatcher() { return *dispatcher; }
+
+	// Why the editor can't take an operation from outside right now, or empty if it can.
+	// Main thread only.
+	std::string GetBusyReason();
 
 	void LoadFiles(const wxArrayString& files, const wxString& projectName = "");
 
@@ -1099,6 +1144,7 @@ public:
 	EditUV* editUV = nullptr;
 	ArchiveBrowser* archiveBrowser = nullptr;
 	OutfitStudioProjectHost projectHost{this};
+	std::unique_ptr<MainThreadDispatcher> dispatcher;
 	OutfitProject* project = nullptr;
 	EditorState editor;
 	ShapeItemData* activeItem = nullptr;
@@ -1236,6 +1282,26 @@ public:
 	wxSliderPanel* GetSliderPanel(const std::string& sliderName);
 
 	void SelectShape(const std::string& shapeName);
+	// Selects the shapes by name, the first one becomes the active shape.
+	// Returns false without changing the selection if a shape doesn't exist.
+	bool SelectShapes(const std::vector<std::string>& shapeNames);
+	std::vector<std::string> GetSelectedShapeNames();
+
+	bool GetShapeDisplayMode(const std::string& shapeName, ShapeDisplayMode& outMode);
+	bool SetShapeDisplayMode(const std::string& shapeName, ShapeDisplayMode mode);
+
+	// Point the camera at shapes, at vertices of a shape, or at the area weighted to a bone.
+	// Keep the camera rotation and return false if there is nothing to look at.
+	bool FrameShapes(const std::vector<std::string>& shapeNames);
+	bool FrameVertices(const std::string& shapeName, const std::vector<int>& vertices);
+	bool FrameBone(const std::string& boneName, float minWeight = 0.1f);
+
+	// Shows the shapes' own vertex colors again, e.g. after a heatmap
+	void FillVertexColors();
+
+	ViewState GetViewState();
+	// Also updates the menu and toolbar items of the display toggles
+	void SetViewState(const ViewState& state);
 	std::vector<std::string> GetShapeList();
 
 	void UpdateShapeSource(nifly::NiShape* shape);
@@ -1444,7 +1510,6 @@ private:
 	void RenameProject(const std::string& projectName);
 
 	void UpdateMeshFromSet(nifly::NiShape* shape);
-	void FillVertexColors();
 
 	bool ShapeSelectionCheck();
 

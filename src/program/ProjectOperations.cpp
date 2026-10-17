@@ -8,7 +8,11 @@ See the included LICENSE file
 #include "../components/MaskOps.h"
 
 #include <algorithm>
+#include <cmath>
+#include <set>
+#include <cfloat>
 #include <unordered_set>
+#include <wx/filename.h>
 #include <wx/log.h>
 
 using namespace nifly;
@@ -642,5 +646,288 @@ OpResult ProjectOperations::AnalyzeWeights(NiShape* shape, MeshAnalysis::WeightS
 			boneWeights.push_back(workAnim.GetWeightsPtr(shapeName, bone));
 
 	outStats = MeshAnalysis::AnalyzeWeights(shape->GetNumVertices(), boneWeights, influenceLimit);
+	return OpResult();
+}
+
+void ProjectOperations::FillWeightColors(const std::string& bone, const std::vector<NiShape*>& shapes) {
+	auto fillFromBone = [&](NiShape* shape) {
+		Mesh* m = GetMesh(shape->name.get());
+		if (!m)
+			return;
+
+		m->WeightFill(0.0f);
+		if (auto weights = project.GetWorkAnim()->GetWeightsPtr(shape->name.get(), bone))
+			for (auto& bw : *weights)
+				m->weight[bw.first] = bw.second;
+
+		m->QueueUpdate(Mesh::UpdateType::Weight);
+	};
+
+	for (auto& s : project.GetWorkNif()->GetShapes()) {
+		if (Mesh* m = GetMesh(s->name.get())) {
+			m->WeightFill(0.0f);
+			m->QueueUpdate(Mesh::UpdateType::Weight);
+		}
+	}
+
+	if (bone.empty())
+		return;
+
+	for (auto* shape : shapes)
+		if (!project.IsBaseShape(shape))
+			fillFromBone(shape);
+
+	// The weights of the reference are always shown, for comparison
+	if (NiShape* baseShape = project.GetBaseShape())
+		fillFromBone(baseShape);
+}
+
+OpResult ProjectOperations::LoadReference(const ReferenceSource& source) {
+	if (source.file.empty())
+		return OpResult::Fail("No reference file was given.");
+
+	wxString ext = wxFileName(wxString::FromUTF8(source.file)).GetExt().Lower();
+
+	int err = 0;
+	if (ext == "nif")
+		err = project.LoadReferenceNif(source.file, source.shape, source.mergeSliders, source.mergeZaps);
+	else if (!source.set.empty())
+		err = project.LoadReference(source.file, source.set, source.shape, source.mergeSliders, source.mergeZaps, source.appendNewSliders);
+	else
+		err = project.LoadReferenceTemplate(source.file, source.set, source.shape, source.loadAll, source.mergeSliders, source.mergeZaps, source.appendNewSliders);
+
+	if (err)
+		return OpResult::Fail("Loading the reference failed with error " + std::to_string(err) + ".");
+
+	project.SetTextures();
+
+	OpResult result;
+	result.refresh = RefreshFlags::ShapeList | RefreshFlags::SliderSet | RefreshFlags::SliderValues | RefreshFlags::Meshes | RefreshFlags::Anim
+		| RefreshFlags::PendingChanges;
+	return result;
+}
+
+OpResult ProjectOperations::AddProject(const std::string& file, const std::string& set, bool appendNewSliders) {
+	int err = project.AddFromSliderSet(file, set, false, appendNewSliders);
+	if (err)
+		return OpResult::Fail("Adding the project failed with error " + std::to_string(err) + ".");
+
+	project.SetTextures();
+
+	OpResult result;
+	result.refresh = RefreshFlags::ShapeList | RefreshFlags::SliderSet | RefreshFlags::SliderValues | RefreshFlags::Meshes | RefreshFlags::Anim
+		| RefreshFlags::PendingChanges;
+	return result;
+}
+
+OpResult ProjectOperations::SaveProject(const SaveProjectOptions& options) {
+	if (options.sliderSetFile.empty() || options.outputFileName.empty())
+		return OpResult::Fail("A slider set file and an output file name are needed to save.");
+
+	if (!options.sfMorphTargetShape.empty() && !project.GetWorkNif()->FindBlockByName<NiShape>(options.sfMorphTargetShape))
+		wxLogWarning("Starfield morph target shape '%s' not found in the project.", options.sfMorphTargetShape);
+
+	std::string error = project.Save(wxFileName(wxString::FromUTF8(options.sliderSetFile)),
+									 wxString::FromUTF8(options.displayName),
+									 wxString::FromUTF8(options.shapeDataFolder),
+									 wxString::FromUTF8(options.shapeDataFile),
+									 wxString::FromUTF8(options.outputDataPath),
+									 wxString::FromUTF8(options.outputFileName),
+									 options.genWeights,
+									 options.copyReference,
+									 project.bPreventMorphFile,
+									 project.bKeepZappedShapes,
+									 wxString::FromUTF8(options.sfMorphPath),
+									 wxString::FromUTF8(options.sfMorphTargetShape));
+
+	if (!error.empty())
+		return OpResult::Fail(error);
+
+	return OpResult();
+}
+
+OpResult ProjectOperations::ExportFile(const std::string& fileName, const ExportOptions& options) {
+	wxString ext = wxFileName(wxString::FromUTF8(fileName)).GetExt().Lower();
+
+	std::vector<NiShape*> shapes;
+	for (auto* s : project.GetWorkNif()->GetShapes())
+		if (options.withReference || !project.IsBaseShape(s))
+			shapes.push_back(s);
+
+	int err = 0;
+	if (ext == "nif") {
+		// Writes the live mesh positions and normals, the same as the window
+		std::vector<Mesh*> shapeMeshes;
+		for (auto* s : shapes)
+			if (Mesh* m = GetMesh(s->name.get()))
+				shapeMeshes.push_back(m);
+
+		err = project.ExportNIF(fileName, shapeMeshes, options.withReference);
+	}
+	else if (ext == "obj")
+		err = project.ExportOBJ(fileName, shapes, options.global);
+	else if (ext == "fbx") {
+#ifdef USE_FBXSDK
+		err = project.ExportFBX(fileName, shapes, options.global);
+#else
+		return OpResult::Fail("FBX export isn't available in this build.");
+#endif
+	}
+	else if (ext == "osd")
+		err = project.SaveSliderData(fileName) ? 0 : 1;
+	else if (ext == "tri")
+		err = project.WriteMorphTRI(fileName) ? 0 : 1;
+	else
+		return OpResult::Fail("Files with the extension '" + std::string(ext.ToUTF8().data()) + "' can't be exported.");
+
+	if (err)
+		return OpResult::Fail("Exporting '" + fileName + "' failed with error " + std::to_string(err) + ".");
+
+	return OpResult();
+}
+
+OpResult ProjectOperations::ShowHeatmap(NiShape* shape, const std::vector<float>& values, float minValue, float maxValue) {
+	if (!shape)
+		return OpResult::Fail("Shape doesn't exist.");
+
+	Mesh* m = GetMesh(shape->name.get());
+	if (!m || !m->vcolors)
+		return OpResult::Fail("The shape has no mesh to color.");
+	if (static_cast<int>(values.size()) != m->nVerts)
+		return OpResult::Fail("There has to be one value per vertex.");
+
+	const float range = maxValue - minValue;
+	for (int i = 0; i < m->nVerts; i++) {
+		if (values[i] == FLT_MAX)
+			m->vcolors[i] = Vector3(0.5f, 0.5f, 0.5f);
+		else
+			m->vcolors[i] = MeshAnalysis::HeatmapColor(range > 0.0f ? (values[i] - minValue) / range : 0.0f);
+
+		if (m->valpha)
+			m->valpha[i] = 1.0f;
+	}
+
+	m->overrideVertexColors = true;
+	m->QueueUpdate(Mesh::UpdateType::VertexColors);
+	m->QueueUpdate(Mesh::UpdateType::VertexAlpha);
+
+	OpResult result;
+	result.refresh = RefreshFlags::Shaders;
+	return result;
+}
+
+OpResult ProjectOperations::CompareToProject(const std::string& file,
+											 const std::string& set,
+											 const std::map<std::string, std::string>& shapeMap,
+											 ProjectComparison& outComparison) {
+	outComparison = ProjectComparison();
+
+	// Unattended and without touching the shared skeleton, so the open project isn't affected
+	OutfitProject other(nullptr, false);
+
+	// A project from another BodySlide folder has its ShapeData next to its SliderSets
+	std::string shapeDataPath;
+	wxFileName fileName(wxString::FromUTF8(file));
+	if (fileName.GetDirCount() > 0 && fileName.GetDirs().Last().IsSameAs("SliderSets", false)) {
+		fileName.RemoveLastDir();
+		fileName.AppendDir("ShapeData");
+		shapeDataPath = fileName.GetPath().ToUTF8().data();
+	}
+
+	if (int err = other.LoadFromSliderSet(file, set, nullptr, shapeDataPath))
+		return OpResult::Fail("Loading '" + set + "' from '" + file + "' failed with error " + std::to_string(err) + ".");
+
+	std::set<std::string> sliderNames;
+	for (size_t i = 0; i < project.SliderCount(); i++)
+		if (!project.SliderUV(i))
+			sliderNames.insert(project.GetSliderName(i));
+	for (size_t i = 0; i < other.SliderCount(); i++)
+		if (!other.SliderUV(i))
+			sliderNames.insert(other.GetSliderName(i));
+
+	for (auto* shape : project.GetWorkNif()->GetShapes()) {
+		if (project.IsBaseShape(shape))
+			continue;
+
+		std::string shapeName = shape->name.get();
+		auto mapped = shapeMap.find(shapeName);
+		std::string otherName = mapped != shapeMap.end() ? mapped->second : shapeName;
+
+		NiShape* otherShape = other.GetWorkNif()->FindBlockByName<NiShape>(otherName);
+		if (!otherShape) {
+			outComparison.skippedShapes.emplace_back(shapeName, "no shape '" + otherName + "' in the other project");
+			continue;
+		}
+
+		const size_t vertexCount = shape->GetNumVertices();
+		if (otherShape->GetNumVertices() != vertexCount) {
+			outComparison.skippedShapes.emplace_back(shapeName, "different vertex count");
+			continue;
+		}
+
+		for (auto& sliderName : sliderNames) {
+			std::vector<Vector3> here(vertexCount), there(vertexCount);
+			bool hasHere = project.ValidSlider(sliderName);
+			bool hasThere = other.ValidSlider(sliderName);
+			if (hasHere)
+				project.GetSliderDiff(shape, sliderName, here);
+			if (hasThere)
+				other.GetSliderDiff(otherShape, sliderName, there);
+
+			ProjectComparison::SliderDifference difference;
+			difference.shape = shapeName;
+			difference.slider = sliderName;
+			difference.onlyHere = !hasThere;
+			difference.onlyThere = !hasHere;
+			difference.deltas = MeshAnalysis::CompareDeltas(here, there);
+			outComparison.sliders.push_back(difference);
+		}
+
+		AnimInfo& hereAnim = *project.GetWorkAnim();
+		AnimInfo& thereAnim = *other.GetWorkAnim();
+		std::set<std::string> bones;
+		if (auto it = hereAnim.shapeBones.find(shapeName); it != hereAnim.shapeBones.end())
+			bones.insert(it->second.begin(), it->second.end());
+		if (auto it = thereAnim.shapeBones.find(otherName); it != thereAnim.shapeBones.end())
+			bones.insert(it->second.begin(), it->second.end());
+
+		for (auto& bone : bones) {
+			auto hereWeights = hereAnim.GetWeightsPtr(shapeName, bone);
+			auto thereWeights = thereAnim.GetWeightsPtr(otherName, bone);
+
+			std::set<uint16_t> vertices;
+			if (hereWeights)
+				for (auto& w : *hereWeights)
+					vertices.insert(w.first);
+			if (thereWeights)
+				for (auto& w : *thereWeights)
+					vertices.insert(w.first);
+
+			if (vertices.empty())
+				continue;
+
+			auto weightOf = [](const std::unordered_map<uint16_t, float>* weights, uint16_t v) {
+				if (!weights)
+					return 0.0f;
+				auto it = weights->find(v);
+				return it != weights->end() ? it->second : 0.0f;
+			};
+
+			ProjectComparison::WeightDifference difference;
+			difference.shape = shapeName;
+			difference.bone = bone;
+			difference.vertices = vertices.size();
+
+			double sum = 0.0;
+			for (uint16_t v : vertices) {
+				float error = std::fabs(weightOf(hereWeights, v) - weightOf(thereWeights, v));
+				sum += error;
+				difference.maxError = std::max(difference.maxError, error);
+			}
+			difference.meanError = static_cast<float>(sum / static_cast<double>(vertices.size()));
+			outComparison.weights.push_back(difference);
+		}
+	}
+
 	return OpResult();
 }

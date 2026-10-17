@@ -371,6 +371,7 @@ set(BSOS_COMMON_SOURCES
 	src/utils/GameUtil.cpp
 	src/utils/StackTrace.cpp
 	src/utils/StringStuff.cpp
+	src/utils/MainThreadDispatcher.cpp
 	src/utils/WxBuildConfigCheck.cpp
 )
 
@@ -482,6 +483,7 @@ if(BSOS_BUILD_TESTS)
 		tests/AutomationJsonTest.cpp
 		tests/ArchiveTest.cpp
 		tests/HkxFileTest.cpp
+		tests/MainThreadDispatcherTest.cpp
 		tests/MaskTransferTest.cpp
 		tests/MeshAnalysisTest.cpp
 		tests/SFMaterialDatabaseTest.cpp
@@ -509,6 +511,7 @@ if(BSOS_BUILD_TESTS)
 		src/utils/AABBTree.cpp
 		src/utils/ConfigurationManager.cpp
 		src/utils/PlatformUtil.cpp
+		src/utils/MainThreadDispatcher.cpp
 		src/utils/StringStuff.cpp
 		lib/FSEngine/FSBSA.cpp
 		lib/FSEngine/FSEngine.cpp
