@@ -232,6 +232,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="tests\SFMaterialDatabaseTest.cpp" />
+    <ClCompile Include="tests\AnimTest.cpp" />
+    <ClCompile Include="src\components\Anim.cpp" />
     <ClCompile Include="tests\SFLayeredMaterialTest.cpp" />
     <ClCompile Include="tests\SFMaterialFileTest.cpp" />
     <ClCompile Include="tests\SFResourceHashTest.cpp" />

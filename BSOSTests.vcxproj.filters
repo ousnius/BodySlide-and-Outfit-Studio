@@ -101,6 +101,12 @@
     <ClCompile Include="tests\SFMaterialDatabaseTest.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
+    <ClCompile Include="tests\AnimTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\Anim.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
     <ClCompile Include="tests\SFLayeredMaterialTest.cpp">
       <Filter>Tests</Filter>
     </ClCompile>

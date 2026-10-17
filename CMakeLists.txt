@@ -479,6 +479,7 @@ if(BSOS_BUILD_TESTS)
 	enable_testing()
 
 	add_executable(BSOSTests
+		tests/AnimTest.cpp
 		tests/ArchiveIndexTest.cpp
 		tests/AutomationJsonTest.cpp
 		tests/ArchiveTest.cpp
@@ -493,6 +494,7 @@ if(BSOS_BUILD_TESTS)
 		tests/SFResourceHashTest.cpp
 		tests/StarfieldDataTest.cpp
 		tests/StarfieldSpaceTest.cpp
+		src/components/Anim.cpp
 		src/components/ArchiveIndex.cpp
 		src/components/Automation.cpp
 		src/components/AutomationJson.cpp
