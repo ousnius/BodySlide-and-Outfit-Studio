@@ -5,6 +5,7 @@ See the included LICENSE file
 
 #include "OutfitProject.h"
 #include "../components/ClippingFixer.h"
+#include "../components/MaskOps.h"
 #include "../components/SliderDataFileUtil.h"
 #include "../components/WeightNorm.h"
 #include "../files/FBXWrangler.h"
@@ -40,17 +41,6 @@ bool AskImportChoice(IProjectHost& host, const std::optional<bool>& choice, cons
 		return *choice;
 
 	return host.Ask(msg, title, false, HostAnswer::Yes) == HostAnswer::Yes;
-}
-
-// Collects the masked vertices of a mesh.
-void GetMeshMask(Mesh* m, std::unordered_map<uint16_t, float>& mask) {
-	if (!m)
-		return;
-
-	for (int i = 0; i < m->nVerts; i++) {
-		if (m->mask[i] != 0.0f)
-			mask[i] = m->mask[i];
-	}
 }
 
 class ArchiveMaterialLoader {
@@ -2729,7 +2719,8 @@ void OutfitProject::CopyBoneWeights(NiShape* shape,
 	morpher.LinkRefDiffData(&dds);
 
 	std::unordered_map<uint16_t, float> refMask;
-	GetMeshMask(host->GetShapeMesh(baseShapeName), refMask);
+	if (Mesh* refMesh = host->GetShapeMesh(baseShapeName))
+		refMask = MaskOps::GetMasked(*refMesh);
 
 	std::set<uint16_t> refMaskIndices;
 	for (auto& m : refMask)
@@ -3796,7 +3787,8 @@ void OutfitProject::ConformShape(NiShape* shape, const ConformOptions& options) 
 		return;
 
 	std::unordered_map<uint16_t, float> mask;
-	GetMeshMask(host->GetShapeMesh(baseShape->name.get()), mask);
+	if (Mesh* refMesh = host->GetShapeMesh(baseShape->name.get()))
+		mask = MaskOps::GetMasked(*refMesh);
 
 	std::set<uint16_t> maskIndices;
 	for (auto& m : mask)

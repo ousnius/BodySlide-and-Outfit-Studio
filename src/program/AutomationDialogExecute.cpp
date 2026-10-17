@@ -10,6 +10,7 @@ See the included LICENSE file
 
 #include "../components/ClippingFixer.h"
 #include "../components/DiffData.h"
+#include "../components/MaskOps.h"
 #include "../components/UndoState.h"
 #include "../files/MaskFile.h"
 #include "../files/TriFile.h"
@@ -3446,37 +3447,6 @@ int AutomationDialog::ExecuteStepGrowShrinkMask(const AutomationStep& step) {
 	const bool grow = step.maskGrowShrinkMode == 0;
 	const int iterations = std::max(1, step.maskGrowShrinkCount);
 
-	// One pass of the same two stage logic the menu items use: welded vertices of
-	// the border first, and only when there are none of those the adjacent ring.
-	auto stepMask = [grow](Mesh* m) {
-		const float to = grow ? 1.0f : 0.0f;
-
-		std::vector<int> changed;
-		for (int i = 0; i < m->nVerts; i++) {
-			if (grow ? m->mask[i] == 0.0f : m->mask[i] > 0.0f)
-				continue;
-
-			m->DoForEachWeldedVertex(i, [&](int wvi) {
-				if (m->mask[wvi] != to)
-					changed.push_back(wvi);
-			});
-		}
-
-		if (changed.empty()) {
-			std::unordered_set<int> adjacentPoints;
-			for (int i = 0; i < m->nVerts; i++)
-				if (grow ? m->mask[i] > 0.0f : m->mask[i] == 0.0f)
-					m->GetAdjacentPoints(i, adjacentPoints);
-
-			for (int adj : adjacentPoints)
-				if (m->mask[adj] != to)
-					changed.push_back(adj);
-		}
-
-		for (int vi : changed)
-			m->mask[vi] = to;
-	};
-
 	for (auto* shape : shapes) {
 		std::string shapeName = shape->name.get();
 		Mesh* m = outfitStudio->glView->GetMesh(shapeName);
@@ -3486,9 +3456,7 @@ int AutomationDialog::ExecuteStepGrowShrinkMask(const AutomationStep& step) {
 		wxLogMessage("Automation: %s the mask of '%s' %d time(s)...", grow ? "Growing" : "Shrinking", shapeName, iterations);
 
 		for (int i = 0; i < iterations; i++)
-			stepMask(m);
-
-		m->QueueUpdate(Mesh::UpdateType::Mask);
+			MaskOps::ApplyChanges(*m, MaskOps::GrowShrinkChanges(*m, grow));
 	}
 
 	outfitStudio->glView->Render();
@@ -3509,10 +3477,7 @@ int AutomationDialog::ExecuteStepInvertMask(const AutomationStep& step) {
 			continue;
 
 		wxLogMessage("Automation: Inverting the mask of '%s'...", shapeName);
-		for (int i = 0; i < m->nVerts; i++)
-			m->mask[i] = 1.0f - m->mask[i];
-
-		m->QueueUpdate(Mesh::UpdateType::Mask);
+		MaskOps::ApplyChanges(*m, MaskOps::InvertChanges(*m));
 	}
 
 	outfitStudio->glView->Render();

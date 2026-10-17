@@ -39,6 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <cstddef>
 #include <cstdint>
 #include <deque>
+#include <functional>
 #include <map>
 #include <memory>
 #include <optional>
@@ -571,6 +572,8 @@ public:
 	std::unordered_map<std::string, std::vector<float>> StashMasks();
 	void UnstashMasks(const std::unordered_map<std::string, std::vector<float>>& stash);
 
+	// Applies the mask changes of each active mesh as one undo step
+	void ApplyMaskChanges(const std::function<std::unordered_map<int, float>(Mesh&)>& changesForMesh);
 	void MaskLess();
 	void MaskMore();
 	void InvertMask();

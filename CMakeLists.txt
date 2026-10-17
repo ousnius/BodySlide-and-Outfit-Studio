@@ -332,6 +332,7 @@ set(BSOS_COMMON_SOURCES
 	src/components/Anim.cpp
 	src/components/Automorph.cpp
 	src/components/ClippingFixer.cpp
+	src/components/MaskOps.cpp
 	src/components/DiffData.cpp
 	src/components/Mesh.cpp
 	src/components/NormalGenLayers.cpp

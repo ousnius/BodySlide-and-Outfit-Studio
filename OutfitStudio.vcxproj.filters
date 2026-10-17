@@ -754,6 +754,9 @@
     <ClInclude Include="src\components\ClippingFixer.h">
       <Filter>Components</Filter>
     </ClInclude>
+    <ClInclude Include="src\components\MaskOps.h">
+      <Filter>Components</Filter>
+    </ClInclude>
     <ClInclude Include="src\files\ObjFile.h">
       <Filter>Files</Filter>
     </ClInclude>
@@ -2149,6 +2152,9 @@
       <Filter>Components</Filter>
     </ClCompile>
     <ClCompile Include="src\components\ClippingFixer.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\MaskOps.cpp">
       <Filter>Components</Filter>
     </ClCompile>
     <ClCompile Include="src\components\DiffData.cpp">

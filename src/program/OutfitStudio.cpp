@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "OutfitStudio.h"
+#include "../components/MaskOps.h"
 #include "../components/SliderGroup.h"
 #include "../components/SliderPresets.h"
 #include "../files/HkxFile.h"
@@ -5175,16 +5176,18 @@ void OutfitStudioFrame::MeshFromProj(NiShape* shape, const bool reloadTextures) 
 	if (editUV)
 		editUV->Close();
 
-	if (extInitialized) {
-		glView->DeleteMesh(shape->name.get());
-		glView->AddMeshFromNif(project->GetWorkNif(), shape->name.get());
+	// The mesh is also the editable state of a shape (mask, brushes, slider preview), so it exists
+	// without OpenGL too. Buffers and textures follow once the view is initialized.
+	glView->DeleteMesh(shape->name.get());
+	glView->AddMeshFromNif(project->GetWorkNif(), shape->name.get());
 
+	if (extInitialized) {
 		MaterialFile matFile;
 		bool hasMatFile = project->GetShapeMaterialFile(shape, matFile);
 		glView->SetMeshTextures(shape->name.get(), project->GetShapeTextures(shape), hasMatFile, matFile, reloadTextures, project->GetShapeSFMaterial(shape));
-
-		UpdateMeshFromSet(shape);
 	}
+
+	UpdateMeshFromSet(shape);
 
 	std::vector<std::string> selShapes;
 	for (auto& i : selectedItems)
@@ -17500,44 +17503,19 @@ void wxGLPanel::UnstashMasks(const std::unordered_map<std::string, std::vector<f
 	}
 }
 
-void wxGLPanel::MaskLess() {
+void wxGLPanel::ApplyMaskChanges(const std::function<std::unordered_map<int, float>(Mesh&)>& changesForMesh) {
 	UndoStateProject* usp = GetUndoHistory()->PushState();
 	usp->undoType = UndoType::Mask;
+
 	for (auto& m : gls.GetActiveMeshes()) {
 		usp->usss.emplace_back();
 		UndoStateShape& uss = usp->usss.back();
 		uss.shapeName = m->shapeName;
 
-		// First, try to remove welds of unmasked points from the mask.
-		bool unmaskedAWeld = false;
-		for (int i = 0; i < m->nVerts; ++i) {
-			if (m->mask[i] > 0.0f)
-				continue;
-			m->DoForEachWeldedVertex(i, [&](int wvi){
-				if (m->mask[wvi] != 0.0f) {
-					uss.pointStartState[wvi].x = m->mask[wvi];
-					uss.pointEndState[wvi].x = 0.0f;
-					unmaskedAWeld = true;
-				}
-			});
+		for (auto& change : changesForMesh(*m)) {
+			uss.pointStartState[change.first].x = m->mask[change.first];
+			uss.pointEndState[change.first].x = change.second;
 		}
-
-		// If we unmasked a weld, we've done something useful, so stop.
-		if (unmaskedAWeld)
-			continue;
-
-		// Get points adjacent to unmasked points, taking welds into account.
-		std::unordered_set<int> adjacentPoints;
-		for (int i = 0; i < m->nVerts; i++)
-			if (m->mask[i] == 0.0f)
-				m->GetAdjacentPoints(i, adjacentPoints);
-
-		// Unmask the adjacent points
-		for (auto& adj : adjacentPoints)
-			if (m->mask[adj] != 0.0f) {
-				uss.pointStartState[adj].x = m->mask[adj];
-				uss.pointEndState[adj].x = 0.0f;
-			}
 	}
 
 	ApplyUndoState(usp, false);
@@ -17548,100 +17526,20 @@ void wxGLPanel::MaskLess() {
 	os->UpdateUndoTools();
 }
 
+void wxGLPanel::MaskLess() {
+	ApplyMaskChanges([](Mesh& m) { return MaskOps::GrowShrinkChanges(m, false); });
+}
 
 void wxGLPanel::MaskMore() {
-	UndoStateProject* usp = GetUndoHistory()->PushState();
-	usp->undoType = UndoType::Mask;
-	for (auto& m : gls.GetActiveMeshes()) {
-		usp->usss.emplace_back();
-		UndoStateShape& uss = usp->usss.back();
-		uss.shapeName = m->shapeName;
-
-		// First, try to add welds of masked points to the mask.
-		bool maskedAWeld = false;
-		for (int i = 0; i < m->nVerts; ++i) {
-			if (m->mask[i] == 0.0f)
-				continue;
-			m->DoForEachWeldedVertex(i, [&](int wvi){
-				if (m->mask[wvi] != 1.0f) {
-					uss.pointStartState[wvi].x = m->mask[wvi];
-					uss.pointEndState[wvi].x = 1.0f;
-					maskedAWeld = true;
-				}
-			});
-		}
-
-		// If we masked a weld, we've done something useful, so stop.
-		if (maskedAWeld)
-			continue;
-
-		// Get points adjacent to masked points, taking welds into account.
-		std::unordered_set<int> adjacentPoints;
-		for (int i = 0; i < m->nVerts; i++)
-			if (m->mask[i] > 0.0f)
-				m->GetAdjacentPoints(i, adjacentPoints);
-
-		// Mask the adjacent points
-		for (auto& adj : adjacentPoints) {
-			if (m->mask[adj] != 1.0f) {
-				uss.pointStartState[adj].x = m->mask[adj];
-				uss.pointEndState[adj].x = 1.0f;
-			}
-		}
-	}
-
-	ApplyUndoState(usp, false);
-
-	if (!Config.GetBoolValue("Input/MaskHistory"))
-		GetUndoHistory()->PopState();
-
-	os->UpdateUndoTools();
+	ApplyMaskChanges([](Mesh& m) { return MaskOps::GrowShrinkChanges(m, true); });
 }
 
 void wxGLPanel::InvertMask() {
-	UndoStateProject* usp = GetUndoHistory()->PushState();
-	usp->undoType = UndoType::Mask;
-
-	for (auto& m : gls.GetActiveMeshes()) {
-		usp->usss.emplace_back();
-		UndoStateShape& uss = usp->usss.back();
-		uss.shapeName = m->shapeName;
-
-		for (int i = 0; i < m->nVerts; i++) {
-			uss.pointStartState[i].x = m->mask[i];
-			uss.pointEndState[i].x = 1.0f - m->mask[i];
-		}
-	}
-
-	ApplyUndoState(usp, false);
-
-	if (!Config.GetBoolValue("Input/MaskHistory"))
-		GetUndoHistory()->PopState();
-
-	os->UpdateUndoTools();
+	ApplyMaskChanges([](Mesh& m) { return MaskOps::InvertChanges(m); });
 }
 
 void wxGLPanel::ClearMask() {
-	UndoStateProject* usp = GetUndoHistory()->PushState();
-	usp->undoType = UndoType::Mask;
-
-	for (auto& m : gls.GetActiveMeshes()) {
-		usp->usss.emplace_back();
-		UndoStateShape& uss = usp->usss.back();
-		uss.shapeName = m->shapeName;
-
-		for (int i = 0; i < m->nVerts; i++) {
-			uss.pointStartState[i].x = m->mask[i];
-			uss.pointEndState[i].x = 0.0f;
-		}
-	}
-
-	ApplyUndoState(usp, false);
-
-	if (!Config.GetBoolValue("Input/MaskHistory"))
-		GetUndoHistory()->PopState();
-
-	os->UpdateUndoTools();
+	ApplyMaskChanges([](Mesh& m) { return MaskOps::ClearChanges(m); });
 }
 
 bool wxGLPanel::RestoreMode(UndoStateProject* usp) {
