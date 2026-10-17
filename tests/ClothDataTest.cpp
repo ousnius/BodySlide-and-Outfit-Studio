@@ -247,6 +247,25 @@ TEST_CASE("Cloth sources survive rename duplication and delete undo", "[cloth][e
     CHECK(Payloads(outfit) == std::vector<std::string>{"coat physics"});
 }
 
+TEST_CASE("Restoring a project snapshot restores the cloth of every shape", "[cloth][export]") {
+    ClothData data;
+    auto outfit = Fixture("Coat", coatBones, {coatCloth.front()});
+    data.Capture(outfit, "coat.nif", outfit.GetShapes(), Skeleton);
+    NifFile before(outfit);
+    const auto snapshot = data.GetAllShapeSources();
+
+    // Edits after the snapshot rename the shape and import another file
+    data.RenameShape("Coat", "Renamed");
+    auto other = Fixture("Other", coatBones, {{"other physics", {"Cloth_Bone_001"}}});
+    data.Capture(other, "other.nif", other.GetShapes(), Skeleton);
+
+    data.SetAllShapeSources(snapshot);
+    CHECK(data.GetShapeSources("Renamed").empty());
+    CHECK(data.GetShapeSources("Other").empty());
+    data.Apply(before);
+    CHECK(Payloads(before) == std::vector<std::string>{"coat physics"});
+}
+
 TEST_CASE("Reimporting the same path never replaces an earlier shape's cloth", "[cloth][export]") {
     ClothData data;
     auto first = Fixture("First", coatBones, {{"first version", {"Cloth_Bone_001"}}});

@@ -314,6 +314,7 @@ public:
 		std::unordered_map<std::string, MaterialFile> shapeMaterialFiles;
 		std::unordered_map<std::string, std::shared_ptr<const SFLayeredMaterial>> shapeSFMaterials;
 		std::unordered_map<std::string, std::vector<std::string>> shapePhysicsFiles;
+		ClothData::ShapeSources clothSources;
 	};
 
 	std::unique_ptr<Snapshot> CaptureSnapshot();

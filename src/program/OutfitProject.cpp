@@ -318,6 +318,7 @@ std::unique_ptr<OutfitProject::Snapshot> OutfitProject::CaptureSnapshot() {
 	snapshot->shapeMaterialFiles = shapeMaterialFiles;
 	snapshot->shapeSFMaterials = shapeSFMaterials;
 	snapshot->shapePhysicsFiles = shapePhysicsFiles;
+	snapshot->clothSources = clothData.GetAllShapeSources();
 	return snapshot;
 }
 
@@ -341,6 +342,7 @@ void OutfitProject::RestoreSnapshot(const Snapshot& snapshot) {
 	shapeMaterialFiles = snapshot.shapeMaterialFiles;
 	shapeSFMaterials = snapshot.shapeSFMaterials;
 	shapePhysicsFiles = snapshot.shapePhysicsFiles;
+	clothData.SetAllShapeSources(snapshot.clothSources);
 }
 
 void OutfitProject::UpdateProgress(int val, const wxString& msg) {

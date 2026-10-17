@@ -19,13 +19,14 @@ class ClothData {
 public:
 	using Sources = std::vector<std::string>;
 	using Blocks = std::map<std::string, std::unique_ptr<nifly::BSClothExtraData>>;
+	using ShapeSources = std::unordered_map<std::string, Sources>;
 
 	// Tells whether a bone belongs to the reference skeleton rather than to a loaded outfit
 	using SkeletonBones = std::function<bool(const std::string&)>;
 
 private:
 	Blocks blocks;
-	std::unordered_map<std::string, Sources> shapeSources;
+	ShapeSources shapeSources;
 	Sources manualSources;
 
 	std::string Add(const std::string& source, std::unique_ptr<nifly::BSClothExtraData> block);
@@ -38,6 +39,10 @@ public:
 	void SetShapeSources(const std::string& shape, const Sources& sources);
 	void RemoveShape(const std::string& shape) { shapeSources.erase(shape); }
 	void RenameShape(const std::string& before, const std::string& after);
+
+	// The cloth of every shape, for project snapshots. Blocks are never removed, so restored sources stay valid.
+	const ShapeSources& GetAllShapeSources() const { return shapeSources; }
+	void SetAllShapeSources(const ShapeSources& sources) { shapeSources = sources; }
 
 	// Takes the cloth blocks out of the NIF and assigns them to the given shapes.
 	// Cloth drives the bones an outfit adds to the skeleton, so a block belongs to the shapes of the file skinned to an
