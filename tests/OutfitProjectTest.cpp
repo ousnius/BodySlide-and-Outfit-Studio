@@ -13,6 +13,7 @@
 #include <filesystem>
 #include <map>
 #include <memory>
+#include <random>
 
 extern ConfigurationManager Config;
 
@@ -46,7 +47,35 @@ void MakeGrid(int n, float size, float z, std::vector<Vector3>& verts, std::vect
 	}
 }
 
-std::string WriteGridNif(const std::string& fileName, const std::string& shapeName, int n, float z) {
+// Folder of its own for each fixture, so test processes running at the same time don't share files
+struct TempFolder {
+	std::filesystem::path path;
+
+	TempFolder() {
+		std::random_device random;
+		path = std::filesystem::temp_directory_path() / ("BSOSTests-" + std::to_string(random()));
+		std::filesystem::create_directories(path);
+	}
+
+	~TempFolder() {
+		std::error_code error;
+		std::filesystem::remove_all(path, error);
+	}
+};
+
+// Sets the target game for the lifetime of a fixture, also when its setup fails part way
+struct TargetGameScope {
+	int previous = 0;
+
+	explicit TargetGameScope(TargetGame game) {
+		previous = Config.GetIntValue("TargetGame");
+		Config.SetValue("TargetGame", static_cast<int>(game));
+	}
+
+	~TargetGameScope() { Config.SetValue("TargetGame", previous); }
+};
+
+std::string WriteGridNif(const std::filesystem::path& dir, const std::string& fileName, const std::string& shapeName, int n, float z) {
 	std::vector<Vector3> verts;
 	std::vector<Triangle> tris;
 	std::vector<Vector2> uvs;
@@ -56,8 +85,6 @@ std::string WriteGridNif(const std::string& fileName, const std::string& shapeNa
 	nif.Create(nifly::NiVersion::getSSE());
 	nif.CreateShapeFromData(shapeName, &verts, &tris, &uvs);
 
-	auto dir = std::filesystem::temp_directory_path() / "BSOSTests";
-	std::filesystem::create_directories(dir);
 	auto path = dir / fileName;
 	REQUIRE(nif.Save(path) == 0);
 	return path.string();
@@ -84,7 +111,8 @@ public:
 // A body grid with a "Grow" slider that lifts it by 1 and two bones weighted along X,
 // and a coarser skirt grid half a unit above it.
 struct ProjectFixture {
-	int previousTargetGame = 0;
+	TargetGameScope targetGame{SKYRIMSE};
+	TempFolder folder;
 	MeshHost host;
 	OutfitProject project{&host, false};
 	EditorState editor;
@@ -93,12 +121,10 @@ struct ProjectFixture {
 	NiShape* skirt = nullptr;
 
 	ProjectFixture() {
-		previousTargetGame = Config.GetIntValue("TargetGame");
-		Config.SetValue("TargetGame", static_cast<int>(SKYRIMSE));
 		host.project = &project;
 
-		REQUIRE(project.LoadReferenceNif(WriteGridNif("Body.nif", "Body", 10, 0.0f), "Body") == 0);
-		REQUIRE(project.ImportNIF(WriteGridNif("Skirt.nif", "Skirt", 6, 0.5f), false) == 0);
+		REQUIRE(project.LoadReferenceNif(WriteGridNif(folder.path, "Body.nif", "Body", 10, 0.0f), "Body") == 0);
+		REQUIRE(project.ImportNIF(WriteGridNif(folder.path, "Skirt.nif", "Skirt", 6, 0.5f), false) == 0);
 		body = project.GetWorkNif()->FindBlockByName<NiShape>("Body");
 		skirt = project.GetWorkNif()->FindBlockByName<NiShape>("Skirt");
 		REQUIRE(body);
@@ -134,8 +160,6 @@ struct ProjectFixture {
 		if (HasRefresh(flags, RefreshFlags::Meshes))
 			host.BuildMeshes();
 	}
-
-	~ProjectFixture() { Config.SetValue("TargetGame", previousTargetGame); }
 
 	float Weight(NiShape* shape, const std::string& bone, uint16_t vertex) {
 		auto weights = project.GetWorkAnim()->GetWeightsPtr(shape->name.get(), bone);
