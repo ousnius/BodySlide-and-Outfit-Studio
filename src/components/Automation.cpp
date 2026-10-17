@@ -6,6 +6,7 @@ See the included LICENSE file
 #include "Automation.h"
 
 #include "../utils/PlatformUtil.h"
+#include "../utils/StringStuff.h"
 
 #include <tinyxml2.h>
 
@@ -993,4 +994,57 @@ void AutomationScript::SubstitutePlaceholders(const std::map<std::string, std::s
 
 		SubstituteStepPlaceholders(step, vars);
 	}
+}
+
+namespace {
+
+const std::vector<AutomationTexturePathDef> TexturePathDefs = {
+	{0, "Diffuse", "0: Diffuse"},
+	{1, "Normal", "1: Normal"},
+	{2, "Glow/Skin", "2: Glow/Skin"},
+	{3, "Parallax", "3: Parallax"},
+	{4, "Environment", "4: Environment"},
+	{5, "Env Mask", "5: Env Mask"},
+	{6, "6", "6"},
+	{7, "Specular", "7: Specular"},
+	{8, "8", "8"},
+	{9, "9", "9"},
+	{10, "10", "10"},
+	{11, "11", "11"},
+	{12, "12", "12"}
+};
+
+} // namespace
+
+const std::vector<AutomationTexturePathDef>& GetAutomationTexturePathDefs() {
+	return TexturePathDefs;
+}
+
+const AutomationTexturePathDef* FindAutomationTexturePathDef(int index) {
+	for (const auto& def : TexturePathDefs) {
+		if (def.index == index)
+			return &def;
+	}
+	return nullptr;
+}
+
+int AutomationTexturePathIndexForName(const std::string& name) {
+	std::string nameLower = ToLower(name);
+	for (const auto& def : TexturePathDefs) {
+		if (nameLower == ToLower(def.name) || nameLower == ToLower(def.label))
+			return def.index;
+	}
+	return -1;
+}
+
+int ResolveAutomationTexturePathIndex(const AutomationStep::TexturePath& path) {
+	if (path.index >= 0)
+		return path.index;
+
+	return AutomationTexturePathIndexForName(path.name);
+}
+
+std::string AutomationTexturePathNameForIndex(int index) {
+	const AutomationTexturePathDef* def = FindAutomationTexturePathDef(index);
+	return def ? def->name : std::to_string(index);
 }

@@ -8,8 +8,15 @@ See the included LICENSE file
 #include "../components/Anim.h"
 #include "../components/Automorph.h"
 #include "../components/Mesh.h"
+#include "../components/UndoState.h"
+#include "../files/ObjFile.h"
 #include "../files/SFMaterialResolver.h"
-#include "OutfitStudio.h"
+#include "ProjectHost.h"
+#include "../utils/TargetGame.h"
+
+#ifdef USE_FBXSDK
+#include "../files/FBXWrangler.h"
+#endif
 
 #include <cstddef>
 #include <cstdint>
@@ -63,7 +70,39 @@ struct SliderDataLocation {
 	std::vector<std::string> dataFolders;
 };
 
-class OutfitStudioFrame;
+// Answers to the questions an OBJ or FBX import can ask. Unset answers are asked through the host.
+struct ImportChoices {
+	std::optional<bool> copyReferenceSkinTransform;
+	// The merge shape has the same vertex count: update it instead of adding a new shape
+	std::optional<bool> updateMatchingShape;
+	std::optional<bool> updatePositions;
+	std::optional<bool> updateUVs;
+	std::optional<bool> updateNormals;
+	std::optional<bool> updateWeights; // FBX only
+	std::optional<std::string> newShapeName;
+};
+
+// Bones whose transforms are inconsistent, and the fix chosen for each of them.
+struct BadBonesReport {
+	struct ShapeBadBones {
+		std::unordered_map<std::string, nifly::MatTransform> badStandard, badCustom;
+		bool fixStanSkin = false;
+	};
+
+	struct BadCustomBone {
+		std::unordered_set<std::string> badShapes, goodShapes;
+		enum FixType { DoNothing, TrustNode, TrustSkin };
+		int fixtype = DoNothing;
+		std::string trustShape;
+	};
+
+	// Every skinned shape by name, including those without bad bones
+	std::unordered_map<std::string, ShapeBadBones> shapeBBs;
+	// Bad custom bones by bone name
+	std::unordered_map<std::string, BadCustomBone> badCBs;
+	bool found = false;
+};
+
 struct UndoStateShape;
 struct UndoStateShapeDelete;
 
@@ -145,7 +184,8 @@ std::vector<bool> CalcVertexListForAsymmetryTasks(const SymmetricVertices& symve
 void AddWeldedToVertexList(const Mesh::WeldVertsType& welcVerts, std::vector<bool>& selVerts);
 
 class OutfitProject {
-	OutfitStudioFrame* owner = nullptr;
+	IProjectHost* host = nullptr;
+	std::unique_ptr<NonInteractiveHost> ownHost;
 
 	void UpdateProgress(int val, const wxString& msg = "");
 
@@ -155,6 +195,12 @@ class OutfitProject {
 
 	// All cloth data blocks that have been loaded during work
 	std::unordered_map<std::string, std::unique_ptr<nifly::BSClothExtraData>> clothData;
+
+	struct ShapeReferenceSource {
+		std::string projectFile;
+		std::string projectName;
+	};
+	std::unordered_map<std::string, ShapeReferenceSource> shapeRefSources;
 
 	// All HDT-SMP physics links that sat on the root node of a loaded NIF. The
 	// game reads only one of them, so a single one is picked for the output.
@@ -247,13 +293,36 @@ public:
 	// is about to be merged into the work NIF, keyed by shape name.
 	void CapturePhysicsFiles(nifly::NifFile& nif, const std::vector<nifly::NiShape*>& shapes);
 
-	// Set while an unattended script drives the project. Prompts that would
-	// otherwise stall the run fall back to their default answer instead.
-	bool suppressPrompts = false;
+	// Without a host, the project runs unattended and answers prompts with their defaults.
+	// Copy of the editable project data, to return to after trying out a change.
+	// Not included: the shared skeleton, cloth and physics extra data, and the file names the project was saved as.
+	struct Snapshot {
+		nifly::NifFile workNif;
+		AnimInfo workAnim;
+		DiffDataSets baseDiffData;
+		DiffDataSets morphResults;
+		std::unordered_map<std::string, std::string> morphDataNames;
+		SliderSet activeSet;
+		std::string outfitName;
+		std::string baseShapeName;
+		std::string refProjectFile;
+		std::string refProjectName;
+		std::string refShapeName;
+		std::unordered_map<std::string, ShapeReferenceSource> shapeRefSources;
+		std::unordered_map<std::string, std::vector<std::string>> shapeTextures;
+		std::unordered_map<std::string, MaterialFile> shapeMaterialFiles;
+		std::unordered_map<std::string, std::shared_ptr<const SFLayeredMaterial>> shapeSFMaterials;
+		std::unordered_map<std::string, std::vector<std::string>> shapePhysicsFiles;
+	};
 
-	// inOwner is meant to provide access to OutfitStudio for the purposes of reporting process status only.
-	OutfitProject(OutfitStudioFrame* inOwner = nullptr);
+	std::unique_ptr<Snapshot> CaptureSnapshot();
+	// Shape pointers into the work NIF are invalid afterwards
+	void RestoreSnapshot(const Snapshot& snapshot);
+
+	explicit OutfitProject(IProjectHost* inHost = nullptr);
 	~OutfitProject();
+
+	IProjectHost& GetHost() { return *host; }
 
 	wxString mFileName;
 	wxString mOutfitName;
@@ -278,6 +347,13 @@ public:
 	std::string mRefProjectFile;    // OSP file path relative to project dir
 	std::string mRefProjectName;    // Slider set name in the OSP file
 	std::string mRefShapeName;      // Shape name in the project
+
+	// Shape names in display and output order
+	std::vector<std::string> GetShapeOrder() { return workNif.GetShapeNames(); }
+
+	// Reference project a shape came from. It is restored when the shape becomes the reference again.
+	bool GetShapeReferenceSource(const std::string& shapeName, std::string& outProjectFile, std::string& outProjectName) const;
+	void SetShapeReferenceSource(const std::string& shapeName, const std::string& projectFile, const std::string& projectName);
 
 	// Returns a string error message or empty string on success.
 	std::string Save(const wxFileName& sliderSetFile,
@@ -435,6 +511,9 @@ public:
 	// pose-independent undo/redo. Only has effect when bPose is true.
 	void ComputeUndoRestDiffs(nifly::NiShape* shape, UndoStateShape& uss);
 	void ScaleMorphResult(nifly::NiShape* shape, const std::string& sliderName, float scaleValue);
+	// Smooths the morph of an outfit shape for a slider. Fully masked vertices keep their morph.
+	// Returns false if the shape has no morph for the slider.
+	bool SmoothSliderDiff(nifly::NiShape* shape, const std::string& sliderName, int iterations, float strength);
 	void MoveVertex(nifly::NiShape* shape, const nifly::Vector3& pos, const int& id);
 	void OffsetShape(nifly::NiShape* shape, const nifly::Vector3& xlate, std::unordered_map<uint16_t, float>* mask = nullptr);
 	void ScaleShape(nifly::NiShape* shape, const nifly::Vector3& scale, std::unordered_map<uint16_t, float>* mask = nullptr);
@@ -549,7 +628,11 @@ public:
 	void RemoveSkinning(nifly::NiShape* s);
 	void RemoveSkinning();
 
-	bool CheckForBadBones(bool interactive = true);
+	// Finds bones with inconsistent transforms and recommends a fix for each of them.
+	BadBonesReport FindBadBones();
+	void FixBadBones(const BadBonesReport& report);
+	// Applies the recommended fixes. Returns false if there were no bad bones.
+	bool CheckForBadBones();
 	bool ShapeHasBadBones(nifly::NiShape* s);
 
 	void GetAllPoseTransforms(nifly::NiShape* s, std::vector<nifly::MatTransform>& ts);
@@ -577,7 +660,11 @@ public:
 	// No-op for non-Starfield NIFs.
 	void GenerateStarfieldMeshlets(nifly::NifFile& nif);
 
-	int ImportOBJ(const std::string& fileName, const std::string& shapeName = "", nifly::NiShape* mergeShape = nullptr);
+	int ImportOBJ(const std::string& fileName,
+				  const ObjImportOptions& options,
+				  const std::string& shapeName = "",
+				  nifly::NiShape* mergeShape = nullptr,
+				  const ImportChoices& choices = {});
 	int ExportOBJ(const std::string& fileName,
 				  const std::vector<nifly::NiShape*>& shapes,
 				  bool transToGlobal,
@@ -585,7 +672,11 @@ public:
 				  const nifly::Vector3& offset = nifly::Vector3());
 
 #ifdef USE_FBXSDK
-	int ImportFBX(const std::string& fileName, const std::string& shapeName = "", nifly::NiShape* mergeShape = nullptr);
+	int ImportFBX(const std::string& fileName,
+				  const FBXImportOptions& options,
+				  const std::string& shapeName = "",
+				  nifly::NiShape* mergeShape = nullptr,
+				  const ImportChoices& choices = {});
 	int ExportFBX(const std::string& fileName, const std::vector<nifly::NiShape*>& shapes, bool transToGlobal);
 #endif
 };

@@ -754,6 +754,12 @@
     <ClInclude Include="src\components\ClippingFixer.h">
       <Filter>Components</Filter>
     </ClInclude>
+    <ClInclude Include="src\components\MaskOps.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\MeshAnalysis.h">
+      <Filter>Components</Filter>
+    </ClInclude>
     <ClInclude Include="src\files\ObjFile.h">
       <Filter>Files</Filter>
     </ClInclude>
@@ -886,6 +892,21 @@
     <ClInclude Include="src\program\OutfitProject.h">
       <Filter>Program</Filter>
     </ClInclude>
+    <ClInclude Include="src\program\ProjectHost.h">
+      <Filter>Program</Filter>
+    </ClInclude>
+    <ClInclude Include="src\program\ProjectOperations.h">
+      <Filter>Program</Filter>
+    </ClInclude>
+    <ClInclude Include="src\program\BrushStrokeController.h">
+      <Filter>Program</Filter>
+    </ClInclude>
+    <ClInclude Include="src\program\EditorState.h">
+      <Filter>Program</Filter>
+    </ClInclude>
+    <ClInclude Include="src\program\BadBonesDialog.h">
+      <Filter>Program</Filter>
+    </ClInclude>
     <ClInclude Include="src\render\GLShader.h">
       <Filter>Rendering</Filter>
     </ClInclude>
@@ -938,6 +959,9 @@
       <Filter>Utilities</Filter>
     </ClInclude>
     <ClInclude Include="src\utils\StringStuff.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\TargetGame.h">
       <Filter>Utilities</Filter>
     </ClInclude>
     <ClInclude Include="lib\gli\core\coord.hpp">
@@ -1564,7 +1588,13 @@
     <ClInclude Include="src\program\AutomationDialog.h">
       <Filter>Program</Filter>
     </ClInclude>
+    <ClInclude Include="src\program\AutomationRunner.h">
+      <Filter>Program</Filter>
+    </ClInclude>
     <ClInclude Include="src\components\Automation.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\AutomationJson.h">
       <Filter>Components</Filter>
     </ClInclude>
     <ClInclude Include="src\utils\ConfigDialogUtil.h">
@@ -2142,6 +2172,12 @@
     <ClCompile Include="src\components\ClippingFixer.cpp">
       <Filter>Components</Filter>
     </ClCompile>
+    <ClCompile Include="src\components\MaskOps.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\MeshAnalysis.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
     <ClCompile Include="src\components\DiffData.cpp">
       <Filter>Components</Filter>
     </ClCompile>
@@ -2251,6 +2287,18 @@
       <Filter>Program</Filter>
     </ClCompile>
     <ClCompile Include="src\program\OutfitProject.cpp">
+      <Filter>Program</Filter>
+    </ClCompile>
+    <ClCompile Include="src\program\ProjectHost.cpp">
+      <Filter>Program</Filter>
+    </ClCompile>
+    <ClCompile Include="src\program\ProjectOperations.cpp">
+      <Filter>Program</Filter>
+    </ClCompile>
+    <ClCompile Include="src\program\BrushStrokeController.cpp">
+      <Filter>Program</Filter>
+    </ClCompile>
+    <ClCompile Include="src\program\BadBonesDialog.cpp">
       <Filter>Program</Filter>
     </ClCompile>
     <ClCompile Include="src\render\GLSurface.cpp">
@@ -2403,10 +2451,13 @@
     <ClCompile Include="src\program\AutomationDialog.cpp">
       <Filter>Program</Filter>
     </ClCompile>
-    <ClCompile Include="src\program\AutomationDialogExecute.cpp">
+    <ClCompile Include="src\program\AutomationRunner.cpp">
       <Filter>Program</Filter>
     </ClCompile>
     <ClCompile Include="src\components\Automation.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\AutomationJson.cpp">
       <Filter>Components</Filter>
     </ClCompile>
     <ClCompile Include="src\program\SliderDataImportDialog.cpp">

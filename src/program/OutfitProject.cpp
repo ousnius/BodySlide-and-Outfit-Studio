@@ -5,6 +5,7 @@ See the included LICENSE file
 
 #include "OutfitProject.h"
 #include "../components/ClippingFixer.h"
+#include "../components/MaskOps.h"
 #include "../components/SliderDataFileUtil.h"
 #include "../components/WeightNorm.h"
 #include "../files/FBXWrangler.h"
@@ -12,8 +13,6 @@ See the included LICENSE file
 #include "../files/ObjFile.h"
 #include "../files/TriFile.h"
 #include "../files/SFMorphFile.h"
-#include "FBXImportDialog.h"
-#include "ObjImportDialog.h"
 #include "../utils/PlatformUtil.h"
 #include "../utils/StringStuff.h"
 #include "../utils/ProjectUtil.h"
@@ -27,12 +26,22 @@ See the included LICENSE file
 #include <limits>
 #include <regex>
 #include <sstream>
+#include <wx/log.h>
+#include <wx/collpane.h>
 
 extern ConfigurationManager Config;
 
 using namespace nifly;
 
 namespace {
+
+// Uses the given answer to an import question, or asks the host with "yes" as the default.
+bool AskImportChoice(IProjectHost& host, const std::optional<bool>& choice, const wxString& msg, const wxString& title) {
+	if (choice)
+		return *choice;
+
+	return host.Ask(msg, title, false, HostAnswer::Yes) == HostAnswer::Yes;
+}
 
 class ArchiveMaterialLoader {
 public:
@@ -270,8 +279,13 @@ void RemapExtraDataStrings(NifFile& nif, NiExtraData* extraData) {
 
 }
 
-OutfitProject::OutfitProject(OutfitStudioFrame* inOwner) {
-	owner = inOwner;
+OutfitProject::OutfitProject(IProjectHost* inHost) {
+	host = inHost;
+	if (!host) {
+		ownHost = std::make_unique<NonInteractiveHost>();
+		host = ownHost.get();
+	}
+
 	workAnim.SetRefNif(&workNif);
 
 	LoadDefaultSkeletonReference();
@@ -281,9 +295,50 @@ OutfitProject::OutfitProject(OutfitStudioFrame* inOwner) {
 		mGenWeights = true;
 }
 
+std::unique_ptr<OutfitProject::Snapshot> OutfitProject::CaptureSnapshot() {
+	auto snapshot = std::make_unique<Snapshot>();
+	snapshot->workNif = workNif;
+	snapshot->workAnim = workAnim;
+	snapshot->baseDiffData = baseDiffData;
+	morpher.SaveResults(snapshot->morphResults, snapshot->morphDataNames);
+	snapshot->activeSet = activeSet;
+	snapshot->outfitName = outfitName;
+	snapshot->baseShapeName = baseShape ? baseShape->name.get() : "";
+	snapshot->refProjectFile = mRefProjectFile;
+	snapshot->refProjectName = mRefProjectName;
+	snapshot->refShapeName = mRefShapeName;
+	snapshot->shapeRefSources = shapeRefSources;
+	snapshot->shapeTextures = shapeTextures;
+	snapshot->shapeMaterialFiles = shapeMaterialFiles;
+	snapshot->shapeSFMaterials = shapeSFMaterials;
+	snapshot->shapePhysicsFiles = shapePhysicsFiles;
+	return snapshot;
+}
+
+void OutfitProject::RestoreSnapshot(const Snapshot& snapshot) {
+	morpher.UnlinkRefDiffData();
+	morpher.ClearProximityCache();
+
+	workNif = snapshot.workNif;
+	workAnim = snapshot.workAnim;
+	workAnim.SetRefNif(&workNif);
+	baseDiffData = snapshot.baseDiffData;
+	morpher.RestoreResults(snapshot.morphResults, snapshot.morphDataNames);
+	activeSet = snapshot.activeSet;
+	outfitName = snapshot.outfitName;
+	baseShape = snapshot.baseShapeName.empty() ? nullptr : workNif.FindBlockByName<NiShape>(snapshot.baseShapeName);
+	mRefProjectFile = snapshot.refProjectFile;
+	mRefProjectName = snapshot.refProjectName;
+	mRefShapeName = snapshot.refShapeName;
+	shapeRefSources = snapshot.shapeRefSources;
+	shapeTextures = snapshot.shapeTextures;
+	shapeMaterialFiles = snapshot.shapeMaterialFiles;
+	shapeSFMaterials = snapshot.shapeSFMaterials;
+	shapePhysicsFiles = snapshot.shapePhysicsFiles;
+}
+
 void OutfitProject::UpdateProgress(int val, const wxString& msg) {
-	if (owner)
-		owner->UpdateProgress(val, msg);
+	host->UpdateProgress(val, msg);
 }
 
 OutfitProject::~OutfitProject() {}
@@ -489,7 +544,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 
 	if (workNif.IsValid()) {
 		workAnim.CleanupBones();
-		owner->UpdateAnimationGUI();
+		host->OnAnimationChanged();
 
 		NifFile clone(workNif);
 		ChooseClothData(clone);
@@ -507,7 +562,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 		for (auto& s : clone.GetShapes())
 			clone.UpdateSkinPartitions(s);
 
-		clone.SetShapeOrder(owner->GetShapeList());
+		clone.SetShapeOrder(GetShapeOrder());
 		clone.GetHeader().SetExportInfo("Exported using Outfit Studio.");
 
 		// Project ShapeData NIFs always use internal geometry for simplicity
@@ -522,7 +577,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 		}
 	}
 
-	owner->ShowPartition();
+	host->OnPartitionsChanged();
 	UpdateProgress(100, _("Finished"));
 	return errmsg;
 }
@@ -659,9 +714,26 @@ bool OutfitProject::ShapeSliderDataIsLocalOnly(const std::string& shapeName) {
 	return true;
 }
 
+bool OutfitProject::GetShapeReferenceSource(const std::string& shapeName, std::string& outProjectFile, std::string& outProjectName) const {
+	auto it = shapeRefSources.find(shapeName);
+	if (it == shapeRefSources.end()) {
+		outProjectFile.clear();
+		outProjectName.clear();
+		return false;
+	}
+
+	outProjectFile = it->second.projectFile;
+	outProjectName = it->second.projectName;
+	return true;
+}
+
+void OutfitProject::SetShapeReferenceSource(const std::string& shapeName, const std::string& projectFile, const std::string& projectName) {
+	shapeRefSources[shapeName] = {projectFile, projectName};
+}
+
 void OutfitProject::SetBaseShape(NiShape* shape, const bool moveData) {
-	if (owner && baseShape && baseShape != shape && (!mRefProjectFile.empty() || !mRefProjectName.empty()))
-		owner->SetShapeReferenceSource(baseShape, mRefProjectFile, mRefProjectName);
+	if (baseShape && baseShape != shape && (!mRefProjectFile.empty() || !mRefProjectName.empty()))
+		SetShapeReferenceSource(baseShape->name.get(), mRefProjectFile, mRefProjectName);
 
 	if (moveData) {
 		if (baseShape != shape) {
@@ -716,7 +788,7 @@ void OutfitProject::SetBaseShape(NiShape* shape, const bool moveData) {
 	if (shape) {
 		std::string refProjectFile;
 		std::string refProjectName;
-		if (owner && owner->GetShapeReferenceSource(shape, refProjectFile, refProjectName)) {
+		if (GetShapeReferenceSource(shape->name.get(), refProjectFile, refProjectName)) {
 			mRefProjectFile = refProjectFile;
 			mRefProjectName = refProjectName;
 		}
@@ -728,11 +800,10 @@ void OutfitProject::SetBaseShape(NiShape* shape, const bool moveData) {
 		if (ShapeSliderDataIsLocalOnly(shape->name.get())) {
 			mRefProjectFile.clear();
 			mRefProjectName.clear();
-			if (owner)
-				owner->SetShapeReferenceSource(shape, "", "");
+			SetShapeReferenceSource(shape->name.get(), "", "");
 		}
-		else if (owner)
-			owner->SetShapeReferenceSource(shape, mRefProjectFile, mRefProjectName);
+		else
+			SetShapeReferenceSource(shape->name.get(), mRefProjectFile, mRefProjectName);
 
 		mRefShapeName = shape->name.get();
 	}
@@ -1565,7 +1636,7 @@ void OutfitProject::NegateSlider(const std::string& sliderName, NiShape* shape) 
 }
 
 void OutfitProject::MaskAffected(const std::string& sliderName, NiShape* shape) {
-	Mesh* m = owner->glView->GetMesh(shape->name.get());
+	Mesh* m = host->GetShapeMesh(shape->name.get());
 	if (!m)
 		return;
 
@@ -2563,6 +2634,31 @@ void OutfitProject::ScaleMorphResult(NiShape* shape, const std::string& sliderNa
 		morpher.ScaleResultDiff(target, sliderName, scaleValue);
 }
 
+bool OutfitProject::SmoothSliderDiff(NiShape* shape, const std::string& sliderName, int iterations, float strength) {
+	if (!shape || IsBaseShape(shape) || !ValidSlider(sliderName))
+		return false;
+
+	if (baseShape)
+		InitConform();
+	else
+		morpher.SourceShapesFromNif(workNif, &workAnim);
+
+	std::string shapeName = shape->name.get();
+	if (Mesh* m = host->GetShapeMesh(shapeName))
+		morpher.CopyMeshMask(m, shapeName);
+
+	std::string target = SliderDataTargetForShape(shape);
+	if (morpher.GetResultDiffSize(target, sliderName) == 0) {
+		morpher.UnlinkRefDiffData();
+		return false;
+	}
+
+	morpher.SmoothResultDiff(shapeName, sliderName, target, iterations, strength);
+	morpher.UnlinkRefDiffData();
+	EnsureSliderDataLocal(sliderName, shape);
+	return true;
+}
+
 void OutfitProject::MoveVertex(NiShape* shape, const Vector3& pos, const int& id) {
 	workNif.MoveVertex(shape, pos, id);
 }
@@ -2690,7 +2786,8 @@ void OutfitProject::CopyBoneWeights(NiShape* shape,
 	morpher.LinkRefDiffData(&dds);
 
 	std::unordered_map<uint16_t, float> refMask;
-	owner->glView->GetShapeMask(refMask, baseShapeName);
+	if (Mesh* refMesh = host->GetShapeMesh(baseShapeName))
+		refMask = MaskOps::GetMasked(*refMesh);
 
 	std::set<uint16_t> refMaskIndices;
 	for (auto& m : refMask)
@@ -2832,7 +2929,7 @@ bool OutfitProject::HasUnweighted(std::vector<std::string>* shapeNames) {
 		}
 
 		bool shapeUnweighted = false;
-		Mesh* m = owner->glView->GetMesh(shapeName);
+		Mesh* m = host->GetShapeMesh(shapeName);
 		if (m) {
 			for (auto& i : influences) {
 				if (i.second == 0) {
@@ -3026,12 +3123,12 @@ int OutfitProject::LoadReferenceTemplate(
 	const std::string& sourceFile, const std::string& set, const std::string& shape, bool loadAll, bool mergeSliders, bool mergeZaps, bool appendNewSliders) {
 	if (sourceFile.empty() || set.empty()) {
 		wxLogError("Template source entries are invalid.");
-		wxMessageBox(_("Template source entries are invalid."), _("Reference Error"), wxICON_ERROR, owner);
+		host->ShowMessage(HostMessageLevel::Error, _("Template source entries are invalid."), _("Reference Error"));
 		return 1;
 	}
 
 	if (loadAll) {
-		owner->StartSubProgress(10, 20);
+		host->StartSubProgress(10, 20);
 		return AddFromSliderSet(sourceFile, set, false, appendNewSliders);
 	}
 	else
@@ -3040,7 +3137,7 @@ int OutfitProject::LoadReferenceTemplate(
 
 int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::string& shapeName, bool mergeSliders, bool mergeZaps) {
 	if (mergeZaps || mergeSliders) {
-		owner->DeleteSliders(mergeSliders, mergeZaps);
+		host->DeleteSlidersForMerge(mergeSliders, mergeZaps);
 		DeleteShape(baseShape);
 	}
 	else
@@ -3056,12 +3153,12 @@ int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::stri
 			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s"), fileName, refNif.GetHeader().GetVersion().GetVersionInfo());
 
 			wxLogError(errorText);
-			wxMessageBox(errorText, _("Reference Error"), wxICON_ERROR, owner);
+			host->ShowMessage(HostMessageLevel::Error, errorText, _("Reference Error"));
 			return 3;
 		}
 
 		wxLogError("Could not load reference NIF file '%s'!", fileName);
-		wxMessageBox(wxString::Format(_("Could not load reference NIF file '%s'!"), fileName), _("Reference Error"), wxICON_ERROR, owner);
+		host->ShowMessage(HostMessageLevel::Error, wxString::Format(_("Could not load reference NIF file '%s'!"), fileName), _("Reference Error"));
 		return 2;
 	}
 
@@ -3121,10 +3218,8 @@ int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::stri
 
 	if (!deletedShapes.empty()) {
 		std::string shapesJoin = JoinStrings(deletedShapes, "; ");
-		wxMessageBox(wxString::Format("%s\n \n%s", _("The following shapes were deleted. Rename the duplicates yourself beforehand if you wish to keep them."), shapesJoin),
-					 _("Deleted Shapes"),
-					 wxOK | wxICON_WARNING,
-					 owner);
+		host->ShowMessage(HostMessageLevel::Warning, wxString::Format("%s\n \n%s", _("The following shapes were deleted. Rename the duplicates yourself beforehand if you wish to keep them."), shapesJoin),
+					 _("Deleted Shapes"));
 	}
 
 	return 0;
@@ -3132,7 +3227,7 @@ int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::stri
 
 int OutfitProject::LoadReference(const std::string& fileName, const std::string& setName, const std::string& shapeName, bool mergeSliders, bool mergeZaps, bool appendNewSliders) {
 	if (mergeZaps || mergeSliders) {
-		owner->DeleteSliders(mergeSliders, mergeZaps);
+		host->DeleteSlidersForMerge(mergeSliders, mergeZaps);
 		DeleteShape(baseShape);
 	}
 	else
@@ -3141,7 +3236,7 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 	SliderSetFile sset(fileName);
 	if (sset.fail()) {
 		wxLogError("Could not load slider set file '%s'!", fileName);
-		wxMessageBox(wxString::Format(_("Could not load slider set file '%s'!"), fileName), _("Reference Error"), wxICON_ERROR, owner);
+		host->ShowMessage(HostMessageLevel::Error, wxString::Format(_("Could not load slider set file '%s'!"), fileName), _("Reference Error"));
 		return 1;
 	}
 
@@ -3151,7 +3246,7 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 	SliderSet refSet;
 	if (sset.GetSet(setName, refSet, appendNewSliders)) {
 		wxLogError("Could not load set '%s' from slider set file '%s'!", setName, fileName);
-		wxMessageBox(wxString::Format(_("Could not load set '%s' from slider set file '%s'!"), setName, fileName), _("Reference Error"), wxICON_ERROR, owner);
+		host->ShowMessage(HostMessageLevel::Error, wxString::Format(_("Could not load set '%s' from slider set file '%s'!"), setName, fileName), _("Reference Error"));
 		return 1;
 	}
 
@@ -3168,14 +3263,14 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s"), refFile, refNif.GetHeader().GetVersion().GetVersionInfo());
 
 			wxLogError(errorText);
-			wxMessageBox(errorText, _("Reference Error"), wxICON_ERROR, owner);
+			host->ShowMessage(HostMessageLevel::Error, errorText, _("Reference Error"));
 			ClearReference();
 			return 5;
 		}
 
 		ClearReference();
 		wxLogError("Could not load reference NIF file '%s'!", refFile);
-		wxMessageBox(wxString::Format(_("Could not load reference NIF file '%s'!"), refFile), _("Reference Error"), wxICON_ERROR, owner);
+		host->ShowMessage(HostMessageLevel::Error, wxString::Format(_("Could not load reference NIF file '%s'!"), refFile), _("Reference Error"));
 		return 2;
 	}
 
@@ -3185,7 +3280,7 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 	if (shapes.empty()) {
 		ClearReference();
 		wxLogError("Reference NIF file '%s' does not contain any shapes.", refFile);
-		wxMessageBox(wxString::Format(_("Reference NIF file '%s' does not contain any shapes."), refFile), _("Reference Error"), wxICON_ERROR, owner);
+		host->ShowMessage(HostMessageLevel::Error, wxString::Format(_("Reference NIF file '%s' does not contain any shapes."), refFile), _("Reference Error"));
 		return 3;
 	}
 
@@ -3197,7 +3292,7 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 	if (!refShape) {
 		ClearReference();
 		wxLogError("Shape '%s' not found in reference NIF file '%s'!", shape, refFile);
-		wxMessageBox(wxString::Format(_("Shape '%s' not found in reference NIF file '%s'!"), shape, refFile), _("Reference Error"), wxICON_ERROR, owner);
+		host->ShowMessage(HostMessageLevel::Error, wxString::Format(_("Shape '%s' not found in reference NIF file '%s'!"), shape, refFile), _("Reference Error"));
 		return 4;
 	}
 
@@ -3285,28 +3380,26 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 
 	if (!deletedShapes.empty()) {
 		std::string shapesJoin = JoinStrings(deletedShapes, "; ");
-		wxMessageBox(wxString::Format("%s\n \n%s",
+		host->ShowMessage(HostMessageLevel::Warning, wxString::Format("%s\n \n%s",
 									  _("The following shapes were deleted. Rename the duplicates yourself beforehand if you wish to keep them."),
 									  shapesJoin),
-					 _("Deleted Shapes"),
-					 wxOK | wxICON_WARNING,
-					 owner);
+					 _("Deleted Shapes"));
 	}
 
 	return 0;
 }
 
 int OutfitProject::LoadFromSliderSet(const std::string& fileName, const std::string& sliderSetName, std::vector<std::string>* origShapeOrder) {
-	owner->StartProgress(_("Loading slider set..."));
+	host->StartProgress(_("Loading slider set..."));
 	SliderSetFile InSS(fileName);
 	if (InSS.fail()) {
-		owner->EndProgress();
+		host->EndProgress();
 		return 1;
 	}
 
 	UpdateProgress(20, _("Retrieving sliders..."));
 	if (InSS.GetSet(sliderSetName, activeSet)) {
-		owner->EndProgress();
+		host->EndProgress();
 		return 3;
 	}
 
@@ -3316,7 +3409,7 @@ int OutfitProject::LoadFromSliderSet(const std::string& fileName, const std::str
 
 	UpdateProgress(30, _("Loading outfit shapes..."));
 	if (ImportNIF(inputNif, true, sliderSetName)) {
-		owner->EndProgress();
+		host->EndProgress();
 		return 4;
 	}
 
@@ -3399,7 +3492,7 @@ int OutfitProject::LoadFromSliderSet(const std::string& fileName, const std::str
 		mRefShapeName = baseShape->name.get();
 	}
 
-	owner->EndProgress();
+	host->EndProgress();
 	return 0;
 }
 
@@ -3408,18 +3501,18 @@ int OutfitProject::AddFromSliderSet(const std::string& fileName,
 									const bool newDataLocal,
 									const bool appendNewSliders,
 									const bool setAsReference) {
-	owner->StartProgress(_("Adding slider set..."));
+	host->StartProgress(_("Adding slider set..."));
 	const bool hadBaseShape = baseShape != nullptr;
 	SliderSetFile InSS(fileName);
 	if (InSS.fail()) {
-		owner->EndProgress();
+		host->EndProgress();
 		return 1;
 	}
 
 	SliderSet addSet;
 	UpdateProgress(20, _("Retrieving sliders..."));
 	if (InSS.GetSet(sliderSetName, addSet)) {
-		owner->EndProgress();
+		host->EndProgress();
 		return 2;
 	}
 
@@ -3436,7 +3529,7 @@ int OutfitProject::AddFromSliderSet(const std::string& fileName,
 	std::map<std::string, std::string> renamedShapes;
 	UpdateProgress(30, _("Adding outfit shapes..."));
 	if (ImportNIF(inputNif, false, "", &renamedShapes)) {
-		owner->EndProgress();
+		host->EndProgress();
 		return 3;
 	}
 
@@ -3482,12 +3575,10 @@ int OutfitProject::AddFromSliderSet(const std::string& fileName,
 			renamedShapesOrig.push_back(rs.first);
 
 		std::string shapesJoin = JoinStrings(renamedShapesOrig, "; ");
-		wxMessageBox(wxString::Format("%s\n \n%s",
+		host->ShowMessage(HostMessageLevel::Warning, wxString::Format("%s\n \n%s",
 									  _("The following shapes were renamed and won't have slider data attached. Rename the duplicates yourself beforehand."),
 									  shapesJoin),
-					 _("Renamed Shapes"),
-					 wxOK | wxICON_WARNING,
-					 owner);
+					 _("Renamed Shapes"));
 	}
 
 	std::vector<std::pair<std::string, std::string>> incomingShapeTargets;
@@ -3519,7 +3610,7 @@ int OutfitProject::AddFromSliderSet(const std::string& fileName,
 			mRefShapeName = baseShape->name.get();
 	}
 
-	owner->EndProgress();
+	host->EndProgress();
 	return 0;
 }
 
@@ -3763,7 +3854,8 @@ void OutfitProject::ConformShape(NiShape* shape, const ConformOptions& options) 
 		return;
 
 	std::unordered_map<uint16_t, float> mask;
-	owner->glView->GetShapeMask(mask, baseShape->name.get());
+	if (Mesh* refMesh = host->GetShapeMesh(baseShape->name.get()))
+		mask = MaskOps::GetMasked(*refMesh);
 
 	std::set<uint16_t> maskIndices;
 	for (auto& m : mask)
@@ -3856,7 +3948,7 @@ void OutfitProject::CollectVertexData(NiShape* shape, UndoStateShape& uss, const
 	const std::vector<Vector3>* bitangents = workNif.GetBitangentsForShape(shape);
 	const std::vector<float>* eyeData = workNif.GetEyeDataForShape(shape);
 	AnimSkin& skin = workAnim.shapeSkinning[shape->name.get()];
-	Mesh* m = owner->glView->GetMesh(shape->name.get());
+	Mesh* m = host->GetShapeMesh(shape->name.get());
 	const float* mask = m ? m->mask.get() : nullptr;
 
 	uss.hadVertexColors = colors && !colors->empty();
@@ -5345,7 +5437,8 @@ void OutfitProject::DeleteShape(NiShape* shape) {
 
 	std::string shapeName = shape->name.get();
 	workAnim.ClearShape(shapeName);
-	owner->glView->DeleteMesh(shapeName);
+	host->OnShapeDeleting(shape);
+	shapeRefSources.erase(shapeName);
 	shapeTextures.erase(shapeName);
 	shapeMaterialFiles.erase(shapeName);
 	shapeSFMaterials.erase(shapeName);
@@ -5359,7 +5452,6 @@ void OutfitProject::DeleteShape(NiShape* shape) {
 		mRefShapeName.clear();
 	}
 
-	owner->ClearSelected(shape);
 	workNif.DeleteShape(shape);
 }
 
@@ -5534,7 +5626,7 @@ bool OutfitProject::ChooseRootExtraData(std::vector<RootExtraDataCandidate>& mer
 	}
 
 	// Unattended runs get the default answer of "everything but the replacements"
-	if (suppressPrompts) {
+	if (!host->IsInteractive()) {
 		keepChosen(preSelected);
 		return true;
 	}
@@ -5543,12 +5635,11 @@ bool OutfitProject::ChooseRootExtraData(std::vector<RootExtraDataCandidate>& mer
 	if (anyReplaced)
 		message += "\n \n" + _("The entries that aren't checked already exist in the project under the same name. Only one block of a name can be used, so merging one of them replaces the one that is currently loaded.");
 
-	wxMultiChoiceDialog extraDataChoice(owner, message, _("Choose extra data"), extraDataNames);
-	extraDataChoice.SetSelections(preSelected);
-	if (extraDataChoice.ShowModal() == wxID_CANCEL)
+	wxArrayInt selections = preSelected;
+	if (!host->ChooseMany(message, _("Choose extra data"), extraDataNames, selections))
 		return false;
 
-	keepChosen(extraDataChoice.GetSelections());
+	keepChosen(selections);
 	return true;
 }
 
@@ -5684,6 +5775,13 @@ void OutfitProject::RenameShape(NiShape* shape, const std::string& newShapeName)
 
 	workNif.RenameShape(shape, newShapeName);
 	workAnim.RenameShape(shapeName, newShapeName);
+
+	auto refSource = shapeRefSources.find(shapeName);
+	if (refSource != shapeRefSources.end()) {
+		auto source = refSource->second;
+		shapeRefSources.erase(refSource);
+		shapeRefSources[newShapeName] = source;
+	}
 
 	bool isBaseShape = IsBaseShape(shape);
 	for (size_t si = 0; si < activeSet.size(); ++si) {
@@ -6637,12 +6735,12 @@ int OutfitProject::ImportNIF(std::istream& fileStream, const std::string& fileNa
 			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s"), fileName, nif.GetHeader().GetVersion().GetVersionInfo());
 
 			wxLogError(errorText);
-			wxMessageBox(errorText, _("NIF Error"), wxICON_ERROR, owner);
+			host->ShowMessage(HostMessageLevel::Error, errorText, _("NIF Error"));
 			return 4;
 		}
 
 		wxLogError("Could not load NIF file '%s'!", fileName);
-		wxMessageBox(wxString::Format(_("Could not load NIF file '%s'!"), fileName), _("NIF Error"), wxICON_ERROR, owner);
+		host->ShowMessage(HostMessageLevel::Error, wxString::Format(_("Could not load NIF file '%s'!"), fileName), _("NIF Error"));
 		return 1;
 	}
 
@@ -6721,7 +6819,7 @@ int OutfitProject::ImportNIF(std::istream& fileStream, const std::string& fileNa
 
 int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<Mesh*>& modMeshes, bool withRef, std::optional<bool> useInternalGeom) {
 	workAnim.CleanupBones();
-	owner->UpdateAnimationGUI();
+	host->OnAnimationChanged();
 
 	NifFile clone(workNif);
 	ChooseClothData(clone);
@@ -6765,7 +6863,7 @@ int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<Mesh
 	for (auto& s : clone.GetShapes())
 		clone.UpdateSkinPartitions(s);
 
-	clone.SetShapeOrder(owner->GetShapeList());
+	clone.SetShapeOrder(GetShapeOrder());
 	clone.GetHeader().SetExportInfo("Exported using Outfit Studio.");
 
 	GenerateStarfieldMeshlets(clone);
@@ -6789,8 +6887,8 @@ void OutfitProject::WriteAnimToNif(NifFile& nif, const std::string& shapeExcepti
 	wxString message = _("Bone information incomplete. Exported data will not contain correct bone entries! Be sure to load a reference NIF prior to export.");
 	wxLogWarning(message);
 
-	if (!suppressPrompts)
-		wxMessageBox(message, _("Export Warning"), wxICON_WARNING, owner);
+	if (host->IsInteractive())
+		host->ShowMessage(HostMessageLevel::Warning, message, _("Export Warning"));
 }
 
 void OutfitProject::ChooseClothData(NifFile& nif) {
@@ -6800,20 +6898,17 @@ void OutfitProject::ChooseClothData(NifFile& nif) {
 			clothFileNames.Add(wxString::FromUTF8(cloth.first));
 
 		wxArrayInt sel;
-		if (suppressPrompts) {
+		if (!host->IsInteractive()) {
 			// Unattended runs get the default answer of "all origins"
 			for (size_t i = 0; i < clothFileNames.GetCount(); i++)
 				sel.Add(static_cast<int>(i));
 		}
 		else {
-			wxMultiChoiceDialog clothDataChoice(owner,
-												_("There was cloth physics data loaded at some point (BSClothExtraData). Please choose all the origins to use in the output."),
-												_("Choose cloth data"),
-												clothFileNames);
-			if (clothDataChoice.ShowModal() == wxID_CANCEL)
+			if (!host->ChooseMany(_("There was cloth physics data loaded at some point (BSClothExtraData). Please choose all the origins to use in the output."),
+								  _("Choose cloth data"),
+								  clothFileNames,
+								  sel))
 				return;
-
-			sel = clothDataChoice.GetSelections();
 		}
 
 		for (size_t i = 0; i < sel.Count(); i++) {
@@ -6840,21 +6935,18 @@ void OutfitProject::ChoosePhysicsData(NifFile& nif) {
 		return;
 
 	size_t chosen = 0;
-	if (rootPhysicsData.size() > 1 && !suppressPrompts) {
+	if (rootPhysicsData.size() > 1 && host->IsInteractive()) {
 		wxArrayString physicsFileNames;
 		for (auto& physicsData : rootPhysicsData)
 			physicsFileNames.Add(wxString::FromUTF8(physicsData->stringData.get()));
 
-		wxSingleChoiceDialog physicsDataChoice(
-			owner,
-			_("There was HDT-SMP physics data loaded at some point. Only one physics file can be linked to the root node, so please choose the one to use in the output."),
-			_("Choose physics data"),
-			physicsFileNames);
-		physicsDataChoice.SetSelection(0);
-		if (physicsDataChoice.ShowModal() == wxID_CANCEL)
+		int sel = 0;
+		if (!host->ChooseOne(_("There was HDT-SMP physics data loaded at some point. Only one physics file can be linked to the root node, so please choose the one to use in the output."),
+							 _("Choose physics data"),
+							 physicsFileNames,
+							 sel))
 			return;
 
-		int sel = physicsDataChoice.GetSelection();
 		if (sel == wxNOT_FOUND)
 			return;
 
@@ -6888,7 +6980,7 @@ int OutfitProject::ExportShapeNIF(const std::string& fileName, const std::vector
 	ChooseClothData(clone);
 	ChoosePhysicsData(clone);
 
-	clone.SetShapeOrder(owner->GetShapeList());
+	clone.SetShapeOrder(GetShapeOrder());
 
 	for (auto& s : clone.GetShapes())
 		if (find(exportShapes.begin(), exportShapes.end(), s->name.get()) == exportShapes.end())
@@ -7055,7 +7147,7 @@ bool OutfitProject::SaveExternalMeshes(NifFile& nif, const std::string& nifFileN
 	return true;
 }
 
-int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& shapeName, NiShape* mergeShape) {
+int OutfitProject::ImportOBJ(const std::string& fileName, const ObjImportOptions& options, const std::string& shapeName, NiShape* mergeShape, const ImportChoices& choices) {
 	// Set reference NIF in case nothing was loaded yet
 	if (!workAnim.GetRefNif())
 		workAnim.SetRefNif(&workNif);
@@ -7071,29 +7163,23 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 	size_t vertexLimit = workNif.GetVertexLimit();
 	size_t triLimit = workNif.GetTriangleLimit();
 
-	wxString warningLabel;
-	if (!baseShape)
-		warningLabel = _("No reference has been loaded.  For correct bone transforms, you might need to load a reference before importing OBJ files.");
-
-	ObjImportDialog import(owner, fileName, vertexLimit, triLimit, warningLabel);
-	if (import.ShowModal() != wxID_OK)
-		return 1;
-
-	if (obj.LoadForNif(fileName, import.GetOptions())) {
+	if (obj.LoadForNif(fileName, options)) {
 		wxLogError("Could not load OBJ file '%s'!", fileName);
-		wxMessageBox(wxString::Format(_("Could not load OBJ file '%s'!"), fileName), _("OBJ Error"), wxICON_ERROR, owner);
+		host->ShowMessage(HostMessageLevel::Error, wxString::Format(_("Could not load OBJ file '%s'!"), fileName), _("OBJ Error"));
 		return 1;
 	}
 
 	bool copyBaseSkinTrans = false;
-	if (baseShape && !workAnim.GetTransformGlobalToShape(baseShape).IsNearlyEqualTo(MatTransform())) {
-		int res = wxMessageBox(_("The reference shape has a skin coordinate system that is different from the global coordinate system.  Would you like to copy the reference's "
-								 "global-to-skin transform to the imported shapes?"),
-							   _("Copy skin coordinates"),
-							   wxYES_NO | wxCANCEL);
-		if (res == wxCANCEL)
+	if (choices.copyReferenceSkinTransform) {
+		copyBaseSkinTrans = baseShape && *choices.copyReferenceSkinTransform;
+	}
+	else if (baseShape && !workAnim.GetTransformGlobalToShape(baseShape).IsNearlyEqualTo(MatTransform())) {
+		HostAnswer res = host->Ask(_("The reference shape has a skin coordinate system that is different from the global coordinate system.  Would you like to copy the reference's "
+												"global-to-skin transform to the imported shapes?"),
+									_("Copy skin coordinates"), true, HostAnswer::No);
+		if (res == HostAnswer::Cancel)
 			return 1;
-		if (res == wxYES)
+		if (res == HostAnswer::Yes)
 			copyBaseSkinTrans = true;
 	}
 
@@ -7105,7 +7191,7 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 		std::vector<Vector3> n;
 		if (!obj.CopyDataForGroup(group, &v, &t, &uv, &n)) {
 			wxLogError("Could not copy data from OBJ file '%s'!", fileName);
-			wxMessageBox(wxString::Format(_("Could not copy data from OBJ file '%s'!"), fileName), _("OBJ Error"), wxICON_ERROR, owner);
+			host->ShowMessage(HostMessageLevel::Error, wxString::Format(_("Could not copy data from OBJ file '%s'!"), fileName), _("OBJ Error"));
 			return 3;
 		}
 
@@ -7122,25 +7208,21 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 			std::vector<Vector3> shapeVerts;
 			workNif.GetVertsForShape(mergeShape, shapeVerts);
 			if (shapeVerts.size() == vertCount) {
-				int ret = wxMessageBox(_("The vertex count of the selected .obj file matches the currently selected outfit shape.  Do you wish to update the current shape?  "
-										 "(click No to create a new shape)"),
-									   _("Merge or New"),
-									   wxYES_NO | wxICON_QUESTION,
-									   owner);
-				if (ret == wxYES) {
-					ret = wxMessageBox(_("Update Vertex Positions?"), _("Vertex Position Update"), wxYES_NO | wxICON_QUESTION, owner);
-					if (ret == wxYES)
+				if (AskImportChoice(*host,
+									choices.updateMatchingShape,
+									_("The vertex count of the selected .obj file matches the currently selected outfit shape.  Do you wish to update the current shape?  "
+									"(click No to create a new shape)"),
+									_("Merge or New"))) {
+					if (AskImportChoice(*host, choices.updatePositions, _("Update Vertex Positions?"), _("Vertex Position Update")))
 						workNif.SetVertsForShape(mergeShape, v);
 
 					if (uv.size() == vertCount) {
-						ret = wxMessageBox(_("Update Texture Coordinates?"), _("UV Update"), wxYES_NO | wxICON_QUESTION, owner);
-						if (ret == wxYES)
+						if (AskImportChoice(*host, choices.updateUVs, _("Update Texture Coordinates?"), _("UV Update")))
 							workNif.SetUvsForShape(mergeShape, uv);
 					}
 
 					if (n.size() == vertCount) {
-						ret = wxMessageBox(_("Update Normals?"), _("Normals Update"), wxYES_NO | wxICON_QUESTION, owner);
-						if (ret == wxYES) {
+						if (AskImportChoice(*host, choices.updateNormals, _("Update Normals?"), _("Normals Update"))) {
 							workNif.SetNormalsForShape(mergeShape, n);
 							workNif.CalcTangentsForShape(mergeShape);
 						}
@@ -7149,7 +7231,16 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 					return 101;
 				}
 			}
-			useShapeName = wxGetTextFromUser(_("Please specify a name for the new shape"), _("New Shape Name"), useShapeName, owner).ToUTF8();
+			if (choices.newShapeName) {
+				useShapeName = *choices.newShapeName;
+			}
+			else {
+				wxString newShapeName = wxString::FromUTF8(useShapeName);
+				if (!host->GetText(_("Please specify a name for the new shape"), _("New Shape Name"), newShapeName))
+					return 100;
+				useShapeName = newShapeName.ToUTF8();
+			}
+
 			if (useShapeName.empty())
 				return 100;
 		}
@@ -7160,16 +7251,14 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 			uint32_t triCountNew = newShape->GetNumTriangles();
 
 			if (vertCountNew < vertCount || triCountNew < triCount) {
-				wxMessageBox(wxString::Format(_("The vertex or triangle limit for '%s' was exceeded.\nRemaining data was dropped.\n\nVertices (current/max): %zu/%zu\nTriangles "
+				host->ShowMessage(HostMessageLevel::Warning, wxString::Format(_("The vertex or triangle limit for '%s' was exceeded.\nRemaining data was dropped.\n\nVertices (current/max): %zu/%zu\nTriangles "
 												"(current/max): %zu/%zu"),
 											  useShapeName,
 											  vertCount,
 											  vertexLimit,
 											  triCount,
 											  triLimit),
-							 _("OBJ Error"),
-							 wxICON_WARNING,
-							 owner);
+							 _("OBJ Error"));
 			}
 
 			if (copyBaseSkinTrans)
@@ -7229,7 +7318,7 @@ int OutfitProject::ExportOBJ(const std::string& fileName, const std::vector<NiSh
 }
 
 #ifdef USE_FBXSDK
-int OutfitProject::ImportFBX(const std::string& fileName, const std::string& shapeName, NiShape* mergeShape) {
+int OutfitProject::ImportFBX(const std::string& fileName, const FBXImportOptions& options, const std::string& shapeName, NiShape* mergeShape, const ImportChoices& choices) {
 	// Set reference NIF in case nothing was loaded yet
 	if (!workAnim.GetRefNif())
 		workAnim.SetRefNif(&workNif);
@@ -7239,27 +7328,21 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 	size_t vertexLimit = workNif.GetVertexLimit();
 	size_t triLimit = workNif.GetTriangleLimit();
 
-	wxString warningLabel;
-	if (!baseShape)
-		warningLabel = _("No reference has been loaded.  For correct bone transforms, you might need to load a reference before importing FBX files.");
-
-	FBXImportDialog import(owner, fileName, vertexLimit, triLimit, warningLabel);
-	if (import.ShowModal() != wxID_OK)
-		return 1;
-
-	bool result = fbxw.ImportScene(fileName, import.GetOptions());
+	bool result = fbxw.ImportScene(fileName, options);
 	if (!result)
 		return 2;
 
 	bool copyBaseSkinTrans = false;
-	if (baseShape && !workAnim.GetTransformGlobalToShape(baseShape).IsNearlyEqualTo(MatTransform())) {
-		int res = wxMessageBox(_("The reference shape has a skin coordinate system that is different from the global coordinate system.  Would you like to copy the reference's "
-								 "global-to-skin transform to the imported shapes?"),
-							   _("Copy skin coordinates"),
-							   wxYES_NO | wxCANCEL);
-		if (res == wxCANCEL)
+	if (choices.copyReferenceSkinTransform) {
+		copyBaseSkinTrans = baseShape && *choices.copyReferenceSkinTransform;
+	}
+	else if (baseShape && !workAnim.GetTransformGlobalToShape(baseShape).IsNearlyEqualTo(MatTransform())) {
+		HostAnswer res = host->Ask(_("The reference shape has a skin coordinate system that is different from the global coordinate system.  Would you like to copy the reference's "
+												"global-to-skin transform to the imported shapes?"),
+									_("Copy skin coordinates"), true, HostAnswer::No);
+		if (res == HostAnswer::Cancel)
 			return 1;
-		if (res == wxYES)
+		if (res == HostAnswer::Yes)
 			copyBaseSkinTrans = true;
 	}
 
@@ -7279,32 +7362,27 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 
 		if (mergeShape) {
 			if (mergeShape->GetNumVertices() == vertCount) {
-				int ret = wxMessageBox(_("The vertex count of the selected .fbx file matches the currently selected outfit shape.  Do you wish to update the current shape?  "
-										 "(click No to create a new shape)"),
-									   _("Merge or New"),
-									   wxYES_NO | wxICON_QUESTION,
-									   owner);
-				if (ret == wxYES) {
-					ret = wxMessageBox(_("Update Vertex Positions?"), _("Vertex Position Update"), wxYES_NO | wxICON_QUESTION, owner);
-					if (ret == wxYES)
+				if (AskImportChoice(*host,
+									choices.updateMatchingShape,
+									_("The vertex count of the selected .fbx file matches the currently selected outfit shape.  Do you wish to update the current shape?  "
+									"(click No to create a new shape)"),
+									_("Merge or New"))) {
+					if (AskImportChoice(*host, choices.updatePositions, _("Update Vertex Positions?"), _("Vertex Position Update")))
 						workNif.SetVertsForShape(mergeShape, fbxShape->verts);
 
 					if (fbxShape->uvs.size() == vertCount) {
-						ret = wxMessageBox(_("Update Texture Coordinates?"), _("UV Update"), wxYES_NO | wxICON_QUESTION, owner);
-						if (ret == wxYES)
+						if (AskImportChoice(*host, choices.updateUVs, _("Update Texture Coordinates?"), _("UV Update")))
 							workNif.SetUvsForShape(mergeShape, fbxShape->uvs);
 					}
 
 					if (fbxShape->normals.size() == vertCount) {
-						ret = wxMessageBox(_("Update Normals?"), _("Normals Update"), wxYES_NO | wxICON_QUESTION, owner);
-						if (ret == wxYES) {
+						if (AskImportChoice(*host, choices.updateNormals, _("Update Normals?"), _("Normals Update"))) {
 							workNif.SetNormalsForShape(mergeShape, fbxShape->normals);
 							workNif.CalcTangentsForShape(mergeShape);
 						}
 					}
 
-					ret = wxMessageBox(_("Update Animation Weighting?"), _("Animation Weight Update"), wxYES_NO | wxICON_QUESTION, owner);
-					if (ret == wxYES)
+					if (AskImportChoice(*host, choices.updateWeights, _("Update Animation Weighting?"), _("Animation Weight Update")))
 						for (auto& bn : fbxShape->boneNames)
 							workAnim.SetWeights(mergeShape->name.get(), bn, fbxShape->boneSkin[bn].GetWeights());
 
@@ -7312,7 +7390,16 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 				}
 			}
 
-			useShapeName = wxGetTextFromUser(_("Please specify a name for the new shape"), _("New Shape Name"), useShapeName, owner).ToUTF8();
+			if (choices.newShapeName) {
+				useShapeName = *choices.newShapeName;
+			}
+			else {
+				wxString newShapeName = wxString::FromUTF8(useShapeName);
+				if (!host->GetText(_("Please specify a name for the new shape"), _("New Shape Name"), newShapeName))
+					return 100;
+				useShapeName = newShapeName.ToUTF8();
+			}
+
 			if (useShapeName.empty())
 				return 100;
 		}
@@ -7327,16 +7414,14 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 		uint32_t triCountNew = newShape->GetNumTriangles();
 
 		if (vertCountNew < vertCount || triCountNew < triCount) {
-			wxMessageBox(wxString::Format(_("The vertex or triangle limit for '%s' was exceeded.\nRemaining data was dropped.\n\nVertices (current/max): %zu/%zu\nTriangles "
+			host->ShowMessage(HostMessageLevel::Warning, wxString::Format(_("The vertex or triangle limit for '%s' was exceeded.\nRemaining data was dropped.\n\nVertices (current/max): %zu/%zu\nTriangles "
 											"(current/max): %zu/%zu"),
 										  useShapeName,
 										  vertCount,
 										  vertexLimit,
 										  triCount,
 										  triLimit),
-						 _("OBJ Error"),
-						 wxICON_WARNING,
-						 owner);
+						 _("OBJ Error"));
 		}
 
 		if (copyBaseSkinTrans)
@@ -7399,15 +7484,20 @@ void OutfitProject::ValidateNIF(NifFile& nif, const std::string& nifFilePath) {
 
 	if (!match) {
 		if ((targetGame == SKYRIMSE || targetGame == SKYRIMVR) && nif.GetHeader().GetVersion().IsSK()) {
-			if (!Config.Exists("OptimizeForSSE")) {
-				int res = wxMessageBox(_("Would you like Skyrim NIFs to be optimized for SSE during this session?"), _("Target Game"), wxYES_NO | wxICON_INFORMATION, owner);
-				if (res == wxYES)
-					Config.SetDefaultBoolValue("OptimizeForSSE", true);
-				else
-					Config.SetDefaultBoolValue("OptimizeForSSE", false);
+			bool optimize = true;
+			if (Config.Exists("OptimizeForSSE"))
+				optimize = Config["OptimizeForSSE"] == "true";
+			else if (host->IsInteractive()) {
+				HostAnswer res = host->Ask(_("Would you like Skyrim NIFs to be optimized for SSE during this session?"), _("Target Game"), false, HostAnswer::Yes);
+				optimize = res == HostAnswer::Yes;
+				Config.SetDefaultBoolValue("OptimizeForSSE", optimize);
+			}
+			else {
+				// Unattended runs optimize the file, but leave the choice for the session to the user
+				wxLogMessage("Optimizing Skyrim NIF '%s' for SSE.", nifFilePath);
 			}
 
-			if (Config["OptimizeForSSE"] == "true") {
+			if (optimize) {
 				OptOptions options;
 				options.targetVersion.SetFile(V20_2_0_7);
 				options.targetVersion.SetUser(12);
@@ -7417,18 +7507,14 @@ void OutfitProject::ValidateNIF(NifFile& nif, const std::string& nifFilePath) {
 		}
 		else {
 			wxLogWarning("Version of NIF file doesn't match current target game.");
-			wxMessageBox(wxString::Format(_("File format doesn't match the current game. Use FBX export, then start a new project and import the FBX file there.")),
-						 _("Version"),
-						 wxICON_WARNING,
-						 owner);
+			host->ShowMessage(HostMessageLevel::Warning, wxString::Format(_("File format doesn't match the current game. Use FBX export, then start a new project and import the FBX file there.")),
+						 _("Version"));
 		}
 	}
 
 	for (const auto& meshPath : GameDataStream::LoadExternalGeometry(nif, Config["GameDataPath"], nifFilePath))
-		wxMessageBox(wxString::Format(_("Unable to locate external mesh data for shape. Expected path: %s"), meshPath),
-					 _("External Mesh Data Load Failure"),
-					 wxICON_WARNING,
-					 owner);
+		host->ShowMessage(HostMessageLevel::Warning, wxString::Format(_("Unable to locate external mesh data for shape. Expected path: %s"), meshPath),
+					 _("External Mesh Data Load Failure"));
 
 	for (auto& s : nif.GetShapes())
 		nif.TriangulateShape(s);
@@ -7508,12 +7594,12 @@ void OutfitProject::RemoveSkinning() {
 	workNif.DeleteUnreferencedNodes();
 }
 
-bool OutfitProject::CheckForBadBones(bool interactive) {
-	struct ShapeBadBones {
-		std::unordered_map<std::string, MatTransform> badStandard, badCustom;
-		bool fixStanSkin = false;
-	};
-	std::unordered_map<std::string, ShapeBadBones> shapeBBs;
+BadBonesReport OutfitProject::FindBadBones() {
+	BadBonesReport report;
+	auto& shapeBBs = report.shapeBBs;
+	auto& badCBs = report.badCBs;
+	using ShapeBadBones = BadBonesReport::ShapeBadBones;
+	using BadCustomBone = BadBonesReport::BadCustomBone;
 	bool gotAnyBad = false;
 
 	// Find bad bones for every skinned shape, initializing shapeBBs.
@@ -7529,21 +7615,13 @@ bool OutfitProject::CheckForBadBones(bool interactive) {
 		if (!sbb.badStandard.empty())
 			sbb.fixStanSkin = true;
 	}
-	if (!gotAnyBad) {
-		if (interactive)
-			wxMessageBox(_("No Bad Bones Found."), _("No Bad Bones"), wxOK, owner);
-		return false;
-	}
+	if (!gotAnyBad)
+		return report;
+
+	report.found = true;
 
 	// For bad custom bones, we need to rearrange the data so it's keyed
 	// on bone name rather than shape name.
-	struct BadCustomBone {
-		std::unordered_set<std::string> badShapes, goodShapes;
-		enum FixType {DoNothing, TrustNode, TrustSkin};
-		int fixtype = DoNothing;
-		std::string trustShape;
-	};
-	std::unordered_map<std::string, BadCustomBone> badCBs;
 	for (auto& sbbp : shapeBBs) {
 		const std::string& shapeName = sbbp.first;
 		ShapeBadBones& sbb = sbbp.second;
@@ -7645,220 +7723,22 @@ bool OutfitProject::CheckForBadBones(bool interactive) {
 		}
 	}
 
-	if (interactive) {
-		// Create dialog window
-		wxDialog dlg(owner, -1, _("Bad Bones"), wxDefaultPosition, wxSize(800,600), wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
-		wxBoxSizer* topBox = new wxBoxSizer(wxVERTICAL);
-		wxSizerFlags sizerFlags = wxSizerFlags().Expand().Border(wxALL, 5);
-		constexpr int wrapPixels = 800;
-		wxScrolledWindow* wnd = new wxScrolledWindow(&dlg);
-		topBox->Add(wnd, wxSizerFlags().Expand().Proportion(1));
-		wxBoxSizer* scrollBox = new wxBoxSizer(wxVERTICAL);
-		wnd->SetScrollRate(30, 50);
+	return report;
+}
 
-		// A helper class for creating the collapsible panes
-		struct CollapsePane {
-			wxScrolledWindow* wnd;
-			wxCollapsiblePane* collapse;
-			wxFlexGridSizer* collPaneBox;
-			CollapsePane(wxScrolledWindow* wi, wxSizer* boxSizer, const wxString& label, const wxString& col1Label):
-				wnd(wi) {
-				wxSizerFlags sizerFlags = wxSizerFlags().Expand().Border(wxALL, 5);
-				collapse = new wxCollapsiblePane(wnd, wxID_ANY, label, wxDefaultPosition, wxDefaultSize, wxCP_DEFAULT_STYLE | wxCP_NO_TLW_RESIZE);
-				boxSizer->Add(collapse, sizerFlags);
-				collPaneBox = new wxFlexGridSizer(4);
-				collPaneBox->Add(new wxStaticText(collapse->GetPane(), wxID_ANY, col1Label), sizerFlags);
-				collPaneBox->Add(new wxStaticText(collapse->GetPane(), wxID_ANY, _("Error in rotation")), sizerFlags);
-				collPaneBox->Add(new wxStaticText(collapse->GetPane(), wxID_ANY, _("Error in translation")), sizerFlags);
-				collPaneBox->Add(new wxStaticText(collapse->GetPane(), wxID_ANY, _("Error in scale")), sizerFlags);
-			}
-			void AddRow(const wxString& label, const MatTransform& t) {
-				wxSizerFlags sizerFlags = wxSizerFlags().Expand().Border(wxALL, 5);
-				float rotErr = RotMatToVec(t.rotation).length();
-				float trErr = t.translation.length();
-				float scErr = std::fabs(t.scale - 1.0f);
-				collPaneBox->Add(new wxStaticText(collapse->GetPane(), wxID_ANY, label), sizerFlags);
-				collPaneBox->Add(new wxStaticText(collapse->GetPane(), wxID_ANY, wxString() << rotErr), sizerFlags);
-				collPaneBox->Add(new wxStaticText(collapse->GetPane(), wxID_ANY, wxString() << trErr), sizerFlags);
-				collPaneBox->Add(new wxStaticText(collapse->GetPane(), wxID_ANY, wxString() << scErr), sizerFlags);
-			}
-			void Finish() {
-				collapse->GetPane()->SetSizerAndFit(collPaneBox);
-				wxScrolledWindow* wndl = wnd;
-				collapse->Bind(wxEVT_COLLAPSIBLEPANE_CHANGED, [wndl](wxCollapsiblePaneEvent&) { wndl->FitInside(); });
-			}
-		};
-
-		// Add a frame for each shape with bad standard bones
-		for (auto& sbbp : shapeBBs) {
-			const std::string &shapeName = sbbp.first;
-			ShapeBadBones& sbb = sbbp.second;
-			auto& bb = sbb.badStandard;
-			if (bb.empty())
-				continue;
-
-			wxStaticBoxSizer* boxSizer = new wxStaticBoxSizer(wxVERTICAL, wnd, wxString::Format(_("Bad standard bones for shape \"%s\""), shapeName));
-			scrollBox->Add(boxSizer, sizerFlags);
-
-			wxString label = wxString::Format(_("%zu bones in shape \"%s\" had inconsistencies between their NIF skin transforms and the standard skeleton:\n"), bb.size(), shapeName);
-
-			auto brit = bb.begin();
-			label << brit->first;
-			++brit;
-
-			while (brit != bb.end()) {
-				label << ", " << brit->first;
-				++brit;
-			}
-
-			wxStaticText* ctrl = new wxStaticText(wnd, -1, label);
-			ctrl->Wrap(wrapPixels);
-			boxSizer->Add(ctrl, sizerFlags);
-
-			wxRadioButton* rb = new wxRadioButton(wnd, wxID_ANY, _("Update skin (recommended)"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
-			rb->SetValue(1);
-			rb->Bind(wxEVT_RADIOBUTTON, [&](wxCommandEvent&) {
-				sbb.fixStanSkin = true;
-			});
-			boxSizer->Add(rb, sizerFlags);
-			sbb.fixStanSkin = true;
-
-			CollapsePane bcp(wnd, boxSizer, _("Details"), _("Bone"));
-			for (auto& brp : bb)
-				bcp.AddRow(brp.first, brp.second);
-			bcp.Finish();
-
-			rb = new wxRadioButton(wnd, wxID_ANY, _("Do nothing"));
-			rb->Bind(wxEVT_RADIOBUTTON, [&](wxCommandEvent&) {
-				sbb.fixStanSkin = false;
-			});
-			boxSizer->Add(rb, sizerFlags);
-		}
-
-		// Add a frame for each bad custom bone
-		for (auto& bcbp : badCBs) {
-			const std::string& bone = bcbp.first;
-			BadCustomBone& bcb = bcbp.second;
-
-			wxStaticBoxSizer* boxSizer = new wxStaticBoxSizer(wxVERTICAL, wnd, wxString::Format(_("Bad Custom Bone \"%s\""), bone));
-			scrollBox->Add(boxSizer, sizerFlags);
-
-			wxString label = wxString::Format(_("Custom bone \"%s\" had inconsistent NIF node and skin transforms for the following shapes:\n\""), bone);
-
-			auto bsit = bcb.badShapes.begin();
-			label << *bsit;
-			++bsit;
-
-			while (bsit != bcb.badShapes.end()) {
-				label << "\", \"" << *bsit;
-				++bsit;
-			}
-			label << "\"";
-
-			wxStaticText* ctrl = new wxStaticText(wnd, -1, label);
-			ctrl->Wrap(wrapPixels);
-			boxSizer->Add(ctrl, sizerFlags);
-
-			wxString tnLabel;
-			if (bcb.fixtype == BadCustomBone::TrustNode) {
-				tnLabel = "";
-				if (bcb.goodShapes.size() > 1)
-					tnLabel << _("Trust node and skins \"");
-				else
-					tnLabel << _("Trust node and skin \"");
-				auto gsit = bcb.goodShapes.begin();
-				tnLabel << *gsit;
-				++gsit;
-				while (gsit != bcb.goodShapes.end()) {
-					tnLabel << "\", \"" << *gsit;
-					++gsit;
-				}
-				tnLabel << _("\", and update other skins (recommended)");
-			}
-			else if (bcb.badShapes.size() > 1)
-				tnLabel = _("Trust node, and update skins");
-			else
-				tnLabel = _("Trust node, and update skin");
-			wxRadioButton* rb = new wxRadioButton(wnd, wxID_ANY, tnLabel, wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
-			if (bcb.fixtype == BadCustomBone::TrustNode)
-				rb->SetValue(1);
-			rb->Bind(wxEVT_RADIOBUTTON, [&](wxCommandEvent&) {
-				bcb.fixtype = BadCustomBone::TrustNode;
-			});
-			boxSizer->Add(rb, sizerFlags);
-
-			CollapsePane ncp(wnd, boxSizer, _("Details"), _("Skin"));
-			for (const std::string& shapeName : bcb.badShapes) {
-				MatTransform t = shapeBBs[shapeName].badCustom[bone];
-				ncp.AddRow(shapeName, t);
-			}
-			ncp.Finish();
-
-			for (const std::string& shapeName : bcb.badShapes) {
-				wxString sLabel;
-				sLabel << _("Trust skin \"") << shapeName;
-				if (bcb.badShapes.size() == 1 && bcb.goodShapes.empty())
-					sLabel << _("\", and update node");
-				else
-					sLabel << _("\", and update node and other skins");
-				rb = new wxRadioButton(wnd, wxID_ANY, sLabel);
-				rb->Bind(wxEVT_RADIOBUTTON, [&](wxCommandEvent&) {
-					bcb.fixtype = BadCustomBone::TrustSkin;
-					bcb.trustShape = shapeName;
-				});
-				if (bcb.fixtype == BadCustomBone::TrustSkin && bcb.trustShape == shapeName)
-					rb->SetValue(1);
-				boxSizer->Add(rb, sizerFlags);
-
-				CollapsePane scp(wnd, boxSizer, _("Details"), _("With"));
-				scp.AddRow(_("Node"), shapeBBs[shapeName].badCustom[bone]);
-				for (const std::string& shapeName2 : bcb.badShapes) {
-					if (shapeName == shapeName2)
-						continue;
-					MatTransform skinToBone1, skinToBone2;
-					workAnim.GetXFormSkinToBone(shapeName, bone, skinToBone1);
-					workAnim.GetXFormSkinToBone(shapeName, bone, skinToBone2);
-					MatTransform residual = skinToBone1.ComposeTransforms(skinToBone2.InverseTransform());
-					scp.AddRow(shapeName2, residual);
-				}
-				scp.Finish();
-			}
-
-			rb = new wxRadioButton(wnd, wxID_ANY, _("Do nothing"));
-			rb->Bind(wxEVT_RADIOBUTTON, [&](wxCommandEvent&) {
-				bcb.fixtype = BadCustomBone::DoNothing;
-			});
-			if (bcb.fixtype == BadCustomBone::DoNothing)
-				rb->SetValue(1);
-			boxSizer->Add(rb, sizerFlags);
-		}
-
-		// Finish building the dialog window
-		wnd->SetSizer(scrollBox);
-		wxStdDialogButtonSizer* buttonSizer = new wxStdDialogButtonSizer;
-		buttonSizer->AddButton(new wxButton(&dlg, wxID_OK));
-		buttonSizer->AddButton(new wxButton(&dlg, wxID_CANCEL, _("Fix nothing")));
-		buttonSizer->Realize();
-		topBox->Add(buttonSizer, sizerFlags);
-		dlg.SetSizer(topBox);
-
-		if (dlg.ShowModal() == wxID_CANCEL)
-			return false;
-	}
-
-	// Execute the fixes (recommended defaults, or user's choices if interactive)
-	for (auto& sbbp : shapeBBs) {
+void OutfitProject::FixBadBones(const BadBonesReport& report) {
+	for (auto& sbbp : report.shapeBBs) {
 		const std::string &shapeName = sbbp.first;
-		ShapeBadBones& sbb = sbbp.second;
+		const BadBonesReport::ShapeBadBones& sbb = sbbp.second;
 
 		if (sbb.fixStanSkin)
 			for (auto& brp : sbb.badStandard)
 				workAnim.RecalcXFormSkinToBone(shapeName, brp.first);
 	}
-	for (auto& bcbp : badCBs) {
+	for (auto& bcbp : report.badCBs) {
 		const std::string& bone = bcbp.first;
-		BadCustomBone& bcb = bcbp.second;
-		if (bcb.fixtype == BadCustomBone::TrustSkin) {
+		const BadBonesReport::BadCustomBone& bcb = bcbp.second;
+		if (bcb.fixtype == BadBonesReport::BadCustomBone::TrustSkin) {
 			workAnim.RecalcCustomBoneXFormsFromSkin(bcb.trustShape, bone);
 			// After updating the node's bone-to-global transform, any shapes
 			// that had good skin-to-bone transforms now have bad ones and
@@ -7866,10 +7746,18 @@ bool OutfitProject::CheckForBadBones(bool interactive) {
 			for (const std::string& shapeName : bcb.goodShapes)
 				workAnim.RecalcXFormSkinToBone(shapeName, bone);
 		}
-		if (bcb.fixtype != BadCustomBone::DoNothing)
+		if (bcb.fixtype != BadBonesReport::BadCustomBone::DoNothing)
 			for (const std::string& shapeName : bcb.badShapes)
 				workAnim.RecalcXFormSkinToBone(shapeName, bone);
 	}
+}
+
+bool OutfitProject::CheckForBadBones() {
+	BadBonesReport report = FindBadBones();
+	if (!report.found)
+		return false;
+
+	FixBadBones(report);
 	return true;
 }
 

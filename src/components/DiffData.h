@@ -59,6 +59,12 @@ class DiffDataSets {
 	TargetDataDiffs* MaterializeSet(const std::string& name);
 
 public:
+	DiffDataSets() = default;
+	DiffDataSets(const DiffDataSets& other);
+	DiffDataSets& operator=(const DiffDataSets& other);
+	DiffDataSets(DiffDataSets&&) = default;
+	DiffDataSets& operator=(DiffDataSets&&) = default;
+
 	inline bool TargetMatch(const std::string& set, const std::string& target);
 	void MoveToSet(const std::string& name, const std::string& target, std::unique_ptr<TargetDataDiffs>& inDiffData);
 	void LoadSet(const std::string& name, const std::string& target, const TargetDataDiffs& inDiffData);

@@ -6,6 +6,7 @@ See the included LICENSE file
 #pragma once
 
 #include <wx/wx.h>
+#include <wx/wizard.h>
 #include <wx/xrc/xmlres.h>
 
 #include <vector>

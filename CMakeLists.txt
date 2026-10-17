@@ -332,6 +332,8 @@ set(BSOS_COMMON_SOURCES
 	src/components/Anim.cpp
 	src/components/Automorph.cpp
 	src/components/ClippingFixer.cpp
+	src/components/MaskOps.cpp
+	src/components/MeshAnalysis.cpp
 	src/components/DiffData.cpp
 	src/components/Mesh.cpp
 	src/components/NormalGenLayers.cpp
@@ -376,6 +378,7 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	${BSOS_COMMON_SOURCES}
 	src/components/RefTemplates.cpp
 	src/components/Automation.cpp
+	src/components/AutomationJson.cpp
 	src/components/TweakBrush.cpp
 	src/components/ArchiveIndex.cpp
 	src/components/UndoHistory.cpp
@@ -400,10 +403,14 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/program/ObjImportDialog.cpp
 	src/program/OutfitProject.cpp
 	src/program/OutfitStudio.cpp
+	src/program/ProjectHost.cpp
+	src/program/ProjectOperations.cpp
+	src/program/BrushStrokeController.cpp
+	src/program/BadBonesDialog.cpp
 	src/program/ShapeProperties.cpp
 	src/program/ConvertBodyReferenceDialog.cpp
 	src/program/AutomationDialog.cpp
-	src/program/AutomationDialogExecute.cpp
+	src/program/AutomationRunner.cpp
 	src/program/SliderDataDialog.cpp
 	src/program/SliderDataImportDialog.cpp
 	src/program/AddProjectDialog.cpp
@@ -472,9 +479,11 @@ if(BSOS_BUILD_TESTS)
 
 	add_executable(BSOSTests
 		tests/ArchiveIndexTest.cpp
+		tests/AutomationJsonTest.cpp
 		tests/ArchiveTest.cpp
 		tests/HkxFileTest.cpp
 		tests/MaskTransferTest.cpp
+		tests/MeshAnalysisTest.cpp
 		tests/SFMaterialDatabaseTest.cpp
 		tests/SFLayeredMaterialTest.cpp
 		tests/SFMaterialFileTest.cpp
@@ -483,7 +492,11 @@ if(BSOS_BUILD_TESTS)
 		tests/StarfieldDataTest.cpp
 		tests/StarfieldSpaceTest.cpp
 		src/components/ArchiveIndex.cpp
+		src/components/Automation.cpp
+		src/components/AutomationJson.cpp
+		src/components/ClippingFixer.cpp
 		src/components/MaskTransfer.cpp
+		src/components/MeshAnalysis.cpp
 		src/files/HkxFile.cpp
 		src/files/GameDataStream.cpp
 		src/files/SFMaterialDatabase.cpp

@@ -392,6 +392,31 @@ public:
 	};
 
 	void RenderOneFrame();
+	// Draws the scene into the bound framebuffer, using the current viewport
+	void RenderScene();
+
+	// Renders the scene offscreen at the given size, as RGBA rows from top to bottom
+	bool RenderToImage(uint32_t width, uint32_t height, std::vector<uint8_t>& outRGBA, int samples = 4);
+
+	// The camera as a whole, to change it for a render and restore it afterwards
+	struct CameraState {
+		nifly::Vector3 camPos;
+		nifly::Vector3 camOffset;
+		nifly::Vector3 camRot;
+		nifly::Vector3 camRotOffset;
+		bool perspective = true;
+		float fov = 90.0f;
+	};
+
+	CameraState GetCamera() const { return {camPos, camOffset, camRot, camRotOffset, perspective, mFov}; }
+	void SetCamera(const CameraState& camera) {
+		camPos = camera.camPos;
+		camOffset = camera.camOffset;
+		camRot = camera.camRot;
+		camRotOffset = camera.camRotOffset;
+		perspective = camera.perspective;
+		mFov = camera.fov;
+	}
 	void RenderToTexture(GLMaterial* renderShader);
 	void RenderMesh(Mesh* m);
 	void RenderMeshAsPoints(Mesh* m);
