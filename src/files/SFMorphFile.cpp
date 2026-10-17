@@ -413,14 +413,7 @@ SFMorphShape SFMorphShape::FromShape(NifFile& nif, NiShape* shape, SFMorphNormal
 	nif.GetVertsForShape(shape, verts);
 	nif.GetUvsForShape(shape, uvs);
 	shape->GetTriangles(tris);
-
-	if (auto meshData = dynamic_cast<BSGeometryMeshData*>(nif.GetGeometryData(shape))) {
-		colors.reserve(meshData->vColors.size());
-		for (auto& c : meshData->vColors)
-			colors.emplace_back(c.r / 255.0f, c.g / 255.0f, c.b / 255.0f, c.a / 255.0f);
-	}
-	else
-		nif.GetColorsForShape(shape, colors);
+	nif.GetColorsForShape(shape, colors);
 
 	for (auto& extraDataRef : shape->extraDataRefs) {
 		auto integersExtraData = nif.GetHeader().GetBlock<NiIntegersExtraData>(extraDataRef);

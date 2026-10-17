@@ -27,6 +27,8 @@ struct UndoStateVertexWeight {
 struct UndoStateBoneWeights {
 	std::string boneName;
 	std::unordered_map<uint16_t, UndoStateVertexWeight> weights;
+	// Bind for a newly copied bone missing from the skeleton. Keep it with the weights so preview/apply/redo do not depend on a later reference shape.
+	std::optional<nifly::MatTransform> skinToBone;
 };
 
 struct UndoStateVertexBoneWeight {
@@ -96,6 +98,8 @@ struct UndoStateShape {
 	nifly::NiVector<nifly::BSDismemberSkinInstance::PartitionInfo> partitionInfoBefore;
 	nifly::NiVector<nifly::BSDismemberSkinInstance::PartitionInfo> partitionInfoAfter;
 	bool hadVertexColors = false;
+	bool hasClothSources = false;
+	std::vector<std::string> clothSourcesBefore, clothSourcesAfter;
 };
 
 struct UndoStateShapeSliderDiff {
@@ -113,6 +117,7 @@ struct UndoStateShapeDelete {
 	std::optional<MaterialFile> materialFile;
 	std::shared_ptr<const SFLayeredMaterial> sfMaterial;
 	std::vector<std::string> physicsFiles;
+	std::vector<std::string> clothSources;
 	// Reference info captured when wasBaseShape, restored on undo
 	std::string refProjectFile;
 	std::string refProjectName;

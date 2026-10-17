@@ -812,6 +812,7 @@
     <ClInclude Include="src\components\ClippingFixer.h" />
     <ClInclude Include="src\components\MaskOps.h" />
     <ClInclude Include="src\components\MeshAnalysis.h" />
+    <ClInclude Include="src\components\ClothData.h" />
     <ClInclude Include="src\components\DiffData.h" />
     <ClInclude Include="src\components\Mesh.h" />
     <ClInclude Include="src\components\NormalGenLayers.h" />
@@ -971,6 +972,7 @@
     <ClCompile Include="src\components\UndoHistory.cpp" />
     <ClCompile Include="src\components\WeightNorm.cpp" />
     <ClCompile Include="src\components\MaskTransfer.cpp" />
+    <ClCompile Include="src\components\ClothData.cpp" />
     <ClCompile Include="src\files\FBXWrangler.cpp" />
     <ClCompile Include="src\files\GameDataStream.cpp" />
     <ClCompile Include="src\files\MaterialFile.cpp" />
