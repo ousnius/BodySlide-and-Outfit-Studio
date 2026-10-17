@@ -211,6 +211,17 @@ TEST_CASE("Cloth follows the bones it drives rather than the shared skeleton", "
         CHECK(data.GetShapeSources("Clothless").size() == 3);
         CHECK(data.GetShapeSources("Unskinned").empty());
     }
+    SECTION("A body bone the cloth rig names but the reference skeleton lacks also claims the cloth") {
+        // Known limitation: names alone cannot tell a driven bone from one the cloth only collides with
+        REQUIRE(AddShape(combined, "Physics Body", {"C_Spine", "L_BreastSkin"}));
+        combined.GetRootNode()->extraDataRefs.AddBlockRef(
+            combined.GetHeader().AddBlock(Cloth("physics coat", {"L_BreastSkin", "Cloth_Bone_Physics"})));
+        REQUIRE(AddShape(combined, "Physics Coat", {"C_Spine", "L_BreastSkin", "Cloth_Bone_Physics"}));
+        ClothData data;
+        data.Capture(combined, "combined.nif", combined.GetShapes(), Skeleton);
+        CHECK(data.GetShapeSources("Physics Coat") == ClothData::Sources{"combined.nif (4)"});
+        CHECK(data.GetShapeSources("Physics Body") == ClothData::Sources{"combined.nif (4)"});
+    }
 }
 
 TEST_CASE("Cloth sources survive rename duplication and delete undo", "[cloth][export]") {

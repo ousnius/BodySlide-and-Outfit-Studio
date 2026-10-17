@@ -113,7 +113,8 @@ void ClothData::Capture(NifFile& nif, const std::string& source, const std::vect
 		}
 	}
 
-	// Cloth no shape is skinned to, such as cloth that only drives the base skeleton, stays with every captured shape
+	// Cloth that names no added bone of any shape, such as cloth that only drives the base skeleton, stays with every
+	// captured shape
 	for (auto& shape : shapes) {
 		if (!shape)
 			continue;

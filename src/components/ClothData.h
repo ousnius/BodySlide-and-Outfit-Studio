@@ -42,6 +42,8 @@ public:
 	// Takes the cloth blocks out of the NIF and assigns them to the given shapes.
 	// Cloth drives the bones an outfit adds to the skeleton, so a block belongs to the shapes of the file skinned to an
 	// added bone it names. A block that names no such bone is kept with every given shape rather than dropped.
+	// The payload also names rig bones the cloth only collides with, so a shape skinned to such a bone outside the
+	// reference skeleton, like a physics body under cloth built for that body's skeleton, claims the cloth as well.
 	void Capture(nifly::NifFile& nif,
 				 const std::string& source,
 				 const std::vector<nifly::NiShape*>& shapes,
