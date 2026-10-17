@@ -296,6 +296,46 @@ TEST_CASE("Copied cloth binds survive deferred application without changing exis
 	skeleton.Clear();
 }
 
+TEST_CASE("Starfield bones added without a bind take it from another shape", "[anim][starfield][cloth-copy]") {
+	auto& skeleton = AnimSkeleton::getInstance();
+	skeleton.Clear();
+	skeleton.AddStandardBone("COM").boneName = "COM";
+	NifFile nif;
+	nif.Create(NiVersion::getSF());
+	AddClothTestShape(nif, "Reference", clothSourceSpace, true);
+	AddClothTestShape(nif, "Target", clothTargetSpace, false);
+	AnimInfo anim;
+	REQUIRE(anim.LoadFromNif(&nif));
+	REQUIRE(anim.WriteToNif(&nif));
+
+	SECTION("Painting a bone that another shape has uses that shape's bind") {
+		REQUIRE(anim.AddShapeBone("Target", "Cloth_B"));
+		MatTransform actual;
+		REQUIRE(anim.GetXFormSkinToBone("Target", "Cloth_B", actual));
+		CHECK(actual.IsNearlyEqualTo(clothGlobalToBoneB.ComposeTransforms(clothTargetSpace.InverseTransform())));
+		CHECK(anim.WriteToNif(&nif));
+	}
+	SECTION("A bone no shape has a bind for is reported on export") {
+		REQUIRE(anim.AddShapeBone("Target", "Cloth_New"));
+		CHECK_FALSE(anim.WriteToNif(&nif));
+
+		SECTION("The guess is not copied to other shapes") {
+			REQUIRE(anim.AddShapeBone("Reference", "Cloth_New"));
+			anim.SetXFormSkinToBone("Target", "Cloth_New", MatTransform());
+			CHECK_FALSE(anim.WriteToNif(&nif));
+		}
+		SECTION("Changing skin coordinates keeps the bind a guess") {
+			anim.ChangeGlobalToSkinTransform("Target", clothSourceSpace);
+			CHECK_FALSE(anim.WriteToNif(&nif));
+		}
+		SECTION("Setting the bind resolves it") {
+			anim.SetXFormSkinToBone("Target", "Cloth_New", MatTransform());
+			CHECK(anim.WriteToNif(&nif));
+		}
+	}
+	skeleton.Clear();
+}
+
 // These two hidden cases are driven by Run-ClothWeightCopy.ps1. The application,
 // not the test, performs CopyBoneWeights/TransferWeights and exports the result.
 TEST_CASE("Create cloth weight copy workflow fixture", "[.cloth-copy-setup]") {

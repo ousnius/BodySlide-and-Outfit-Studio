@@ -20,20 +20,26 @@ bool AnimInfo::AddShapeBone(const std::string& shape, const std::string& boneNam
 		if (!bone.compare(boneName))
 			return false;
 
-	shapeSkinning[shape].boneNames[boneName] = shapeBones[shape].size();
+	auto& skin = shapeSkinning[shape];
+	auto bind = skinToBone;
+	if (!bind && LacksSkeletonBind(boneName))
+		bind = FindBindOnOtherShape(shape, boneName);
+
+	skin.boneNames[boneName] = shapeBones[shape].size();
 	shapeBones[shape].push_back(boneName);
 	AnimSkeleton::getInstance().RefBone(boneName);
-	if (skinToBone)
-		SetXFormSkinToBone(shape, boneName, *skinToBone);
+	if (bind)
+		SetXFormSkinToBone(shape, boneName, *bind);
 	else
 		RecalcXFormSkinToBone(shape, boneName);
 	return true;
 }
 
-std::optional<MatTransform> AnimInfo::GetMissingBoneTransformForCopy(const std::string& sourceShape, const std::string& targetShape, const std::string& boneName) const {
-	if (!refNif || !refNif->GetHeader().GetVersion().IsSF() || AnimSkeleton::getInstance().GetBonePtr(boneName))
-		return std::nullopt;
+bool AnimInfo::LacksSkeletonBind(const std::string& boneName) const {
+	return refNif && refNif->GetHeader().GetVersion().IsSF() && !AnimSkeleton::getInstance().GetBonePtr(boneName);
+}
 
+std::optional<MatTransform> AnimInfo::BindFromShape(const std::string& sourceShape, const std::string& targetShape, const std::string& boneName) const {
 	auto source = shapeSkinning.find(sourceShape);
 	auto target = shapeSkinning.find(targetShape);
 	if (source == shapeSkinning.end() || target == shapeSkinning.end())
@@ -42,12 +48,32 @@ std::optional<MatTransform> AnimInfo::GetMissingBoneTransformForCopy(const std::
 	if (bone == source->second.boneNames.end())
 		return std::nullopt;
 	auto weights = source->second.boneWeights.find(bone->second);
-	if (weights == source->second.boneWeights.end())
+	if (weights == source->second.boneWeights.end() || weights->second.guessedBind)
 		return std::nullopt;
 
 	// target skin -> global -> source skin -> bone
 	return weights->second.xformSkinToBone.ComposeTransforms(source->second.xformGlobalToSkin)
 		.ComposeTransforms(target->second.xformGlobalToSkin.InverseTransform());
+}
+
+std::optional<MatTransform> AnimInfo::FindBindOnOtherShape(const std::string& targetShape, const std::string& boneName) const {
+	// shapeBones is ordered, so the same shape provides the bind every time
+	for (auto& shape : shapeBones) {
+		if (shape.first == targetShape)
+			continue;
+
+		if (auto bind = BindFromShape(shape.first, targetShape, boneName))
+			return bind;
+	}
+
+	return std::nullopt;
+}
+
+std::optional<MatTransform> AnimInfo::GetMissingBoneTransformForCopy(const std::string& sourceShape, const std::string& targetShape, const std::string& boneName) const {
+	if (!LacksSkeletonBind(boneName))
+		return std::nullopt;
+
+	return BindFromShape(sourceShape, targetShape, boneName);
 }
 
 bool AnimInfo::RemoveShapeBone(const std::string& shape, const std::string& boneName) {
@@ -313,7 +339,9 @@ void AnimInfo::SetXFormSkinToBone(const std::string& shape, const std::string& b
 	if (b < 0)
 		return;
 
-	shapeSkinning[shape].boneWeights[b].xformSkinToBone = stransform;
+	auto& weight = shapeSkinning[shape].boneWeights[b];
+	weight.xformSkinToBone = stransform;
+	weight.guessedBind = false;
 }
 
 void AnimInfo::RecalcXFormSkinToBone(const std::string& shape, const std::string& boneName) {
@@ -322,9 +350,13 @@ void AnimInfo::RecalcXFormSkinToBone(const std::string& shape, const std::string
 	// then inverting
 	MatTransform xformGlobalToSkin = shapeSkinning[shape].xformGlobalToSkin;
 	MatTransform xformBoneToGlobal;
-	AnimSkeleton::getInstance().GetBoneTransformToGlobal(boneName, xformBoneToGlobal);
+	const bool known = AnimSkeleton::getInstance().GetBoneTransformToGlobal(boneName, xformBoneToGlobal);
 	MatTransform xformBoneToSkin = xformGlobalToSkin.ComposeTransforms(xformBoneToGlobal);
 	SetXFormSkinToBone(shape, boneName, xformBoneToSkin.InverseTransform());
+
+	int b = GetShapeBoneIndex(shape, boneName);
+	if (b >= 0)
+		shapeSkinning[shape].boneWeights[b].guessedBind = !known;
 }
 
 void AnimInfo::RecursiveRecalcXFormSkinToBone(const std::string& shape, AnimBone* bPtr) {
@@ -337,10 +369,11 @@ void AnimInfo::ChangeGlobalToSkinTransform(const std::string& shape, const MatTr
 	const auto newSkinToOldSkin = shapeSkinning[shape].xformGlobalToSkin.ComposeTransforms(newTrans.InverseTransform());
 	shapeSkinning[shape].xformGlobalToSkin = newTrans;
 	for (const std::string& bone : shapeBones[shape]) {
-		MatTransform skinToBone;
-		if (refNif && refNif->GetHeader().GetVersion().IsSF() && !AnimSkeleton::getInstance().GetBonePtr(bone) && GetXFormSkinToBone(shape, bone, skinToBone)) {
-			// No skeleton transform exists to reconstruct this cloth bind. Preserve  the authored global-to-bone transform while changing skin coordinates.
-			SetXFormSkinToBone(shape, bone, skinToBone.ComposeTransforms(newSkinToOldSkin));
+		int b = GetShapeBoneIndex(shape, bone);
+		if (b >= 0 && LacksSkeletonBind(bone)) {
+			// No skeleton transform exists to reconstruct this cloth bind. Preserve the authored global-to-bone transform while changing skin coordinates.
+			auto& weight = shapeSkinning[shape].boneWeights[b];
+			weight.xformSkinToBone = weight.xformSkinToBone.ComposeTransforms(newSkinToOldSkin);
 		}
 		else
 			RecalcXFormSkinToBone(shape, bone);
@@ -670,7 +703,7 @@ bool AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 					vertWeights[vw.first].Add(bid, vw.second);
 
 			nif->SetShapeTransformSkinToBone(shape, bid, bw.xformSkinToBone);
-			if (!bptr && !isSFShape)
+			if (isSFShape ? bw.guessedBind : !bptr)
 				incomplete = true;
 			if (!isFO)
 				nif->SetShapeBoneWeights(shapeBoneList.first, bid, bw.weights);

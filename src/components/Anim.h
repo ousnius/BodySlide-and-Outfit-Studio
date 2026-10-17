@@ -88,6 +88,8 @@ public:
 	std::unordered_map<uint16_t, float> weights;
 	nifly::MatTransform xformSkinToBone;
 	nifly::BoundingSphere bounds;
+	// No skeleton bone or other shape gave this bone a bind, so xformSkinToBone puts it at the origin
+	bool guessedBind = false;
 
 	void LoadFromNif(nifly::NifFile* loadFromFile, nifly::NiShape* shape, const int& index);
 };
@@ -144,6 +146,12 @@ class AnimInfo {
 private:
 	nifly::NifFile* refNif = nullptr;
 
+	// Starfield binds bones by name, so a bone can be skinned without being in the editing skeleton
+	bool LacksSkeletonBind(const std::string& boneName) const;
+	// The source shape's bind of a bone, converted to the target shape's skin coordinates
+	std::optional<nifly::MatTransform> BindFromShape(const std::string& sourceShape, const std::string& targetShape, const std::string& boneName) const;
+	std::optional<nifly::MatTransform> FindBindOnOtherShape(const std::string& targetShape, const std::string& boneName) const;
+
 public:
 	std::map<std::string, std::vector<std::string>> shapeBones;
 	std::unordered_map<std::string, AnimSkin> shapeSkinning; // Shape to skin association.
@@ -154,6 +162,7 @@ public:
 
 	// Returns true if a new bone is added, false if the bone already exists.
 	// An explicit bind is used only for a newly added bone; existing binds are preserved.
+	// Without one, a Starfield bone missing from the skeleton takes its bind from another shape that has it.
 	bool AddShapeBone(const std::string& shape, const std::string& boneName, const std::optional<nifly::MatTransform>& skinToBone = std::nullopt);
 	// For Starfield bones absent from the editing skeleton, use the reference shape's authored bind, converted to the target skin coordinates.
 	std::optional<nifly::MatTransform> GetMissingBoneTransformForCopy(const std::string& sourceShape, const std::string& targetShape, const std::string& boneName) const;
@@ -192,7 +201,7 @@ public:
 	void CleanupBones();
 	void WriteNodesToNif(nifly::NifFile* nif, const std::string& shapeException = "");
 	// Returns false if a skinned bone is missing from the reference skeleton.
-	// Starfield BSGeometry binds bones by name, so its bones never count as missing.
+	// Starfield BSGeometry binds bones by name, so only its bones without a known bind count as missing.
 	bool WriteToNif(nifly::NifFile* nif, const std::string& shapeException = "");
 
 	void RenameShape(const std::string& shapeName, const std::string& newShapeName);
