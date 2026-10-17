@@ -31,7 +31,7 @@ std::unordered_set<std::string> Names(const BSClothExtraData& block) {
 	std::string current;
 	auto flush = [&]() {
 		if (current.size() > 1)
-			names.insert(current);
+			names.insert(Lower(current));
 		current.clear();
 	};
 
@@ -39,7 +39,7 @@ std::unordered_set<std::string> Names(const BSClothExtraData& block) {
 	for (size_t i = 0; i < block.data.size(); ++i) {
 		char c = data[i];
 		if (c >= 0x20 && c <= 0x7e)
-			current += static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+			current += c;
 		else
 			flush();
 	}
