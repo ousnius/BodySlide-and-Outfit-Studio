@@ -216,6 +216,8 @@ public:
 	void SetSelectedShape(const std::string& shapeName);
 
 	UndoHistory* GetUndoHistory();
+	// Renders the view offscreen at the given size and saves it as a PNG
+	bool SaveViewImage(const wxString& fileName, int width, int height);
 
 	void SetActiveTool(ToolID brushID);
 	ToolID GetActiveTool() { return activeTool; }

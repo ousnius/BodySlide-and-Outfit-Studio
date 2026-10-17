@@ -15066,6 +15066,23 @@ wxGLPanel::~wxGLPanel() {
 	gls.RenderOneFrame();
 }
 
+bool wxGLPanel::SaveViewImage(const wxString& fileName, int width, int height) {
+	std::vector<uint8_t> rgba;
+	if (!gls.RenderToImage(static_cast<uint32_t>(width), static_cast<uint32_t>(height), rgba))
+		return false;
+
+	// wxImage takes ownership of malloc'd RGB data
+	unsigned char* rgb = static_cast<unsigned char*>(malloc(static_cast<size_t>(width) * height * 3));
+	for (size_t i = 0; i < static_cast<size_t>(width) * height; i++) {
+		rgb[i * 3] = rgba[i * 4];
+		rgb[i * 3 + 1] = rgba[i * 4 + 1];
+		rgb[i * 3 + 2] = rgba[i * 4 + 2];
+	}
+
+	wxImage image(width, height, rgb);
+	return image.SaveFile(fileName, wxBITMAP_TYPE_PNG);
+}
+
 UndoHistory* wxGLPanel::GetUndoHistory() {
 	return &os->editor.undoHistory;
 }
@@ -15372,6 +15389,14 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 	// No editing shortcuts while an animation is playing.
 	if (os && os->IsAnimationPlaying()) {
 		event.Skip();
+		return;
+	}
+
+	if (event.GetKeyCode() == WXK_F12 && event.ControlDown() && event.AltDown() && event.ShiftDown()) {
+		// Hidden: saves an offscreen render of the view, to check rendering without screen captures
+		wxString fileName = wxString::FromUTF8(Config["AppDir"]) + "/ViewportCapture.png";
+		if (SaveViewImage(fileName, 1024, 1024))
+			wxLogMessage("Saved view image to '%s'.", fileName);
 		return;
 	}
 

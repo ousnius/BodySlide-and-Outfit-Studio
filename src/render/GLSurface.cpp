@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "GLSurface.h"
+#include "GLOffscreenBuffer.h"
 #include "../utils/ConfigurationManager.h"
 
 #include <wx/log.h>
@@ -842,7 +843,45 @@ void GLSurface::RenderOneFrame() {
 		return;
 
 	canvas->SetCurrent(*context);
+	RenderScene();
+	canvas->SwapBuffers();
+}
 
+bool GLSurface::RenderToImage(uint32_t width, uint32_t height, std::vector<uint8_t>& outRGBA, int samples) {
+	if (!canvas || width == 0 || height == 0 || !SetContext())
+		return false;
+
+	// The projection follows the viewport size, so render with the image's aspect ratio
+	const uint32_t savedW = vpW;
+	const uint32_t savedH = vpH;
+	vpW = width;
+	vpH = height;
+
+	{
+		GLOffScreenBuffer buffer(this, static_cast<int>(width), static_cast<int>(height), 1, std::vector<GLuint>(), samples);
+		buffer.Start();
+		RenderScene();
+		buffer.Resolve();
+
+		std::vector<uint8_t> pixels(static_cast<size_t>(width) * height * 4);
+		glPixelStorei(GL_PACK_ALIGNMENT, 1);
+		glReadPixels(0, 0, static_cast<GLsizei>(width), static_cast<GLsizei>(height), GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+		buffer.End();
+
+		// OpenGL rows start at the bottom
+		const size_t rowSize = static_cast<size_t>(width) * 4;
+		outRGBA.resize(pixels.size());
+		for (uint32_t y = 0; y < height; y++)
+			std::copy_n(pixels.data() + (height - 1 - y) * rowSize, rowSize, outRGBA.data() + y * rowSize);
+	}
+
+	vpW = savedW;
+	vpH = savedH;
+	glViewport(0, 0, static_cast<GLsizei>(vpW * canvas->GetContentScaleFactor()), static_cast<GLsizei>(vpH * canvas->GetContentScaleFactor()));
+	return true;
+}
+
+void GLSurface::RenderScene() {
 	glClearColor(colorBackground.x, colorBackground.y, colorBackground.z, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -895,9 +934,6 @@ void GLSurface::RenderOneFrame() {
 			RenderMesh(o);
 		}
 	}
-
-	canvas->SwapBuffers();
-	return;
 }
 
 void GLSurface::RenderMesh(Mesh* m) {
