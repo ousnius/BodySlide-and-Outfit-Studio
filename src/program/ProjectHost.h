@@ -64,14 +64,6 @@ public:
 
 	// Deletes the sliders that are about to be replaced by merged reference sliders.
 	virtual void DeleteSlidersForMerge(bool WXUNUSED(keepSliders), bool WXUNUSED(keepZaps)) {}
-
-	// Display order of the project shapes. Empty if the host doesn't track one.
-	virtual std::vector<std::string> GetShapeOrder() { return {}; }
-
-	virtual bool GetShapeReferenceSource(nifly::NiShape* WXUNUSED(shape), std::string& WXUNUSED(outProjectFile), std::string& WXUNUSED(outProjectName)) {
-		return false;
-	}
-	virtual void SetShapeReferenceSource(nifly::NiShape* WXUNUSED(shape), const std::string& WXUNUSED(projectFile), const std::string& WXUNUSED(projectName)) {}
 };
 
 // Host for unattended use: answers every prompt with its default, logs messages and

@@ -158,6 +158,12 @@ class OutfitProject {
 	// All cloth data blocks that have been loaded during work
 	std::unordered_map<std::string, std::unique_ptr<nifly::BSClothExtraData>> clothData;
 
+	struct ShapeReferenceSource {
+		std::string projectFile;
+		std::string projectName;
+	};
+	std::unordered_map<std::string, ShapeReferenceSource> shapeRefSources;
+
 	// All HDT-SMP physics links that sat on the root node of a loaded NIF. The
 	// game reads only one of them, so a single one is picked for the output.
 	std::vector<std::unique_ptr<nifly::NiStringExtraData>> rootPhysicsData;
@@ -278,6 +284,13 @@ public:
 	std::string mRefProjectFile;    // OSP file path relative to project dir
 	std::string mRefProjectName;    // Slider set name in the OSP file
 	std::string mRefShapeName;      // Shape name in the project
+
+	// Shape names in display and output order
+	std::vector<std::string> GetShapeOrder() { return workNif.GetShapeNames(); }
+
+	// Reference project a shape came from. It is restored when the shape becomes the reference again.
+	bool GetShapeReferenceSource(const std::string& shapeName, std::string& outProjectFile, std::string& outProjectName) const;
+	void SetShapeReferenceSource(const std::string& shapeName, const std::string& projectFile, const std::string& projectName);
 
 	// Returns a string error message or empty string on success.
 	std::string Save(const wxFileName& sliderSetFile,

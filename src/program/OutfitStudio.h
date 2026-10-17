@@ -79,31 +79,18 @@ struct MergeCheckErrors;
 
 class ShapeItemData : public wxTreeItemData {
 	nifly::NiShape* shape = nullptr;
-	std::string refProjectFile;
-	std::string refProjectName;
-
 public:
 	ShapeItemData(nifly::NiShape* inShape) { shape = inShape; }
 
 	nifly::NiShape* GetShape() { return shape; }
 
 	void SetShape(nifly::NiShape* newShape) { shape = newShape; }
-
-	const std::string& GetRefProjectFile() const { return refProjectFile; }
-	const std::string& GetRefProjectName() const { return refProjectName; }
-
-	void SetRefSource(const std::string& projectFile, const std::string& projectName) {
-		refProjectFile = projectFile;
-		refProjectName = projectName;
-	}
 };
 
 struct ShapeItemState {
 	std::string shapeName;
 	int state = 0;
 	bool selected = false;
-	std::string refProjectFile;
-	std::string refProjectName;
 };
 
 class SegmentItemData : public wxTreeItemData {
@@ -1034,10 +1021,6 @@ public:
 	void OnShapeDeleting(nifly::NiShape* shape) override;
 	void DeleteSlidersForMerge(bool keepSliders, bool keepZaps) override;
 
-	std::vector<std::string> GetShapeOrder() override;
-	bool GetShapeReferenceSource(nifly::NiShape* shape, std::string& outProjectFile, std::string& outProjectName) override;
-	void SetShapeReferenceSource(nifly::NiShape* shape, const std::string& projectFile, const std::string& projectName) override;
-
 private:
 	OutfitStudioFrame* frame = nullptr;
 	bool interactive = true;
@@ -1288,8 +1271,6 @@ public:
 	void UpdateShapeReference(nifly::NiShape* shape, nifly::NiShape* newShape);
 	std::vector<ShapeItemData*>& GetSelectedItems();
 	void ClearSelected(nifly::NiShape* shape);
-	bool GetShapeReferenceSource(nifly::NiShape* shape, std::string& outProjectFile, std::string& outProjectName);
-	void SetShapeReferenceSource(nifly::NiShape* shape, const std::string& projectFile, const std::string& projectName);
 	std::string GetActiveBone();
 
 	bool CheckEditableState();

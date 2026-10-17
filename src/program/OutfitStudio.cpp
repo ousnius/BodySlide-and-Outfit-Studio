@@ -3425,18 +3425,6 @@ void OutfitStudioProjectHost::DeleteSlidersForMerge(bool keepSliders, bool keepZ
 	frame->DeleteSliders(keepSliders, keepZaps);
 }
 
-std::vector<std::string> OutfitStudioProjectHost::GetShapeOrder() {
-	return frame->GetShapeList();
-}
-
-bool OutfitStudioProjectHost::GetShapeReferenceSource(NiShape* shape, std::string& outProjectFile, std::string& outProjectName) {
-	return frame->GetShapeReferenceSource(shape, outProjectFile, outProjectName);
-}
-
-void OutfitStudioProjectHost::SetShapeReferenceSource(NiShape* shape, const std::string& projectFile, const std::string& projectName) {
-	frame->SetShapeReferenceSource(shape, projectFile, projectName);
-}
-
 std::vector<std::string> OutfitStudioFrame::GetShapeList() {
 	std::vector<std::string> shapes;
 
@@ -3629,46 +3617,6 @@ void OutfitStudioFrame::ClearSelected(NiShape* shape) {
 		activeItem = nullptr;
 
 	selectedItems.erase(std::remove_if(selectedItems.begin(), selectedItems.end(), [&](ShapeItemData* i) { return i->GetShape() == shape; }), selectedItems.end());
-}
-
-bool OutfitStudioFrame::GetShapeReferenceSource(NiShape* shape, std::string& outProjectFile, std::string& outProjectName) {
-	outProjectFile.clear();
-	outProjectName.clear();
-
-	if (!shape || !outfitRoot.IsOk())
-		return false;
-
-	wxTreeItemIdValue cookie;
-	wxTreeItemId child = outfitShapes->GetFirstChild(outfitRoot, cookie);
-	while (child.IsOk()) {
-		auto* itemData = dynamic_cast<ShapeItemData*>(outfitShapes->GetItemData(child));
-		if (itemData && itemData->GetShape() == shape) {
-			outProjectFile = itemData->GetRefProjectFile();
-			outProjectName = itemData->GetRefProjectName();
-			return true;
-		}
-
-		child = outfitShapes->GetNextChild(outfitRoot, cookie);
-	}
-
-	return false;
-}
-
-void OutfitStudioFrame::SetShapeReferenceSource(NiShape* shape, const std::string& projectFile, const std::string& projectName) {
-	if (!shape || !outfitRoot.IsOk())
-		return;
-
-	wxTreeItemIdValue cookie;
-	wxTreeItemId child = outfitShapes->GetFirstChild(outfitRoot, cookie);
-	while (child.IsOk()) {
-		auto* itemData = dynamic_cast<ShapeItemData*>(outfitShapes->GetItemData(child));
-		if (itemData && itemData->GetShape() == shape) {
-			itemData->SetRefSource(projectFile, projectName);
-			return;
-		}
-
-		child = outfitShapes->GetNextChild(outfitRoot, cookie);
-	}
 }
 
 std::string OutfitStudioFrame::GetActiveBone() {
@@ -4913,8 +4861,6 @@ void OutfitStudioFrame::RefreshGUIFromProj(bool render, bool stashMasks) {
 				ShapeItemState prevState{};
 				prevState.shapeName = outfitShapes->GetItemText(child).ToUTF8().data();
 				prevState.state = outfitShapes->GetItemState(child);
-				prevState.refProjectFile = itemData->GetRefProjectFile();
-				prevState.refProjectName = itemData->GetRefProjectName();
 
 				if (outfitShapes->IsSelected(child))
 					prevState.selected = true;
@@ -4948,9 +4894,6 @@ void OutfitStudioFrame::RefreshGUIFromProj(bool render, bool stashMasks) {
 		outfitShapes->SetItemState(item, 0);
 		outfitShapes->SetItemData(item, itemData);
 
-		if (project->IsBaseShape(shape))
-			itemData->SetRefSource(project->GetReferenceProjectFile(), project->GetReferenceProjectName());
-
 		if (project->IsBaseShape(shape)) {
 			outfitShapes->SetItemBold(item);
 			outfitShapes->SetItemTextColour(item, wxColour(0, 255, 0));
@@ -4960,7 +4903,6 @@ void OutfitStudioFrame::RefreshGUIFromProj(bool render, bool stashMasks) {
 
 		if (it != prevStates.end()) {
 			outfitShapes->SetItemState(item, it->state);
-			itemData->SetRefSource(it->refProjectFile, it->refProjectName);
 
 			if (it->selected) {
 				outfitShapes->SelectItem(item);

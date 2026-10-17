@@ -523,7 +523,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 		for (auto& s : clone.GetShapes())
 			clone.UpdateSkinPartitions(s);
 
-		clone.SetShapeOrder(host->GetShapeOrder());
+		clone.SetShapeOrder(GetShapeOrder());
 		clone.GetHeader().SetExportInfo("Exported using Outfit Studio.");
 
 		// Project ShapeData NIFs always use internal geometry for simplicity
@@ -675,9 +675,26 @@ bool OutfitProject::ShapeSliderDataIsLocalOnly(const std::string& shapeName) {
 	return true;
 }
 
+bool OutfitProject::GetShapeReferenceSource(const std::string& shapeName, std::string& outProjectFile, std::string& outProjectName) const {
+	auto it = shapeRefSources.find(shapeName);
+	if (it == shapeRefSources.end()) {
+		outProjectFile.clear();
+		outProjectName.clear();
+		return false;
+	}
+
+	outProjectFile = it->second.projectFile;
+	outProjectName = it->second.projectName;
+	return true;
+}
+
+void OutfitProject::SetShapeReferenceSource(const std::string& shapeName, const std::string& projectFile, const std::string& projectName) {
+	shapeRefSources[shapeName] = {projectFile, projectName};
+}
+
 void OutfitProject::SetBaseShape(NiShape* shape, const bool moveData) {
 	if (baseShape && baseShape != shape && (!mRefProjectFile.empty() || !mRefProjectName.empty()))
-		host->SetShapeReferenceSource(baseShape, mRefProjectFile, mRefProjectName);
+		SetShapeReferenceSource(baseShape->name.get(), mRefProjectFile, mRefProjectName);
 
 	if (moveData) {
 		if (baseShape != shape) {
@@ -732,7 +749,7 @@ void OutfitProject::SetBaseShape(NiShape* shape, const bool moveData) {
 	if (shape) {
 		std::string refProjectFile;
 		std::string refProjectName;
-		if (host->GetShapeReferenceSource(shape, refProjectFile, refProjectName)) {
+		if (GetShapeReferenceSource(shape->name.get(), refProjectFile, refProjectName)) {
 			mRefProjectFile = refProjectFile;
 			mRefProjectName = refProjectName;
 		}
@@ -744,10 +761,10 @@ void OutfitProject::SetBaseShape(NiShape* shape, const bool moveData) {
 		if (ShapeSliderDataIsLocalOnly(shape->name.get())) {
 			mRefProjectFile.clear();
 			mRefProjectName.clear();
-				host->SetShapeReferenceSource(shape, "", "");
+			SetShapeReferenceSource(shape->name.get(), "", "");
 		}
 		else
-			host->SetShapeReferenceSource(shape, mRefProjectFile, mRefProjectName);
+			SetShapeReferenceSource(shape->name.get(), mRefProjectFile, mRefProjectName);
 
 		mRefShapeName = shape->name.get();
 	}
@@ -5355,6 +5372,7 @@ void OutfitProject::DeleteShape(NiShape* shape) {
 	std::string shapeName = shape->name.get();
 	workAnim.ClearShape(shapeName);
 	host->OnShapeDeleting(shape);
+	shapeRefSources.erase(shapeName);
 	shapeTextures.erase(shapeName);
 	shapeMaterialFiles.erase(shapeName);
 	shapeSFMaterials.erase(shapeName);
@@ -5691,6 +5709,13 @@ void OutfitProject::RenameShape(NiShape* shape, const std::string& newShapeName)
 
 	workNif.RenameShape(shape, newShapeName);
 	workAnim.RenameShape(shapeName, newShapeName);
+
+	auto refSource = shapeRefSources.find(shapeName);
+	if (refSource != shapeRefSources.end()) {
+		auto source = refSource->second;
+		shapeRefSources.erase(refSource);
+		shapeRefSources[newShapeName] = source;
+	}
 
 	bool isBaseShape = IsBaseShape(shape);
 	for (size_t si = 0; si < activeSet.size(); ++si) {
@@ -6772,7 +6797,7 @@ int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<Mesh
 	for (auto& s : clone.GetShapes())
 		clone.UpdateSkinPartitions(s);
 
-	clone.SetShapeOrder(host->GetShapeOrder());
+	clone.SetShapeOrder(GetShapeOrder());
 	clone.GetHeader().SetExportInfo("Exported using Outfit Studio.");
 
 	GenerateStarfieldMeshlets(clone);
@@ -6889,7 +6914,7 @@ int OutfitProject::ExportShapeNIF(const std::string& fileName, const std::vector
 	ChooseClothData(clone);
 	ChoosePhysicsData(clone);
 
-	clone.SetShapeOrder(host->GetShapeOrder());
+	clone.SetShapeOrder(GetShapeOrder());
 
 	for (auto& s : clone.GetShapes())
 		if (find(exportShapes.begin(), exportShapes.end(), s->name.get()) == exportShapes.end())
