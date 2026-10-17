@@ -27,6 +27,10 @@ See the included LICENSE file
 
 class GLMaterial;
 
+namespace nifly {
+class NifFile;
+}
+
 class Mesh {
 private:
 	std::array<bool, 10> queueUpdate = {false};
@@ -116,7 +120,9 @@ public:
 	std::unique_ptr<nifly::Edge[]> edges;
 	int nEdges = 0;
 
+	// The GL buffers are made by CreateBuffers (MeshBuffers.cpp), which also sets releaseBuffers to free them
 	bool genBuffers = false;
+	void (*releaseBuffers)(Mesh&) = nullptr;
 	GLuint vao = 0;
 	std::vector<GLuint> vbo = std::vector<GLuint>(10, 0);
 	GLuint ibo = 0;
@@ -221,6 +227,9 @@ public:
 
 	Mesh();
 	~Mesh();
+
+	// Mesh data of a shape of the NIF in mesh coordinates, with no GL buffers yet. nullptr if there's no such shape.
+	static std::unique_ptr<Mesh> CreateFromShape(nifly::NifFile* nif, const std::string& shapeName);
 
 	// Creates a new bvh tree for the mesh.
 	std::shared_ptr<AABBTree> CreateBVH();

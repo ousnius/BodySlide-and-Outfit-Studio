@@ -5,21 +5,258 @@ See the included LICENSE file
 
 #include "Mesh.h"
 #include "KDMatcher.hpp"
+#include "NifFile.hpp"
+
+#include <wx/log.h>
 
 using namespace nifly;
 
 Mesh::Mesh() {}
 
 Mesh::~Mesh() {
-	if (genBuffers) {
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-		glBindVertexArray(0);
+	if (releaseBuffers)
+		releaseBuffers(*this);
+}
 
-		glDeleteBuffers(static_cast<GLsizei>(vbo.size()), vbo.data());
-		glDeleteBuffers(1, &ibo);
-		glDeleteVertexArrays(1, &vao);
+std::unique_ptr<Mesh> Mesh::CreateFromShape(NifFile* nif, const std::string& shapeName) {
+	auto shape = nif->FindBlockByName<NiShape>(shapeName);
+	if (!shape)
+		return nullptr;
+
+	std::vector<Vector3> nifVerts;
+	nif->GetVertsForShape(shape, nifVerts);
+
+	std::vector<Triangle> nifTris;
+	shape->GetTriangles(nifTris);
+
+	const std::vector<Vector3>* nifNorms = nif->GetNormalsForShape(shape);
+	const std::vector<Vector2>* nifUvs = nif->GetUvsForShape(shape);
+
+	auto m = std::make_unique<Mesh>();
+
+	if (!shape->IsSkinned()) {
+		// Calculate transform from shape's CS to global CS
+		MatTransform ttg = shape->GetTransformToParent();
+		NiNode* parent = nif->GetParentNode(shape);
+		while (parent) {
+			ttg = parent->GetTransformToParent().ComposeTransforms(ttg);
+			parent = nif->GetParentNode(parent);
+		}
+
+		m->SetXformMeshToModel(Mesh::xformNifToMesh.ComposeTransforms(ttg.ComposeTransforms(Mesh::xformMeshToNif)));
 	}
+	else {
+		// Skinned meshes
+		MatTransform xformGlobalToSkin;
+		if (nif->CalcShapeTransformGlobalToSkin(shape, xformGlobalToSkin)) {
+			m->SetXformModelToMesh(Mesh::xformNifToMesh.ComposeTransforms(xformGlobalToSkin.ComposeTransforms(Mesh::xformMeshToNif)));
+		}
+	}
+
+	NiShader* shader = nif->GetShader(shape);
+	m->hasShader = shader != nullptr;
+	m->bHelperShape = !shader || (shape->flags & 1) != 0;
+	if (shader) {
+		m->doublesided = shader->IsDoubleSided();
+		m->modelSpace = shader->IsModelSpace();
+		m->emissive = shader->IsEmissive();
+		m->specular = shader->HasSpecular();
+		m->vertexColors = shader->HasVertexColors();
+		m->vertexAlpha = shader->HasVertexAlpha();
+		m->glowmap = shader->HasGlowmap();
+		m->greyscaleColor = shader->HasGreyscaleColor();
+		m->cubemap = shader->HasEnvironmentMapping();
+
+		if (nif->GetHeader().GetVersion().Stream() < 130) {
+			m->backlight = shader->HasBacklight();
+			m->backlightMap = m->backlight; // Dedicated map pre-130
+			m->rimlight = shader->HasRimlight();
+			m->softlight = shader->HasSoftlight();
+			m->prop.rimlightPower = shader->GetRimlightPower();
+			m->prop.softlighting = shader->GetSoftlight();
+		}
+		else {
+			m->backlight = (shader->GetBacklightPower() > 0.0);
+			m->softlight = (shader->GetSubsurfaceRolloff() > 0.0);
+			m->prop.subsurfaceRolloff = shader->GetSubsurfaceRolloff();
+		}
+
+		m->prop.uvOffset = shader->GetUVOffset();
+		m->prop.uvScale = shader->GetUVScale();
+		m->prop.specularColor = shader->GetSpecularColor();
+		m->prop.specularStrength = shader->GetSpecularStrength();
+		m->prop.shininess = shader->GetGlossiness();
+		m->prop.envReflection = shader->GetEnvironmentMapScale();
+		m->prop.backlightPower = shader->GetBacklightPower();
+		m->prop.paletteScale = shader->GetGrayscaleToPaletteScale();
+		m->prop.fresnelPower = shader->GetFresnelPower();
+
+		Color4 emissiveColor = shader->GetEmissiveColor();
+		m->prop.emissiveColor = Vector3(emissiveColor.r, emissiveColor.g, emissiveColor.b);
+		m->prop.emissiveMultiple = shader->GetEmissiveMultiple();
+
+		m->prop.alpha = shader->GetAlpha();
+
+		// Everything that has to come off the lighting shader property itself rather than off the
+		// NiShader interface: the tint colors of the shader types that have one, and the True PBR flag.
+		if (!nif->GetHeader().GetVersion().IsSF()) {
+			auto* bslsp = dynamic_cast<BSLightingShaderProperty*>(shader);
+			if (bslsp) {
+				// Community Shaders "True PBR", which a shape asks for with Shader Flags 2 bit 23 - the bit
+				// NifSkope shows as "Unused 01". Only asked of Skyrim: Fallout 4 shares the block type and
+				// spends that bit on something else, and its shapes have their own shader either way.
+				// The multi layer parallax shader type counts alongside the default one, since True PBR
+				// borrows it purely as somewhere to keep its coat, fuzz and glint parameters. Such a shape
+				// still holds its RMAOS map in slot 5, and reading that as one is far closer than falling
+				// back to vanilla, which would take the same map for an environment mask.
+				if (nif->GetHeader().GetVersion().Stream() < 130) {
+					const uint32_t bslspType = bslsp->GetShaderType();
+					m->pbr = (bslsp->shaderFlags2 & SLSF2_UNUSED01) != 0
+							 && (bslspType == BSLightingShaderPropertyShaderType::BSLSP_DEFAULT
+								 || bslspType == BSLightingShaderPropertyShaderType::BSLSP_MULTILAYERPARALLAX);
+
+					if (m->pbr)
+						wxLogMessage("Shape '%s' was detected as a True PBR material.", shapeName);
+				}
+
+				// Face tint map (FaceGen) of the face tint shader type, always in texture slot 6
+				m->faceTint = bslsp->GetShaderType() == BSLightingShaderPropertyShaderType::BSLSP_FACE;
+
+				if (bslsp->GetShaderType() == BSLightingShaderPropertyShaderType::BSLSP_SKINTINT) {
+					m->tintType = Mesh::TintType::Skin;
+					m->prop.tintColor = bslsp->skinTintColor;
+				}
+				else if (bslsp->GetShaderType() == BSLightingShaderPropertyShaderType::BSLSP_HAIRTINT) {
+					m->tintType = Mesh::TintType::Hair;
+					m->prop.tintColor = bslsp->hairTintColor;
+				}
+			}
+		}
+	}
+
+	NiMaterialProperty* material = nif->GetMaterialProperty(shape);
+	if (material) {
+		m->emissive = material->IsEmissive();
+
+		m->prop.specularColor = material->GetSpecularColor();
+		m->prop.shininess = material->GetGlossiness();
+
+		Color4 emissiveColor = material->GetEmissiveColor();
+		m->prop.emissiveColor = Vector3(emissiveColor.r, emissiveColor.g, emissiveColor.b);
+		m->prop.emissiveMultiple = material->GetEmissiveMultiple();
+
+		m->prop.alpha = material->GetAlpha();
+	}
+
+	NiStencilProperty* stencil = nif->GetStencilProperty(shape);
+	if (stencil) {
+		int drawMode = (stencil->flags & DRAW_MASK) >> DRAW_POS;
+
+		switch (drawMode) {
+			case DRAW_CW:
+				m->doublesided = false;
+				m->cullMode = GL_FRONT;
+				break;
+			case DRAW_BOTH:
+				m->doublesided = true;
+				m->cullMode = GL_BACK;
+				break;
+			case DRAW_CCW:
+			default:
+				m->doublesided = false;
+				m->cullMode = GL_BACK;
+				break;
+		}
+	}
+
+	NiAlphaProperty* alphaProp = nif->GetAlphaProperty(shape);
+	if (alphaProp) {
+		m->alphaFlags = alphaProp->flags;
+		m->alphaThreshold = alphaProp->threshold;
+	}
+
+	m->nVerts = nifVerts.size();
+	m->nTris = nifTris.size();
+
+	if (m->nVerts > 0) {
+		m->verts = std::make_unique<Vector3[]>(m->nVerts);
+		m->norms = std::make_unique<Vector3[]>(m->nVerts);
+		m->tangents = std::make_unique<Vector3[]>(m->nVerts);
+		m->bitangents = std::make_unique<Vector3[]>(m->nVerts);
+		m->vcolors = std::make_unique<Vector3[]>(m->nVerts);
+		m->valpha = std::make_unique<float[]>(m->nVerts);
+		m->texcoord = std::make_unique<Vector2[]>(m->nVerts);
+		m->mask = std::make_unique<float[]>(m->nVerts);
+		m->weight = std::make_unique<float[]>(m->nVerts);
+	}
+
+	if (m->nTris > 0)
+		m->tris = std::make_unique<Triangle[]>(m->nTris);
+
+	m->shapeName = shapeName;
+
+	// Load verts. NIF verts are scaled up by approx. 10 and rotated on the x axis (Z up, Y forward).
+	// Scale down by 10 and rotate on x axis by flipping y and z components. To face the camera, this also mirrors
+	// on X and Y (180 degree y axis rotation.)
+	for (int i = 0; i < m->nVerts; i++)
+		m->verts[i] = Mesh::TransformPosNifToMesh(nifVerts[i]);
+
+	if (nifUvs && !nifUvs->empty()) {
+		for (int i = 0; i < m->nVerts; i++) {
+			m->texcoord[i].u = (*nifUvs)[i].u;
+			m->texcoord[i].v = (*nifUvs)[i].v;
+		}
+		m->textured = true;
+	}
+
+	// A Starfield material can map a layer or blender with the second UV channel instead
+	if (nif->GetHeader().GetVersion().IsSF()) {
+		NiGeometryData* geomData = nif->GetGeometryData(shape);
+		if (geomData && geomData->uvSets.size() > 1 && geomData->uvSets[1].size() == static_cast<size_t>(m->nVerts)) {
+			m->texcoord2 = std::make_unique<Vector2[]>(m->nVerts);
+			std::copy(geomData->uvSets[1].begin(), geomData->uvSets[1].end(), m->texcoord2.get());
+		}
+	}
+
+	// Copy triangles
+	for (int t = 0; t < m->nTris; t++)
+		m->tris[t] = nifTris[t];
+
+	if (!nifNorms || nifNorms->empty()) {
+		// Calc weldVerts and normals
+		m->SmoothNormals();
+	}
+	else {
+		// Already have normals, just copy the data over.
+		// Copy normals. Note, normals are transformed the same way the vertices are.
+		for (int i = 0; i < m->nVerts; i++)
+			m->norms[i] = Mesh::TransformDirNifToMesh((*nifNorms)[i]);
+
+		for (auto& extraDataRef : shape->extraDataRefs) {
+			auto integersExtraData = nif->GetHeader().GetBlock<NiIntegersExtraData>(extraDataRef);
+			if (integersExtraData && integersExtraData->name == "LOCKEDNORM")
+				for (auto& i : integersExtraData->integersData)
+					m->lockedNormalIndices.insert(i);
+		}
+
+		// Virtually weld verts across UV seams
+		m->CalcWeldVerts();
+	}
+
+	std::vector<Color4> vColors;
+	if (nif->GetColorsForShape(shape, vColors)) {
+		for (size_t v = 0; v < vColors.size(); v++) {
+			m->vcolors[v].x = vColors.at(v).r;
+			m->vcolors[v].y = vColors.at(v).g;
+			m->vcolors[v].z = vColors.at(v).b;
+			m->valpha[v] = vColors.at(v).a;
+		}
+	}
+
+	m->CalcTangentSpace();
+	m->CreateBVH();
+
+	return m;
 }
 
 std::shared_ptr<AABBTree> Mesh::CreateBVH() {
@@ -144,166 +381,6 @@ void Mesh::BuildEdgeList() {
 
 		ve[edges[e].p1].push_back(e);
 		ve[edges[e].p2].push_back(e);
-	}
-}
-
-void Mesh::CreateBuffers() {
-	if (!genBuffers) {
-		glGenVertexArrays(1, &vao);
-		glGenBuffers(static_cast<GLsizei>(vbo.size()), vbo.data());
-		glGenBuffers(1, &ibo);
-	}
-
-	// NumVertices * (Position + Normal + Colors + Texture Coordinates)
-	glBindVertexArray(vao);
-
-	if (verts) {
-		glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector3), verts.get(), GL_DYNAMIC_DRAW);
-	}
-
-	if (norms) {
-		glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector3), norms.get(), GL_DYNAMIC_DRAW);
-	}
-
-	if (tangents) {
-		glBindBuffer(GL_ARRAY_BUFFER, vbo[2]);
-		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector3), tangents.get(), GL_DYNAMIC_DRAW);
-	}
-
-	if (bitangents) {
-		glBindBuffer(GL_ARRAY_BUFFER, vbo[3]);
-		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector3), bitangents.get(), GL_DYNAMIC_DRAW);
-	}
-
-	if (vcolors) {
-		glBindBuffer(GL_ARRAY_BUFFER, vbo[4]);
-		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector3), vcolors.get(), GL_DYNAMIC_DRAW);
-	}
-
-	if (valpha) {
-		glBindBuffer(GL_ARRAY_BUFFER, vbo[5]);
-		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(float), valpha.get(), GL_DYNAMIC_DRAW);
-	}
-
-	if (texcoord) {
-		glBindBuffer(GL_ARRAY_BUFFER, vbo[6]);
-		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector2), texcoord.get(), GL_DYNAMIC_DRAW);
-	}
-
-	if (mask) {
-		glBindBuffer(GL_ARRAY_BUFFER, vbo[7]);
-		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(float), mask.get(), GL_DYNAMIC_DRAW);
-	}
-
-	if (weight) {
-		glBindBuffer(GL_ARRAY_BUFFER, vbo[8]);
-		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(float), weight.get(), GL_DYNAMIC_DRAW);
-	}
-
-	if (texcoord2) {
-		glBindBuffer(GL_ARRAY_BUFFER, vbo[9]);
-		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector2), texcoord2.get(), GL_STATIC_DRAW);
-	}
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	// Element index array
-	if (verts && tris) {
-		renderTris = std::make_unique<Triangle[]>(nTris);
-		for (int i = 0; i < nTris; ++i)
-			renderTris[i] = tris[i];
-
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, nTris * sizeof(Triangle), renderTris.get(), GL_DYNAMIC_DRAW);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	}
-	else if (verts && edges) {
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, nEdges * sizeof(Edge), edges.get(), GL_DYNAMIC_DRAW);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	}
-
-	glBindVertexArray(0);
-	genBuffers = true;
-}
-
-void Mesh::UpdateBuffers() {
-	if (genBuffers) {
-		glBindVertexArray(vao);
-
-		if (verts && queueUpdate[UpdateType::Position]) {
-			glBindBuffer(GL_ARRAY_BUFFER, vbo[UpdateType::Position]);
-			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(Vector3), verts.get());
-			queueUpdate[UpdateType::Position] = false;
-		}
-
-		if (norms && queueUpdate[UpdateType::Normals]) {
-			glBindBuffer(GL_ARRAY_BUFFER, vbo[UpdateType::Normals]);
-			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(Vector3), norms.get());
-			queueUpdate[UpdateType::Normals] = false;
-		}
-
-		if (tangents && queueUpdate[UpdateType::Tangents]) {
-			glBindBuffer(GL_ARRAY_BUFFER, vbo[UpdateType::Tangents]);
-			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(Vector3), tangents.get());
-			queueUpdate[UpdateType::Tangents] = false;
-		}
-
-		if (bitangents && queueUpdate[UpdateType::Bitangents]) {
-			glBindBuffer(GL_ARRAY_BUFFER, vbo[UpdateType::Bitangents]);
-			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(Vector3), bitangents.get());
-			queueUpdate[UpdateType::Bitangents] = false;
-		}
-
-		if (vcolors && queueUpdate[UpdateType::VertexColors]) {
-			glBindBuffer(GL_ARRAY_BUFFER, vbo[UpdateType::VertexColors]);
-			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(Vector3), vcolors.get());
-			queueUpdate[UpdateType::VertexColors] = false;
-		}
-
-		if (valpha && queueUpdate[UpdateType::VertexAlpha]) {
-			glBindBuffer(GL_ARRAY_BUFFER, vbo[UpdateType::VertexAlpha]);
-			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(float), valpha.get());
-			queueUpdate[UpdateType::VertexAlpha] = false;
-		}
-
-		if (texcoord && queueUpdate[UpdateType::TextureCoordinates]) {
-			glBindBuffer(GL_ARRAY_BUFFER, vbo[UpdateType::TextureCoordinates]);
-			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(Vector2), texcoord.get());
-			queueUpdate[UpdateType::TextureCoordinates] = false;
-		}
-
-		if (mask && queueUpdate[UpdateType::Mask]) {
-			glBindBuffer(GL_ARRAY_BUFFER, vbo[UpdateType::Mask]);
-			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(float), mask.get());
-			queueUpdate[UpdateType::Mask] = false;
-		}
-
-		if (weight && queueUpdate[UpdateType::Weight]) {
-			glBindBuffer(GL_ARRAY_BUFFER, vbo[UpdateType::Weight]);
-			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(float), weight.get());
-			queueUpdate[UpdateType::Weight] = false;
-		}
-
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-		if (queueUpdate[UpdateType::Indices]) {
-			if (tris) {
-				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-				glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, nTris * sizeof(Triangle), renderTris.get());
-				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-			}
-			else if (edges) {
-				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-				glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, nEdges * sizeof(Edge), edges.get());
-				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-			}
-			queueUpdate[UpdateType::Indices] = false;
-		}
-
-		glBindVertexArray(0);
 	}
 }
 
