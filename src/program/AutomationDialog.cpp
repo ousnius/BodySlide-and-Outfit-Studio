@@ -2248,21 +2248,17 @@ int AutomationDialog::RunHeadless(const wxString& scriptName, const wxArrayStrin
 	headlessMode = true;
 	lastRunErrors = 0;
 
-	// Nobody is there to answer prompts, and the project outlives this dialog
+	// Nobody is there to answer prompts, and the window outlives this dialog
 	struct PromptSuppression {
-		OutfitProject* project = nullptr;
+		OutfitStudioProjectHost& host;
 
-		PromptSuppression(OutfitProject* inProject)
-			: project(inProject) {
-			if (project)
-				project->suppressPrompts = true;
+		PromptSuppression(OutfitStudioProjectHost& inHost)
+			: host(inHost) {
+			host.SetInteractive(false);
 		}
 
-		~PromptSuppression() {
-			if (project)
-				project->suppressPrompts = false;
-		}
-	} promptSuppression(project);
+		~PromptSuppression() { host.SetInteractive(true); }
+	} promptSuppression(outfitStudio->projectHost);
 
 	if (scriptName.IsEmpty()) {
 		wxLogError("Automation: No script name provided.");

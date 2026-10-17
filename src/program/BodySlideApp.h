@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../physics/PumpClock.h"
 #include "../utils/ConfigurationManager.h"
 #include "../utils/Log.h"
+#include "../utils/TargetGame.h"
 #include "GroupManager.h"
 #include "PresetSaveDialog.h"
 #include "PreviewWindow.h"
@@ -69,8 +70,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <unordered_set>
 #include <vector>
 
-
-enum TargetGame { FO3, FONV, SKYRIM, FO4, SKYRIMSE, FO4VR, SKYRIMVR, FO76, OB, SF };
 
 // Marks favorites in the outfit, preset and animation lists and on their buttons
 constexpr const char* FavoriteStar = "\xE2\x98\x85";

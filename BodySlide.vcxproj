@@ -831,6 +831,7 @@
     <ClInclude Include="src\utils\GameUtil.h" />
     <ClInclude Include="src\utils\StackTrace.h" />
     <ClInclude Include="src\utils\StringStuff.h" />
+    <ClInclude Include="src\utils\TargetGame.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lib\FSEngine\FSBSA.cpp" />

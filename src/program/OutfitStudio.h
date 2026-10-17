@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../ui/wxStateButton.h"
 #include "../utils/ConfigurationManager.h"
 #include "../utils/Log.h"
+#include "../utils/TargetGame.h"
 #include "OutfitProject.h"
 
 #include "FSEngine/FSEngine.h"
@@ -69,8 +70,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef _WINDOWS
 #include <wx/msw/registry.h>
 #endif
-
-enum TargetGame { FO3, FONV, SKYRIM, FO4, SKYRIMSE, FO4VR, SKYRIMVR, FO76, OB, SF };
 
 #define ANIM_PLAYBACK_TIMER 300
 #define PHYSICS_TIMER 301
@@ -1006,6 +1005,44 @@ public:
 	void Show(int toolId, bool show);
 };
 
+// Connects the project to the Outfit Studio window: progress bar, message boxes and GUI refreshes.
+class OutfitStudioProjectHost : public NonInteractiveHost {
+public:
+	explicit OutfitStudioProjectHost(OutfitStudioFrame* inFrame)
+		: frame(inFrame) {}
+
+	// While disabled, prompts are answered with their defaults like NonInteractiveHost does.
+	void SetInteractive(bool enable) { interactive = enable; }
+	bool IsInteractive() const override { return interactive; }
+
+	void StartProgress(const wxString& msg = "") override;
+	void StartSubProgress(int min, int max) override;
+	void UpdateProgress(int val, const wxString& msg = "") override;
+	void EndProgress(const wxString& msg = "", bool forceEmpty = false) override;
+
+	void ShowMessage(HostMessageLevel level, const wxString& msg, const wxString& title) override;
+	HostAnswer Ask(const wxString& msg, const wxString& title, bool withCancel, HostAnswer defaultAnswer) override;
+	bool ChooseMany(const wxString& msg, const wxString& title, const wxArrayString& choices, wxArrayInt& selections) override;
+	bool ChooseOne(const wxString& msg, const wxString& title, const wxArrayString& choices, int& selection) override;
+	bool GetText(const wxString& msg, const wxString& title, wxString& value) override;
+	wxWindow* GetDialogParent() override;
+
+	Mesh* GetShapeMesh(const std::string& shapeName) override;
+
+	void OnAnimationChanged() override;
+	void OnPartitionsChanged() override;
+	void OnShapeDeleting(nifly::NiShape* shape) override;
+	void DeleteSlidersForMerge(bool keepSliders, bool keepZaps) override;
+
+	std::vector<std::string> GetShapeOrder() override;
+	bool GetShapeReferenceSource(nifly::NiShape* shape, std::string& outProjectFile, std::string& outProjectName) override;
+	void SetShapeReferenceSource(nifly::NiShape* shape, const std::string& projectFile, const std::string& projectName) override;
+
+private:
+	OutfitStudioFrame* frame = nullptr;
+	bool interactive = true;
+};
+
 class OutfitStudioFrame : public wxFrame {
 public:
 	OutfitStudioFrame(const wxPoint& pos, const wxSize& size);
@@ -1063,6 +1100,7 @@ public:
 	wxGLPanel* glView = nullptr;
 	EditUV* editUV = nullptr;
 	ArchiveBrowser* archiveBrowser = nullptr;
+	OutfitStudioProjectHost projectHost{this};
 	OutfitProject* project = nullptr;
 	ShapeItemData* activeItem = nullptr;
 	std::string activeSlider;
@@ -1331,6 +1369,9 @@ public:
 	}
 
 	void StartSubProgress(int min, int max) {
+		if (progressStack.empty())
+			return;
+
 		int range = progressStack.back().second - progressStack.back().first;
 		float mindiv = min / 100.0f;
 		float maxdiv = max / 100.0f;

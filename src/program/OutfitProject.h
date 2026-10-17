@@ -8,8 +8,10 @@ See the included LICENSE file
 #include "../components/Anim.h"
 #include "../components/Automorph.h"
 #include "../components/Mesh.h"
+#include "../components/UndoState.h"
 #include "../files/SFMaterialResolver.h"
-#include "OutfitStudio.h"
+#include "ProjectHost.h"
+#include "../utils/TargetGame.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -63,7 +65,6 @@ struct SliderDataLocation {
 	std::vector<std::string> dataFolders;
 };
 
-class OutfitStudioFrame;
 struct UndoStateShape;
 struct UndoStateShapeDelete;
 
@@ -145,7 +146,8 @@ std::vector<bool> CalcVertexListForAsymmetryTasks(const SymmetricVertices& symve
 void AddWeldedToVertexList(const Mesh::WeldVertsType& welcVerts, std::vector<bool>& selVerts);
 
 class OutfitProject {
-	OutfitStudioFrame* owner = nullptr;
+	IProjectHost* host = nullptr;
+	std::unique_ptr<NonInteractiveHost> ownHost;
 
 	void UpdateProgress(int val, const wxString& msg = "");
 
@@ -247,13 +249,11 @@ public:
 	// is about to be merged into the work NIF, keyed by shape name.
 	void CapturePhysicsFiles(nifly::NifFile& nif, const std::vector<nifly::NiShape*>& shapes);
 
-	// Set while an unattended script drives the project. Prompts that would
-	// otherwise stall the run fall back to their default answer instead.
-	bool suppressPrompts = false;
-
-	// inOwner is meant to provide access to OutfitStudio for the purposes of reporting process status only.
-	OutfitProject(OutfitStudioFrame* inOwner = nullptr);
+	// Without a host, the project runs unattended and answers prompts with their defaults.
+	explicit OutfitProject(IProjectHost* inHost = nullptr);
 	~OutfitProject();
+
+	IProjectHost& GetHost() { return *host; }
 
 	wxString mFileName;
 	wxString mOutfitName;

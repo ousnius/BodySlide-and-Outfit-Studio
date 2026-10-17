@@ -886,6 +886,9 @@
     <ClInclude Include="src\program\OutfitProject.h">
       <Filter>Program</Filter>
     </ClInclude>
+    <ClInclude Include="src\program\ProjectHost.h">
+      <Filter>Program</Filter>
+    </ClInclude>
     <ClInclude Include="src\render\GLShader.h">
       <Filter>Rendering</Filter>
     </ClInclude>
@@ -938,6 +941,9 @@
       <Filter>Utilities</Filter>
     </ClInclude>
     <ClInclude Include="src\utils\StringStuff.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\TargetGame.h">
       <Filter>Utilities</Filter>
     </ClInclude>
     <ClInclude Include="lib\gli\core\coord.hpp">
@@ -2251,6 +2257,9 @@
       <Filter>Program</Filter>
     </ClCompile>
     <ClCompile Include="src\program\OutfitProject.cpp">
+      <Filter>Program</Filter>
+    </ClCompile>
+    <ClCompile Include="src\program\ProjectHost.cpp">
       <Filter>Program</Filter>
     </ClCompile>
     <ClCompile Include="src\render\GLSurface.cpp">

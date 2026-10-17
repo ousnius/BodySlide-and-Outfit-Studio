@@ -1626,7 +1626,7 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	xrc->AttachUnknownControl("bonesFilter", bonesFilter, this);
 	bonesFilter->GetParent()->Hide();
 
-	project = new OutfitProject(this); // Create empty project
+	project = new OutfitProject(&projectHost); // Create empty project
 	CreateSetSliders();
 
 	selectedItems.clear();
@@ -2819,7 +2819,7 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName,
 
 		ShutdownPhysics();
 		delete project;
-		project = new OutfitProject(this);
+		project = new OutfitProject(&projectHost);
 	}
 
 	wxLogMessage("Loading outfit data...");
@@ -3313,6 +3313,128 @@ void OutfitStudioFrame::SelectShape(const std::string& shapeName) {
 		}
 		item = outfitShapes->GetNextSibling(item);
 	}
+}
+
+void OutfitStudioProjectHost::StartProgress(const wxString& msg) {
+	frame->StartProgress(msg);
+}
+
+void OutfitStudioProjectHost::StartSubProgress(int min, int max) {
+	frame->StartSubProgress(min, max);
+}
+
+void OutfitStudioProjectHost::UpdateProgress(int val, const wxString& msg) {
+	frame->UpdateProgress(val, msg);
+}
+
+void OutfitStudioProjectHost::EndProgress(const wxString& msg, bool forceEmpty) {
+	frame->EndProgress(msg, forceEmpty);
+}
+
+void OutfitStudioProjectHost::ShowMessage(HostMessageLevel level, const wxString& msg, const wxString& title) {
+	if (!interactive) {
+		NonInteractiveHost::ShowMessage(level, msg, title);
+		return;
+	}
+
+	long icon = wxICON_INFORMATION;
+	if (level == HostMessageLevel::Error)
+		icon = wxICON_ERROR;
+	else if (level == HostMessageLevel::Warning)
+		icon = wxICON_WARNING;
+
+	wxMessageBox(msg, title, wxOK | icon, frame);
+}
+
+HostAnswer OutfitStudioProjectHost::Ask(const wxString& msg, const wxString& title, bool withCancel, HostAnswer defaultAnswer) {
+	if (!interactive)
+		return NonInteractiveHost::Ask(msg, title, withCancel, defaultAnswer);
+
+	long style = wxYES_NO | wxICON_QUESTION;
+	if (withCancel)
+		style |= wxCANCEL;
+
+	int res = wxMessageBox(msg, title, style, frame);
+	if (res == wxYES)
+		return HostAnswer::Yes;
+	if (res == wxCANCEL)
+		return HostAnswer::Cancel;
+	return HostAnswer::No;
+}
+
+bool OutfitStudioProjectHost::ChooseMany(const wxString& msg, const wxString& title, const wxArrayString& choices, wxArrayInt& selections) {
+	if (!interactive)
+		return NonInteractiveHost::ChooseMany(msg, title, choices, selections);
+
+	wxMultiChoiceDialog choiceDialog(frame, msg, title, choices);
+	choiceDialog.SetSelections(selections);
+	if (choiceDialog.ShowModal() == wxID_CANCEL)
+		return false;
+
+	selections = choiceDialog.GetSelections();
+	return true;
+}
+
+bool OutfitStudioProjectHost::ChooseOne(const wxString& msg, const wxString& title, const wxArrayString& choices, int& selection) {
+	if (!interactive)
+		return NonInteractiveHost::ChooseOne(msg, title, choices, selection);
+
+	wxSingleChoiceDialog choiceDialog(frame, msg, title, choices);
+	if (selection >= 0 && selection < static_cast<int>(choices.GetCount()))
+		choiceDialog.SetSelection(selection);
+	if (choiceDialog.ShowModal() == wxID_CANCEL)
+		return false;
+
+	selection = choiceDialog.GetSelection();
+	return true;
+}
+
+bool OutfitStudioProjectHost::GetText(const wxString& msg, const wxString& title, wxString& value) {
+	if (!interactive)
+		return NonInteractiveHost::GetText(msg, title, value);
+
+	value = wxGetTextFromUser(msg, title, value, frame);
+	return !value.empty();
+}
+
+wxWindow* OutfitStudioProjectHost::GetDialogParent() {
+	return frame;
+}
+
+Mesh* OutfitStudioProjectHost::GetShapeMesh(const std::string& shapeName) {
+	if (!frame->glView)
+		return nullptr;
+
+	return frame->glView->GetMesh(shapeName);
+}
+
+void OutfitStudioProjectHost::OnAnimationChanged() {
+	frame->UpdateAnimationGUI();
+}
+
+void OutfitStudioProjectHost::OnPartitionsChanged() {
+	frame->ShowPartition();
+}
+
+void OutfitStudioProjectHost::OnShapeDeleting(NiShape* shape) {
+	frame->glView->DeleteMesh(shape->name.get());
+	frame->ClearSelected(shape);
+}
+
+void OutfitStudioProjectHost::DeleteSlidersForMerge(bool keepSliders, bool keepZaps) {
+	frame->DeleteSliders(keepSliders, keepZaps);
+}
+
+std::vector<std::string> OutfitStudioProjectHost::GetShapeOrder() {
+	return frame->GetShapeList();
+}
+
+bool OutfitStudioProjectHost::GetShapeReferenceSource(NiShape* shape, std::string& outProjectFile, std::string& outProjectName) {
+	return frame->GetShapeReferenceSource(shape, outProjectFile, outProjectName);
+}
+
+void OutfitStudioProjectHost::SetShapeReferenceSource(NiShape* shape, const std::string& projectFile, const std::string& projectName) {
+	frame->SetShapeReferenceSource(shape, projectFile, projectName);
 }
 
 std::vector<std::string> OutfitStudioFrame::GetShapeList() {
@@ -4230,7 +4352,7 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 
 	ShutdownPhysics();
 	delete project;
-	project = new OutfitProject(this);
+	project = new OutfitProject(&projectHost);
 
 	UpdateProgress(10, _("Loading reference..."));
 
@@ -4663,7 +4785,7 @@ void OutfitStudioFrame::OnUnloadProject(wxCommandEvent& WXUNUSED(event)) {
 
 	ShutdownPhysics();
 	delete project;
-	project = new OutfitProject(this);
+	project = new OutfitProject(&projectHost);
 
 	CreateSetSliders();
 	RefreshGUIFromProj(false);

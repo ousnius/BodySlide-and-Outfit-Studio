@@ -400,6 +400,7 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/program/ObjImportDialog.cpp
 	src/program/OutfitProject.cpp
 	src/program/OutfitStudio.cpp
+	src/program/ProjectHost.cpp
 	src/program/ShapeProperties.cpp
 	src/program/ConvertBodyReferenceDialog.cpp
 	src/program/AutomationDialog.cpp
