@@ -479,9 +479,11 @@ if(BSOS_BUILD_TESTS)
 
 	add_executable(BSOSTests
 		tests/ArchiveIndexTest.cpp
+		tests/AutomationJsonTest.cpp
 		tests/ArchiveTest.cpp
 		tests/HkxFileTest.cpp
 		tests/MaskTransferTest.cpp
+		tests/MeshAnalysisTest.cpp
 		tests/SFMaterialDatabaseTest.cpp
 		tests/SFLayeredMaterialTest.cpp
 		tests/SFMaterialFileTest.cpp
@@ -490,7 +492,11 @@ if(BSOS_BUILD_TESTS)
 		tests/StarfieldDataTest.cpp
 		tests/StarfieldSpaceTest.cpp
 		src/components/ArchiveIndex.cpp
+		src/components/Automation.cpp
+		src/components/AutomationJson.cpp
+		src/components/ClippingFixer.cpp
 		src/components/MaskTransfer.cpp
+		src/components/MeshAnalysis.cpp
 		src/files/HkxFile.cpp
 		src/files/GameDataStream.cpp
 		src/files/SFMaterialDatabase.cpp

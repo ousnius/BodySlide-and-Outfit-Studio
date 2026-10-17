@@ -244,11 +244,17 @@
     <ClCompile Include="tests\ArchiveIndexTest.cpp" />
     <ClCompile Include="tests\ArchiveTest.cpp" />
     <ClCompile Include="tests\HkxFileTest.cpp" />
+    <ClCompile Include="tests\AutomationJsonTest.cpp" />
     <ClCompile Include="tests\MaskTransferTest.cpp" />
+    <ClCompile Include="tests\MeshAnalysisTest.cpp" />
     <ClCompile Include="tests\SFMorphFileTest.cpp" />
     <ClCompile Include="tests\StarfieldSpaceTest.cpp" />
     <ClCompile Include="src\components\ArchiveIndex.cpp" />
+    <ClCompile Include="src\components\Automation.cpp" />
+    <ClCompile Include="src\components\AutomationJson.cpp" />
+    <ClCompile Include="src\components\ClippingFixer.cpp" />
     <ClCompile Include="src\components\MaskTransfer.cpp" />
+    <ClCompile Include="src\components\MeshAnalysis.cpp" />
     <ClCompile Include="src\files\HkxFile.cpp" />
     <ClCompile Include="src\files\SFMorphFile.cpp" />
     <ClCompile Include="src\utils\AABBTree.cpp" />

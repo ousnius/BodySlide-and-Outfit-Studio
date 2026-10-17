@@ -134,6 +134,8 @@ const char* KindName(AutomationFieldKind kind) {
 
 json AutomationStepToJson(const AutomationStep& step, bool includeDefaults) {
 	const AutomationStepInfo& info = GetAutomationStepInfo(step.type);
+	// String parameters can have defaults too, which only a default constructed step knows
+	static const AutomationStep defaults;
 
 	json out = json::object();
 	out[KeyType] = info.xmlName;
@@ -168,13 +170,13 @@ json AutomationStepToJson(const AutomationStep& step, bool includeDefaults) {
 			}
 			case AutomationFieldKind::String: {
 				const std::string& value = step.*field.member.asString;
-				if (includeDefaults || !value.empty())
+				if (includeDefaults || value != defaults.*field.member.asString)
 					out[field.xmlName] = value;
 				break;
 			}
 			case AutomationFieldKind::StringList: {
 				const std::vector<std::string>& value = step.*field.member.asStringList;
-				if (includeDefaults || !value.empty())
+				if (includeDefaults || value != defaults.*field.member.asStringList)
 					out[field.xmlName] = value;
 				break;
 			}
