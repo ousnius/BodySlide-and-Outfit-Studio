@@ -50,9 +50,19 @@ std::unordered_set<std::string> Names(const BSClothExtraData& block) {
 } // namespace
 
 std::string ClothData::Add(const std::string& source, std::unique_ptr<BSClothExtraData> block) {
+	// Reloading a file reuses the blocks it stored before. Blocks are never removed, as undo can still refer to them.
 	std::string key = source;
-	for (size_t suffix = 2; blocks.find(key) != blocks.end(); ++suffix)
+	for (size_t suffix = 2;; ++suffix) {
+		auto existing = blocks.find(key);
+		if (existing == blocks.end())
+			break;
+
+		const auto& data = existing->second->data;
+		if (data.size() == block->data.size() && std::equal(data.data(), data.data() + data.size(), block->data.data()))
+			return key;
+
 		key = source + " (" + std::to_string(suffix) + ")";
+	}
 
 	blocks.emplace(key, std::move(block));
 	return key;
@@ -86,8 +96,11 @@ void ClothData::Capture(NifFile& nif, const std::string& source, const std::vect
 	};
 
 	std::vector<Block> captured;
-	for (auto& block : nif.GetChildren<BSClothExtraData>(nullptr, true))
-		captured.push_back({Add(source, block->Clone()), Names(*block)});
+	for (auto& block : nif.GetChildren<BSClothExtraData>(nullptr, true)) {
+		auto key = Add(source, block->Clone());
+		if (std::none_of(captured.begin(), captured.end(), [&](const Block& other) { return other.key == key; }))
+			captured.push_back({key, Names(*block)});
+	}
 
 	// The payload names the whole skeleton next to the bones it drives, so only the bones a shape adds to the
 	// reference skeleton tell its cloth apart. Every shape of the file is resolved, so cloth owned by a shape outside
@@ -132,7 +145,9 @@ void ClothData::Capture(NifFile& nif, const std::string& source, const std::vect
 }
 
 void ClothData::AddManual(const std::string& source, std::unique_ptr<BSClothExtraData> block) {
-	manualSources.push_back(Add(source, std::move(block)));
+	auto key = Add(source, std::move(block));
+	if (std::find(manualSources.begin(), manualSources.end(), key) == manualSources.end())
+		manualSources.push_back(key);
 }
 
 void ClothData::Apply(NifFile& nif, const Sources& additional) const {

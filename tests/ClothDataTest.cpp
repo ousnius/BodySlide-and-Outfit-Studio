@@ -278,6 +278,36 @@ TEST_CASE("Reimporting the same path never replaces an earlier shape's cloth", "
     CHECK(Payloads(second) == std::vector<std::string>{"second version"});
 }
 
+TEST_CASE("Reloading a file reuses the cloth blocks it stored", "[cloth][export]") {
+    ClothData data;
+    const auto outfit = Fixture("Coat", coatBones, coatCloth);
+    for (int load = 0; load < 3; ++load) {
+        NifFile copy(outfit);
+        data.Capture(copy, "coat.nif", copy.GetShapes(), Skeleton);
+    }
+    CHECK(data.GetBlocks().size() == 2);
+    CHECK(data.GetShapeSources("Coat") == ClothData::Sources{"coat.nif", "coat.nif (2)"});
+
+    SECTION("The same payload from another file keeps that file's name") {
+        auto other = Fixture("Other", coatBones, {coatCloth.front()});
+        data.Capture(other, "other.nif", other.GetShapes(), Skeleton);
+        CHECK(data.GetShapeSources("Other") == ClothData::Sources{"other.nif"});
+        CHECK(data.GetBlocks().size() == 3);
+    }
+    SECTION("Identical blocks in one file are stored once") {
+        auto doubled = Fixture("Doubled", coatBones, {coatCloth.front(), coatCloth.front()});
+        data.Capture(doubled, "doubled.nif", doubled.GetShapes(), Skeleton);
+        CHECK(data.GetShapeSources("Doubled") == ClothData::Sources{"doubled.nif"});
+    }
+    SECTION("Importing the same HKX again lists it once") {
+        data.AddManual("extra.hkx", Cloth("extra physics"));
+        data.AddManual("extra.hkx", Cloth("extra physics"));
+        CHECK(data.GetManualSources() == ClothData::Sources{"extra.hkx"});
+        data.AddManual("extra.hkx", Cloth("edited physics"));
+        CHECK(data.GetManualSources() == ClothData::Sources{"extra.hkx", "extra.hkx (2)"});
+    }
+}
+
 TEST_CASE("Explicit HKX additions cannot deselect original cloth", "[cloth][export]") {
     ClothData data;
     auto outfit = Fixture("Coat", coatBones, {coatCloth.front()});
