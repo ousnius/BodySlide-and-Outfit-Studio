@@ -35,6 +35,11 @@ using namespace nifly;
 
 namespace {
 
+// Cloth is told apart by the bones an outfit adds to the reference skeleton
+bool IsSkeletonBone(const std::string& bone) {
+	return AnimSkeleton::getInstance().GetBonePtr(bone, false) != nullptr;
+}
+
 // Uses the given answer to an import question, or asks the host with "yes" as the default.
 bool AskImportChoice(IProjectHost& host, const std::optional<bool>& choice, const wxString& msg, const wxString& title) {
 	if (choice)
@@ -3178,7 +3183,7 @@ int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::stri
 		deletedShapes.push_back(shapeName);
 	}
 
-	clothData.Capture(refNif, fileName, {refShape});
+	clothData.Capture(refNif, fileName, {refShape}, IsSkeletonBone);
 
 	// Record physics XML links of the reference before it is merged in
 	CaptureRootPhysicsData(refNif);
@@ -3308,7 +3313,7 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 		deletedShapes.push_back(shape);
 	}
 
-	clothData.Capture(refNif, refFile, {refShape});
+	clothData.Capture(refNif, refFile, {refShape}, IsSkeletonBone);
 
 	// Record physics XML links of the reference before it is merged in
 	CaptureRootPhysicsData(refNif);
@@ -6802,7 +6807,7 @@ int OutfitProject::ImportNIF(std::istream& fileStream, const std::string& fileNa
 		}
 	}
 
-	clothData.Capture(nif, fileName, nif.GetShapes());
+	clothData.Capture(nif, fileName, nif.GetShapes(), IsSkeletonBone);
 
 	// Record physics XML links of all shapes before they are merged in
 	CaptureRootPhysicsData(nif);

@@ -6,36 +6,47 @@ See the included LICENSE file
 #include "ClothData.h"
 #include "../../lib/LZ4F/xxhash.h"
 
+#include <algorithm>
+#include <cctype>
 #include <set>
+#include <unordered_set>
 
 using namespace nifly;
 
 namespace {
-// Shape extra data listing the fingerprints of the cloth blocks a shape owns, so ownership survives saving and reopening
-constexpr const char* ownershipName = "BSOS_ClothOwnership_v1";
-
 std::string Fingerprint(const BSClothExtraData& block) {
 	return std::to_string(block.data.size()) + ":" + std::to_string(XXH64(block.data.data(), block.data.size(), 0));
 }
 
-const NiStringsExtraData* Ownership(NifFile& nif, const NiRef& ref) {
-	auto data = nif.GetHeader().GetBlock<NiStringsExtraData>(ref);
-	return data && data->name.get() == ownershipName ? data : nullptr;
+std::string Lower(const std::string& text) {
+	std::string lower(text);
+	std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+	return lower;
 }
 
-void RemoveOwnership(NifFile& nif) {
-	std::set<uint32_t> ids;
-	for (auto& shape : nif.GetShapes()) {
-		for (auto& ref : shape->extraDataRefs) {
-			if (Ownership(nif, ref))
-				ids.insert(ref.index);
-		}
+// The Havok payload keeps its bone names as plain text, in the string table of a tagfile and inline in a packfile.
+// Node and HKX spellings can differ in case, so names are compared lowercase.
+std::unordered_set<std::string> Names(const BSClothExtraData& block) {
+	std::unordered_set<std::string> names;
+	std::string current;
+	auto flush = [&]() {
+		if (current.size() > 1)
+			names.insert(current);
+		current.clear();
+	};
+
+	const char* data = block.data.data();
+	for (size_t i = 0; i < block.data.size(); ++i) {
+		char c = data[i];
+		if (c >= 0x20 && c <= 0x7e)
+			current += static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+		else
+			flush();
 	}
-
-	// Deleting a block renumbers the ones after it
-	for (auto it = ids.rbegin(); it != ids.rend(); ++it)
-		nif.GetHeader().DeleteBlock(*it);
+	flush();
+	return names;
 }
+
 } // namespace
 
 std::string ClothData::Add(const std::string& source, std::unique_ptr<BSClothExtraData> block) {
@@ -68,74 +79,54 @@ void ClothData::RenameShape(const std::string& before, const std::string& after)
 	SetShapeSources(after, sources);
 }
 
-void ClothData::Capture(NifFile& nif, const std::string& source, const std::vector<NiShape*>& shapes) {
-	Sources sources;
-	std::unordered_map<std::string, Sources> payloadSources;
-	for (auto& block : nif.GetChildren<BSClothExtraData>(nullptr, true)) {
-		auto key = Add(source, block->Clone());
-		sources.push_back(key);
-		payloadSources[Fingerprint(*block)].push_back(key);
-	}
-
-	// Resolve the records of every shape in the file, so cloth owned by a shape outside the capture is not handed to another
-	struct Record {
-		bool hasOwnership = false;
-		bool stale = false;
-		Sources owned;
+void ClothData::Capture(NifFile& nif, const std::string& source, const std::vector<NiShape*>& shapes, const SkeletonBones& isSkeletonBone) {
+	struct Block {
+		std::string key;
+		std::unordered_set<std::string> names;
 	};
 
-	std::unordered_map<NiShape*, Record> records;
+	std::vector<Block> captured;
+	for (auto& block : nif.GetChildren<BSClothExtraData>(nullptr, true))
+		captured.push_back({Add(source, block->Clone()), Names(*block)});
+
+	// The payload names the whole skeleton next to the bones it drives, so only the bones a shape adds to the
+	// reference skeleton tell its cloth apart. Every shape of the file is resolved, so cloth owned by a shape outside
+	// the capture is not handed to another.
+	std::unordered_map<NiShape*, Sources> owned;
 	std::set<std::string> claimed;
-	bool anyStale = false;
 	for (auto& shape : nif.GetShapes()) {
-		auto& record = records[shape];
-		for (auto& ref : shape->extraDataRefs) {
-			auto data = Ownership(nif, ref);
-			if (!data)
-				continue;
+		std::vector<std::string> bones;
+		nif.GetShapeBoneList(shape, bones);
 
-			record.hasOwnership = true;
-			for (auto fingerprint = data->stringsData.cbegin(); fingerprint != data->stringsData.cend(); ++fingerprint) {
-				auto it = payloadSources.find(fingerprint->get());
-				if (it == payloadSources.end()) {
-					record.stale = true;
-					continue;
-				}
-
-				record.owned.insert(record.owned.end(), it->second.begin(), it->second.end());
-				claimed.insert(it->second.begin(), it->second.end());
-			}
+		std::vector<std::string> added;
+		for (auto& bone : bones) {
+			if (!isSkeletonBone || !isSkeletonBone(bone))
+				added.push_back(Lower(bone));
 		}
 
-		anyStale |= record.stale;
+		for (auto& block : captured) {
+			bool drives = std::any_of(added.begin(), added.end(), [&](const std::string& bone) { return block.names.count(bone) > 0; });
+			if (drives) {
+				owned[shape].push_back(block.key);
+				claimed.insert(block.key);
+			}
+		}
 	}
 
-	// Another tool can edit or add cloth while leaving the records behind. Instead of being dropped, cloth no record
-	// resolves to goes to the shapes whose records went stale, or to every shape when no record did
-	Sources unclaimed;
-	for (auto& key : sources) {
-		if (claimed.find(key) == claimed.end())
-			unclaimed.push_back(key);
-	}
-
+	// Cloth no shape is skinned to, such as cloth that only drives the base skeleton, stays with every captured shape
 	for (auto& shape : shapes) {
 		if (!shape)
 			continue;
 
-		// Without ownership records, all cloth of the file belongs to every shape
-		auto& record = records[shape];
-		if (!record.hasOwnership) {
-			SetShapeSources(shape->name.get(), sources);
-			continue;
+		Sources sources = owned[shape];
+		for (auto& block : captured) {
+			if (claimed.find(block.key) == claimed.end())
+				sources.push_back(block.key);
 		}
 
-		if (record.stale || !anyStale)
-			record.owned.insert(record.owned.end(), unclaimed.begin(), unclaimed.end());
-
-		SetShapeSources(shape->name.get(), record.owned);
+		SetShapeSources(shape->name.get(), sources);
 	}
 
-	RemoveOwnership(nif);
 	nif.GetHeader().DeleteBlockByType("BSClothExtraData");
 }
 
@@ -155,44 +146,13 @@ void ClothData::Apply(NifFile& nif, const Sources& additional) const {
 	}
 	sources.insert(sources.end(), additional.begin(), additional.end());
 
-	RemoveOwnership(nif);
 	nif.GetHeader().DeleteBlockByType("BSClothExtraData");
 
 	// Several shapes can share a source and different imports can hold the same block, so each payload is written once
-	std::unordered_map<std::string, std::string> fingerprints;
 	std::set<std::string> written;
 	for (auto& source : sources) {
 		auto block = blocks.find(source);
-		if (block == blocks.end() || fingerprints.find(source) != fingerprints.end())
-			continue;
-
-		auto fingerprint = Fingerprint(*block->second);
-		fingerprints[source] = fingerprint;
-		if (written.insert(fingerprint).second)
+		if (block != blocks.end() && written.insert(Fingerprint(*block->second)).second)
 			root->extraDataRefs.AddBlockRef(nif.GetHeader().AddBlock(block->second->Clone()));
-	}
-
-	if (written.empty())
-		return;
-
-	for (auto& shape : nif.GetShapes()) {
-		auto owned = GetShapeSources(shape->name.get());
-		owned.insert(owned.end(), additional.begin(), additional.end());
-
-		std::set<std::string> shapeFingerprints;
-		for (auto& source : owned) {
-			auto it = fingerprints.find(source);
-			if (it != fingerprints.end())
-				shapeFingerprints.insert(it->second);
-		}
-
-		auto ownership = std::make_unique<NiStringsExtraData>();
-		ownership->name.get() = ownershipName;
-		for (auto& fingerprint : shapeFingerprints) {
-			NiString value(fingerprint);
-			ownership->stringsData.push_back(value);
-		}
-
-		shape->extraDataRefs.AddBlockRef(nif.GetHeader().AddBlock(std::move(ownership)));
 	}
 }

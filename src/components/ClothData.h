@@ -7,6 +7,7 @@ See the included LICENSE file
 
 #include "NifFile.hpp"
 
+#include <functional>
 #include <map>
 #include <memory>
 #include <string>
@@ -18,6 +19,9 @@ class ClothData {
 public:
 	using Sources = std::vector<std::string>;
 	using Blocks = std::map<std::string, std::unique_ptr<nifly::BSClothExtraData>>;
+
+	// Tells whether a bone belongs to the reference skeleton rather than to a loaded outfit
+	using SkeletonBones = std::function<bool(const std::string&)>;
 
 private:
 	Blocks blocks;
@@ -35,8 +39,13 @@ public:
 	void RemoveShape(const std::string& shape) { shapeSources.erase(shape); }
 	void RenameShape(const std::string& before, const std::string& after);
 
-	// Takes the cloth blocks out of the NIF and assigns them to the given shapes
-	void Capture(nifly::NifFile& nif, const std::string& source, const std::vector<nifly::NiShape*>& shapes);
+	// Takes the cloth blocks out of the NIF and assigns them to the given shapes.
+	// Cloth drives the bones an outfit adds to the skeleton, so a block belongs to the shapes of the file skinned to an
+	// added bone it names. A block that names no such bone is kept with every given shape rather than dropped.
+	void Capture(nifly::NifFile& nif,
+				 const std::string& source,
+				 const std::vector<nifly::NiShape*>& shapes,
+				 const SkeletonBones& isSkeletonBone = {});
 
 	// Standalone HKX import that is only written to the output on request
 	void AddManual(const std::string& source, std::unique_ptr<nifly::BSClothExtraData> block);
