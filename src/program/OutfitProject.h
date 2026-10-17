@@ -294,6 +294,31 @@ public:
 	void CapturePhysicsFiles(nifly::NifFile& nif, const std::vector<nifly::NiShape*>& shapes);
 
 	// Without a host, the project runs unattended and answers prompts with their defaults.
+	// Copy of the editable project data, to return to after trying out a change.
+	// Not included: the shared skeleton, cloth and physics extra data, and the file names the project was saved as.
+	struct Snapshot {
+		nifly::NifFile workNif;
+		AnimInfo workAnim;
+		DiffDataSets baseDiffData;
+		DiffDataSets morphResults;
+		std::unordered_map<std::string, std::string> morphDataNames;
+		SliderSet activeSet;
+		std::string outfitName;
+		std::string baseShapeName;
+		std::string refProjectFile;
+		std::string refProjectName;
+		std::string refShapeName;
+		std::unordered_map<std::string, ShapeReferenceSource> shapeRefSources;
+		std::unordered_map<std::string, std::vector<std::string>> shapeTextures;
+		std::unordered_map<std::string, MaterialFile> shapeMaterialFiles;
+		std::unordered_map<std::string, std::shared_ptr<const SFLayeredMaterial>> shapeSFMaterials;
+		std::unordered_map<std::string, std::vector<std::string>> shapePhysicsFiles;
+	};
+
+	std::unique_ptr<Snapshot> CaptureSnapshot();
+	// Shape pointers into the work NIF are invalid afterwards
+	void RestoreSnapshot(const Snapshot& snapshot);
+
 	explicit OutfitProject(IProjectHost* inHost = nullptr);
 	~OutfitProject();
 
@@ -486,6 +511,8 @@ public:
 	// pose-independent undo/redo. Only has effect when bPose is true.
 	void ComputeUndoRestDiffs(nifly::NiShape* shape, UndoStateShape& uss);
 	void ScaleMorphResult(nifly::NiShape* shape, const std::string& sliderName, float scaleValue);
+	// Smooths the morph of an outfit shape for a slider. Fully masked vertices keep their morph.
+	bool SmoothSliderDiff(nifly::NiShape* shape, const std::string& sliderName, int iterations, float strength);
 	void MoveVertex(nifly::NiShape* shape, const nifly::Vector3& pos, const int& id);
 	void OffsetShape(nifly::NiShape* shape, const nifly::Vector3& xlate, std::unordered_map<uint16_t, float>* mask = nullptr);
 	void ScaleShape(nifly::NiShape* shape, const nifly::Vector3& scale, std::unordered_map<uint16_t, float>* mask = nullptr);

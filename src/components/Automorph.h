@@ -43,6 +43,17 @@ public:
 	~Automorph();
 
 	void ClearResultDiff() { resultDiffData.Clear(); }
+
+	// The calculated morphs and the data names they are stored under, for snapshots
+	void SaveResults(DiffDataSets& outDiffs, std::unordered_map<std::string, std::string>& outDataNames) const {
+		outDiffs = resultDiffData;
+		outDataNames = targetSliderDataNames;
+	}
+
+	void RestoreResults(const DiffDataSets& diffs, const std::unordered_map<std::string, std::string>& dataNames) {
+		resultDiffData = diffs;
+		targetSliderDataNames = dataNames;
+	}
 	void ClearSourceShapes();
 
 	void RenameResultDiffData(const std::string& shape, const std::string& oldName, const std::string& newName);

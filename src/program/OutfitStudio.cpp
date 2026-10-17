@@ -3049,6 +3049,18 @@ std::string OutfitStudioFrame::NewSlider(const std::string& suggestedName, bool 
 	return sliderName;
 }
 
+void OutfitStudioFrame::SyncSliderPanels() {
+	for (size_t i = 0; i < project->SliderCount(); i++) {
+		auto it = sliderPanels.find(project->GetSliderName(i));
+		if (it == sliderPanels.end() || !it->second)
+			continue;
+
+		int val = static_cast<int>(std::round(project->SliderValue(i) * 100.0f));
+		it->second->sliderReadout->ChangeValue(wxString::Format("%d%%", val));
+		it->second->slider->SetValue(val);
+	}
+}
+
 void OutfitStudioFrame::SetSliderValue(const size_t index, int val) {
 	std::string name = project->GetSliderName(index);
 	project->SliderValue(index) = val / 100.0f;
@@ -3238,19 +3250,7 @@ void OutfitStudioFrame::HighlightBoneNamesWithWeights() {
 }
 
 void OutfitStudioFrame::GetNormalizeBones(std::vector<std::string>* normBones, std::vector<std::string>* notNormBones) {
-	std::vector<std::string> activeBones;
-	project->GetActiveBones(activeBones);
-
-	for (auto& boneName : activeBones) {
-		if (editor.lastNormalizeBones.find(boneName) != editor.lastNormalizeBones.end()) {
-			if (normBones)
-				normBones->push_back(boneName);
-		}
-		else {
-			if (notNormBones)
-				notNormBones->push_back(boneName);
-		}
-	}
+	ProjectOperations(*project, editor).GetNormalizeBones(normBones, notNormBones);
 }
 
 std::vector<std::string> OutfitStudioFrame::GetSelectedBones() {
@@ -3497,141 +3497,60 @@ void OutfitStudioFrame::UpdateShapeSource(NiShape* shape) {
 }
 
 void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject* usp, bool bIsUndo) {
-	if (!usp->sliderName.empty()) {
-		float sliderscale = 1 / usp->sliderscale;
-		for (auto& uss : usp->usss) {
-			Mesh* m = glView->GetMesh(uss.shapeName);
-			if (!m)
-				continue;
+	ApplyRefresh(ProjectOperations(*project, editor).ApplyShapeEdits(*usp, bIsUndo));
+}
 
-			auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(m->shapeName);
-			if (!shape)
-				continue;
+void OutfitStudioFrame::RestoreEditSnapshot(const EditSnapshot& snapshot) {
+	if (editor.bEditSlider)
+		ExitSliderEdit();
 
-			if (!uss.restDiffs.empty()) {
-				// Pose-independent undo/redo: use stored rest-space NIF diffs
-				std::unordered_map<uint16_t, Vector3> morphDiff;
-				for (auto& rd : uss.restDiffs) {
-					Vector3 nifDiff = rd.second;
-					if (bIsUndo)
-						nifDiff *= -1.0f;
-					morphDiff[static_cast<uint16_t>(rd.first)] = Mesh::TransformDiffNifToMesh(nifDiff);
-				}
-				project->UpdateMorphResult(shape, usp->sliderName, morphDiff);
-			}
-			else {
-				std::unordered_map<uint16_t, Vector3> strokeDiff;
+	// Meshes and selection refer to shapes of the work NIF that is about to be replaced
+	for (auto& shape : project->GetWorkNif()->GetShapes())
+		glView->DeleteMesh(shape->name.get());
 
-				for (auto& ps : uss.pointStartState) {
-					auto pe = uss.pointEndState.find(ps.first);
-					if (pe == uss.pointEndState.end())
-						continue;
-					if (bIsUndo)
-						strokeDiff[ps.first] = (ps.second - pe->second) * sliderscale;
-					else
-						strokeDiff[ps.first] = (pe->second - ps.second) * sliderscale;
-				}
+	activeItem = nullptr;
+	selectedItems.clear();
+	editor.undoHistory.ClearHistory();
+	UpdateUndoTools();
 
-				if (project->bPose)
-					project->UndoPoseDiffs(shape, strokeDiff);
+	ProjectOperations ops(*project, editor);
+	ApplyRefresh(ops.RestoreSnapshot(snapshot));
+	ops.RestoreMasks(snapshot);
+	glView->Render();
+}
 
-				// Store rest-space NIF diffs for future undo/redo
-				for (auto& sd : strokeDiff)
-					uss.restDiffs[sd.first] = Mesh::TransformDiffMeshToNif(sd.second);
+void OutfitStudioFrame::ApplyRefresh(RefreshFlags flags) {
+	if (HasRefresh(flags, RefreshFlags::ShapeList))
+		RefreshGUIFromProj();
 
-				project->UpdateMorphResult(shape, usp->sliderName, strokeDiff);
-			}
-		}
+	if (HasRefresh(flags, RefreshFlags::SliderSet))
+		CreateSetSliders();
 
+	if (HasRefresh(flags, RefreshFlags::SliderValues))
+		SyncSliderPanels();
+
+	if (HasRefresh(flags, RefreshFlags::Meshes))
+		ApplySliders(true);
+
+	if (HasRefresh(flags, RefreshFlags::SliderData))
 		HighlightSliderData();
-	}
-	else {
-		if (usp->undoType == UndoType::Weight) {
-			for (auto& uss : usp->usss) {
-				Mesh* m = glView->GetMesh(uss.shapeName);
-				if (!m)
-					continue;
 
-				for (auto& bw : uss.boneWeights) {
-					if (bw.weights.empty())
-						continue;
-					project->GetWorkAnim()->AddShapeBone(m->shapeName, bw.boneName);
-					auto weights = project->GetWorkAnim()->GetWeightsPtr(m->shapeName, bw.boneName);
-					if (!weights)
-						continue;
-					for (auto& p : bw.weights) {
-						float val = bIsUndo ? p.second.startVal : p.second.endVal;
-						if (val == 0.0f)
-							weights->erase(p.first);
-						else
-							(*weights)[p.first] = val;
-					}
-				}
-				if (project->bPose) {
-					auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(m->shapeName);
-					std::vector<Vector3> verts;
-					project->GetLiveVerts(shape, verts);
-					glView->UpdateMeshVertices(shape->name.get(), &verts, true, true, false);
-				}
-			}
-		}
-		else if (usp->undoType == UndoType::Color) {
-			for (auto& uss : usp->usss) {
-				Mesh* m = glView->GetMesh(uss.shapeName);
-				if (!m)
-					continue;
+	if (HasRefresh(flags, RefreshFlags::Anim))
+		UpdateAnimationGUI();
 
-				auto colorPtr = project->GetWorkNif()->GetColorsForShape(m->shapeName);
-				if (!colorPtr || colorPtr->empty())
-					continue;
+	if (HasRefresh(flags, RefreshFlags::Pose)) {
+		if (cbPose)
+			cbPose->SetValue(project->bPose);
+		if (poseToMesh)
+			poseToMesh->Enable(project->bPose);
 
-				std::vector<Color4> vcolors = (*colorPtr);
-
-				if (bIsUndo) {
-					for (auto& p : uss.pointStartState) {
-						vcolors[p.first].r = p.second.x;
-						vcolors[p.first].g = p.second.y;
-						vcolors[p.first].b = p.second.z;
-					}
-				}
-				else {
-					for (auto& p : uss.pointEndState) {
-						vcolors[p.first].r = p.second.x;
-						vcolors[p.first].g = p.second.y;
-						vcolors[p.first].b = p.second.z;
-					}
-				}
-
-				project->GetWorkNif()->SetColorsForShape(m->shapeName, vcolors);
-			}
-		}
-		else if (usp->undoType == UndoType::Alpha) {
-			for (auto& uss : usp->usss) {
-				Mesh* m = glView->GetMesh(uss.shapeName);
-				if (!m)
-					continue;
-
-				auto colorPtr = project->GetWorkNif()->GetColorsForShape(m->shapeName);
-				if (!colorPtr || colorPtr->empty())
-					continue;
-
-				std::vector<Color4> vcolors = (*colorPtr);
-
-				if (bIsUndo) {
-					for (auto& p : uss.pointStartState)
-						vcolors[p.first].a = p.second.x;
-				}
-				else {
-					for (auto& p : uss.pointEndState)
-						vcolors[p.first].a = p.second.x;
-				}
-
-				project->GetWorkNif()->SetColorsForShape(m->shapeName, vcolors);
-			}
-		}
+		PoseToGUI();
+		UpdatePhysicsState();
+		ApplyPose();
 	}
 
-	SetPendingChanges();
+	if (HasRefresh(flags, RefreshFlags::PendingChanges))
+		SetPendingChanges();
 }
 
 void OutfitStudioFrame::UpdateShapeReference(NiShape* shape, NiShape* newShape) {
@@ -8922,15 +8841,7 @@ void OutfitStudioFrame::HighlightSlider(const std::string& name) {
 }
 
 void OutfitStudioFrame::ZeroSliders() {
-	if (!project->AllSlidersZero()) {
-		for (size_t s = 0; s < project->SliderCount(); s++) {
-			if (project->SliderClamp(s))
-				continue;
-
-			SetSliderValue(s, 0);
-		}
-		ApplySliders();
-	}
+	ApplyRefresh(ProjectOperations(*project, editor).ZeroSliders());
 }
 
 void OutfitStudioFrame::OnSlider(wxCommandEvent& event) {
@@ -10393,23 +10304,6 @@ void OutfitStudioFrame::OnSliderFixClipping(wxCommandEvent& WXUNUSED(event)) {
 	HighlightSliderData();
 }
 
-void OutfitStudioFrame::ConformSliders(NiShape* shape, const ConformOptions& options) {
-	if (project->IsBaseShape(shape))
-		return;
-
-	std::string shapeName = shape->name.get();
-	wxLogMessage("Conforming '%s'...", shapeName);
-	UpdateProgress(50, _("Conforming: ") + shapeName);
-
-	Mesh* m = glView->GetMesh(shapeName);
-	if (m) {
-		project->morpher.CopyMeshMask(m, shapeName);
-		project->ConformShape(shape, options);
-	}
-
-	UpdateProgress(99);
-}
-
 void OutfitStudioFrame::OnSliderConform(wxCommandEvent& WXUNUSED(event)) {
 	if (!project->GetBaseShape())
 		return;
@@ -10457,28 +10351,11 @@ int OutfitStudioFrame::ConformShapes(std::vector<NiShape*> shapes, bool silent) 
 			return 0;
 		}
 
-		ZeroSliders();
-
-		project->InitConform();
-
-		int inc = 100 / shapes.size() - 1;
-		int pos = 0;
-
-		for (auto& shape : shapes) {
-			UpdateProgress(pos * inc, _("Conforming: ") + shape->name.get());
-			StartSubProgress(pos * inc, pos * inc + inc);
-			ConformSliders(shape, options);
-			pos++;
-			EndProgress();
-		}
-
-		project->morpher.ClearProximityCache();
-		project->morpher.UnlinkRefDiffData();
+		OpResult result = ProjectOperations(*project, editor).ConformSliders(shapes, options);
+		ApplyRefresh(result.refresh);
 
 		if (statusBar)
 			statusBar->SetStatusText(_("All shapes conformed."));
-
-		SetPendingChanges();
 
 		wxLogMessage("All shapes conformed.");
 	}
@@ -12479,102 +12356,22 @@ int OutfitStudioFrame::CopyBoneWeightForShapes(std::vector<NiShape*> shapes, boo
 	WeightCopyOptions options;
 	options.preselectedBones = preselectedBones;
 	CalcCopySkinTransOption(options);
-	AnimInfo& workAnim = *project->GetWorkAnim();
 
 	WeightCopyDialog dlg(this, project, glView, poseDataCollection, editor.lastNormalizeBones, shapes, options, silent);
 	if (dlg.GetResult()) {
 		StartProgress(_("Copying bone weights..."));
 
+		BoneWeightCopyOptions copyOptions;
+		copyOptions.proximityRadius = options.proximityRadius;
+		copyOptions.maxResults = options.maxResults;
+		copyOptions.selectedBones = options.selectedBones;
+		copyOptions.copySkinTransform = options.doSkinTransCopy;
+		copyOptions.transformGeometry = options.doTransformGeo;
+
 		UndoStateProject* usp = glView->GetUndoHistory()->PushState();
-		usp->undoType = UndoType::Weight;
-
-		std::vector<std::string> baseBones;
-		if (!options.selectedBones.empty())
-			baseBones = options.selectedBones;
-		else
-			baseBones = workAnim.shapeBones[project->GetBaseShape()->name.get()];
-
-		std::sort(baseBones.begin(), baseBones.end());
-
-		int nCopyBones = static_cast<int>(baseBones.size());
-		std::vector<std::string> lockedBones;
-		bool bSpreadWeight = false;
-
-		// When copying a subset of bones, compute normalization info
-		if (!options.selectedBones.empty()) {
-			std::unordered_set<std::string> selBones{baseBones.begin(), baseBones.end()};
-			std::vector<std::string> normBones, notNormBones;
-			GetNormalizeBones(&normBones, &notNormBones);
-
-			for (auto& bone : normBones)
-				if (!selBones.count(bone))
-					baseBones.push_back(bone);
-
-			bSpreadWeight = static_cast<int>(baseBones.size()) > nCopyBones;
-
-			if (bSpreadWeight) {
-				for (auto& bone : notNormBones)
-					if (!selBones.count(bone))
-						lockedBones.push_back(bone);
-			}
-			else {
-				for (auto& bone : notNormBones)
-					if (!selBones.count(bone))
-						baseBones.push_back(bone);
-			}
-		}
-
-		std::unordered_map<uint16_t, float> mask;
-
-		const int inc = 100 / shapes.size() - 1;
-
-		for (size_t i = 0; i < shapes.size(); i++) {
-			NiShape* shape = shapes[i];
-			wxLogMessage("Copying bone weights to '%s'...", shape->name.get());
-			StartSubProgress(i * inc, i * inc + inc);
-
-			if (options.doSkinTransCopy) {
-				MatTransform globalToBaseShape = workAnim.GetTransformGlobalToShape(project->GetBaseShape());
-				MatTransform globalToShape = workAnim.GetTransformGlobalToShape(shape);
-
-				if (options.doTransformGeo && !globalToBaseShape.IsNearlyEqualTo(globalToShape)) {
-					MatTransform shapeToBaseShape = globalToBaseShape.ComposeTransforms(globalToShape.InverseTransform());
-					project->ApplyTransformToShapeGeometry(shape, shapeToBaseShape);
-				}
-
-				workAnim.SetTransformGlobalToShape(shape, globalToBaseShape);
-			}
-
-			usp->usss.resize(usp->usss.size() + 1);
-			usp->usss.back().shapeName = shape->name.get();
-
-			mask.clear();
-			glView->GetShapeMask(mask, shape->name.get());
-
-			std::vector<std::string> mergedBones = baseBones;
-
-			// For full copy, also add shape-specific bones not already in baseBones
-			if (options.selectedBones.empty()) {
-				std::vector<std::string> bones = workAnim.shapeBones[shape->name.get()];
-				for (auto& b : bones)
-					if (!std::binary_search(baseBones.begin(), baseBones.end(), b))
-						mergedBones.push_back(b);
-			}
-
-			project->CopyBoneWeights(shape, options.proximityRadius, options.maxResults, mask, mergedBones, nCopyBones, lockedBones, usp->usss.back(), bSpreadWeight);
-			EndProgress();
-		}
-
-		if (options.doSkinTransCopy || options.doTransformGeo)
-			RefreshGUIFromProj();
-
-		ActiveShapesUpdated(usp, false);
-		project->morpher.ClearProximityCache();
-
+		OpResult result = ProjectOperations(*project, editor).CopyBoneWeights(shapes, copyOptions, *usp);
+		ApplyRefresh(result.refresh);
 		UpdateUndoTools();
-
-		workAnim.CleanupBones();
-		UpdateAnimationGUI();
 
 		EndProgress();
 	}
@@ -13926,23 +13723,7 @@ void OutfitStudioFrame::OnResetAllPose(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::ResetAllPoseBones() {
-
-	std::vector<std::string> bones;
-	AnimSkeleton::getInstance().GetBoneNames(bones);
-
-	for (const std::string& boneName : bones) {
-		AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
-		if (!bone)
-			continue;
-
-		if (bone->IsUnposed())
-			continue;
-
-		bone->poseRotVec = Vector3(0.0f, 0.0f, 0.0f);
-		bone->poseTranVec = Vector3(0.0f, 0.0f, 0.0f);
-		bone->poseScale = 1.0f;
-		bone->UpdatePoseTransform();
-	}
+	ProjectOperations(*project, editor).ResetPose();
 }
 
 void OutfitStudioFrame::OnPoseToMesh(wxCommandEvent& WXUNUSED(event)) {

@@ -758,18 +758,13 @@ int AutomationDialog::ExecuteStepConformSliders(const AutomationStep& step) {
 					 options.sliderNames.size(), namesList);
 	}
 
-	outfitStudio->ZeroSliders();
-
-	project->InitConform();
-	for (auto* shape : shapes) {
-		wxLogMessage("Automation: Conforming '%s'...", shape->name.get());
-		Mesh* m = outfitStudio->glView->GetMesh(shape->name.get());
-		if (m)
-			project->morpher.CopyMeshMask(m, shape->name.get());
-		project->ConformShape(shape, options);
+	OpResult result = ProjectOperations(*project, outfitStudio->editor).ConformSliders(shapes, options);
+	if (!result.ok) {
+		wxLogError("Automation: ConformSliders - %s", result.error);
+		return 1;
 	}
-	project->morpher.ClearProximityCache();
-	project->morpher.UnlinkRefDiffData();
+
+	outfitStudio->ApplyRefresh(result.refresh);
 	return 0;
 }
 
@@ -780,96 +775,19 @@ int AutomationDialog::ExecuteStepCopyBoneWeights(const AutomationStep& step) {
 		return 0;
 	}
 
-	if (!project->GetBaseShape()) {
-		wxLogError("Automation: CopyBoneWeights - no reference shape loaded.");
+	BoneWeightCopyOptions options;
+	options.proximityRadius = step.weightProximityRadius;
+	options.maxResults = step.weightMaxResults;
+	options.selectedBones = step.weightBoneList;
+
+	UndoStateProject usp;
+	OpResult result = ProjectOperations(*project, outfitStudio->editor).CopyBoneWeights(shapes, options, usp);
+	if (!result.ok) {
+		wxLogError("Automation: CopyBoneWeights - %s", result.error);
 		return 1;
 	}
 
-	AnimInfo& workAnim = *project->GetWorkAnim();
-	std::vector<std::string> baseBones;
-	if (!step.weightBoneList.empty())
-		baseBones = step.weightBoneList;
-	else
-		baseBones = workAnim.shapeBones[project->GetBaseShape()->name.get()];
-
-	std::sort(baseBones.begin(), baseBones.end());
-
-	int nCopyBones = static_cast<int>(baseBones.size());
-	std::vector<std::string> lockedBones;
-	bool bSpreadWeight = false;
-
-	if (!step.weightBoneList.empty()) {
-		std::unordered_set<std::string> selectedBones(baseBones.begin(), baseBones.end());
-		std::vector<std::string> normalizeBones;
-		std::vector<std::string> nonNormalizeBones;
-		outfitStudio->GetNormalizeBones(&normalizeBones, &nonNormalizeBones);
-
-		for (const auto& bone : normalizeBones) {
-			if (!selectedBones.count(bone))
-				baseBones.push_back(bone);
-		}
-
-		bSpreadWeight = static_cast<int>(baseBones.size()) > nCopyBones;
-
-		if (bSpreadWeight) {
-			for (const auto& bone : nonNormalizeBones) {
-				if (!selectedBones.count(bone))
-					lockedBones.push_back(bone);
-			}
-		}
-		else {
-			for (const auto& bone : nonNormalizeBones) {
-				if (!selectedBones.count(bone))
-					baseBones.push_back(bone);
-			}
-		}
-	}
-
-	UndoStateProject usp;
-	usp.undoType = UndoType::Weight;
-
-	for (auto* shape : shapes) {
-		if (project->IsBaseShape(shape)) {
-			wxLogWarning("Automation: CopyBoneWeights - shape '%s' is the reference shape; skipping.", shape->name.get());
-			continue;
-		}
-
-		wxLogMessage("Automation: Copying bone weights to '%s'...", shape->name.get());
-
-		std::unordered_map<uint16_t, float> mask;
-		outfitStudio->glView->GetShapeMask(mask, shape->name.get());
-
-		usp.usss.resize(usp.usss.size() + 1);
-		UndoStateShape& uss = usp.usss.back();
-		uss.shapeName = shape->name.get();
-
-		std::vector<std::string> mergedBones = baseBones;
-
-		if (step.weightBoneList.empty()) {
-			auto& shapeBones = workAnim.shapeBones[shape->name.get()];
-			for (const auto& b : shapeBones) {
-				if (!std::binary_search(baseBones.begin(), baseBones.end(), b))
-					mergedBones.push_back(b);
-			}
-		}
-
-		project->CopyBoneWeights(shape,
-							 step.weightProximityRadius,
-							 step.weightMaxResults,
-							 mask,
-							 mergedBones,
-							 nCopyBones,
-							 lockedBones,
-							 uss,
-							 bSpreadWeight);
-	}
-
-	if (!usp.usss.empty())
-		outfitStudio->ActiveShapesUpdated(&usp, false);
-
-	project->morpher.ClearProximityCache();
-	workAnim.CleanupBones();
-	outfitStudio->UpdateAnimationGUI();
+	outfitStudio->ApplyRefresh(result.refresh);
 	return 0;
 }
 
@@ -2699,139 +2617,22 @@ int AutomationDialog::ExecuteStepRemoveUnusedNodes(const AutomationStep&) {
 }
 
 int AutomationDialog::ExecuteStepFixClipping(const AutomationStep& step) {
-	nifly::NiShape* refShape = project->GetBaseShape();
-	if (!refShape) {
-		wxLogError("Automation: FixClipping - no reference shape set.");
-		return 1;
-	}
-
-	ClippingFixOptions options;
-	options.strength = std::max(0.0f, std::min(1.0f, step.fixClipStrength));
-	if (options.strength <= 0.0f) {
-		wxLogWarning("Automation: FixClipping - strength is 0, nothing to do.");
-		return 0;
-	}
-
 	auto shapes = ResolveTargetShapes(step);
 	if (shapes.empty()) {
 		wxLogWarning("Automation: FixClipping - no target shapes found.");
 		return 0;
 	}
 
-	if (step.fixClipMode == 0) {
-		// Shapes mode: fix base geometry of target shapes with no sliders applied
-		wxLogMessage("Automation: FixClipping (Shapes mode, strength=%.0f%%)...", step.fixClipStrength * 100.0f);
+	ClippingFixMode mode = step.fixClipMode == 1 ? ClippingFixMode::Sliders : ClippingFixMode::Shapes;
+	wxLogMessage("Automation: FixClipping (%s mode, strength=%.0f%%)...", mode == ClippingFixMode::Sliders ? "Sliders" : "Shapes", step.fixClipStrength * 100.0f);
 
-		std::vector<nifly::Vector3> bodyVerts;
-		std::vector<nifly::Triangle> bodyTris;
-		project->GetWorkNif()->GetVertsForShape(refShape, bodyVerts);
-		refShape->GetTriangles(bodyTris);
-
-		for (auto* shape : shapes) {
-			if (project->IsBaseShape(shape))
-				continue;
-
-			if (!ClippingFixer::IsEligibleForFix(*project->GetWorkNif(), shape))
-				continue;
-
-			std::vector<nifly::Vector3> outfitVerts;
-			project->GetWorkNif()->GetVertsForShape(shape, outfitVerts);
-
-			std::vector<nifly::Triangle> outfitTris;
-			shape->GetTriangles(outfitTris);
-
-			std::vector<nifly::Vector3> fixedVerts = outfitVerts;
-			ClippingFixer::FixClipping(bodyVerts, bodyTris, fixedVerts, outfitTris, options);
-
-			bool changed = false;
-			for (size_t i = 0; i < outfitVerts.size(); i++) {
-				nifly::Vector3 diff = fixedVerts[i] - outfitVerts[i];
-				if (!diff.IsZero(true)) {
-					changed = true;
-					break;
-				}
-			}
-
-			if (changed) {
-				wxLogMessage("Automation: FixClipping - fixed base geometry for '%s'.", shape->name.get());
-				project->GetWorkNif()->SetVertsForShape(shape, fixedVerts);
-			}
-		}
-
-		outfitStudio->ApplySliders();
-	}
-	else if (step.fixClipMode == 1) {
-		// Sliders mode: fix clipping for each slider individually
-		wxLogMessage("Automation: FixClipping (Sliders mode, strength=%.0f%%)...", step.fixClipStrength * 100.0f);
-
-		// Build list of sliders to process
-		std::vector<size_t> sliderIndices;
-		if (step.fixClipSliderNames.empty()) {
-			// Process all non-zap/non-UV sliders that have morph data
-			for (size_t i = 0; i < project->SliderCount(); i++) {
-				if (project->activeSet[i].bZap || project->activeSet[i].bUV)
-					continue;
-				sliderIndices.push_back(i);
-			}
-			wxLogMessage("Automation: FixClipping - processing all %zu non-zap/non-UV sliders.", sliderIndices.size());
-		}
-		else {
-			for (const auto& name : step.fixClipSliderNames) {
-				size_t idx;
-				if (!project->SliderIndexFromName(name, idx)) {
-					wxLogError("Automation: FixClipping - slider '%s' not found.", name);
-					return 1;
-				}
-				sliderIndices.push_back(idx);
-			}
-		}
-
-		if (sliderIndices.empty()) {
-			wxLogWarning("Automation: FixClipping - no sliders to process.");
-			return 0;
-		}
-
-		// Save current slider values
-		std::vector<float> savedValues(project->SliderCount());
-		for (size_t i = 0; i < project->SliderCount(); i++)
-			savedValues[i] = project->SliderValue(i);
-
-		for (size_t si : sliderIndices) {
-			std::string sliderName = project->GetSliderName(si);
-			wxLogMessage("Automation: FixClipping - processing slider '%s'...", sliderName);
-
-			// Set all sliders to 0%, then this slider to 100%
-			for (size_t i = 0; i < project->SliderCount(); i++)
-				outfitStudio->SetSliderValue(i, 0);
-			outfitStudio->SetSliderValue(si, 100);
-			outfitStudio->ApplySliders();
-
-			for (auto* shape : shapes) {
-				if (project->IsBaseShape(shape))
-					continue;
-
-				// Check if this shape has morph data for this slider
-				TargetDataDiffs* diffSet = project->GetDiffSet(project->activeSet[si], shape);
-				if (!diffSet || diffSet->empty())
-					continue;
-
-				TargetDataDiffs morphDiffs;
-				project->CalcSliderClippingCorrection(shape, sliderName, options.strength, morphDiffs);
-
-				if (!morphDiffs.empty()) {
-					wxLogMessage("Automation: FixClipping - updated %zu vertices for '%s' slider '%s'.",
-								 morphDiffs.size(), shape->name.get(), sliderName);
-					project->UpdateMorphResult(shape, sliderName, morphDiffs);
-				}
-			}
-		}
-
-		// Restore original slider values
-		for (size_t i = 0; i < project->SliderCount(); i++)
-			outfitStudio->SetSliderValue(i, static_cast<int>(savedValues[i] * 100));
-		outfitStudio->ApplySliders();
+	OpResult result = ProjectOperations(*project, outfitStudio->editor).FixClipping(shapes, mode, step.fixClipStrength, step.fixClipSliderNames);
+	if (!result.ok) {
+		wxLogError("Automation: FixClipping - %s", result.error);
+		return 1;
 	}
 
+	outfitStudio->ApplyRefresh(result.refresh);
 	return 0;
 }
 

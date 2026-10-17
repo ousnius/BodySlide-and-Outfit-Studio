@@ -295,6 +295,48 @@ OutfitProject::OutfitProject(IProjectHost* inHost) {
 		mGenWeights = true;
 }
 
+std::unique_ptr<OutfitProject::Snapshot> OutfitProject::CaptureSnapshot() {
+	auto snapshot = std::make_unique<Snapshot>();
+	snapshot->workNif = workNif;
+	snapshot->workAnim = workAnim;
+	snapshot->baseDiffData = baseDiffData;
+	morpher.SaveResults(snapshot->morphResults, snapshot->morphDataNames);
+	snapshot->activeSet = activeSet;
+	snapshot->outfitName = outfitName;
+	snapshot->baseShapeName = baseShape ? baseShape->name.get() : "";
+	snapshot->refProjectFile = mRefProjectFile;
+	snapshot->refProjectName = mRefProjectName;
+	snapshot->refShapeName = mRefShapeName;
+	snapshot->shapeRefSources = shapeRefSources;
+	snapshot->shapeTextures = shapeTextures;
+	snapshot->shapeMaterialFiles = shapeMaterialFiles;
+	snapshot->shapeSFMaterials = shapeSFMaterials;
+	snapshot->shapePhysicsFiles = shapePhysicsFiles;
+	return snapshot;
+}
+
+void OutfitProject::RestoreSnapshot(const Snapshot& snapshot) {
+	morpher.UnlinkRefDiffData();
+	morpher.ClearProximityCache();
+
+	workNif = snapshot.workNif;
+	workAnim = snapshot.workAnim;
+	workAnim.SetRefNif(&workNif);
+	baseDiffData = snapshot.baseDiffData;
+	morpher.RestoreResults(snapshot.morphResults, snapshot.morphDataNames);
+	activeSet = snapshot.activeSet;
+	outfitName = snapshot.outfitName;
+	baseShape = snapshot.baseShapeName.empty() ? nullptr : workNif.FindBlockByName<NiShape>(snapshot.baseShapeName);
+	mRefProjectFile = snapshot.refProjectFile;
+	mRefProjectName = snapshot.refProjectName;
+	mRefShapeName = snapshot.refShapeName;
+	shapeRefSources = snapshot.shapeRefSources;
+	shapeTextures = snapshot.shapeTextures;
+	shapeMaterialFiles = snapshot.shapeMaterialFiles;
+	shapeSFMaterials = snapshot.shapeSFMaterials;
+	shapePhysicsFiles = snapshot.shapePhysicsFiles;
+}
+
 void OutfitProject::UpdateProgress(int val, const wxString& msg) {
 	host->UpdateProgress(val, msg);
 }
@@ -2590,6 +2632,25 @@ void OutfitProject::ScaleMorphResult(NiShape* shape, const std::string& sliderNa
 	}
 	else
 		morpher.ScaleResultDiff(target, sliderName, scaleValue);
+}
+
+bool OutfitProject::SmoothSliderDiff(NiShape* shape, const std::string& sliderName, int iterations, float strength) {
+	if (!shape || IsBaseShape(shape) || !ValidSlider(sliderName))
+		return false;
+
+	if (baseShape)
+		InitConform();
+	else
+		morpher.SourceShapesFromNif(workNif, &workAnim);
+
+	std::string shapeName = shape->name.get();
+	if (Mesh* m = host->GetShapeMesh(shapeName))
+		morpher.CopyMeshMask(m, shapeName);
+
+	morpher.SmoothResultDiff(shapeName, sliderName, SliderDataTargetForShape(shape), iterations, strength);
+	morpher.UnlinkRefDiffData();
+	EnsureSliderDataLocal(sliderName, shape);
+	return true;
 }
 
 void OutfitProject::MoveVertex(NiShape* shape, const Vector3& pos, const int& id) {

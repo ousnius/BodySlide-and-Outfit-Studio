@@ -33,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../utils/TargetGame.h"
 #include "EditorState.h"
 #include "OutfitProject.h"
+#include "ProjectOperations.h"
 
 #include "FSEngine/FSEngine.h"
 #include "FSEngine/FSManager.h"
@@ -1221,6 +1222,8 @@ public:
 	void SetSliderValue(const size_t index, int val);
 	void SetSliderValue(const std::string& name, int val);
 	void ZeroSliders();
+	// Shows the slider values of the project on the slider panels
+	void SyncSliderPanels();
 
 	void ApplySliders(bool recalcBVH = true);
 
@@ -1234,6 +1237,10 @@ public:
 	void UpdateVertexColors();
 
 	void ActiveShapesUpdated(UndoStateProject* usp, bool bIsUndo = false);
+	// Refreshes the parts of the GUI that an operation reported as changed
+	void ApplyRefresh(RefreshFlags flags);
+	// Returns the project to a snapshot and rebuilds the GUI for it. Clears the undo history.
+	void RestoreEditSnapshot(const EditSnapshot& snapshot);
 	void UpdateActiveShape();
 	bool ConfirmSliderDataLocalForEdit(nifly::NiShape* shape, const std::string& sliderName);
 	bool ConfirmSliderDataLocalForEdit(const std::vector<nifly::NiShape*>& shapes, const std::vector<std::string>& sliderNames);
@@ -1619,7 +1626,6 @@ private:
 	void OnLoadPreset(wxCommandEvent& event);
 	void OnSavePreset(wxCommandEvent& event);
 	bool ShowConform(ConformOptions& options, bool silent = false);
-	void ConformSliders(nifly::NiShape* shape, const ConformOptions& options);
 	void OnSliderConform(wxCommandEvent& event);
 	void OnSliderConformAll(wxCommandEvent& event);
 	void OnSliderImportNIF(wxCommandEvent& event);

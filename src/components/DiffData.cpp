@@ -608,6 +608,27 @@ void DiffDataSets::InsertVertexIndices(const std::string& target, const std::vec
 	}
 }
 
+DiffDataSets::DiffDataSets(const DiffDataSets& other) {
+	*this = other;
+}
+
+DiffDataSets& DiffDataSets::operator=(const DiffDataSets& other) {
+	if (this == &other)
+		return *this;
+
+	namedSet.clear();
+	for (auto& set : other.namedSet) {
+		DataSet& copy = namedSet[set.first];
+		copy.target = set.second.target;
+		if (set.second.diffs)
+			copy.diffs = std::make_unique<TargetDataDiffs>(*set.second.diffs);
+		if (set.second.linearDiffs)
+			copy.linearDiffs = std::make_unique<TargetDataDiffList>(*set.second.linearDiffs);
+	}
+
+	return *this;
+}
+
 void DiffDataSets::ClearSet(const std::string& name) {
 	namedSet.erase(name);
 }

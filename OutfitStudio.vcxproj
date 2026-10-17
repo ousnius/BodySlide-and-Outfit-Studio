@@ -878,6 +878,7 @@
     <ClInclude Include="src\program\ObjImportDialog.h" />
     <ClInclude Include="src\program\OutfitProject.h" />
     <ClInclude Include="src\program\ProjectHost.h" />
+    <ClInclude Include="src\program\ProjectOperations.h" />
     <ClInclude Include="src\program\EditorState.h" />
     <ClInclude Include="src\program\BadBonesDialog.h" />
     <ClInclude Include="src\program\OutfitStudio.h" />
@@ -1007,6 +1008,7 @@
     <ClCompile Include="src\program\ObjImportDialog.cpp" />
     <ClCompile Include="src\program\OutfitProject.cpp" />
     <ClCompile Include="src\program\ProjectHost.cpp" />
+    <ClCompile Include="src\program\ProjectOperations.cpp" />
     <ClCompile Include="src\program\BadBonesDialog.cpp" />
     <ClCompile Include="src\program\OutfitStudio.cpp" />
     <ClCompile Include="src\program\PresetSaveDialog.cpp" />
