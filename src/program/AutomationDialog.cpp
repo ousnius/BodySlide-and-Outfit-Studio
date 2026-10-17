@@ -2972,6 +2972,22 @@ void AutomationDialog::OnClose(wxCommandEvent& WXUNUSED(event)) {
 	EndModal(wxID_CLOSE);
 }
 
+int AutomationDialog::ImportOBJFile(const std::string& fileName) {
+	if (headlessMode)
+		return project->ImportOBJ(fileName, ObjImportOptions());
+
+	return outfitStudio->ImportOBJWithDialog(fileName);
+}
+
+#ifdef USE_FBXSDK
+int AutomationDialog::ImportFBXFile(const std::string& fileName) {
+	if (headlessMode)
+		return project->ImportFBX(fileName, FBXImportOptions());
+
+	return outfitStudio->ImportFBXWithDialog(fileName);
+}
+#endif
+
 void AutomationDialog::ResetAndClearProject() {
 	project->SetBaseShape(nullptr, false);
 	project->GetWorkAnim()->Clear();
@@ -3946,10 +3962,10 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 			if (ext == "nif")
 				importErr = project->ImportNIF(filePath, false);
 			else if (ext == "obj")
-				importErr = project->ImportOBJ(filePath);
+				importErr = ImportOBJFile(filePath);
 			else if (ext == "fbx")
 #ifdef USE_FBXSDK
-				importErr = project->ImportFBX(filePath);
+				importErr = ImportFBXFile(filePath);
 #else
 				wxLogError("Automation: FBX import is not available (FBX SDK not compiled in).");
 #endif

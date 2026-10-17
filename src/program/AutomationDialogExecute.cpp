@@ -1506,13 +1506,13 @@ int AutomationDialog::ExecuteStepImportFile(const AutomationStep& step) {
 				if (ext == "nif")
 					err = project->ImportNIF(fullPath, false);
 				else if (ext == "obj")
-					err = project->ImportOBJ(fullPath);
+					err = ImportOBJFile(fullPath);
 				else if (ext == "tri")
 					// Only head TRI files carry a mesh, body TRI files are handled by the ImportSliderData step
 					err = project->ImportHeadTRI(fullPath, "", step.importTriSliders) ? 0 : 1;
 				else if (ext == "fbx")
 #ifdef USE_FBXSDK
-					err = project->ImportFBX(fullPath);
+					err = ImportFBXFile(fullPath);
 #else
 					wxLogError("Automation: FBX import is not available (FBX SDK not compiled in).");
 #endif
@@ -1536,13 +1536,13 @@ int AutomationDialog::ExecuteStepImportFile(const AutomationStep& step) {
 		if (ext == "nif")
 			err = project->ImportNIF(importFilePathStd, false);
 		else if (ext == "obj")
-			err = project->ImportOBJ(importFilePathStd);
+			err = ImportOBJFile(importFilePathStd);
 		else if (ext == "tri")
 			// Only head TRI files carry a mesh, body TRI files are handled by the ImportSliderData step
 			err = project->ImportHeadTRI(importFilePathStd, "", step.importTriSliders) ? 0 : 1;
 		else if (ext == "fbx")
 #ifdef USE_FBXSDK
-			err = project->ImportFBX(importFilePathStd);
+			err = ImportFBXFile(importFilePathStd);
 #else
 			wxLogError("Automation: FBX import is not available (FBX SDK not compiled in).");
 #endif
@@ -2837,7 +2837,7 @@ int AutomationDialog::ExecuteStepFixClipping(const AutomationStep& step) {
 int AutomationDialog::ExecuteStepFixBadBones(const AutomationStep& WXUNUSED(step)) {
 	wxLogMessage("Automation: Fixing bad bones...");
 
-	if (!project->CheckForBadBones(false))
+	if (!project->CheckForBadBones())
 		wxLogMessage("Automation: No bad bones found.");
 
 	return 0;

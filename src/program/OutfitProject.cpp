@@ -12,8 +12,6 @@ See the included LICENSE file
 #include "../files/ObjFile.h"
 #include "../files/TriFile.h"
 #include "../files/SFMorphFile.h"
-#include "FBXImportDialog.h"
-#include "ObjImportDialog.h"
 #include "../utils/PlatformUtil.h"
 #include "../utils/StringStuff.h"
 #include "../utils/ProjectUtil.h"
@@ -27,6 +25,7 @@ See the included LICENSE file
 #include <limits>
 #include <regex>
 #include <sstream>
+#include <wx/log.h>
 #include <wx/collpane.h>
 
 extern ConfigurationManager Config;
@@ -34,6 +33,14 @@ extern ConfigurationManager Config;
 using namespace nifly;
 
 namespace {
+
+// Uses the given answer to an import question, or asks the host with "yes" as the default.
+bool AskImportChoice(IProjectHost& host, const std::optional<bool>& choice, const wxString& msg, const wxString& title) {
+	if (choice)
+		return *choice;
+
+	return host.Ask(msg, title, false, HostAnswer::Yes) == HostAnswer::Yes;
+}
 
 // Collects the masked vertices of a mesh.
 void GetMeshMask(Mesh* m, std::unordered_map<uint16_t, float>& mask) {
@@ -7081,7 +7088,7 @@ bool OutfitProject::SaveExternalMeshes(NifFile& nif, const std::string& nifFileN
 	return true;
 }
 
-int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& shapeName, NiShape* mergeShape) {
+int OutfitProject::ImportOBJ(const std::string& fileName, const ObjImportOptions& options, const std::string& shapeName, NiShape* mergeShape, const ImportChoices& choices) {
 	// Set reference NIF in case nothing was loaded yet
 	if (!workAnim.GetRefNif())
 		workAnim.SetRefNif(&workNif);
@@ -7097,22 +7104,17 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 	size_t vertexLimit = workNif.GetVertexLimit();
 	size_t triLimit = workNif.GetTriangleLimit();
 
-	wxString warningLabel;
-	if (!baseShape)
-		warningLabel = _("No reference has been loaded.  For correct bone transforms, you might need to load a reference before importing OBJ files.");
-
-	ObjImportDialog import(host->GetDialogParent(), fileName, vertexLimit, triLimit, warningLabel);
-	if (import.ShowModal() != wxID_OK)
-		return 1;
-
-	if (obj.LoadForNif(fileName, import.GetOptions())) {
+	if (obj.LoadForNif(fileName, options)) {
 		wxLogError("Could not load OBJ file '%s'!", fileName);
 		host->ShowMessage(HostMessageLevel::Error, wxString::Format(_("Could not load OBJ file '%s'!"), fileName), _("OBJ Error"));
 		return 1;
 	}
 
 	bool copyBaseSkinTrans = false;
-	if (baseShape && !workAnim.GetTransformGlobalToShape(baseShape).IsNearlyEqualTo(MatTransform())) {
+	if (choices.copyReferenceSkinTransform) {
+		copyBaseSkinTrans = baseShape && *choices.copyReferenceSkinTransform;
+	}
+	else if (baseShape && !workAnim.GetTransformGlobalToShape(baseShape).IsNearlyEqualTo(MatTransform())) {
 		HostAnswer res = host->Ask(_("The reference shape has a skin coordinate system that is different from the global coordinate system.  Would you like to copy the reference's "
 												"global-to-skin transform to the imported shapes?"),
 									_("Copy skin coordinates"), true, HostAnswer::No);
@@ -7147,19 +7149,21 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 			std::vector<Vector3> shapeVerts;
 			workNif.GetVertsForShape(mergeShape, shapeVerts);
 			if (shapeVerts.size() == vertCount) {
-				if (host->Ask(_("The vertex count of the selected .obj file matches the currently selected outfit shape.  Do you wish to update the current shape?  "
-							  "(click No to create a new shape)"),
-						  _("Merge or New"), false, HostAnswer::Yes) == HostAnswer::Yes) {
-					if (host->Ask(_("Update Vertex Positions?"), _("Vertex Position Update"), false, HostAnswer::Yes) == HostAnswer::Yes)
+				if (AskImportChoice(*host,
+									choices.updateMatchingShape,
+									_("The vertex count of the selected .obj file matches the currently selected outfit shape.  Do you wish to update the current shape?  "
+									"(click No to create a new shape)"),
+									_("Merge or New"))) {
+					if (AskImportChoice(*host, choices.updatePositions, _("Update Vertex Positions?"), _("Vertex Position Update")))
 						workNif.SetVertsForShape(mergeShape, v);
 
 					if (uv.size() == vertCount) {
-						if (host->Ask(_("Update Texture Coordinates?"), _("UV Update"), false, HostAnswer::Yes) == HostAnswer::Yes)
+						if (AskImportChoice(*host, choices.updateUVs, _("Update Texture Coordinates?"), _("UV Update")))
 							workNif.SetUvsForShape(mergeShape, uv);
 					}
 
 					if (n.size() == vertCount) {
-						if (host->Ask(_("Update Normals?"), _("Normals Update"), false, HostAnswer::Yes) == HostAnswer::Yes) {
+						if (AskImportChoice(*host, choices.updateNormals, _("Update Normals?"), _("Normals Update"))) {
 							workNif.SetNormalsForShape(mergeShape, n);
 							workNif.CalcTangentsForShape(mergeShape);
 						}
@@ -7168,10 +7172,18 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 					return 101;
 				}
 			}
-			wxString newShapeName = wxString::FromUTF8(useShapeName);
-			if (!host->GetText(_("Please specify a name for the new shape"), _("New Shape Name"), newShapeName) || newShapeName.empty())
+			if (choices.newShapeName) {
+				useShapeName = *choices.newShapeName;
+			}
+			else {
+				wxString newShapeName = wxString::FromUTF8(useShapeName);
+				if (!host->GetText(_("Please specify a name for the new shape"), _("New Shape Name"), newShapeName))
+					return 100;
+				useShapeName = newShapeName.ToUTF8();
+			}
+
+			if (useShapeName.empty())
 				return 100;
-			useShapeName = newShapeName.ToUTF8();
 		}
 
 		auto newShape = CreateNifShapeFromData(useShapeName, &v, &t, &uv, &n);
@@ -7247,7 +7259,7 @@ int OutfitProject::ExportOBJ(const std::string& fileName, const std::vector<NiSh
 }
 
 #ifdef USE_FBXSDK
-int OutfitProject::ImportFBX(const std::string& fileName, const std::string& shapeName, NiShape* mergeShape) {
+int OutfitProject::ImportFBX(const std::string& fileName, const FBXImportOptions& options, const std::string& shapeName, NiShape* mergeShape, const ImportChoices& choices) {
 	// Set reference NIF in case nothing was loaded yet
 	if (!workAnim.GetRefNif())
 		workAnim.SetRefNif(&workNif);
@@ -7257,20 +7269,15 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 	size_t vertexLimit = workNif.GetVertexLimit();
 	size_t triLimit = workNif.GetTriangleLimit();
 
-	wxString warningLabel;
-	if (!baseShape)
-		warningLabel = _("No reference has been loaded.  For correct bone transforms, you might need to load a reference before importing FBX files.");
-
-	FBXImportDialog import(host->GetDialogParent(), fileName, vertexLimit, triLimit, warningLabel);
-	if (import.ShowModal() != wxID_OK)
-		return 1;
-
-	bool result = fbxw.ImportScene(fileName, import.GetOptions());
+	bool result = fbxw.ImportScene(fileName, options);
 	if (!result)
 		return 2;
 
 	bool copyBaseSkinTrans = false;
-	if (baseShape && !workAnim.GetTransformGlobalToShape(baseShape).IsNearlyEqualTo(MatTransform())) {
+	if (choices.copyReferenceSkinTransform) {
+		copyBaseSkinTrans = baseShape && *choices.copyReferenceSkinTransform;
+	}
+	else if (baseShape && !workAnim.GetTransformGlobalToShape(baseShape).IsNearlyEqualTo(MatTransform())) {
 		HostAnswer res = host->Ask(_("The reference shape has a skin coordinate system that is different from the global coordinate system.  Would you like to copy the reference's "
 												"global-to-skin transform to the imported shapes?"),
 									_("Copy skin coordinates"), true, HostAnswer::No);
@@ -7296,25 +7303,27 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 
 		if (mergeShape) {
 			if (mergeShape->GetNumVertices() == vertCount) {
-				if (host->Ask(_("The vertex count of the selected .fbx file matches the currently selected outfit shape.  Do you wish to update the current shape?  "
-							  "(click No to create a new shape)"),
-						  _("Merge or New"), false, HostAnswer::Yes) == HostAnswer::Yes) {
-					if (host->Ask(_("Update Vertex Positions?"), _("Vertex Position Update"), false, HostAnswer::Yes) == HostAnswer::Yes)
+				if (AskImportChoice(*host,
+									choices.updateMatchingShape,
+									_("The vertex count of the selected .fbx file matches the currently selected outfit shape.  Do you wish to update the current shape?  "
+									"(click No to create a new shape)"),
+									_("Merge or New"))) {
+					if (AskImportChoice(*host, choices.updatePositions, _("Update Vertex Positions?"), _("Vertex Position Update")))
 						workNif.SetVertsForShape(mergeShape, fbxShape->verts);
 
 					if (fbxShape->uvs.size() == vertCount) {
-						if (host->Ask(_("Update Texture Coordinates?"), _("UV Update"), false, HostAnswer::Yes) == HostAnswer::Yes)
+						if (AskImportChoice(*host, choices.updateUVs, _("Update Texture Coordinates?"), _("UV Update")))
 							workNif.SetUvsForShape(mergeShape, fbxShape->uvs);
 					}
 
 					if (fbxShape->normals.size() == vertCount) {
-						if (host->Ask(_("Update Normals?"), _("Normals Update"), false, HostAnswer::Yes) == HostAnswer::Yes) {
+						if (AskImportChoice(*host, choices.updateNormals, _("Update Normals?"), _("Normals Update"))) {
 							workNif.SetNormalsForShape(mergeShape, fbxShape->normals);
 							workNif.CalcTangentsForShape(mergeShape);
 						}
 					}
 
-					if (host->Ask(_("Update Animation Weighting?"), _("Animation Weight Update"), false, HostAnswer::Yes) == HostAnswer::Yes)
+					if (AskImportChoice(*host, choices.updateWeights, _("Update Animation Weighting?"), _("Animation Weight Update")))
 						for (auto& bn : fbxShape->boneNames)
 							workAnim.SetWeights(mergeShape->name.get(), bn, fbxShape->boneSkin[bn].GetWeights());
 
@@ -7322,10 +7331,18 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 				}
 			}
 
-			wxString newShapeName = wxString::FromUTF8(useShapeName);
-			if (!host->GetText(_("Please specify a name for the new shape"), _("New Shape Name"), newShapeName) || newShapeName.empty())
+			if (choices.newShapeName) {
+				useShapeName = *choices.newShapeName;
+			}
+			else {
+				wxString newShapeName = wxString::FromUTF8(useShapeName);
+				if (!host->GetText(_("Please specify a name for the new shape"), _("New Shape Name"), newShapeName))
+					return 100;
+				useShapeName = newShapeName.ToUTF8();
+			}
+
+			if (useShapeName.empty())
 				return 100;
-			useShapeName = newShapeName.ToUTF8();
 		}
 
 		auto newShape = CreateNifShapeFromData(useShapeName, &fbxShape->verts, &fbxShape->tris, &fbxShape->uvs, &fbxShape->normals);
@@ -7513,12 +7530,12 @@ void OutfitProject::RemoveSkinning() {
 	workNif.DeleteUnreferencedNodes();
 }
 
-bool OutfitProject::CheckForBadBones(bool interactive) {
-	struct ShapeBadBones {
-		std::unordered_map<std::string, MatTransform> badStandard, badCustom;
-		bool fixStanSkin = false;
-	};
-	std::unordered_map<std::string, ShapeBadBones> shapeBBs;
+BadBonesReport OutfitProject::FindBadBones() {
+	BadBonesReport report;
+	auto& shapeBBs = report.shapeBBs;
+	auto& badCBs = report.badCBs;
+	using ShapeBadBones = BadBonesReport::ShapeBadBones;
+	using BadCustomBone = BadBonesReport::BadCustomBone;
 	bool gotAnyBad = false;
 
 	// Find bad bones for every skinned shape, initializing shapeBBs.
@@ -7534,21 +7551,13 @@ bool OutfitProject::CheckForBadBones(bool interactive) {
 		if (!sbb.badStandard.empty())
 			sbb.fixStanSkin = true;
 	}
-	if (!gotAnyBad) {
-		if (interactive)
-			host->ShowMessage(HostMessageLevel::Info, _("No Bad Bones Found."), _("No Bad Bones"));
-		return false;
-	}
+	if (!gotAnyBad)
+		return report;
+
+	report.found = true;
 
 	// For bad custom bones, we need to rearrange the data so it's keyed
 	// on bone name rather than shape name.
-	struct BadCustomBone {
-		std::unordered_set<std::string> badShapes, goodShapes;
-		enum FixType {DoNothing, TrustNode, TrustSkin};
-		int fixtype = DoNothing;
-		std::string trustShape;
-	};
-	std::unordered_map<std::string, BadCustomBone> badCBs;
 	for (auto& sbbp : shapeBBs) {
 		const std::string& shapeName = sbbp.first;
 		ShapeBadBones& sbb = sbbp.second;
@@ -7650,220 +7659,22 @@ bool OutfitProject::CheckForBadBones(bool interactive) {
 		}
 	}
 
-	if (interactive) {
-		// Create dialog window
-		wxDialog dlg(host->GetDialogParent(), -1, _("Bad Bones"), wxDefaultPosition, wxSize(800,600), wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
-		wxBoxSizer* topBox = new wxBoxSizer(wxVERTICAL);
-		wxSizerFlags sizerFlags = wxSizerFlags().Expand().Border(wxALL, 5);
-		constexpr int wrapPixels = 800;
-		wxScrolledWindow* wnd = new wxScrolledWindow(&dlg);
-		topBox->Add(wnd, wxSizerFlags().Expand().Proportion(1));
-		wxBoxSizer* scrollBox = new wxBoxSizer(wxVERTICAL);
-		wnd->SetScrollRate(30, 50);
+	return report;
+}
 
-		// A helper class for creating the collapsible panes
-		struct CollapsePane {
-			wxScrolledWindow* wnd;
-			wxCollapsiblePane* collapse;
-			wxFlexGridSizer* collPaneBox;
-			CollapsePane(wxScrolledWindow* wi, wxSizer* boxSizer, const wxString& label, const wxString& col1Label):
-				wnd(wi) {
-				wxSizerFlags sizerFlags = wxSizerFlags().Expand().Border(wxALL, 5);
-				collapse = new wxCollapsiblePane(wnd, wxID_ANY, label, wxDefaultPosition, wxDefaultSize, wxCP_DEFAULT_STYLE | wxCP_NO_TLW_RESIZE);
-				boxSizer->Add(collapse, sizerFlags);
-				collPaneBox = new wxFlexGridSizer(4);
-				collPaneBox->Add(new wxStaticText(collapse->GetPane(), wxID_ANY, col1Label), sizerFlags);
-				collPaneBox->Add(new wxStaticText(collapse->GetPane(), wxID_ANY, _("Error in rotation")), sizerFlags);
-				collPaneBox->Add(new wxStaticText(collapse->GetPane(), wxID_ANY, _("Error in translation")), sizerFlags);
-				collPaneBox->Add(new wxStaticText(collapse->GetPane(), wxID_ANY, _("Error in scale")), sizerFlags);
-			}
-			void AddRow(const wxString& label, const MatTransform& t) {
-				wxSizerFlags sizerFlags = wxSizerFlags().Expand().Border(wxALL, 5);
-				float rotErr = RotMatToVec(t.rotation).length();
-				float trErr = t.translation.length();
-				float scErr = std::fabs(t.scale - 1.0f);
-				collPaneBox->Add(new wxStaticText(collapse->GetPane(), wxID_ANY, label), sizerFlags);
-				collPaneBox->Add(new wxStaticText(collapse->GetPane(), wxID_ANY, wxString() << rotErr), sizerFlags);
-				collPaneBox->Add(new wxStaticText(collapse->GetPane(), wxID_ANY, wxString() << trErr), sizerFlags);
-				collPaneBox->Add(new wxStaticText(collapse->GetPane(), wxID_ANY, wxString() << scErr), sizerFlags);
-			}
-			void Finish() {
-				collapse->GetPane()->SetSizerAndFit(collPaneBox);
-				wxScrolledWindow* wndl = wnd;
-				collapse->Bind(wxEVT_COLLAPSIBLEPANE_CHANGED, [wndl](wxCollapsiblePaneEvent&) { wndl->FitInside(); });
-			}
-		};
-
-		// Add a frame for each shape with bad standard bones
-		for (auto& sbbp : shapeBBs) {
-			const std::string &shapeName = sbbp.first;
-			ShapeBadBones& sbb = sbbp.second;
-			auto& bb = sbb.badStandard;
-			if (bb.empty())
-				continue;
-
-			wxStaticBoxSizer* boxSizer = new wxStaticBoxSizer(wxVERTICAL, wnd, wxString::Format(_("Bad standard bones for shape \"%s\""), shapeName));
-			scrollBox->Add(boxSizer, sizerFlags);
-
-			wxString label = wxString::Format(_("%zu bones in shape \"%s\" had inconsistencies between their NIF skin transforms and the standard skeleton:\n"), bb.size(), shapeName);
-
-			auto brit = bb.begin();
-			label << brit->first;
-			++brit;
-
-			while (brit != bb.end()) {
-				label << ", " << brit->first;
-				++brit;
-			}
-
-			wxStaticText* ctrl = new wxStaticText(wnd, -1, label);
-			ctrl->Wrap(wrapPixels);
-			boxSizer->Add(ctrl, sizerFlags);
-
-			wxRadioButton* rb = new wxRadioButton(wnd, wxID_ANY, _("Update skin (recommended)"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
-			rb->SetValue(1);
-			rb->Bind(wxEVT_RADIOBUTTON, [&](wxCommandEvent&) {
-				sbb.fixStanSkin = true;
-			});
-			boxSizer->Add(rb, sizerFlags);
-			sbb.fixStanSkin = true;
-
-			CollapsePane bcp(wnd, boxSizer, _("Details"), _("Bone"));
-			for (auto& brp : bb)
-				bcp.AddRow(brp.first, brp.second);
-			bcp.Finish();
-
-			rb = new wxRadioButton(wnd, wxID_ANY, _("Do nothing"));
-			rb->Bind(wxEVT_RADIOBUTTON, [&](wxCommandEvent&) {
-				sbb.fixStanSkin = false;
-			});
-			boxSizer->Add(rb, sizerFlags);
-		}
-
-		// Add a frame for each bad custom bone
-		for (auto& bcbp : badCBs) {
-			const std::string& bone = bcbp.first;
-			BadCustomBone& bcb = bcbp.second;
-
-			wxStaticBoxSizer* boxSizer = new wxStaticBoxSizer(wxVERTICAL, wnd, wxString::Format(_("Bad Custom Bone \"%s\""), bone));
-			scrollBox->Add(boxSizer, sizerFlags);
-
-			wxString label = wxString::Format(_("Custom bone \"%s\" had inconsistent NIF node and skin transforms for the following shapes:\n\""), bone);
-
-			auto bsit = bcb.badShapes.begin();
-			label << *bsit;
-			++bsit;
-
-			while (bsit != bcb.badShapes.end()) {
-				label << "\", \"" << *bsit;
-				++bsit;
-			}
-			label << "\"";
-
-			wxStaticText* ctrl = new wxStaticText(wnd, -1, label);
-			ctrl->Wrap(wrapPixels);
-			boxSizer->Add(ctrl, sizerFlags);
-
-			wxString tnLabel;
-			if (bcb.fixtype == BadCustomBone::TrustNode) {
-				tnLabel = "";
-				if (bcb.goodShapes.size() > 1)
-					tnLabel << _("Trust node and skins \"");
-				else
-					tnLabel << _("Trust node and skin \"");
-				auto gsit = bcb.goodShapes.begin();
-				tnLabel << *gsit;
-				++gsit;
-				while (gsit != bcb.goodShapes.end()) {
-					tnLabel << "\", \"" << *gsit;
-					++gsit;
-				}
-				tnLabel << _("\", and update other skins (recommended)");
-			}
-			else if (bcb.badShapes.size() > 1)
-				tnLabel = _("Trust node, and update skins");
-			else
-				tnLabel = _("Trust node, and update skin");
-			wxRadioButton* rb = new wxRadioButton(wnd, wxID_ANY, tnLabel, wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
-			if (bcb.fixtype == BadCustomBone::TrustNode)
-				rb->SetValue(1);
-			rb->Bind(wxEVT_RADIOBUTTON, [&](wxCommandEvent&) {
-				bcb.fixtype = BadCustomBone::TrustNode;
-			});
-			boxSizer->Add(rb, sizerFlags);
-
-			CollapsePane ncp(wnd, boxSizer, _("Details"), _("Skin"));
-			for (const std::string& shapeName : bcb.badShapes) {
-				MatTransform t = shapeBBs[shapeName].badCustom[bone];
-				ncp.AddRow(shapeName, t);
-			}
-			ncp.Finish();
-
-			for (const std::string& shapeName : bcb.badShapes) {
-				wxString sLabel;
-				sLabel << _("Trust skin \"") << shapeName;
-				if (bcb.badShapes.size() == 1 && bcb.goodShapes.empty())
-					sLabel << _("\", and update node");
-				else
-					sLabel << _("\", and update node and other skins");
-				rb = new wxRadioButton(wnd, wxID_ANY, sLabel);
-				rb->Bind(wxEVT_RADIOBUTTON, [&](wxCommandEvent&) {
-					bcb.fixtype = BadCustomBone::TrustSkin;
-					bcb.trustShape = shapeName;
-				});
-				if (bcb.fixtype == BadCustomBone::TrustSkin && bcb.trustShape == shapeName)
-					rb->SetValue(1);
-				boxSizer->Add(rb, sizerFlags);
-
-				CollapsePane scp(wnd, boxSizer, _("Details"), _("With"));
-				scp.AddRow(_("Node"), shapeBBs[shapeName].badCustom[bone]);
-				for (const std::string& shapeName2 : bcb.badShapes) {
-					if (shapeName == shapeName2)
-						continue;
-					MatTransform skinToBone1, skinToBone2;
-					workAnim.GetXFormSkinToBone(shapeName, bone, skinToBone1);
-					workAnim.GetXFormSkinToBone(shapeName, bone, skinToBone2);
-					MatTransform residual = skinToBone1.ComposeTransforms(skinToBone2.InverseTransform());
-					scp.AddRow(shapeName2, residual);
-				}
-				scp.Finish();
-			}
-
-			rb = new wxRadioButton(wnd, wxID_ANY, _("Do nothing"));
-			rb->Bind(wxEVT_RADIOBUTTON, [&](wxCommandEvent&) {
-				bcb.fixtype = BadCustomBone::DoNothing;
-			});
-			if (bcb.fixtype == BadCustomBone::DoNothing)
-				rb->SetValue(1);
-			boxSizer->Add(rb, sizerFlags);
-		}
-
-		// Finish building the dialog window
-		wnd->SetSizer(scrollBox);
-		wxStdDialogButtonSizer* buttonSizer = new wxStdDialogButtonSizer;
-		buttonSizer->AddButton(new wxButton(&dlg, wxID_OK));
-		buttonSizer->AddButton(new wxButton(&dlg, wxID_CANCEL, _("Fix nothing")));
-		buttonSizer->Realize();
-		topBox->Add(buttonSizer, sizerFlags);
-		dlg.SetSizer(topBox);
-
-		if (dlg.ShowModal() == wxID_CANCEL)
-			return false;
-	}
-
-	// Execute the fixes (recommended defaults, or user's choices if interactive)
-	for (auto& sbbp : shapeBBs) {
+void OutfitProject::FixBadBones(const BadBonesReport& report) {
+	for (auto& sbbp : report.shapeBBs) {
 		const std::string &shapeName = sbbp.first;
-		ShapeBadBones& sbb = sbbp.second;
+		const BadBonesReport::ShapeBadBones& sbb = sbbp.second;
 
 		if (sbb.fixStanSkin)
 			for (auto& brp : sbb.badStandard)
 				workAnim.RecalcXFormSkinToBone(shapeName, brp.first);
 	}
-	for (auto& bcbp : badCBs) {
+	for (auto& bcbp : report.badCBs) {
 		const std::string& bone = bcbp.first;
-		BadCustomBone& bcb = bcbp.second;
-		if (bcb.fixtype == BadCustomBone::TrustSkin) {
+		const BadBonesReport::BadCustomBone& bcb = bcbp.second;
+		if (bcb.fixtype == BadBonesReport::BadCustomBone::TrustSkin) {
 			workAnim.RecalcCustomBoneXFormsFromSkin(bcb.trustShape, bone);
 			// After updating the node's bone-to-global transform, any shapes
 			// that had good skin-to-bone transforms now have bad ones and
@@ -7871,10 +7682,18 @@ bool OutfitProject::CheckForBadBones(bool interactive) {
 			for (const std::string& shapeName : bcb.goodShapes)
 				workAnim.RecalcXFormSkinToBone(shapeName, bone);
 		}
-		if (bcb.fixtype != BadCustomBone::DoNothing)
+		if (bcb.fixtype != BadBonesReport::BadCustomBone::DoNothing)
 			for (const std::string& shapeName : bcb.badShapes)
 				workAnim.RecalcXFormSkinToBone(shapeName, bone);
 	}
+}
+
+bool OutfitProject::CheckForBadBones() {
+	BadBonesReport report = FindBadBones();
+	if (!report.found)
+		return false;
+
+	FixBadBones(report);
 	return true;
 }
 

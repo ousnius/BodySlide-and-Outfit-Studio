@@ -889,6 +889,9 @@
     <ClInclude Include="src\program\ProjectHost.h">
       <Filter>Program</Filter>
     </ClInclude>
+    <ClInclude Include="src\program\BadBonesDialog.h">
+      <Filter>Program</Filter>
+    </ClInclude>
     <ClInclude Include="src\render\GLShader.h">
       <Filter>Rendering</Filter>
     </ClInclude>
@@ -2260,6 +2263,9 @@
       <Filter>Program</Filter>
     </ClCompile>
     <ClCompile Include="src\program\ProjectHost.cpp">
+      <Filter>Program</Filter>
+    </ClCompile>
+    <ClCompile Include="src\program\BadBonesDialog.cpp">
       <Filter>Program</Filter>
     </ClCompile>
     <ClCompile Include="src\render\GLSurface.cpp">

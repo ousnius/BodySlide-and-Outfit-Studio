@@ -1033,6 +1033,12 @@ public:
 
 	void LoadFiles(const wxArrayString& files, const wxString& projectName = "");
 
+	// Import a file after asking for the import options. Returns 1 if the dialog was cancelled.
+	int ImportOBJWithDialog(const std::string& fileName, const std::string& shapeName = "", nifly::NiShape* mergeShape = nullptr);
+#ifdef USE_FBXSDK
+	int ImportFBXWithDialog(const std::string& fileName, const std::string& shapeName = "", nifly::NiShape* mergeShape = nullptr);
+#endif
+
 	// Loads a mesh out of a BSA/BA2 archive as the outfit, or imports it into
 	// the project when "import" is set.
 	void LoadMeshFromArchive(const std::string& relPath, const std::string& archivePath, bool import);

@@ -9,9 +9,14 @@ See the included LICENSE file
 #include "../components/Automorph.h"
 #include "../components/Mesh.h"
 #include "../components/UndoState.h"
+#include "../files/ObjFile.h"
 #include "../files/SFMaterialResolver.h"
 #include "ProjectHost.h"
 #include "../utils/TargetGame.h"
+
+#ifdef USE_FBXSDK
+#include "../files/FBXWrangler.h"
+#endif
 
 #include <cstddef>
 #include <cstdint>
@@ -63,6 +68,39 @@ struct SliderDataLocation {
 	std::string resolvedPath;
 	std::string candidatePath;
 	std::vector<std::string> dataFolders;
+};
+
+// Answers to the questions an OBJ or FBX import can ask. Unset answers are asked through the host.
+struct ImportChoices {
+	std::optional<bool> copyReferenceSkinTransform;
+	// The merge shape has the same vertex count: update it instead of adding a new shape
+	std::optional<bool> updateMatchingShape;
+	std::optional<bool> updatePositions;
+	std::optional<bool> updateUVs;
+	std::optional<bool> updateNormals;
+	std::optional<bool> updateWeights; // FBX only
+	std::optional<std::string> newShapeName;
+};
+
+// Bones whose transforms are inconsistent, and the fix chosen for each of them.
+struct BadBonesReport {
+	struct ShapeBadBones {
+		std::unordered_map<std::string, nifly::MatTransform> badStandard, badCustom;
+		bool fixStanSkin = false;
+	};
+
+	struct BadCustomBone {
+		std::unordered_set<std::string> badShapes, goodShapes;
+		enum FixType { DoNothing, TrustNode, TrustSkin };
+		int fixtype = DoNothing;
+		std::string trustShape;
+	};
+
+	// Every skinned shape by name, including those without bad bones
+	std::unordered_map<std::string, ShapeBadBones> shapeBBs;
+	// Bad custom bones by bone name
+	std::unordered_map<std::string, BadCustomBone> badCBs;
+	bool found = false;
 };
 
 struct UndoStateShape;
@@ -562,7 +600,11 @@ public:
 	void RemoveSkinning(nifly::NiShape* s);
 	void RemoveSkinning();
 
-	bool CheckForBadBones(bool interactive = true);
+	// Finds bones with inconsistent transforms and recommends a fix for each of them.
+	BadBonesReport FindBadBones();
+	void FixBadBones(const BadBonesReport& report);
+	// Applies the recommended fixes. Returns false if there were no bad bones.
+	bool CheckForBadBones();
 	bool ShapeHasBadBones(nifly::NiShape* s);
 
 	void GetAllPoseTransforms(nifly::NiShape* s, std::vector<nifly::MatTransform>& ts);
@@ -590,7 +632,11 @@ public:
 	// No-op for non-Starfield NIFs.
 	void GenerateStarfieldMeshlets(nifly::NifFile& nif);
 
-	int ImportOBJ(const std::string& fileName, const std::string& shapeName = "", nifly::NiShape* mergeShape = nullptr);
+	int ImportOBJ(const std::string& fileName,
+				  const ObjImportOptions& options,
+				  const std::string& shapeName = "",
+				  nifly::NiShape* mergeShape = nullptr,
+				  const ImportChoices& choices = {});
 	int ExportOBJ(const std::string& fileName,
 				  const std::vector<nifly::NiShape*>& shapes,
 				  bool transToGlobal,
@@ -598,7 +644,11 @@ public:
 				  const nifly::Vector3& offset = nifly::Vector3());
 
 #ifdef USE_FBXSDK
-	int ImportFBX(const std::string& fileName, const std::string& shapeName = "", nifly::NiShape* mergeShape = nullptr);
+	int ImportFBX(const std::string& fileName,
+				  const FBXImportOptions& options,
+				  const std::string& shapeName = "",
+				  nifly::NiShape* mergeShape = nullptr,
+				  const ImportChoices& choices = {});
 	int ExportFBX(const std::string& fileName, const std::vector<nifly::NiShape*>& shapes, bool transToGlobal);
 #endif
 };

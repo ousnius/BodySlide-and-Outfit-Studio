@@ -236,6 +236,12 @@ private:
 	void UpdateBatchPanelVisibility();
 
 	void ResetAndClearProject();
+
+	// Imports with default options when headless, otherwise after asking for the options.
+	int ImportOBJFile(const std::string& fileName);
+#ifdef USE_FBXSDK
+	int ImportFBXFile(const std::string& fileName);
+#endif
 	static int TexturePathIndexForName(const std::string& name);
 	static int ResolveTexturePathIndex(const AutomationStep::TexturePath& path);
 	static std::string TexturePathNameForIndex(int index);

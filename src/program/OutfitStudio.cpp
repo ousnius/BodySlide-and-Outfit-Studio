@@ -28,12 +28,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../utils/ConfigDialogUtil.h"
 #include "../utils/PlatformUtil.h"
 #include "EditUV.h"
+#include "FBXImportDialog.h"
 #include "GroupManager.h"
+#include "ObjImportDialog.h"
 #include "PresetSaveDialog.h"
 #include "PartitionTypeChoices.h"
 #include "ShapeProperties.h"
 #include "SliderDataDialog.h"
 #include "AddProjectDialog.h"
+#include "BadBonesDialog.h"
 #include "SliderDataImportDialog.h"
 #include "AutomationDialog.h"
 #include "../components/ClippingFixer.h"
@@ -510,6 +513,34 @@ const std::array<wxLanguage, 37> SupportedLangs = {wxLANGUAGE_ENGLISH,	  wxLANGU
 
 
 // Load files into the current project
+int OutfitStudioFrame::ImportOBJWithDialog(const std::string& fileName, const std::string& shapeName, NiShape* mergeShape) {
+	wxString warningLabel;
+	if (!project->GetBaseShape())
+		warningLabel = _("No reference has been loaded.  For correct bone transforms, you might need to load a reference before importing OBJ files.");
+
+	NifFile* nif = project->GetWorkNif();
+	ObjImportDialog import(this, fileName, nif->GetVertexLimit(), nif->GetTriangleLimit(), warningLabel);
+	if (import.ShowModal() != wxID_OK)
+		return 1;
+
+	return project->ImportOBJ(fileName, import.GetOptions(), shapeName, mergeShape);
+}
+
+#ifdef USE_FBXSDK
+int OutfitStudioFrame::ImportFBXWithDialog(const std::string& fileName, const std::string& shapeName, NiShape* mergeShape) {
+	wxString warningLabel;
+	if (!project->GetBaseShape())
+		warningLabel = _("No reference has been loaded.  For correct bone transforms, you might need to load a reference before importing FBX files.");
+
+	NifFile* nif = project->GetWorkNif();
+	FBXImportDialog import(this, fileName, nif->GetVertexLimit(), nif->GetTriangleLimit(), warningLabel);
+	if (import.ShowModal() != wxID_OK)
+		return 1;
+
+	return project->ImportFBX(fileName, import.GetOptions(), shapeName, mergeShape);
+}
+#endif
+
 void OutfitStudioFrame::LoadFiles(const wxArrayString& files, const wxString& projectName) {
 	for (auto& f : files) {
 		wxFileName loadFile(f);
@@ -536,7 +567,7 @@ void OutfitStudioFrame::LoadFiles(const wxArrayString& files, const wxString& pr
 			else if (fileExt == "obj") {
 				StartProgress("Adding OBJ file...");
 				UpdateProgress(1, _("Adding OBJ file..."));
-				project->ImportOBJ(fileName);
+				ImportOBJWithDialog(fileName);
 				project->SetTextures();
 
 				UpdateProgress(60, _("Refreshing GUI..."));
@@ -548,7 +579,7 @@ void OutfitStudioFrame::LoadFiles(const wxArrayString& files, const wxString& pr
 #ifdef USE_FBXSDK
 				StartProgress(_("Adding FBX file..."));
 				UpdateProgress(1, _("Adding FBX file..."));
-				project->ImportFBX(fileName);
+				ImportFBXWithDialog(fileName);
 				project->SetTextures();
 
 				UpdateProgress(60, _("Refreshing GUI..."));
@@ -2474,7 +2505,7 @@ bool OutfitStudioFrame::SaveProject() {
 		return SaveProjectAs();
 
 	if (!project->GetWorkNif()->IsValid()) {
-		wxMessageBox(_("There are no valid shapes loaded!"), _("Error"));
+		projectHost.ShowMessage(HostMessageLevel::Error, _("There are no valid shapes loaded!"), _("Error"));
 		return false;
 	}
 
@@ -2513,7 +2544,7 @@ bool OutfitStudioFrame::SaveProject() {
 
 	if (!error.empty()) {
 		wxLogError(error.c_str());
-		wxMessageBox(error, _("Error"), wxOK | wxICON_ERROR);
+		projectHost.ShowMessage(HostMessageLevel::Error, error, _("Error"));
 		EndProgress(_("Saving failed."));
 		return false;
 	}
@@ -2528,7 +2559,7 @@ bool OutfitStudioFrame::SaveProjectAs() {
 	int result = wxID_CANCEL;
 
 	if (!project->GetWorkNif()->IsValid()) {
-		wxMessageBox(_("There are no valid shapes loaded!"), _("Error"));
+		projectHost.ShowMessage(HostMessageLevel::Error, _("There are no valid shapes loaded!"), _("Error"));
 		return false;
 	}
 
@@ -2752,7 +2783,7 @@ bool OutfitStudioFrame::SaveProjectAs() {
 	}
 	else {
 		wxLogError(error.c_str());
-		wxMessageBox(error, _("Error"), wxOK | wxICON_ERROR);
+		projectHost.ShowMessage(HostMessageLevel::Error, error, _("Error"));
 		EndProgress(_("Saving failed."));
 		return false;
 	}
@@ -2764,7 +2795,7 @@ std::string OutfitStudioFrame::ChooseSliderSetName(const std::string& fileName, 
 	SliderSetFile inFile(fileName);
 	if (inFile.fail()) {
 		wxLogError("Failed to open '%s' as a slider set file!", fileName);
-		wxMessageBox(wxString::Format(_("Failed to open '%s' as a slider set file!"), fileName), _("Slider Set Error"), wxICON_ERROR);
+		projectHost.ShowMessage(HostMessageLevel::Error, wxString::Format(_("Failed to open '%s' as a slider set file!"), fileName), _("Slider Set Error"));
 		return "";
 	}
 
@@ -2782,7 +2813,12 @@ std::string OutfitStudioFrame::ChooseSliderSetName(const std::string& fileName, 
 		for (auto& s : setnames)
 			choices.Add(wxString::FromUTF8(s));
 
-		return wxGetSingleChoice(_("Please choose an outfit to load"), _("Load a slider set"), choices, 0, this).ToUTF8().data();
+		// Unattended callers have to name the set, there is no sensible default
+		int sel = projectHost.IsInteractive() ? 0 : -1;
+		if (!projectHost.ChooseOne(_("Please choose an outfit to load"), _("Load a slider set"), choices, sel) || sel < 0)
+			return "";
+
+		return choices[sel].ToUTF8().data();
 	}
 
 	if (setnames.size() == 1)
@@ -2837,7 +2873,7 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName,
 	if (error) {
 		EndProgress();
 		wxLogError("Failed to create project (%d)!", error);
-		wxMessageBox(wxString::Format(_("Failed to create project '%s' from file '%s' (%d)!"), outfit, fileName, error), _("Slider Set Error"), wxICON_ERROR);
+		projectHost.ShowMessage(HostMessageLevel::Error, wxString::Format(_("Failed to create project '%s' from file '%s' (%d)!"), outfit, fileName, error), _("Slider Set Error"));
 		RefreshGUIFromProj();
 		return false;
 	}
@@ -4351,10 +4387,10 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 		if (fileName.Lower().EndsWith(".nif"))
 			error = project->ImportNIF(fileName.ToUTF8().data(), true, outfitName);
 		else if (fileName.Lower().EndsWith(".obj"))
-			error = project->ImportOBJ(fileName.ToUTF8().data(), outfitName);
+			error = ImportOBJWithDialog(fileName.ToUTF8().data(), outfitName);
 #ifdef USE_FBXSDK
 		else if (fileName.Lower().EndsWith(".fbx"))
-			error = project->ImportFBX(fileName.ToUTF8().data(), outfitName);
+			error = ImportFBXWithDialog(fileName.ToUTF8().data(), outfitName);
 #endif
 	}
 
@@ -4614,10 +4650,10 @@ void OutfitStudioFrame::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 				ret = project->ImportNIF(fileName.ToUTF8().data(), false);
 		}
 		else if (fileName.Lower().EndsWith(".obj"))
-			ret = project->ImportOBJ(fileName.ToUTF8().data(), outfitName);
+			ret = ImportOBJWithDialog(fileName.ToUTF8().data(), outfitName);
 #ifdef USE_FBXSDK
 		else if (fileName.Lower().EndsWith(".fbx"))
-			ret = project->ImportFBX(fileName.ToUTF8().data(), outfitName);
+			ret = ImportFBXWithDialog(fileName.ToUTF8().data(), outfitName);
 #endif
 	}
 	else
@@ -5411,9 +5447,9 @@ void OutfitStudioFrame::OnImportOBJ(wxCommandEvent& WXUNUSED(event)) {
 
 		int ret;
 		if (activeItem)
-			ret = project->ImportOBJ(fileName.ToUTF8().data(), project->OutfitName(), activeItem->GetShape());
+			ret = ImportOBJWithDialog(fileName.ToUTF8().data(), project->OutfitName(), activeItem->GetShape());
 		else
-			ret = project->ImportOBJ(fileName.ToUTF8().data(), project->OutfitName());
+			ret = ImportOBJWithDialog(fileName.ToUTF8().data(), project->OutfitName());
 
 		if (ret == 101)
 			wxLogMessage("Updated shape '%s' from OBJ file '%s'.", activeItem->GetShape()->name.get(), fileName);
@@ -5532,9 +5568,9 @@ void OutfitStudioFrame::OnImportFBX(wxCommandEvent& WXUNUSED(event)) {
 
 		int ret;
 		if (activeItem)
-			ret = project->ImportFBX(fileName.ToUTF8().data(), project->OutfitName(), activeItem->GetShape());
+			ret = ImportFBXWithDialog(fileName.ToUTF8().data(), project->OutfitName(), activeItem->GetShape());
 		else
-			ret = project->ImportFBX(fileName.ToUTF8().data(), project->OutfitName());
+			ret = ImportFBXWithDialog(fileName.ToUTF8().data(), project->OutfitName());
 
 		if (ret == 101)
 			wxLogMessage("Updated shape '%s' from FBX file '%s'.", activeItem->GetShape()->name.get(), fileName);
@@ -12291,14 +12327,14 @@ bool OutfitStudioFrame::HasUnweightedCheck() {
 		std::string shapesJoin = JoinStrings(unweighted, "; ");
 		wxLogWarning(wxString::Format("Unweighted vertices found on shapes: %s", shapesJoin));
 
-		int error = wxMessageBox(wxString::Format("%s\n \n%s",
+		HostAnswer answer = projectHost.Ask(wxString::Format("%s\n \n%s",
 												  _("The following shapes have unweighted vertices, which can cause issues. The affected vertices have been put under a mask. Do "
 													"you want to save anyway?"),
 												  shapesJoin),
-								 _("Unweighted Vertices"),
-								 wxYES_NO | wxICON_WARNING,
-								 this);
-		if (error != wxYES)
+											   _("Unweighted Vertices"),
+											   false,
+											   HostAnswer::Yes);
+		if (answer != HostAnswer::Yes)
 			return true;
 	}
 
@@ -12670,10 +12706,18 @@ void OutfitStudioFrame::OnMaskBoneWeighted(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnCheckBadBones(wxCommandEvent& WXUNUSED(event)) {
-	if (!project->CheckForBadBones())
+	BadBonesReport report = project->FindBadBones();
+	if (!report.found) {
+		wxMessageBox(_("No Bad Bones Found."), _("No Bad Bones"), wxOK, this);
+		return;
+	}
+
+	if (!ShowBadBonesDialog(this, report, *project->GetWorkAnim()))
 		return;
 
-	// CheckForBadBones updates AnimBone transforms in-place but leaves the
+	project->FixBadBones(report);
+
+	// FixBadBones updates AnimBone transforms in-place but leaves the
 	// NIF nodes untouched; push the fixed transforms out so every view
 	// (node overlays, bad-bone indicator, gizmo center) is consistent.
 	if (auto* nif = project->GetWorkNif()) {
@@ -18994,7 +19038,7 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 			else if (inputFile.Lower().EndsWith(".obj")) {
 				owner->StartProgress("Adding OBJ file...");
 				owner->UpdateProgress(1, _("Adding OBJ file..."));
-				owner->project->ImportOBJ(inputFile.ToUTF8().data(), dataName.ToUTF8().data(), mergeShape);
+				owner->ImportOBJWithDialog(inputFile.ToUTF8().data(), dataName.ToUTF8().data(), mergeShape);
 				owner->project->SetTextures();
 
 				owner->UpdateProgress(60, _("Refreshing GUI..."));
@@ -19006,7 +19050,7 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 			else if (inputFile.Lower().EndsWith(".fbx")) {
 				owner->StartProgress(_("Adding FBX file..."));
 				owner->UpdateProgress(1, _("Adding FBX file..."));
-				owner->project->ImportFBX(inputFile.ToUTF8().data(), dataName.ToUTF8().data(), mergeShape);
+				owner->ImportFBXWithDialog(inputFile.ToUTF8().data(), dataName.ToUTF8().data(), mergeShape);
 				owner->project->SetTextures();
 
 				owner->UpdateProgress(60, _("Refreshing GUI..."));
