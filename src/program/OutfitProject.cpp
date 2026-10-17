@@ -2803,6 +2803,7 @@ void OutfitProject::CopyBoneWeights(NiShape* shape,
 
 	for (int bi = 0; bi < nCopyBones; ++bi) {
 		const std::string& boneName = boneList[bi];
+		uss.boneWeights[bi].skinToBone = workAnim.GetMissingBoneTransformForCopy(baseShapeName, shapeName, boneName);
 		auto& ubw = uss.boneWeights[bi].weights;
 		// Zero out unmasked weights
 		auto weights = workAnim.GetWeightsPtr(shapeName, boneName);
@@ -2893,7 +2894,7 @@ void OutfitProject::TransferSelectedWeights(NiShape* shape, std::unordered_map<u
 				weights[w.first] = w.second;
 		}
 
-		workAnim.AddShapeBone(shapeName, boneName);
+		workAnim.AddShapeBone(shapeName, boneName, workAnim.GetMissingBoneTransformForCopy(baseShapeName, shapeName, boneName));
 		workAnim.SetWeights(shapeName, boneName, weights);
 		UpdateProgress(prog += step, "");
 	}

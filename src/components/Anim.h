@@ -12,6 +12,7 @@ See the included LICENSE file
 #include <cstddef>
 #include <cstdint>
 #include <map>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -152,7 +153,10 @@ public:
 	void SetRefNif(nifly::NifFile* nif) { refNif = nif; };
 
 	// Returns true if a new bone is added, false if the bone already exists.
-	bool AddShapeBone(const std::string& shape, const std::string& boneName);
+	// An explicit bind is used only for a newly added bone; existing binds are preserved.
+	bool AddShapeBone(const std::string& shape, const std::string& boneName, const std::optional<nifly::MatTransform>& skinToBone = std::nullopt);
+	// For Starfield bones absent from the editing skeleton, use the reference shape's authored bind, converted to the target skin coordinates.
+	std::optional<nifly::MatTransform> GetMissingBoneTransformForCopy(const std::string& sourceShape, const std::string& targetShape, const std::string& boneName) const;
 	bool RemoveShapeBone(const std::string& shape, const std::string& boneName);
 
 	void Clear();

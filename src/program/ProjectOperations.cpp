@@ -78,7 +78,7 @@ RefreshFlags ProjectOperations::ApplyShapeEdits(UndoStateProject& usp, bool bIsU
 				for (auto& bw : uss.boneWeights) {
 					if (bw.weights.empty())
 						continue;
-					project.GetWorkAnim()->AddShapeBone(uss.shapeName, bw.boneName);
+					project.GetWorkAnim()->AddShapeBone(uss.shapeName, bw.boneName, bw.skinToBone);
 					auto weights = project.GetWorkAnim()->GetWeightsPtr(uss.shapeName, bw.boneName);
 					if (!weights)
 						continue;
