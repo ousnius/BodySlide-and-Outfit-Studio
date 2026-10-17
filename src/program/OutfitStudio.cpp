@@ -882,10 +882,15 @@ int OutfitStudio::RunAutomationFromCmdLine() {
 	return code;
 }
 
-int OutfitStudio::OnExit() {
-	int base = wxApp::OnExit();
-	// In automation mode propagate the script's exit code; otherwise keep wx's.
+int OutfitStudio::OnRun() {
+	int base = wxApp::OnRun();
+	// The process exit code comes from here, wx ignores what OnExit returns.
+	// In automation mode it is the script's exit code.
 	return cmdAutomation.IsEmpty() ? base : automationExitCode;
+}
+
+int OutfitStudio::OnExit() {
+	return wxApp::OnExit();
 }
 
 bool OutfitStudio::OnExceptionInMainLoop() {

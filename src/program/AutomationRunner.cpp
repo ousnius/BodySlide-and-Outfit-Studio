@@ -788,30 +788,21 @@ int AutomationRunner::ExecuteStepLoadReference(const AutomationStep& step) {
 		return 1;
 	}
 
-	wxString refSourceFile = MakeAbsoluteToProject(wxString::FromUTF8(step.refSourceFile));
-	wxFileName fn(refSourceFile);
-	wxString ext = fn.GetExt().Lower();
-	std::string refSourceFileStd = refSourceFile.ToUTF8().data();
+	ReferenceSource source;
+	source.file = MakeAbsoluteToProject(wxString::FromUTF8(step.refSourceFile)).ToUTF8().data();
+	source.set = step.refSet;
+	source.shape = step.refShape;
+	source.loadAll = step.refLoadAll;
+	source.mergeSliders = step.refMergeSliders;
+	source.mergeZaps = step.refMergeZaps;
+	source.appendNewSliders = step.refAppendNewSliders;
 
-	int err = 0;
-	if (ext == "nif") {
-		err = project->LoadReferenceNif(refSourceFileStd, step.refShape, step.refMergeSliders, step.refMergeZaps);
-	}
-	else {
-		if (!step.refSet.empty()) {
-			err = project->LoadReference(refSourceFileStd, step.refSet, step.refShape, step.refMergeSliders, step.refMergeZaps, step.refAppendNewSliders);
-		}
-		else {
-			err = project->LoadReferenceTemplate(refSourceFileStd, step.refSet, step.refShape, step.refLoadAll, step.refMergeSliders, step.refMergeZaps, step.refAppendNewSliders);
-		}
+	OpResult result = ProjectOperations(*project, outfitStudio->editor).LoadReference(source);
+	if (!result.ok) {
+		wxLogError("Automation: LoadReference - %s", result.error);
+		return 1;
 	}
 
-	if (err) {
-		wxLogError("Automation: LoadReference failed with error %d.", err);
-		return err;
-	}
-
-	project->SetTextures();
 	return 0;
 }
 
@@ -822,15 +813,14 @@ int AutomationRunner::ExecuteStepAddProject(const AutomationStep& step) {
 	}
 
 	wxString refSourceFile = MakeAbsoluteToProject(wxString::FromUTF8(step.refSourceFile));
-	std::string refSourceFileStd = refSourceFile.ToUTF8().data();
 	wxLogMessage("Automation: Adding project from '%s' (set: '%s')...", refSourceFile, step.refSet);
-	int err = project->AddFromSliderSet(refSourceFileStd, step.refSet, false, step.refAppendNewSliders);
-	if (err) {
-		wxLogError("Automation: AddProject failed with error %d.", err);
-		return err;
+
+	OpResult result = ProjectOperations(*project, outfitStudio->editor).AddProject(refSourceFile.ToUTF8().data(), step.refSet, step.refAppendNewSliders);
+	if (!result.ok) {
+		wxLogError("Automation: AddProject - %s", result.error);
+		return 1;
 	}
 
-	project->SetTextures();
 	return 0;
 }
 
@@ -1649,35 +1639,26 @@ int AutomationRunner::ExecuteStepRenameShape(const AutomationStep& step) {
 }
 
 int AutomationRunner::ExecuteStepSaveProject(const AutomationStep& step) {
-	if (step.saveSliderSetFile.empty() || step.saveOutputFileName.empty()) {
-		wxLogError("Automation: SaveProject - required fields not filled.");
-		return 1;
-	}
-
 	wxLogMessage("Automation: Saving project '%s'...", step.saveName);
 
-	wxFileName sliderSetFile(wxString::FromUTF8(step.saveSliderSetFile));
-	wxString strOutfitName = wxString::FromUTF8(step.saveName);
-	wxString strDataDir = wxString::FromUTF8(step.saveShapeDataFolder);
-	wxString strBaseFile = wxString::FromUTF8(step.saveShapeDataFile);
-	wxString strGamePath = wxString::FromUTF8(step.saveOutputDataPath);
-	wxString strGameFile = wxString::FromUTF8(step.saveOutputFileName);
+	SaveProjectOptions options;
+	options.displayName = step.saveName;
+	options.sliderSetFile = step.saveSliderSetFile;
+	options.shapeDataFolder = step.saveShapeDataFolder;
+	options.shapeDataFile = step.saveShapeDataFile;
+	options.outputDataPath = step.saveOutputDataPath;
+	options.outputFileName = step.saveOutputFileName;
+	options.genWeights = step.saveGenWeights;
+	options.copyReference = step.saveAutoCopyRef;
+	options.sfMorphPath = step.saveSFMorphPath;
+	options.sfMorphTargetShape = step.saveSFMorphTargetShape;
 
-	wxString strSFMorphPath = wxString::FromUTF8(step.saveSFMorphPath);
-	wxString strSFMorphTargetShape = wxString::FromUTF8(step.saveSFMorphTargetShape);
-	if (!strSFMorphTargetShape.empty() && !FindShapeByName(step.saveSFMorphTargetShape))
-		wxLogWarning("Automation: SaveProject - Starfield morph target shape '%s' not found in the project.", strSFMorphTargetShape);
-
-	std::string result = project->Save(sliderSetFile, strOutfitName, strDataDir,
-									   strBaseFile, strGamePath, strGameFile,
-									   step.saveGenWeights, step.saveAutoCopyRef,
-									   project->bPreventMorphFile, project->bKeepZappedShapes,
-									   strSFMorphPath, strSFMorphTargetShape);
-
-	if (!result.empty()) {
-		wxLogError("Automation: SaveProject error: %s", result);
+	OpResult result = ProjectOperations(*project, outfitStudio->editor).SaveProject(options);
+	if (!result.ok) {
+		wxLogError("Automation: SaveProject - %s", result.error);
 		return 1;
 	}
+
 	return 0;
 }
 
@@ -1700,65 +1681,19 @@ int AutomationRunner::ExecuteStepExportFile(const AutomationStep& step) {
 		exportPath = fn.GetFullPath().ToUTF8().data();
 	}
 
-	wxFileName fn(wxString::FromUTF8(exportPath));
-	wxString ext = fn.GetExt().Lower();
-
 	wxLogMessage("Automation: Exporting to '%s'...", exportPath);
 
-	if (ext == "nif") {
-		std::vector<Mesh*> shapeMeshes;
-		for (auto* s : project->GetWorkNif()->GetShapes()) {
-			if (step.exportWithRef || !project->IsBaseShape(s)) {
-				Mesh* m = outfitStudio->glView->GetMesh(s->name.get());
-				if (m)
-					shapeMeshes.push_back(m);
-			}
-		}
-		int err = project->ExportNIF(exportPath, shapeMeshes, step.exportWithRef);
-		if (err) {
-			wxLogError("Automation: ExportNIF failed with error %d.", err);
-			return err;
-		}
-	}
-	else if (ext == "obj") {
-		auto shapes = project->GetWorkNif()->GetShapes();
-		int err = project->ExportOBJ(exportPath, shapes, false);
-		if (err) {
-			wxLogError("Automation: ExportOBJ failed with error %d.", err);
-			return err;
-		}
-	}
-	else if (ext == "fbx") {
-#ifdef USE_FBXSDK
-		auto shapes = project->GetWorkNif()->GetShapes();
-		int err = project->ExportFBX(exportPath, shapes, false);
-		if (err) {
-			wxLogError("Automation: ExportFBX failed with error %d.", err);
-			return err;
-		}
-#else
-		wxLogError("Automation: FBX export is not available (FBX SDK not compiled in).");
-		return 1;
-#endif
-	}
-	else if (ext == "osd") {
-		bool ok = project->SaveSliderData(exportPath);
-		if (!ok) {
-			wxLogError("Automation: SaveSliderData failed.");
-			return 1;
-		}
-	}
-	else if (ext == "tri") {
-		bool ok = project->WriteMorphTRI(exportPath);
-		if (!ok) {
-			wxLogError("Automation: WriteMorphTRI failed.");
-			return 1;
-		}
-	}
-	else {
-		wxLogError("Automation: ExportFile - unsupported file extension '%s'.", ext);
+	// OBJ and FBX exports from automation have always written every shape, including the reference
+	ExportOptions options;
+	wxString ext = wxFileName(wxString::FromUTF8(exportPath)).GetExt().Lower();
+	options.withReference = step.exportWithRef || ext == "obj" || ext == "fbx";
+
+	OpResult result = ProjectOperations(*project, outfitStudio->editor).ExportFile(exportPath, options);
+	if (!result.ok) {
+		wxLogError("Automation: ExportFile - %s", result.error);
 		return 1;
 	}
+
 	return 0;
 }
 

@@ -89,6 +89,40 @@ struct WeightBrushBones {
 	}
 };
 
+// Where to load a reference shape from: a NIF, a set of a slider set file, or a reference template
+struct ReferenceSource {
+	std::string file;
+	// The set of a slider set file. Without a set the file is used as a reference template.
+	std::string set;
+	std::string shape;
+	// Templates only: load all shapes of the set, not only the reference shape
+	bool loadAll = false;
+	// Keep the existing sliders or zaps and add the reference's data to them
+	bool mergeSliders = false;
+	bool mergeZaps = false;
+	bool appendNewSliders = false;
+};
+
+struct SaveProjectOptions {
+	std::string displayName;
+	std::string sliderSetFile;   // Relative to the SliderSets folder
+	std::string shapeDataFolder; // Relative to the ShapeData folder
+	std::string shapeDataFile;
+	std::string outputDataPath;  // Game path of the meshes BodySlide builds
+	std::string outputFileName;
+	bool genWeights = true;
+	bool copyReference = true;
+	std::string sfMorphPath;
+	std::string sfMorphTargetShape;
+};
+
+struct ExportOptions {
+	// NIF, OBJ and FBX: include the reference shape
+	bool withReference = false;
+	// OBJ and FBX: positions in global space instead of the space of each shape
+	bool global = false;
+};
+
 // Project data and shape masks, to return to after trying out a change
 struct EditSnapshot {
 	std::unique_ptr<OutfitProject::Snapshot> project;
@@ -109,6 +143,13 @@ public:
 
 	// Splits the bones of the selected shapes by whether they take part in weight normalization
 	void GetNormalizeBones(std::vector<std::string>* normBones, std::vector<std::string>* notNormBones);
+
+	OpResult LoadReference(const ReferenceSource& source);
+	// Adds the shapes and sliders of a set of a slider set file to the project
+	OpResult AddProject(const std::string& file, const std::string& set, bool appendNewSliders);
+	OpResult SaveProject(const SaveProjectOptions& options);
+	// The format comes from the extension: nif, obj, fbx, osd (slider data) or tri (morphs)
+	OpResult ExportFile(const std::string& fileName, const ExportOptions& options);
 
 	// Sets all sliders that aren't clamped to zero
 	RefreshFlags ZeroSliders();

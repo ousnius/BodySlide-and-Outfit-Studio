@@ -9,6 +9,7 @@ See the included LICENSE file
 
 #include <algorithm>
 #include <unordered_set>
+#include <wx/filename.h>
 #include <wx/log.h>
 
 using namespace nifly;
@@ -676,4 +677,108 @@ void ProjectOperations::FillWeightColors(const std::string& bone, const std::vec
 	// The weights of the reference are always shown, for comparison
 	if (NiShape* baseShape = project.GetBaseShape())
 		fillFromBone(baseShape);
+}
+
+OpResult ProjectOperations::LoadReference(const ReferenceSource& source) {
+	if (source.file.empty())
+		return OpResult::Fail("No reference file was given.");
+
+	wxString ext = wxFileName(wxString::FromUTF8(source.file)).GetExt().Lower();
+
+	int err = 0;
+	if (ext == "nif")
+		err = project.LoadReferenceNif(source.file, source.shape, source.mergeSliders, source.mergeZaps);
+	else if (!source.set.empty())
+		err = project.LoadReference(source.file, source.set, source.shape, source.mergeSliders, source.mergeZaps, source.appendNewSliders);
+	else
+		err = project.LoadReferenceTemplate(source.file, source.set, source.shape, source.loadAll, source.mergeSliders, source.mergeZaps, source.appendNewSliders);
+
+	if (err)
+		return OpResult::Fail("Loading the reference failed with error " + std::to_string(err) + ".");
+
+	project.SetTextures();
+
+	OpResult result;
+	result.refresh = RefreshFlags::ShapeList | RefreshFlags::SliderSet | RefreshFlags::SliderValues | RefreshFlags::Meshes | RefreshFlags::Anim
+		| RefreshFlags::PendingChanges;
+	return result;
+}
+
+OpResult ProjectOperations::AddProject(const std::string& file, const std::string& set, bool appendNewSliders) {
+	int err = project.AddFromSliderSet(file, set, false, appendNewSliders);
+	if (err)
+		return OpResult::Fail("Adding the project failed with error " + std::to_string(err) + ".");
+
+	project.SetTextures();
+
+	OpResult result;
+	result.refresh = RefreshFlags::ShapeList | RefreshFlags::SliderSet | RefreshFlags::SliderValues | RefreshFlags::Meshes | RefreshFlags::Anim
+		| RefreshFlags::PendingChanges;
+	return result;
+}
+
+OpResult ProjectOperations::SaveProject(const SaveProjectOptions& options) {
+	if (options.sliderSetFile.empty() || options.outputFileName.empty())
+		return OpResult::Fail("A slider set file and an output file name are needed to save.");
+
+	if (!options.sfMorphTargetShape.empty() && !project.GetWorkNif()->FindBlockByName<NiShape>(options.sfMorphTargetShape))
+		wxLogWarning("Starfield morph target shape '%s' not found in the project.", options.sfMorphTargetShape);
+
+	std::string error = project.Save(wxFileName(wxString::FromUTF8(options.sliderSetFile)),
+									 wxString::FromUTF8(options.displayName),
+									 wxString::FromUTF8(options.shapeDataFolder),
+									 wxString::FromUTF8(options.shapeDataFile),
+									 wxString::FromUTF8(options.outputDataPath),
+									 wxString::FromUTF8(options.outputFileName),
+									 options.genWeights,
+									 options.copyReference,
+									 project.bPreventMorphFile,
+									 project.bKeepZappedShapes,
+									 wxString::FromUTF8(options.sfMorphPath),
+									 wxString::FromUTF8(options.sfMorphTargetShape));
+
+	if (!error.empty())
+		return OpResult::Fail(error);
+
+	return OpResult();
+}
+
+OpResult ProjectOperations::ExportFile(const std::string& fileName, const ExportOptions& options) {
+	wxString ext = wxFileName(wxString::FromUTF8(fileName)).GetExt().Lower();
+
+	std::vector<NiShape*> shapes;
+	for (auto* s : project.GetWorkNif()->GetShapes())
+		if (options.withReference || !project.IsBaseShape(s))
+			shapes.push_back(s);
+
+	int err = 0;
+	if (ext == "nif") {
+		// Writes the live mesh positions and normals, the same as the window
+		std::vector<Mesh*> shapeMeshes;
+		for (auto* s : shapes)
+			if (Mesh* m = GetMesh(s->name.get()))
+				shapeMeshes.push_back(m);
+
+		err = project.ExportNIF(fileName, shapeMeshes, options.withReference);
+	}
+	else if (ext == "obj")
+		err = project.ExportOBJ(fileName, shapes, options.global);
+	else if (ext == "fbx") {
+#ifdef USE_FBXSDK
+		err = project.ExportFBX(fileName, shapes, options.global);
+#else
+		return OpResult::Fail("FBX export isn't available in this build.");
+#endif
+	}
+	else if (ext == "osd")
+		err = project.SaveSliderData(fileName) ? 0 : 1;
+	else if (ext == "tri")
+		err = project.WriteMorphTRI(fileName) ? 0 : 1;
+	else
+		return OpResult::Fail("Files with the extension '" + std::string(ext.ToUTF8().data()) + "' can't be exported.");
+
+	if (err)
+		return OpResult::Fail("Exporting '" + fileName + "' failed with error " + std::to_string(err) + ".");
+
+	return OpResult();
 }
