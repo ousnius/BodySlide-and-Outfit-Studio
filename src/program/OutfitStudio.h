@@ -1290,6 +1290,15 @@ public:
 	bool GetShapeDisplayMode(const std::string& shapeName, ShapeDisplayMode& outMode);
 	bool SetShapeDisplayMode(const std::string& shapeName, ShapeDisplayMode mode);
 
+	// Point the camera at shapes, at vertices of a shape, or at the area weighted to a bone.
+	// Keep the camera rotation and return false if there is nothing to look at.
+	bool FrameShapes(const std::vector<std::string>& shapeNames);
+	bool FrameVertices(const std::string& shapeName, const std::vector<int>& vertices);
+	bool FrameBone(const std::string& boneName, float minWeight = 0.1f);
+
+	// Shows the shapes' own vertex colors again, e.g. after a heatmap
+	void FillVertexColors();
+
 	ViewState GetViewState();
 	// Also updates the menu and toolbar items of the display toggles
 	void SetViewState(const ViewState& state);
@@ -1501,7 +1510,6 @@ private:
 	void RenameProject(const std::string& projectName);
 
 	void UpdateMeshFromSet(nifly::NiShape* shape);
-	void FillVertexColors();
 
 	bool ShapeSelectionCheck();
 

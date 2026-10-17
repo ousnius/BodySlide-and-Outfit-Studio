@@ -282,6 +282,66 @@ void GLSurface::SetView(const char type) {
 	}
 }
 
+bool GLSurface::SetViewPreset(const std::string& name) {
+	// Pitch and yaw in degrees, the same turntable angles the mouse changes
+	static const std::pair<const char*, Vector3> presets[] = {
+		{"front", Vector3(0.0f, 0.0f, 0.0f)},
+		{"back", Vector3(0.0f, 180.0f, 0.0f)},
+		{"left", Vector3(0.0f, -90.0f, 0.0f)},
+		{"right", Vector3(0.0f, 90.0f, 0.0f)},
+		{"top", Vector3(90.0f, 0.0f, 0.0f)},
+		{"bottom", Vector3(-90.0f, 0.0f, 0.0f)},
+	};
+
+	for (auto& preset : presets) {
+		if (name == preset.first) {
+			camRot = preset.second;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void GLSurface::FrameModelPoints(const std::vector<Vector3>& points, float margin) {
+	if (points.empty())
+		return;
+
+	Vector3 minPoint = points.front();
+	Vector3 maxPoint = points.front();
+	for (auto& p : points) {
+		minPoint.x = std::min(minPoint.x, p.x);
+		minPoint.y = std::min(minPoint.y, p.y);
+		minPoint.z = std::min(minPoint.z, p.z);
+		maxPoint.x = std::max(maxPoint.x, p.x);
+		maxPoint.y = std::max(maxPoint.y, p.y);
+		maxPoint.z = std::max(maxPoint.z, p.z);
+	}
+
+	Vector3 center = (minPoint + maxPoint) * 0.5f;
+	float radius = 0.0f;
+	for (auto& p : points)
+		radius = std::max(radius, (p - center).length());
+	radius = std::max(radius, 0.01f) * margin;
+
+	// The camera turns around the point the offset moves to the origin
+	camOffset = center * -1.0f;
+	camRotOffset.Zero();
+
+	if (perspective) {
+		// Fit the bounding sphere into the narrower of the two fields of view
+		const float aspect = static_cast<float>(vpW) / static_cast<float>(vpH);
+		const float halfVertical = glm::radians(mFov) * 0.5f;
+		const float halfHorizontal = std::atan(std::tan(halfVertical) * aspect);
+		const float halfAngle = std::min(halfVertical, halfHorizontal);
+		camPos = Vector3(0.0f, 0.0f, -radius / std::sin(halfAngle));
+	}
+	else {
+		// The orthographic view is half as high as the camera is far from the center
+		camPos = Vector3(0.0f, 0.0f, -2.0f * radius + center.z);
+	}
+}
+
 void GLSurface::SetPerspective(const bool enabled) {
 	perspective = enabled;
 }
@@ -1369,8 +1429,9 @@ void GLSurface::UpdateShaders(Mesh* m) {
 		shader.ShowLighting(bLighting);
 		shader.ShowMask(bMaskVisible && m->mask);
 		shader.ShowWeight(bWeightColors && m->weight);
-		shader.ShowVertexColors(bVertexColors && m->vcolors && m->vertexColors);
-		shader.ShowVertexAlpha(bVertexColors && m->valpha && m->vertexColors && m->vertexAlpha);
+		const bool showColors = m->vertexColors || m->overrideVertexColors;
+		shader.ShowVertexColors(bVertexColors && m->vcolors && showColors);
+		shader.ShowVertexAlpha(bVertexColors && m->valpha && showColors && m->vertexAlpha);
 		shader.SetProperties(m->prop);
 	}
 }

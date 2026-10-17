@@ -3428,6 +3428,64 @@ bool OutfitStudioFrame::SetShapeDisplayMode(const std::string& shapeName, ShapeD
 	return true;
 }
 
+bool OutfitStudioFrame::FrameShapes(const std::vector<std::string>& shapeNames) {
+	std::vector<Vector3> points;
+	for (auto& shapeName : shapeNames) {
+		Mesh* m = glView->GetMesh(shapeName);
+		if (!m)
+			continue;
+
+		for (int i = 0; i < m->nVerts; i++)
+			points.push_back(m->TransformPosMeshToModel(m->verts[i]));
+	}
+
+	if (points.empty())
+		return false;
+
+	glView->gls.FrameModelPoints(points);
+	glView->Render();
+	return true;
+}
+
+bool OutfitStudioFrame::FrameVertices(const std::string& shapeName, const std::vector<int>& vertices) {
+	Mesh* m = glView->GetMesh(shapeName);
+	if (!m)
+		return false;
+
+	std::vector<Vector3> points;
+	for (int v : vertices)
+		if (v >= 0 && v < m->nVerts)
+			points.push_back(m->TransformPosMeshToModel(m->verts[v]));
+
+	if (points.empty())
+		return false;
+
+	glView->gls.FrameModelPoints(points);
+	glView->Render();
+	return true;
+}
+
+bool OutfitStudioFrame::FrameBone(const std::string& boneName, float minWeight) {
+	std::vector<Vector3> points;
+	for (auto& shapeName : project->GetWorkNif()->GetShapeNames()) {
+		Mesh* m = glView->GetMesh(shapeName);
+		auto weights = project->GetWorkAnim()->GetWeightsPtr(shapeName, boneName);
+		if (!m || !weights)
+			continue;
+
+		for (auto& w : *weights)
+			if (w.second >= minWeight && w.first < m->nVerts)
+				points.push_back(m->TransformPosMeshToModel(m->verts[w.first]));
+	}
+
+	if (points.empty())
+		return false;
+
+	glView->gls.FrameModelPoints(points);
+	glView->Render();
+	return true;
+}
+
 ViewState OutfitStudioFrame::GetViewState() {
 	ViewState state;
 	state.camera = glView->gls.GetCamera();
@@ -3665,6 +3723,9 @@ void OutfitStudioFrame::ApplyRefresh(RefreshFlags flags) {
 
 	if (HasRefresh(flags, RefreshFlags::Anim))
 		UpdateAnimationGUI();
+
+	if (HasRefresh(flags, RefreshFlags::Shaders))
+		glView->gls.SetDisplaySettings(glView->gls.GetDisplaySettings());
 
 	if (HasRefresh(flags, RefreshFlags::WeightDisplay)) {
 		HighlightBoneNamesWithWeights();
@@ -5284,6 +5345,14 @@ void OutfitStudioFrame::FillVertexColors() {
 				m->vcolors[v].z = vcolors->at(v).b;
 				m->valpha[v] = vcolors->at(v).a;
 			}
+		}
+
+		m->QueueUpdate(Mesh::UpdateType::VertexColors);
+		m->QueueUpdate(Mesh::UpdateType::VertexAlpha);
+
+		if (m->overrideVertexColors) {
+			m->overrideVertexColors = false;
+			glView->gls.UpdateShaders(m);
 		}
 	}
 }

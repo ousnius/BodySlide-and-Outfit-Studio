@@ -29,6 +29,7 @@ enum class RefreshFlags : uint32_t {
 	Anim = 1 << 6,			 // Bones or weights changed
 	Pose = 1 << 7,			 // The preview pose changed
 	WeightDisplay = 1 << 8,	 // Which bones have weights, and how many
+	Shaders = 1 << 9,		 // What the mesh shaders show changed
 };
 
 inline RefreshFlags operator|(RefreshFlags a, RefreshFlags b) {
@@ -200,6 +201,11 @@ public:
 	// Shows the weights of a bone as weight colors on the meshes of the shapes and of the reference.
 	// The other meshes are cleared. Weight colors have to be turned on to see them.
 	void FillWeightColors(const std::string& bone, const std::vector<nifly::NiShape*>& shapes);
+
+	// Colors the mesh of a shape by one value per vertex, from minValue (blue) to maxValue (red).
+	// Vertices with FLT_MAX get grey. Shows with vertex colors turned on; the window's FillVertexColors
+	// puts the shape's own colors back.
+	OpResult ShowHeatmap(nifly::NiShape* shape, const std::vector<float>& values, float minValue, float maxValue);
 
 	// Bones for painting weights of the active bone, optionally mirrored to xMirrorBone
 	WeightBrushBones GetWeightBrushBones(const std::string& xMirrorBone);

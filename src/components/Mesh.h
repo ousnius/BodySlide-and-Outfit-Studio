@@ -150,6 +150,8 @@ public:
 	bool emissive = false;
 	bool specular = true;
 	bool vertexColors = false;
+	// Shows the vertex colors even if the shader doesn't use them, for colors like heatmaps
+	bool overrideVertexColors = false;
 	bool vertexAlpha = false;
 	bool backlight = false;
 	bool backlightMap = false;

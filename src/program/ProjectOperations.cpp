@@ -8,6 +8,7 @@ See the included LICENSE file
 #include "../components/MaskOps.h"
 
 #include <algorithm>
+#include <cfloat>
 #include <unordered_set>
 #include <wx/filename.h>
 #include <wx/log.h>
@@ -781,4 +782,34 @@ OpResult ProjectOperations::ExportFile(const std::string& fileName, const Export
 		return OpResult::Fail("Exporting '" + fileName + "' failed with error " + std::to_string(err) + ".");
 
 	return OpResult();
+}
+
+OpResult ProjectOperations::ShowHeatmap(NiShape* shape, const std::vector<float>& values, float minValue, float maxValue) {
+	if (!shape)
+		return OpResult::Fail("Shape doesn't exist.");
+
+	Mesh* m = GetMesh(shape->name.get());
+	if (!m || !m->vcolors)
+		return OpResult::Fail("The shape has no mesh to color.");
+	if (static_cast<int>(values.size()) != m->nVerts)
+		return OpResult::Fail("There has to be one value per vertex.");
+
+	const float range = maxValue - minValue;
+	for (int i = 0; i < m->nVerts; i++) {
+		if (values[i] == FLT_MAX)
+			m->vcolors[i] = Vector3(0.5f, 0.5f, 0.5f);
+		else
+			m->vcolors[i] = MeshAnalysis::HeatmapColor(range > 0.0f ? (values[i] - minValue) / range : 0.0f);
+
+		if (m->valpha)
+			m->valpha[i] = 1.0f;
+	}
+
+	m->overrideVertexColors = true;
+	m->QueueUpdate(Mesh::UpdateType::VertexColors);
+	m->QueueUpdate(Mesh::UpdateType::VertexAlpha);
+
+	OpResult result;
+	result.refresh = RefreshFlags::Shaders;
+	return result;
 }

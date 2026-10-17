@@ -185,4 +185,25 @@ DeltaComparison CompareDeltas(const std::vector<Vector3>& a, const std::vector<V
 	return result;
 }
 
+Vector3 HeatmapColor(float t) {
+	static const Vector3 ramp[] = {
+		Vector3(0.0f, 0.0f, 1.0f),
+		Vector3(0.0f, 1.0f, 1.0f),
+		Vector3(0.0f, 1.0f, 0.0f),
+		Vector3(1.0f, 1.0f, 0.0f),
+		Vector3(1.0f, 0.0f, 0.0f),
+	};
+	constexpr int segments = 4;
+
+	if (!(t > 0.0f))
+		return ramp[0];
+	if (t >= 1.0f)
+		return ramp[segments];
+
+	float scaled = t * segments;
+	int segment = std::min(static_cast<int>(scaled), segments - 1);
+	float f = scaled - segment;
+	return ramp[segment] * (1.0f - f) + ramp[segment + 1] * f;
+}
+
 } // namespace MeshAnalysis

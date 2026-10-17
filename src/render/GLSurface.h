@@ -408,6 +408,13 @@ public:
 		float fov = 90.0f;
 	};
 
+	// Turns the camera to a named view: front, back, left, right, top or bottom. Keeps what it looks at.
+	bool SetViewPreset(const std::string& name);
+
+	// Looks at the center of the points, in model space, from far enough away that all of them fit.
+	// Keeps the camera rotation.
+	void FrameModelPoints(const std::vector<nifly::Vector3>& points, float margin = 1.1f);
+
 	CameraState GetCamera() const { return {camPos, camOffset, camRot, camRotOffset, perspective, mFov}; }
 	void SetCamera(const CameraState& camera) {
 		camPos = camera.camPos;
