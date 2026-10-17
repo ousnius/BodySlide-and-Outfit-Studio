@@ -88,7 +88,7 @@ RefreshFlags ProjectOperations::ApplyShapeEdits(UndoStateProject& usp, bool bIsU
 				}
 				// Weights change the posed positions
 				if (project.bPose)
-					refresh |= RefreshFlags::Meshes;
+					project.GetHost().UpdateShapeMesh(m->shapeName);
 			}
 		}
 		else if (usp.undoType == UndoType::Color) {
@@ -483,10 +483,12 @@ OpResult ProjectOperations::SmoothSliderDeltas(NiShape* shape, const std::string
 		return OpResult::Fail("Shape doesn't exist.");
 	if (project.IsBaseShape(shape))
 		return OpResult::Fail("The morphs of the reference shape can't be smoothed.");
-	if (!project.SmoothSliderDiff(shape, sliderName, iterations, strength))
+	if (!project.ValidSlider(sliderName))
 		return OpResult::Fail("Slider '" + sliderName + "' doesn't exist.");
 
 	OpResult result;
+	if (!project.SmoothSliderDiff(shape, sliderName, iterations, strength))
+		return result;
 	result.refresh = RefreshFlags::Meshes | RefreshFlags::SliderData | RefreshFlags::PendingChanges;
 	return result;
 }
@@ -634,8 +636,10 @@ OpResult ProjectOperations::AnalyzeWeights(NiShape* shape, MeshAnalysis::WeightS
 	std::string shapeName = shape->name.get();
 
 	std::vector<const std::unordered_map<uint16_t, float>*> boneWeights;
-	for (auto& bone : workAnim.shapeBones[shapeName])
-		boneWeights.push_back(workAnim.GetWeightsPtr(shapeName, bone));
+	auto shapeBones = workAnim.shapeBones.find(shapeName);
+	if (shapeBones != workAnim.shapeBones.end())
+		for (auto& bone : shapeBones->second)
+			boneWeights.push_back(workAnim.GetWeightsPtr(shapeName, bone));
 
 	outStats = MeshAnalysis::AnalyzeWeights(shape->GetNumVertices(), boneWeights, influenceLimit);
 	return OpResult();

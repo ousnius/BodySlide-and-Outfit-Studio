@@ -552,7 +552,7 @@ void AutomationRunner::BeginRun(const std::map<std::string, std::string>& baseVa
 	runtimeVariables.clear();
 }
 
-int AutomationRunner::RunStep(const AutomationStep& scriptStep) {
+int AutomationRunner::RunStep(const AutomationStep& scriptStep, AutomationStep* executedStep) {
 	// Copied so Set Variable steps earlier in the run can still fill in
 	// placeholders that were unknown when the script was substituted
 	AutomationStep step = scriptStep;
@@ -561,6 +561,9 @@ int AutomationRunner::RunStep(const AutomationStep& scriptStep) {
 
 	int err = ExecuteStep(step);
 	RefreshAfterStep(step);
+
+	if (executedStep)
+		*executedStep = step;
 	return err;
 }
 

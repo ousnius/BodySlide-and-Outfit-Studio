@@ -3693,7 +3693,7 @@ void AutomationDialog::ExecuteSteps(const std::vector<size_t>& stepIndices) {
 
 	int totalSteps = static_cast<int>(execScript.GetSteps().size());
 	for (int i = 0; i < totalSteps; i++) {
-		const AutomationStep& step = execScript.GetSteps()[i];
+		AutomationStep step = execScript.GetSteps()[i];
 
 		wxString stepDesc = wxString::Format(_("Step %d/%d: %s"),
 			i + 1, totalSteps,
@@ -3710,7 +3710,7 @@ void AutomationDialog::ExecuteSteps(const std::vector<size_t>& stepIndices) {
 
 		wxLogMessage("Automation: %s", stepDesc);
 
-		int err = runner.RunStep(step);
+		int err = runner.RunStep(execScript.GetSteps()[i], &step);
 		if (err != 0) {
 			lastRunErrors++;
 			wxString errMsg = wxString::Format(

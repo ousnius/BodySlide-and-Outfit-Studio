@@ -1024,6 +1024,7 @@ public:
 
 	Mesh* GetShapeMesh(const std::string& shapeName) override;
 
+	void UpdateShapeMesh(const std::string& shapeName) override;
 	void OnAnimationChanged() override;
 	void OnPartitionsChanged() override;
 	void OnShapeDeleting(nifly::NiShape* shape) override;

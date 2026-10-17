@@ -857,28 +857,36 @@ bool GLSurface::RenderToImage(uint32_t width, uint32_t height, std::vector<uint8
 	vpW = width;
 	vpH = height;
 
+	bool rendered = false;
 	{
 		GLOffScreenBuffer buffer(this, static_cast<int>(width), static_cast<int>(height), 1, std::vector<GLuint>(), samples);
 		buffer.Start();
-		RenderScene();
-		buffer.Resolve();
 
-		std::vector<uint8_t> pixels(static_cast<size_t>(width) * height * 4);
-		glPixelStorei(GL_PACK_ALIGNMENT, 1);
-		glReadPixels(0, 0, static_cast<GLsizei>(width), static_cast<GLsizei>(height), GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+		// Sizes or sample counts the driver can't do leave the framebuffer incomplete
+		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE) {
+			RenderScene();
+			buffer.Resolve();
+
+			std::vector<uint8_t> pixels(static_cast<size_t>(width) * height * 4);
+			glPixelStorei(GL_PACK_ALIGNMENT, 1);
+			glReadPixels(0, 0, static_cast<GLsizei>(width), static_cast<GLsizei>(height), GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+
+			// OpenGL rows start at the bottom
+			const size_t rowSize = static_cast<size_t>(width) * 4;
+			outRGBA.resize(pixels.size());
+			for (uint32_t y = 0; y < height; y++)
+				std::copy_n(pixels.data() + (height - 1 - y) * rowSize, rowSize, outRGBA.data() + y * rowSize);
+			rendered = true;
+		}
+
 		buffer.End();
-
-		// OpenGL rows start at the bottom
-		const size_t rowSize = static_cast<size_t>(width) * 4;
-		outRGBA.resize(pixels.size());
-		for (uint32_t y = 0; y < height; y++)
-			std::copy_n(pixels.data() + (height - 1 - y) * rowSize, rowSize, outRGBA.data() + y * rowSize);
 	}
 
 	vpW = savedW;
 	vpH = savedH;
+	UpdateProjection();
 	glViewport(0, 0, static_cast<GLsizei>(vpW * canvas->GetContentScaleFactor()), static_cast<GLsizei>(vpH * canvas->GetContentScaleFactor()));
-	return true;
+	return rendered;
 }
 
 void GLSurface::RenderScene() {

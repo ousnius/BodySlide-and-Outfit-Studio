@@ -35,7 +35,8 @@ public:
 
 	// Fills in variables set earlier in the run, executes the step and refreshes the GUI.
 	// Returns 0 on success.
-	int RunStep(const AutomationStep& step);
+	// executedStep receives the step with the variables filled in.
+	int RunStep(const AutomationStep& step, AutomationStep* executedStep = nullptr);
 
 	// Executes a step as it is, without refreshing the GUI. Returns 0 on success.
 	int ExecuteStep(const AutomationStep& step);

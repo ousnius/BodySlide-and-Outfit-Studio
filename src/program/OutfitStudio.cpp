@@ -3446,6 +3446,16 @@ Mesh* OutfitStudioProjectHost::GetShapeMesh(const std::string& shapeName) {
 	return frame->glView->GetMesh(shapeName);
 }
 
+void OutfitStudioProjectHost::UpdateShapeMesh(const std::string& shapeName) {
+	auto shape = frame->project->GetWorkNif()->FindBlockByName<NiShape>(shapeName);
+	if (!shape || !frame->glView)
+		return;
+
+	std::vector<Vector3> verts;
+	frame->project->GetLiveVerts(shape, verts);
+	frame->glView->UpdateMeshVertices(shapeName, &verts, true, true, false);
+}
+
 void OutfitStudioProjectHost::OnAnimationChanged() {
 	frame->UpdateAnimationGUI();
 }
@@ -12364,7 +12374,13 @@ int OutfitStudioFrame::CopyBoneWeightForShapes(std::vector<NiShape*> shapes, boo
 
 		UndoStateProject* usp = glView->GetUndoHistory()->PushState();
 		OpResult result = ProjectOperations(*project, editor).CopyBoneWeights(shapes, copyOptions, *usp);
+		if (!result.ok || usp->usss.empty())
+			glView->GetUndoHistory()->PopState();
+
 		ApplyRefresh(result.refresh);
+
+		if (!result.ok)
+			wxMessageBox(wxString::FromUTF8(result.error), _("Copy Bone Weights"), wxOK | wxICON_WARNING, this);
 		UpdateUndoTools();
 
 		EndProgress();

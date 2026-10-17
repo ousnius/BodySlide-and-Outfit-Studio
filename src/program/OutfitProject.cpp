@@ -2647,7 +2647,13 @@ bool OutfitProject::SmoothSliderDiff(NiShape* shape, const std::string& sliderNa
 	if (Mesh* m = host->GetShapeMesh(shapeName))
 		morpher.CopyMeshMask(m, shapeName);
 
-	morpher.SmoothResultDiff(shapeName, sliderName, SliderDataTargetForShape(shape), iterations, strength);
+	std::string target = SliderDataTargetForShape(shape);
+	if (morpher.GetResultDiffSize(target, sliderName) == 0) {
+		morpher.UnlinkRefDiffData();
+		return false;
+	}
+
+	morpher.SmoothResultDiff(shapeName, sliderName, target, iterations, strength);
 	morpher.UnlinkRefDiffData();
 	EnsureSliderDataLocal(sliderName, shape);
 	return true;
@@ -7478,15 +7484,20 @@ void OutfitProject::ValidateNIF(NifFile& nif, const std::string& nifFilePath) {
 
 	if (!match) {
 		if ((targetGame == SKYRIMSE || targetGame == SKYRIMVR) && nif.GetHeader().GetVersion().IsSK()) {
-			if (!Config.Exists("OptimizeForSSE")) {
+			bool optimize = true;
+			if (Config.Exists("OptimizeForSSE"))
+				optimize = Config["OptimizeForSSE"] == "true";
+			else if (host->IsInteractive()) {
 				HostAnswer res = host->Ask(_("Would you like Skyrim NIFs to be optimized for SSE during this session?"), _("Target Game"), false, HostAnswer::Yes);
-				if (res == HostAnswer::Yes)
-					Config.SetDefaultBoolValue("OptimizeForSSE", true);
-				else
-					Config.SetDefaultBoolValue("OptimizeForSSE", false);
+				optimize = res == HostAnswer::Yes;
+				Config.SetDefaultBoolValue("OptimizeForSSE", optimize);
+			}
+			else {
+				// Unattended runs optimize the file, but leave the choice for the session to the user
+				wxLogMessage("Optimizing Skyrim NIF '%s' for SSE.", nifFilePath);
 			}
 
-			if (Config["OptimizeForSSE"] == "true") {
+			if (optimize) {
 				OptOptions options;
 				options.targetVersion.SetFile(V20_2_0_7);
 				options.targetVersion.SetUser(12);

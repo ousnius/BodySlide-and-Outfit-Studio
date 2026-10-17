@@ -512,6 +512,7 @@ public:
 	void ComputeUndoRestDiffs(nifly::NiShape* shape, UndoStateShape& uss);
 	void ScaleMorphResult(nifly::NiShape* shape, const std::string& sliderName, float scaleValue);
 	// Smooths the morph of an outfit shape for a slider. Fully masked vertices keep their morph.
+	// Returns false if the shape has no morph for the slider.
 	bool SmoothSliderDiff(nifly::NiShape* shape, const std::string& sliderName, int iterations, float strength);
 	void MoveVertex(nifly::NiShape* shape, const nifly::Vector3& pos, const int& id);
 	void OffsetShape(nifly::NiShape* shape, const nifly::Vector3& xlate, std::unordered_map<uint16_t, float>* mask = nullptr);

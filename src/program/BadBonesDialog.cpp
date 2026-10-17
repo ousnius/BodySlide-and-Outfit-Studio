@@ -188,7 +188,7 @@ bool ShowBadBonesDialog(wxWindow* parent, BadBonesReport& report, AnimInfo& anim
 					continue;
 				MatTransform skinToBone1, skinToBone2;
 				anim.GetXFormSkinToBone(shapeName, bone, skinToBone1);
-				anim.GetXFormSkinToBone(shapeName, bone, skinToBone2);
+				anim.GetXFormSkinToBone(shapeName2, bone, skinToBone2);
 				MatTransform residual = skinToBone1.ComposeTransforms(skinToBone2.InverseTransform());
 				scp.AddRow(shapeName2, residual);
 			}

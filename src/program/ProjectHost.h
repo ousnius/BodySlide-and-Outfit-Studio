@@ -58,6 +58,9 @@ public:
 	// Editable mesh of a shape, or nullptr if there is none.
 	virtual Mesh* GetShapeMesh(const std::string& WXUNUSED(shapeName)) { return nullptr; }
 
+	// The mesh of a shape has to be recalculated from the project (sliders, pose)
+	virtual void UpdateShapeMesh(const std::string& WXUNUSED(shapeName)) {}
+
 	virtual void OnAnimationChanged() {}
 	virtual void OnPartitionsChanged() {}
 	virtual void OnShapeDeleting(nifly::NiShape* WXUNUSED(shape)) {}
