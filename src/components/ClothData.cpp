@@ -77,27 +77,62 @@ void ClothData::Capture(NifFile& nif, const std::string& source, const std::vect
 		payloadSources[Fingerprint(*block)].push_back(key);
 	}
 
-	for (auto& shape : shapes) {
-		if (!shape)
-			continue;
-
-		// Without ownership records, all cloth of the file belongs to every shape
+	// Resolve the records of every shape in the file, so cloth owned by a shape outside the capture is not handed to another
+	struct Record {
 		bool hasOwnership = false;
+		bool stale = false;
 		Sources owned;
+	};
+
+	std::unordered_map<NiShape*, Record> records;
+	std::set<std::string> claimed;
+	bool anyStale = false;
+	for (auto& shape : nif.GetShapes()) {
+		auto& record = records[shape];
 		for (auto& ref : shape->extraDataRefs) {
 			auto data = Ownership(nif, ref);
 			if (!data)
 				continue;
 
-			hasOwnership = true;
+			record.hasOwnership = true;
 			for (auto fingerprint = data->stringsData.cbegin(); fingerprint != data->stringsData.cend(); ++fingerprint) {
 				auto it = payloadSources.find(fingerprint->get());
-				if (it != payloadSources.end())
-					owned.insert(owned.end(), it->second.begin(), it->second.end());
+				if (it == payloadSources.end()) {
+					record.stale = true;
+					continue;
+				}
+
+				record.owned.insert(record.owned.end(), it->second.begin(), it->second.end());
+				claimed.insert(it->second.begin(), it->second.end());
 			}
 		}
 
-		SetShapeSources(shape->name.get(), hasOwnership ? owned : sources);
+		anyStale |= record.stale;
+	}
+
+	// Another tool can edit or add cloth while leaving the records behind. Instead of being dropped, cloth no record
+	// resolves to goes to the shapes whose records went stale, or to every shape when no record did
+	Sources unclaimed;
+	for (auto& key : sources) {
+		if (claimed.find(key) == claimed.end())
+			unclaimed.push_back(key);
+	}
+
+	for (auto& shape : shapes) {
+		if (!shape)
+			continue;
+
+		// Without ownership records, all cloth of the file belongs to every shape
+		auto& record = records[shape];
+		if (!record.hasOwnership) {
+			SetShapeSources(shape->name.get(), sources);
+			continue;
+		}
+
+		if (record.stale || !anyStale)
+			record.owned.insert(record.owned.end(), unclaimed.begin(), unclaimed.end());
+
+		SetShapeSources(shape->name.get(), record.owned);
 	}
 
 	RemoveOwnership(nif);

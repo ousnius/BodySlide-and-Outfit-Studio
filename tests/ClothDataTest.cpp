@@ -215,6 +215,57 @@ TEST_CASE("Shared cloth stays with each owner after reopening", "[cloth][export]
     CHECK(Payloads(reloaded) == std::vector<std::string>{"coat physics", "shared physics"});
 }
 
+TEST_CASE("Cloth edited outside Outfit Studio survives stale ownership records", "[cloth][export][roundtrip]") {
+    ClothData data;
+    auto reference = Fixture("Reference", {"body physics"});
+    auto outfit = Fixture("Coat", {"coat physics", "badge physics"});
+    data.Capture(reference, "naked.nif", reference.GetShapes());
+    data.Capture(outfit, "coat.nif", outfit.GetShapes());
+    NifFile combined(reference);
+    REQUIRE(combined.CloneShape(outfit.GetShapes().front(), "Coat", &outfit));
+    REQUIRE(AddShape(combined, "Clothless"));
+    data.Apply(combined);
+
+    std::stringstream stream(std::ios::in | std::ios::out | std::ios::binary);
+    REQUIRE(combined.Save(stream) == 0);
+    NifFile reloaded;
+    REQUIRE(reloaded.Load(stream) == 0);
+
+    std::vector<std::string> coat;
+    std::vector<std::string> body;
+    std::vector<std::string> clothless;
+    SECTION("A replaced payload follows the shape whose record went stale") {
+        for (auto* block : reloaded.GetChildren<BSClothExtraData>(nullptr, true)) {
+            if (std::string(block->data.begin(), block->data.end()) == "coat physics") {
+                const std::string edited = "coat physics (rebuilt)";
+                block->data.resize(static_cast<uint32_t>(edited.size()));
+                std::copy(edited.begin(), edited.end(), block->data.begin());
+            }
+        }
+        coat = {"badge physics", "coat physics (rebuilt)"};
+        body = {"body physics"};
+    }
+    SECTION("A payload added without any record belongs to every shape") {
+        reloaded.GetRootNode()->extraDataRefs.AddBlockRef(reloaded.GetHeader().AddBlock(Cloth("new physics")));
+        coat = {"badge physics", "coat physics", "new physics"};
+        body = {"body physics", "new physics"};
+        clothless = {"new physics"};
+    }
+
+    for (const auto& [keep, expected] : {std::pair{"Coat", coat}, std::pair{"Reference", body}, std::pair{"Clothless", clothless}}) {
+        CAPTURE(keep);
+        NifFile work(reloaded);
+        ClothData reopened;
+        reopened.Capture(work, "combined.nif", work.GetShapes());
+        for (auto* shape : work.GetShapes()) {
+            if (shape->name.get() != keep)
+                work.DeleteShape(shape);
+        }
+        reopened.Apply(work);
+        CHECK(Payloads(work) == expected);
+    }
+}
+
 TEST_CASE("Create cloth preservation workflow fixtures", "[.cloth-data-setup]") {
     auto directory = WorkflowDirectory();
     std::filesystem::create_directories(directory);
