@@ -27,6 +27,7 @@ enum class RefreshFlags : uint32_t {
 	ShapeList = 1 << 5,		 // Shapes were added, removed or renamed
 	Anim = 1 << 6,			 // Bones or weights changed
 	Pose = 1 << 7,			 // The preview pose changed
+	WeightDisplay = 1 << 8,	 // Which bones have weights, and how many
 };
 
 inline RefreshFlags operator|(RefreshFlags a, RefreshFlags b) {
@@ -66,6 +67,25 @@ struct BoneWeightCopyOptions {
 	bool copySkinTransform = false;
 	// Move the geometry along when the skin transform changes, so the shapes keep their place
 	bool transformGeometry = false;
+};
+
+// Bones a weight brush works on, from the active bone and the normalization settings
+struct WeightBrushBones {
+	// The active bone first, then the x-mirror bone if there is one, then the bones to normalize with
+	std::vector<std::string> boneNames;
+	std::vector<std::string> lockedBoneNames;
+	bool spreadWeight = false;
+	bool xMirrorBone = false;
+
+	// Configures one of the weight brush classes, which share these members
+	template<typename Brush>
+	void ApplyTo(Brush& brush, AnimInfo* animInfo) const {
+		brush.animInfo = animInfo;
+		brush.boneNames = boneNames;
+		brush.lockedBoneNames = lockedBoneNames;
+		brush.bSpreadWeight = spreadWeight;
+		brush.bXMirrorBone = xMirrorBone;
+	}
 };
 
 // Project data and shape masks, to return to after trying out a change
@@ -125,6 +145,12 @@ public:
 	// Pushes the shapes out of the reference shape. Shapes mode fixes the base geometry,
 	// sliders mode fixes the morph of each slider (all non-zap, non-UV sliders without names).
 	OpResult FixClipping(const std::vector<nifly::NiShape*>& shapes, ClippingFixMode mode, float strength, const std::vector<std::string>& sliderNames = {});
+
+	// Bones for painting weights of the active bone, optionally mirrored to xMirrorBone
+	WeightBrushBones GetWeightBrushBones(const std::string& xMirrorBone);
+
+	// Writes the vertex positions of the shape's mesh back to the shape
+	void UpdateShapeFromMesh(nifly::NiShape* shape);
 
 	// Copies bone weights from the reference shape to the masked-out vertices of the shapes.
 	// The changes are recorded in usp, so the caller can keep them as an undo step.

@@ -38,6 +38,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "SliderDataDialog.h"
 #include "AddProjectDialog.h"
 #include "BadBonesDialog.h"
+#include "BrushStrokeController.h"
 #include "SliderDataImportDialog.h"
 #include "AutomationDialog.h"
 #include "../components/ClippingFixer.h"
@@ -3481,19 +3482,7 @@ std::vector<std::string> OutfitStudioFrame::GetShapeList() {
 }
 
 void OutfitStudioFrame::UpdateShapeSource(NiShape* shape) {
-	Mesh* m = glView->GetMesh(shape->name.get());
-	if (m) {
-		project->UpdateShapeFromMesh(shape, m);
-		return;
-	}
-
-	// Headless / no GL mesh: bake the live (slider-applied) verts directly
-	// into the NIF. This mirrors UpdateShapeFromMesh's non-pose path without
-	// requiring a GL mesh round-trip.
-	std::vector<Vector3> liveVerts;
-	project->GetLiveVerts(shape, liveVerts);
-	if (!liveVerts.empty())
-		project->GetWorkNif()->SetVertsForShape(shape, liveVerts);
+	ProjectOperations(*project, editor).UpdateShapeFromMesh(shape);
 }
 
 void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject* usp, bool bIsUndo) {
@@ -3537,6 +3526,11 @@ void OutfitStudioFrame::ApplyRefresh(RefreshFlags flags) {
 
 	if (HasRefresh(flags, RefreshFlags::Anim))
 		UpdateAnimationGUI();
+
+	if (HasRefresh(flags, RefreshFlags::WeightDisplay)) {
+		HighlightBoneNamesWithWeights();
+		UpdateBoneCounts();
+	}
 
 	if (HasRefresh(flags, RefreshFlags::Pose)) {
 		if (cbPose)
@@ -15568,41 +15562,11 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 		}
 	}
 	else if (activeBrush == &weightBrush) {
-		std::vector<std::string> normBones, notNormBones, brushBones, lockedBones;
-		os->GetNormalizeBones(&normBones, &notNormBones);
-
-		std::string activeBone = os->GetActiveBone();
-		std::string xMirrorBone = os->GetXMirrorBone();
-		brushBones.push_back(activeBone);
-
-		if (!xMirrorBone.empty())
-			brushBones.push_back(xMirrorBone);
-
-		bool bHasNormBones = false;
-		for (auto& bone : normBones) {
-			if (bone != activeBone && bone != xMirrorBone) {
-				brushBones.push_back(bone);
-				bHasNormBones = true;
-			}
-		}
-
-		if (bHasNormBones) {
-			for (auto& bone : notNormBones)
-				if (bone != activeBone && bone != xMirrorBone)
-					lockedBones.push_back(bone);
-		}
-		else {
-			for (auto& bone : notNormBones)
-				if (bone != activeBone && bone != xMirrorBone)
-					brushBones.push_back(bone);
-		}
+		WeightBrushBones bones = ProjectOperations(*os->project, os->editor).GetWeightBrushBones(os->GetXMirrorBone());
+		AnimInfo* animInfo = os->project->GetWorkAnim();
 
 		if (wxGetKeyState(WXK_ALT)) {
-			unweightBrush.animInfo = os->project->GetWorkAnim();
-			unweightBrush.boneNames = brushBones;
-			unweightBrush.lockedBoneNames = lockedBones;
-			unweightBrush.bSpreadWeight = bHasNormBones;
-			unweightBrush.bXMirrorBone = !xMirrorBone.empty();
+			bones.ApplyTo(unweightBrush, animInfo);
 			unweightBrush.bNormalizeWeights = weightBrush.bNormalizeWeights;
 			unweightBrush.setStrength(-weightBrush.getStrength());
 			unweightBrush.setFocus(weightBrush.getFocus());
@@ -15610,11 +15574,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 			activeBrush = &unweightBrush;
 		}
 		else if (wxGetKeyState(WXK_SHIFT)) {
-			smoothWeightBrush.animInfo = os->project->GetWorkAnim();
-			smoothWeightBrush.boneNames = brushBones;
-			smoothWeightBrush.lockedBoneNames = lockedBones;
-			smoothWeightBrush.bSpreadWeight = bHasNormBones;
-			smoothWeightBrush.bXMirrorBone = !xMirrorBone.empty();
+			bones.ApplyTo(smoothWeightBrush, animInfo);
 			smoothWeightBrush.bNormalizeWeights = weightBrush.bNormalizeWeights;
 			smoothWeightBrush.setStrength(weightBrush.getStrength() * 15.0f);
 			smoothWeightBrush.setFocus(weightBrush.getFocus());
@@ -15622,11 +15582,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 			activeBrush = &smoothWeightBrush;
 		}
 		else {
-			weightBrush.animInfo = os->project->GetWorkAnim();
-			weightBrush.boneNames = brushBones;
-			weightBrush.lockedBoneNames = lockedBones;
-			weightBrush.bSpreadWeight = bHasNormBones;
-			weightBrush.bXMirrorBone = !xMirrorBone.empty();
+			bones.ApplyTo(weightBrush, animInfo);
 		}
 	}
 	else if (wxGetKeyState(WXK_ALT) && !segmentMode) {
@@ -15671,56 +15627,21 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 	activeBrush->setRestrictPlane(toolOptionRestrictPlane);
 	activeBrush->setRestrictNormal(toolOptionRestrictNormal);
 
+	brushStroke = std::make_unique<BrushStrokeController>(*os->project, os->editor);
+
 	if (activeBrush->Type() == TweakBrush::BrushType::Weight) {
-		for (auto& sel : os->GetSelectedItems()) {
-			os->project->CreateSkinning(sel->GetShape());
+		std::vector<NiShape*> shapes;
+		for (auto& sel : os->GetSelectedItems())
+			shapes.push_back(sel->GetShape());
 
-			int boneIndex = os->project->GetWorkAnim()->GetShapeBoneIndex(sel->GetShape()->name.get(), os->GetActiveBone());
-			if (boneIndex < 0)
-				os->project->AddBoneRef(os->GetActiveBone());
-		}
+		brushStroke->PrepareWeightStroke(shapes);
 	}
 
-	activeStroke = std::make_unique<TweakStroke>(gls.GetActiveMeshes(), activeBrush, *os->editor.undoHistory.PushState());
+	bool applyFirstDab = activeBrush->Type() != TweakBrush::BrushType::Move && !segmentMode;
+	brushStroke->Begin(gls.GetActiveMeshes(), activeBrush, tpi, applyFirstDab);
 
-	if (os->editor.bEditSlider) {
-		activeStroke->usp.sliderName = os->editor.activeSlider;
-		float sliderscale = os->project->SliderValue(os->editor.activeSlider);
-		if (sliderscale == 0.0)
-			sliderscale = 1.0;
-
-		activeStroke->usp.sliderscale = sliderscale;
-	}
-
-	if (activeBrush->Type() == TweakBrush::BrushType::Undiff) {
-		std::vector<Mesh*> refMeshes = activeStroke->GetRefMeshes();
-
-		std::vector<std::vector<Vector3>> positionData;
-		positionData.resize(refMeshes.size());
-
-		for (size_t i = 0; i < refMeshes.size(); i++) {
-			// Get base vertex positions, not current mesh position
-			Mesh* m = refMeshes[i];
-			std::vector<Vector3> basePosition;
-
-			auto workNif = os->project->GetWorkNif();
-			auto shape = workNif->FindBlockByName<NiShape>(m->shapeName);
-			if (shape)
-				workNif->GetVertsForShape(shape, basePosition);
-
-			for (auto& p : basePosition)
-				p = Mesh::TransformPosNifToMesh(p);
-
-			positionData[i] = std::move(basePosition);
-		}
-
-		activeStroke->beginStroke(tpi, positionData);
-	}
-	else
-		activeStroke->beginStroke(tpi);
-
-	if (activeBrush->Type() != TweakBrush::BrushType::Move) {
-		if (segmentMode) {
+	if (activeBrush->Type() != TweakBrush::BrushType::Move && segmentMode) {
+		{
 			bool changed = os->PaintSegmentPartitionTriangles(hitMesh, hitTri, tpi.origin, activeBrush->getRadius());
 
 			if (GetToolOptionXMirror()) {
@@ -15739,9 +15660,6 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 				os->ShowPartition();
 			}
 		}
-		else {
-			activeStroke->updateStroke(tpi);
-		}
 	}
 
 	return true;
@@ -15750,7 +15668,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 	TweakPickInfo tpi;
 
-	if (activeStroke) {
+	if (brushStroke && brushStroke->IsActive()) {
 		bool hit = gls.UpdateCursor(screenPos.x, screenPos.y, true);
 		Mesh* hitMesh = nullptr;
 		int hitTri = -1;
@@ -15800,14 +15718,7 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 			}
 		}
 		else {
-			activeStroke->updateStroke(tpi);
-		}
-
-		if (activeBrush->Type() == TweakBrush::BrushType::Weight) {
-			std::string selectedBone = os->GetActiveBone();
-			if (!selectedBone.empty()) {
-				os->ActiveShapesUpdated(os->editor.undoHistory.GetCurState(), false);
-			}
+			os->ApplyRefresh(brushStroke->Update(tpi));
 		}
 
 		if (transformMode)
@@ -15821,59 +15732,9 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 }
 
 void wxGLPanel::EndBrushStroke() {
-	if (activeStroke) {
-		activeStroke->endStroke();
-
-		TweakBrush::BrushType brushType = activeStroke->BrushType();
-		if (brushType != TweakBrush::BrushType::Mask) {
-			os->ActiveShapesUpdated(os->editor.undoHistory.GetCurState());
-
-			if (brushType == TweakBrush::BrushType::Weight) {
-				std::string selectedBone = os->GetActiveBone();
-				if (!selectedBone.empty()) {
-					os->HighlightBoneNamesWithWeights();
-					os->UpdateBoneCounts();
-				}
-			}
-
-			if (!os->editor.bEditSlider && brushType != TweakBrush::BrushType::Weight && brushType != TweakBrush::BrushType::Color && brushType != TweakBrush::BrushType::Alpha) {
-				{
-					UndoStateProject* usp = os->editor.undoHistory.GetCurState();
-					for (auto& uss : usp->usss) {
-						auto shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(uss.shapeName);
-						if (shape)
-							os->project->ComputeUndoRestDiffs(shape, uss);
-					}
-				}
-
-				for (auto& s : os->project->GetWorkNif()->GetShapes()) {
-					os->UpdateShapeSource(s);
-					os->project->RefreshMorphShape(s);
-				}
-
-				if (os->project->bPose) {
-					for (auto& s : os->project->GetWorkNif()->GetShapes()) {
-						std::vector<Vector3> verts;
-						os->project->GetLiveVerts(s, verts);
-						UpdateMeshVertices(s->name.get(), &verts, true, true, false);
-					}
-				}
-			}
-			else if (os->editor.bEditSlider && os->project->bPose && brushType != TweakBrush::BrushType::Weight && brushType != TweakBrush::BrushType::Color && brushType != TweakBrush::BrushType::Alpha) {
-				for (auto& s : os->project->GetWorkNif()->GetShapes()) {
-					std::vector<Vector3> verts;
-					os->project->GetLiveVerts(s, verts);
-					UpdateMeshVertices(s->name.get(), &verts, true, true, false);
-				}
-			}
-		}
-
-		if (brushType == TweakBrush::BrushType::Mask) {
-			if (!Config.GetBoolValue("Input/MaskHistory"))
-				os->editor.undoHistory.PopState();
-		}
-
-		activeStroke = nullptr;
+	if (brushStroke && brushStroke->IsActive()) {
+		os->ApplyRefresh(brushStroke->End());
+		brushStroke.reset();
 		activeBrush = savedBrush;
 
 		if (transformMode)

@@ -163,6 +163,7 @@ struct ConformOptions;
 struct ClippingFixOptions;
 class OutfitStudioFrame;
 class ArchiveBrowser;
+class BrushStrokeController;
 class EditUV;
 struct SymmetricVertices;
 struct VertexAsymmetries;
@@ -863,6 +864,7 @@ private:
 	TB_XForm translateBrush;
 
 	std::unique_ptr<TweakStroke> activeStroke;
+	std::unique_ptr<BrushStrokeController> brushStroke;
 
 	Mesh* RotationCenterMesh = nullptr;
 	Mesh* RotationCenterMeshRingX = nullptr;

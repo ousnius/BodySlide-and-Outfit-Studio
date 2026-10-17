@@ -548,3 +548,50 @@ void ProjectOperations::ResetPose() {
 		bone->UpdatePoseTransform();
 	}
 }
+
+WeightBrushBones ProjectOperations::GetWeightBrushBones(const std::string& xMirrorBone) {
+	WeightBrushBones bones;
+
+	std::vector<std::string> normBones, notNormBones;
+	GetNormalizeBones(&normBones, &notNormBones);
+
+	const std::string& activeBone = editor.activeBone;
+	bones.boneNames.push_back(activeBone);
+
+	if (!xMirrorBone.empty()) {
+		bones.boneNames.push_back(xMirrorBone);
+		bones.xMirrorBone = true;
+	}
+
+	for (auto& bone : normBones) {
+		if (bone != activeBone && bone != xMirrorBone) {
+			bones.boneNames.push_back(bone);
+			bones.spreadWeight = true;
+		}
+	}
+
+	for (auto& bone : notNormBones) {
+		if (bone == activeBone || bone == xMirrorBone)
+			continue;
+
+		if (bones.spreadWeight)
+			bones.lockedBoneNames.push_back(bone);
+		else
+			bones.boneNames.push_back(bone);
+	}
+
+	return bones;
+}
+
+void ProjectOperations::UpdateShapeFromMesh(NiShape* shape) {
+	if (Mesh* m = GetMesh(shape->name.get())) {
+		project.UpdateShapeFromMesh(shape, m);
+		return;
+	}
+
+	// Without a mesh, bake the live (slider-applied) vertices into the shape instead
+	std::vector<Vector3> liveVerts;
+	project.GetLiveVerts(shape, liveVerts);
+	if (!liveVerts.empty())
+		project.GetWorkNif()->SetVertsForShape(shape, liveVerts);
+}

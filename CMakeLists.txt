@@ -404,6 +404,7 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/program/OutfitStudio.cpp
 	src/program/ProjectHost.cpp
 	src/program/ProjectOperations.cpp
+	src/program/BrushStrokeController.cpp
 	src/program/BadBonesDialog.cpp
 	src/program/ShapeProperties.cpp
 	src/program/ConvertBodyReferenceDialog.cpp

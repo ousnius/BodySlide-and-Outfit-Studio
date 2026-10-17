@@ -895,6 +895,9 @@
     <ClInclude Include="src\program\ProjectOperations.h">
       <Filter>Program</Filter>
     </ClInclude>
+    <ClInclude Include="src\program\BrushStrokeController.h">
+      <Filter>Program</Filter>
+    </ClInclude>
     <ClInclude Include="src\program\EditorState.h">
       <Filter>Program</Filter>
     </ClInclude>
@@ -2284,6 +2287,9 @@
       <Filter>Program</Filter>
     </ClCompile>
     <ClCompile Include="src\program\ProjectOperations.cpp">
+      <Filter>Program</Filter>
+    </ClCompile>
+    <ClCompile Include="src\program\BrushStrokeController.cpp">
       <Filter>Program</Filter>
     </ClCompile>
     <ClCompile Include="src\program\BadBonesDialog.cpp">
