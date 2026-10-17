@@ -8,6 +8,8 @@ See the included LICENSE file
 #include "../components/MaskOps.h"
 
 #include <algorithm>
+#include <cmath>
+#include <set>
 #include <cfloat>
 #include <unordered_set>
 #include <wx/filename.h>
@@ -812,4 +814,120 @@ OpResult ProjectOperations::ShowHeatmap(NiShape* shape, const std::vector<float>
 	OpResult result;
 	result.refresh = RefreshFlags::Shaders;
 	return result;
+}
+
+OpResult ProjectOperations::CompareToProject(const std::string& file,
+											 const std::string& set,
+											 const std::map<std::string, std::string>& shapeMap,
+											 ProjectComparison& outComparison) {
+	outComparison = ProjectComparison();
+
+	// Unattended and without touching the shared skeleton, so the open project isn't affected
+	OutfitProject other(nullptr, false);
+
+	// A project from another BodySlide folder has its ShapeData next to its SliderSets
+	std::string shapeDataPath;
+	wxFileName fileName(wxString::FromUTF8(file));
+	if (fileName.GetDirCount() > 0 && fileName.GetDirs().Last().IsSameAs("SliderSets", false)) {
+		fileName.RemoveLastDir();
+		fileName.AppendDir("ShapeData");
+		shapeDataPath = fileName.GetPath().ToUTF8().data();
+	}
+
+	if (int err = other.LoadFromSliderSet(file, set, nullptr, shapeDataPath))
+		return OpResult::Fail("Loading '" + set + "' from '" + file + "' failed with error " + std::to_string(err) + ".");
+
+	std::set<std::string> sliderNames;
+	for (size_t i = 0; i < project.SliderCount(); i++)
+		if (!project.SliderUV(i))
+			sliderNames.insert(project.GetSliderName(i));
+	for (size_t i = 0; i < other.SliderCount(); i++)
+		if (!other.SliderUV(i))
+			sliderNames.insert(other.GetSliderName(i));
+
+	for (auto* shape : project.GetWorkNif()->GetShapes()) {
+		if (project.IsBaseShape(shape))
+			continue;
+
+		std::string shapeName = shape->name.get();
+		auto mapped = shapeMap.find(shapeName);
+		std::string otherName = mapped != shapeMap.end() ? mapped->second : shapeName;
+
+		NiShape* otherShape = other.GetWorkNif()->FindBlockByName<NiShape>(otherName);
+		if (!otherShape) {
+			outComparison.skippedShapes.emplace_back(shapeName, "no shape '" + otherName + "' in the other project");
+			continue;
+		}
+
+		const size_t vertexCount = shape->GetNumVertices();
+		if (otherShape->GetNumVertices() != vertexCount) {
+			outComparison.skippedShapes.emplace_back(shapeName, "different vertex count");
+			continue;
+		}
+
+		for (auto& sliderName : sliderNames) {
+			std::vector<Vector3> here(vertexCount), there(vertexCount);
+			bool hasHere = project.ValidSlider(sliderName);
+			bool hasThere = other.ValidSlider(sliderName);
+			if (hasHere)
+				project.GetSliderDiff(shape, sliderName, here);
+			if (hasThere)
+				other.GetSliderDiff(otherShape, sliderName, there);
+
+			ProjectComparison::SliderDifference difference;
+			difference.shape = shapeName;
+			difference.slider = sliderName;
+			difference.onlyHere = !hasThere;
+			difference.onlyThere = !hasHere;
+			difference.deltas = MeshAnalysis::CompareDeltas(here, there);
+			outComparison.sliders.push_back(difference);
+		}
+
+		AnimInfo& hereAnim = *project.GetWorkAnim();
+		AnimInfo& thereAnim = *other.GetWorkAnim();
+		std::set<std::string> bones;
+		if (auto it = hereAnim.shapeBones.find(shapeName); it != hereAnim.shapeBones.end())
+			bones.insert(it->second.begin(), it->second.end());
+		if (auto it = thereAnim.shapeBones.find(otherName); it != thereAnim.shapeBones.end())
+			bones.insert(it->second.begin(), it->second.end());
+
+		for (auto& bone : bones) {
+			auto hereWeights = hereAnim.GetWeightsPtr(shapeName, bone);
+			auto thereWeights = thereAnim.GetWeightsPtr(otherName, bone);
+
+			std::set<uint16_t> vertices;
+			if (hereWeights)
+				for (auto& w : *hereWeights)
+					vertices.insert(w.first);
+			if (thereWeights)
+				for (auto& w : *thereWeights)
+					vertices.insert(w.first);
+
+			if (vertices.empty())
+				continue;
+
+			auto weightOf = [](const std::unordered_map<uint16_t, float>* weights, uint16_t v) {
+				if (!weights)
+					return 0.0f;
+				auto it = weights->find(v);
+				return it != weights->end() ? it->second : 0.0f;
+			};
+
+			ProjectComparison::WeightDifference difference;
+			difference.shape = shapeName;
+			difference.bone = bone;
+			difference.vertices = vertices.size();
+
+			double sum = 0.0;
+			for (uint16_t v : vertices) {
+				float error = std::fabs(weightOf(hereWeights, v) - weightOf(thereWeights, v));
+				sum += error;
+				difference.maxError = std::max(difference.maxError, error);
+			}
+			difference.meanError = static_cast<float>(sum / static_cast<double>(vertices.size()));
+			outComparison.weights.push_back(difference);
+		}
+	}
+
+	return OpResult();
 }

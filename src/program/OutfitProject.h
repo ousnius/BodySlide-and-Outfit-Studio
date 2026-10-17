@@ -319,7 +319,8 @@ public:
 	// Shape pointers into the work NIF are invalid afterwards
 	void RestoreSnapshot(const Snapshot& snapshot);
 
-	explicit OutfitProject(IProjectHost* inHost = nullptr);
+	// Without loadSkeleton the shared skeleton stays as it is, for a project loaded next to the open one.
+	explicit OutfitProject(IProjectHost* inHost = nullptr, bool loadSkeleton = true);
 	~OutfitProject();
 
 	IProjectHost& GetHost() { return *host; }
@@ -568,7 +569,11 @@ public:
 	int LoadReference(
 		const std::string& fileName, const std::string& setName, const std::string& shapeName = "", bool mergeSliders = false, bool mergeZaps = false, bool appendNewSliders = true);
 
-	int LoadFromSliderSet(const std::string& fileName, const std::string& setName, std::vector<std::string>* origShapeOrder = nullptr);
+	// shapeDataPath is the ShapeData folder the set's files are in, the program's own by default
+	int LoadFromSliderSet(const std::string& fileName,
+						  const std::string& setName,
+						  std::vector<std::string>* origShapeOrder = nullptr,
+						  const std::string& shapeDataPath = "");
 	int AddFromSliderSet(const std::string& fileName,
 						 const std::string& setName,
 						 const bool newDataLocal = false,

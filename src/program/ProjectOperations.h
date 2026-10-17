@@ -124,6 +124,30 @@ struct ExportOptions {
 	bool global = false;
 };
 
+// Differences between the shapes of the open project and the same shapes in another project
+struct ProjectComparison {
+	struct SliderDifference {
+		std::string shape;
+		std::string slider;
+		bool onlyHere = false;  // The other project has no data for it, compared with no morph
+		bool onlyThere = false; // This project has no data for it
+		MeshAnalysis::DeltaComparison deltas;
+	};
+
+	struct WeightDifference {
+		std::string shape;
+		std::string bone;
+		size_t vertices = 0; // Vertices weighted to the bone in either project
+		float meanError = 0.0f;
+		float maxError = 0.0f;
+	};
+
+	std::vector<SliderDifference> sliders;
+	std::vector<WeightDifference> weights;
+	// Shapes that couldn't be compared, with the reason
+	std::vector<std::pair<std::string, std::string>> skippedShapes;
+};
+
 // Project data and shape masks, to return to after trying out a change
 struct EditSnapshot {
 	std::unique_ptr<OutfitProject::Snapshot> project;
@@ -183,6 +207,14 @@ public:
 	OpResult AnalyzeClipping(nifly::NiShape* shape, MeshAnalysis::PenetrationStats& outStats, float nearDistance = 0.1f);
 
 	OpResult AnalyzeWeights(nifly::NiShape* shape, MeshAnalysis::WeightStats& outStats, int influenceLimit = 4);
+
+	// Compares the slider data and weights of the outfit shapes with a set of a slider set file, e.g. a
+	// finished conversion of the same outfit. shapeMap maps names of this project to the other one, other
+	// shapes are matched by name. Shapes are only compared when their vertex counts match.
+	OpResult CompareToProject(const std::string& file,
+							  const std::string& set,
+							  const std::map<std::string, std::string>& shapeMap,
+							  ProjectComparison& outComparison);
 
 	std::unique_ptr<EditSnapshot> CaptureSnapshot();
 
