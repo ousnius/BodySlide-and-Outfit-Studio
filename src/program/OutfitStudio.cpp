@@ -1325,6 +1325,9 @@ void ToolBarButtonHider::Show(int toolId, bool show) {
 
 
 OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
+	// Other threads wake the dispatcher through the event queue, which wx makes thread safe
+	dispatcher = std::make_unique<MainThreadDispatcher>([this]() { CallAfter([this]() { dispatcher->ProcessPending(); }); });
+
 	wxLogMessage("Loading Outfit Studio frame at X:%d Y:%d with W:%d H:%d...", pos.x, pos.y, size.GetWidth(), size.GetHeight());
 
 	wxXmlResource* xrc = wxXmlResource::Get();
@@ -3452,6 +3455,31 @@ void OutfitStudioFrame::SetViewState(const ViewState& state) {
 		SetShapeDisplayMode(shape.first, shape.second);
 
 	glView->Render();
+}
+
+std::string OutfitStudioFrame::GetBusyReason() {
+#ifdef __WXMSW__
+	// Modal dialogs and native message boxes disable the window they belong to
+	if (!::IsWindowEnabled(static_cast<HWND>(GetHandle())))
+		return "A dialog or message box is open.";
+#endif
+
+	for (wxWindow* window : wxTopLevelWindows) {
+		auto dialog = dynamic_cast<wxDialog*>(window);
+		if (dialog && dialog->IsModal())
+			return "The dialog '" + std::string(dialog->GetTitle().ToUTF8().data()) + "' is open.";
+	}
+
+	if (glView && glView->IsStrokeActive())
+		return "A brush stroke or transform is in progress.";
+
+	if (IsAnimationPlaying())
+		return "An animation is playing.";
+
+	if (!progressStack.empty())
+		return "Another operation is running.";
+
+	return {};
 }
 
 void OutfitStudioProjectHost::StartProgress(const wxString& msg) {
@@ -15163,6 +15191,10 @@ bool wxGLPanel::SaveViewImage(const wxString& fileName, int width, int height) {
 
 	wxImage image(width, height, rgb);
 	return image.SaveFile(fileName, wxBITMAP_TYPE_PNG);
+}
+
+bool wxGLPanel::IsStrokeActive() const {
+	return activeStroke || (brushStroke && brushStroke->IsActive());
 }
 
 UndoHistory* wxGLPanel::GetUndoHistory() {

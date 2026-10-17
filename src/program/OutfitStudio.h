@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../ui/wxStateButton.h"
 #include "../utils/ConfigurationManager.h"
 #include "../utils/Log.h"
+#include "../utils/MainThreadDispatcher.h"
 #include "../utils/TargetGame.h"
 #include "EditorState.h"
 #include "OutfitProject.h"
@@ -216,6 +217,8 @@ public:
 	void SetSelectedShape(const std::string& shapeName);
 
 	UndoHistory* GetUndoHistory();
+	// A brush stroke or a transform is in progress
+	bool IsStrokeActive() const;
 	// Renders the view offscreen at the given size and saves it as a PNG
 	bool SaveViewImage(const wxString& fileName, int width, int height);
 
@@ -1075,6 +1078,13 @@ public:
 	OutfitStudioFrame(const wxPoint& pos, const wxSize& size);
 	~OutfitStudioFrame() {}
 
+	// Runs work on this window's thread for callers on other threads, like an external API
+	MainThreadDispatcher& GetDispatcher() { return *dispatcher; }
+
+	// Why the editor can't take an operation from outside right now, or empty if it can.
+	// Main thread only.
+	std::string GetBusyReason();
+
 	void LoadFiles(const wxArrayString& files, const wxString& projectName = "");
 
 	// Import a file after asking for the import options. Returns 1 if the dialog was cancelled.
@@ -1134,6 +1144,7 @@ public:
 	EditUV* editUV = nullptr;
 	ArchiveBrowser* archiveBrowser = nullptr;
 	OutfitStudioProjectHost projectHost{this};
+	std::unique_ptr<MainThreadDispatcher> dispatcher;
 	OutfitProject* project = nullptr;
 	EditorState editor;
 	ShapeItemData* activeItem = nullptr;

@@ -961,6 +961,9 @@
     <ClInclude Include="src\utils\StringStuff.h">
       <Filter>Utilities</Filter>
     </ClInclude>
+    <ClInclude Include="src\utils\MainThreadDispatcher.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
     <ClInclude Include="src\utils\TargetGame.h">
       <Filter>Utilities</Filter>
     </ClInclude>
@@ -2353,6 +2356,9 @@
       <Filter>Utilities</Filter>
     </ClCompile>
     <ClCompile Include="src\utils\StringStuff.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\MainThreadDispatcher.cpp">
       <Filter>Utilities</Filter>
     </ClCompile>
     <ClCompile Include="src\utils\WxBuildConfigCheck.cpp">

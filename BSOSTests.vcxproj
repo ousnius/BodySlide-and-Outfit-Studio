@@ -240,11 +240,13 @@
     <ClCompile Include="src\files\SFLayeredMaterial.cpp" />
     <ClCompile Include="src\files\SFMaterialGraph.cpp" />
     <ClCompile Include="src\files\SFResourceHash.cpp" />
+    <ClCompile Include="src\utils\MainThreadDispatcher.cpp" />
     <ClCompile Include="src\utils\StringStuff.cpp" />
     <ClCompile Include="tests\ArchiveIndexTest.cpp" />
     <ClCompile Include="tests\ArchiveTest.cpp" />
     <ClCompile Include="tests\HkxFileTest.cpp" />
     <ClCompile Include="tests\AutomationJsonTest.cpp" />
+    <ClCompile Include="tests\MainThreadDispatcherTest.cpp" />
     <ClCompile Include="tests\MaskTransferTest.cpp" />
     <ClCompile Include="tests\MeshAnalysisTest.cpp" />
     <ClCompile Include="tests\SFMorphFileTest.cpp" />
