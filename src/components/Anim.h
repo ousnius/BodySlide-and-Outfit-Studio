@@ -191,8 +191,8 @@ public:
 	bool CalcShapeSkinBounds(const std::string& shapeName, const int& boneIndex);
 	void CleanupBones();
 	void WriteNodesToNif(nifly::NifFile* nif, const std::string& shapeException = "");
-	// Returns false if bone data is incomplete. Starfield BSGeometry needs matching
-	// exported names/transforms and cached skinning; other formats also need skeleton bones.
+	// Returns false if a skinned bone is missing from the reference skeleton.
+	// Starfield BSGeometry binds bones by name, so its bones never count as missing.
 	bool WriteToNif(nifly::NifFile* nif, const std::string& shapeException = "");
 
 	void RenameShape(const std::string& shapeName, const std::string& newShapeName);
