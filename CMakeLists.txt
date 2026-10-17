@@ -377,6 +377,7 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	${BSOS_COMMON_SOURCES}
 	src/components/RefTemplates.cpp
 	src/components/Automation.cpp
+	src/components/AutomationJson.cpp
 	src/components/TweakBrush.cpp
 	src/components/ArchiveIndex.cpp
 	src/components/UndoHistory.cpp
@@ -407,7 +408,7 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/program/ShapeProperties.cpp
 	src/program/ConvertBodyReferenceDialog.cpp
 	src/program/AutomationDialog.cpp
-	src/program/AutomationDialogExecute.cpp
+	src/program/AutomationRunner.cpp
 	src/program/SliderDataDialog.cpp
 	src/program/SliderDataImportDialog.cpp
 	src/program/AddProjectDialog.cpp

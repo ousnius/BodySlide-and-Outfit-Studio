@@ -871,7 +871,9 @@
     <ClInclude Include="src\physics\hdt\hdtVertex.h" />
     <ClInclude Include="src\program\ConvertBodyReferenceDialog.h" />
     <ClInclude Include="src\program\AutomationDialog.h" />
+    <ClInclude Include="src\program\AutomationRunner.h" />
     <ClInclude Include="src\components\Automation.h" />
+    <ClInclude Include="src\components\AutomationJson.h" />
     <ClInclude Include="src\program\EditUV.h" />
     <ClInclude Include="src\program\FBXImportDialog.h" />
     <ClInclude Include="src\program\GroupManager.h" />
@@ -1000,8 +1002,9 @@
     <ClCompile Include="src\physics\hdt\hdtVertex.cpp" />
     <ClCompile Include="src\program\ConvertBodyReferenceDialog.cpp" />
     <ClCompile Include="src\program\AutomationDialog.cpp" />
-    <ClCompile Include="src\program\AutomationDialogExecute.cpp" />
+    <ClCompile Include="src\program\AutomationRunner.cpp" />
     <ClCompile Include="src\components\Automation.cpp" />
+    <ClCompile Include="src\components\AutomationJson.cpp" />
     <ClCompile Include="src\program\EditUV.cpp" />
     <ClCompile Include="src\program\FBXImportDialog.cpp" />
     <ClCompile Include="src\program\GroupManager.cpp" />

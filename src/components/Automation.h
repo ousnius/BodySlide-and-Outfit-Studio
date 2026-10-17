@@ -627,3 +627,18 @@ public:
 	// Substitute placeholders like {{KEY}} in all string fields
 	void SubstitutePlaceholders(const std::map<std::string, std::string>& vars);
 };
+
+// Texture slots of a shader, as Set Texture Paths steps name them
+struct AutomationTexturePathDef {
+	int index;
+	const char* name;
+	const char* label;
+};
+
+const std::vector<AutomationTexturePathDef>& GetAutomationTexturePathDefs();
+const AutomationTexturePathDef* FindAutomationTexturePathDef(int index);
+// Index of a texture slot by name or label, or -1
+int AutomationTexturePathIndexForName(const std::string& name);
+// Index of a texture path entry, from its index or else its name
+int ResolveAutomationTexturePathIndex(const AutomationStep::TexturePath& path);
+std::string AutomationTexturePathNameForIndex(int index);

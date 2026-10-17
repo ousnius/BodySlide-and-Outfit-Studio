@@ -276,12 +276,6 @@ struct GeometryPropertyDef {
 	bool defaultEnabled;
 };
 
-struct TexturePathDef {
-	int index;
-	const char* name;
-	const char* label;
-};
-
 const ShaderPropertyChoiceDef ShaderTypeChoices[] = {
 	{"Default (BSLighting)", "BSLighting:0"},
 	{"Environment Map (BSLighting)", "BSLighting:1"},
@@ -339,21 +333,6 @@ const GeometryPropertyDef GeometryPropertyDefs[] = {
 	{"SubIndex", "Sub Index", true}
 };
 
-const TexturePathDef TexturePathDefs[] = {
-	{0, "Diffuse", "0: Diffuse"},
-	{1, "Normal", "1: Normal"},
-	{2, "Glow/Skin", "2: Glow/Skin"},
-	{3, "Parallax", "3: Parallax"},
-	{4, "Environment", "4: Environment"},
-	{5, "Env Mask", "5: Env Mask"},
-	{6, "6", "6"},
-	{7, "Specular", "7: Specular"},
-	{8, "8", "8"},
-	{9, "9", "9"},
-	{10, "10", "10"},
-	{11, "11", "11"},
-	{12, "12", "12"}
-};
 
 const ShaderPropertyDef* FindShaderPropertyDef(const std::string& name) {
 	for (const auto& def : ShaderPropertyDefs) {
@@ -390,24 +369,7 @@ AutomationStep::GeometryProperty MakeDefaultGeometryProperty(const GeometryPrope
 	return prop;
 }
 
-const TexturePathDef* FindTexturePathDefByIndex(int index) {
-	for (const auto& def : TexturePathDefs) {
-		if (def.index == index)
-			return &def;
-	}
-	return nullptr;
-}
-
-const TexturePathDef* FindTexturePathDefByName(const std::string& name) {
-	std::string nameLower = ToLower(name);
-	for (const auto& def : TexturePathDefs) {
-		if (nameLower == ToLower(def.name) || nameLower == ToLower(def.label))
-			return &def;
-	}
-	return nullptr;
-}
-
-AutomationStep::TexturePath MakeDefaultTexturePath(const TexturePathDef& def) {
+AutomationStep::TexturePath MakeDefaultTexturePath(const AutomationTexturePathDef& def) {
 	AutomationStep::TexturePath path;
 	path.index = def.index;
 	path.name = def.name;
@@ -476,23 +438,6 @@ std::string GetStepTargetDisplayString(const AutomationStep& step) {
 
 }
 
-int AutomationDialog::TexturePathIndexForName(const std::string& name) {
-	const TexturePathDef* def = FindTexturePathDefByName(name);
-	return def ? def->index : -1;
-}
-
-int AutomationDialog::ResolveTexturePathIndex(const AutomationStep::TexturePath& path) {
-	if (path.index >= 0)
-		return path.index;
-
-	return TexturePathIndexForName(path.name);
-}
-
-std::string AutomationDialog::TexturePathNameForIndex(int index) {
-	const TexturePathDef* def = FindTexturePathDefByIndex(index);
-	return def ? def->name : std::to_string(index);
-}
-
 wxBEGIN_EVENT_TABLE(AutomationDialog, wxDialog)
 	EVT_COMBOBOX(XRCID("cmbAutomation"), AutomationDialog::OnAutomationSelected)
 	EVT_BUTTON(XRCID("btnSaveScript"), AutomationDialog::OnSaveScript)
@@ -519,7 +464,7 @@ wxBEGIN_EVENT_TABLE(AutomationDialog, wxDialog)
 wxEND_EVENT_TABLE()
 
 AutomationDialog::AutomationDialog(OutfitStudioFrame* outfitStudio, OutfitProject* project)
-	: outfitStudio(outfitStudio), project(project) {
+	: outfitStudio(outfitStudio), project(project), runner(outfitStudio) {
 	wxXmlResource* xrc = wxXmlResource::Get();
 	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/Automation.xrc");
 	xrc->LoadDialog(this, outfitStudio, "dlgAutomation");
@@ -1109,7 +1054,7 @@ void AutomationDialog::PopulateTexturePathChoice() {
 	auto* choice = XRCCTRL(*this, "choiceTexturePathAdd", wxChoice);
 	if (choice) {
 		choice->Clear();
-		for (const auto& def : TexturePathDefs)
+		for (const auto& def : GetAutomationTexturePathDefs())
 			choice->Append(wxString::FromUTF8(def.label), new wxStringClientData(wxString::Format("%d", def.index)));
 
 		if (choice->GetCount() > 0)
@@ -1134,8 +1079,8 @@ void AutomationDialog::ClearTexturePathRows() {
 }
 
 void AutomationDialog::AddTexturePathRow(const AutomationStep::TexturePath& path) {
-	int index = ResolveTexturePathIndex(path);
-	const TexturePathDef* def = FindTexturePathDefByIndex(index);
+	int index = ResolveAutomationTexturePathIndex(path);
+	const AutomationTexturePathDef* def = FindAutomationTexturePathDef(index);
 	if (!def)
 		return;
 
@@ -1211,7 +1156,7 @@ std::vector<AutomationStep::TexturePath> AutomationDialog::ReadTexturePathRows()
 	for (const auto& row : texturePathRows) {
 		AutomationStep::TexturePath path;
 		path.index = row.index;
-		path.name = row.name.empty() ? TexturePathNameForIndex(row.index) : row.name;
+		path.name = row.name.empty() ? AutomationTexturePathNameForIndex(row.index) : row.name;
 		path.path = row.path ? row.path->GetValue().ToUTF8().data() : std::string();
 		paths.push_back(path);
 	}
@@ -1916,74 +1861,20 @@ void AutomationDialog::StepFromUISetTexturePaths(AutomationStep& step) {
 // name their executor.
 const AutomationDialog::StepBinding* AutomationDialog::FindStepBinding(AutomationStepType type) {
 	static const StepBinding bindings[] = {
-		{AutomationStepType::AddCustomBone, &AutomationDialog::ExecuteStepAddCustomBone},
-		{AutomationStepType::CopyBoneWeights, &AutomationDialog::ExecuteStepCopyBoneWeights},
-		{AutomationStepType::DeleteBones, &AutomationDialog::ExecuteStepDeleteBones},
-		{AutomationStepType::EditBone, &AutomationDialog::ExecuteStepEditBone},
-		{AutomationStepType::RemoveSkinning, &AutomationDialog::ExecuteStepRemoveSkinning},
-		{AutomationStepType::ExportFile, &AutomationDialog::ExecuteStepExportFile, &AutomationDialog::StepToUIExportFile, &AutomationDialog::StepFromUIExportFile},
-		{AutomationStepType::ExportSFMorphs, &AutomationDialog::ExecuteStepExportSFMorphs},
-		{AutomationStepType::SaveProject, &AutomationDialog::ExecuteStepSaveProject, &AutomationDialog::StepToUISaveProject},
-		{AutomationStepType::ImportFile, &AutomationDialog::ExecuteStepImportFile, &AutomationDialog::StepToUIImportFile, &AutomationDialog::StepFromUIImportFile},
-		{AutomationStepType::ImportSliderData, &AutomationDialog::ExecuteStepImportSliderData, &AutomationDialog::StepToUIImportSliderData, &AutomationDialog::StepFromUIImportSliderData},
-		{AutomationStepType::AddProject, &AutomationDialog::ExecuteStepAddProject, &AutomationDialog::StepToUIAddProject, &AutomationDialog::StepFromUIAddProject},
-		{AutomationStepType::ClearProject, &AutomationDialog::ExecuteStepClearProject},
-		{AutomationStepType::ClearReference, &AutomationDialog::ExecuteStepClearReference},
-		{AutomationStepType::LoadReference, &AutomationDialog::ExecuteStepLoadReference, &AutomationDialog::StepToUILoadReference, &AutomationDialog::StepFromUILoadReference},
-		{AutomationStepType::SetBaseShape, &AutomationDialog::ExecuteStepSetBaseShape},
-		{AutomationStepType::SetReferenceShape, &AutomationDialog::ExecuteStepSetReferenceShape, &AutomationDialog::StepToUISetReferenceShape},
-		{AutomationStepType::ApplyPose, &AutomationDialog::ExecuteStepApplyPose},
-		{AutomationStepType::DeleteShape, &AutomationDialog::ExecuteStepDeleteShape},
-		{AutomationStepType::DuplicateShape, &AutomationDialog::ExecuteStepDuplicateShape},
-		{AutomationStepType::ChangePartitions, &AutomationDialog::ExecuteStepChangePartitions},
-		{AutomationStepType::FixBadBones, &AutomationDialog::ExecuteStepFixBadBones},
-		{AutomationStepType::FixClipping, &AutomationDialog::ExecuteStepFixClipping},
-		{AutomationStepType::InvertUVs, &AutomationDialog::ExecuteStepInvertUVs},
-		{AutomationStepType::MirrorShape, &AutomationDialog::ExecuteStepMirrorShape},
-		{AutomationStepType::RecalcNormals, &AutomationDialog::ExecuteStepRecalcNormals},
-		{AutomationStepType::RefineMesh, &AutomationDialog::ExecuteStepRefineMesh},
-		{AutomationStepType::RenameShape, &AutomationDialog::ExecuteStepRenameShape},
-		{AutomationStepType::ApplyTransforms, &AutomationDialog::ExecuteStepApplyTransforms},
-		{AutomationStepType::ResetTransforms, &AutomationDialog::ExecuteStepResetTransforms},
-		{AutomationStepType::TransformShape, &AutomationDialog::ExecuteStepTransformShape},
-		{AutomationStepType::SetGeometryProperties, &AutomationDialog::ExecuteStepSetGeometryProperties, &AutomationDialog::StepToUISetGeometryProperties, &AutomationDialog::StepFromUISetGeometryProperties},
-		{AutomationStepType::SetExtraData, &AutomationDialog::ExecuteStepSetExtraData, &AutomationDialog::StepToUISetExtraData, &AutomationDialog::StepFromUISetExtraData},
-		{AutomationStepType::DeleteExtraData, &AutomationDialog::ExecuteStepDeleteExtraData},
-		{AutomationStepType::ConformSliders, &AutomationDialog::ExecuteStepConformSliders},
-		{AutomationStepType::DeleteSlider, &AutomationDialog::ExecuteStepDeleteSlider},
-		{AutomationStepType::SetSliderValues, &AutomationDialog::ExecuteStepSetSliderValues},
-		{AutomationStepType::SetSliderProperties, &AutomationDialog::ExecuteStepSetSliderProperties, &AutomationDialog::StepToUISetSliderProperties, &AutomationDialog::StepFromUISetSliderProperties},
-		{AutomationStepType::SetShaderProperties, &AutomationDialog::ExecuteStepSetShaderProperties, &AutomationDialog::StepToUISetShaderProperties, &AutomationDialog::StepFromUISetShaderProperties},
-		{AutomationStepType::SetTexturePaths, &AutomationDialog::ExecuteStepSetTexturePaths, &AutomationDialog::StepToUISetTexturePaths, &AutomationDialog::StepFromUISetTexturePaths},
-		{AutomationStepType::ClearMask, &AutomationDialog::ExecuteStepClearMask},
-		{AutomationStepType::LoadMask, &AutomationDialog::ExecuteStepLoadMask, &AutomationDialog::StepToUILoadMask, &AutomationDialog::StepFromUILoadMask},
-		{AutomationStepType::RemoveUnusedNodes, &AutomationDialog::ExecuteStepRemoveUnusedNodes},
-		{AutomationStepType::AddBone, &AutomationDialog::ExecuteStepAddBone},
-		{AutomationStepType::TransferWeights, &AutomationDialog::ExecuteStepTransferWeights},
-		{AutomationStepType::SetBoneTransform, &AutomationDialog::ExecuteStepSetBoneTransform},
-		{AutomationStepType::MakeConversionRef, &AutomationDialog::ExecuteStepMakeConversionRef},
-		{AutomationStepType::CopySegPart, &AutomationDialog::ExecuteStepCopySegPart},
-		{AutomationStepType::DeleteVertices, &AutomationDialog::ExecuteStepDeleteVertices},
-		{AutomationStepType::SeparateVertices, &AutomationDialog::ExecuteStepSeparateVertices},
-		{AutomationStepType::MergeGeometry, &AutomationDialog::ExecuteStepMergeGeometry},
-		{AutomationStepType::SymmetrizeVertices, &AutomationDialog::ExecuteStepSymmetrizeVertices},
-		{AutomationStepType::ClearSliderData, &AutomationDialog::ExecuteStepClearSliderData},
-		{AutomationStepType::CloneSlider, &AutomationDialog::ExecuteStepCloneSlider},
-		{AutomationStepType::NegateSlider, &AutomationDialog::ExecuteStepNegateSlider},
-		{AutomationStepType::NewCombinedSlider, &AutomationDialog::ExecuteStepNewCombinedSlider},
-		{AutomationStepType::NewZapSlider, &AutomationDialog::ExecuteStepNewZapSlider},
-		{AutomationStepType::GrowShrinkMask, &AutomationDialog::ExecuteStepGrowShrinkMask},
-		{AutomationStepType::InvertMask, &AutomationDialog::ExecuteStepInvertMask},
-		{AutomationStepType::MaskAsymmetric, &AutomationDialog::ExecuteStepMaskAsymmetric},
-		{AutomationStepType::MaskBoneWeighted, &AutomationDialog::ExecuteStepMaskBoneWeighted},
-		{AutomationStepType::MaskSliderAffected, &AutomationDialog::ExecuteStepMaskSliderAffected},
-		{AutomationStepType::MaskWeighted, &AutomationDialog::ExecuteStepMaskWeighted},
-		{AutomationStepType::SaveMask, &AutomationDialog::ExecuteStepSaveMask},
-		{AutomationStepType::SetVariable, &AutomationDialog::ExecuteStepSetVariable},
-		{AutomationStepType::LogMessage, &AutomationDialog::ExecuteStepLogMessage},
+		{AutomationStepType::ExportFile, &AutomationDialog::StepToUIExportFile, &AutomationDialog::StepFromUIExportFile},
+		{AutomationStepType::SaveProject, &AutomationDialog::StepToUISaveProject},
+		{AutomationStepType::ImportFile, &AutomationDialog::StepToUIImportFile, &AutomationDialog::StepFromUIImportFile},
+		{AutomationStepType::ImportSliderData, &AutomationDialog::StepToUIImportSliderData, &AutomationDialog::StepFromUIImportSliderData},
+		{AutomationStepType::AddProject, &AutomationDialog::StepToUIAddProject, &AutomationDialog::StepFromUIAddProject},
+		{AutomationStepType::LoadReference, &AutomationDialog::StepToUILoadReference, &AutomationDialog::StepFromUILoadReference},
+		{AutomationStepType::SetReferenceShape, &AutomationDialog::StepToUISetReferenceShape},
+		{AutomationStepType::SetGeometryProperties, &AutomationDialog::StepToUISetGeometryProperties, &AutomationDialog::StepFromUISetGeometryProperties},
+		{AutomationStepType::SetExtraData, &AutomationDialog::StepToUISetExtraData, &AutomationDialog::StepFromUISetExtraData},
+		{AutomationStepType::SetSliderProperties, &AutomationDialog::StepToUISetSliderProperties, &AutomationDialog::StepFromUISetSliderProperties},
+		{AutomationStepType::SetShaderProperties, &AutomationDialog::StepToUISetShaderProperties, &AutomationDialog::StepFromUISetShaderProperties},
+		{AutomationStepType::SetTexturePaths, &AutomationDialog::StepToUISetTexturePaths, &AutomationDialog::StepFromUISetTexturePaths},
+		{AutomationStepType::LoadMask, &AutomationDialog::StepToUILoadMask, &AutomationDialog::StepFromUILoadMask},
 	};
-
-	static_assert(std::size(bindings) == AutomationStepTypeCount, "every AutomationStepType needs a binding");
 
 	for (const auto& binding : bindings)
 		if (binding.type == type)
@@ -2048,66 +1939,6 @@ std::map<std::string, std::string> AutomationDialog::CollectVariables() {
 	}
 
 	return vars;
-}
-
-NiShape* AutomationDialog::FindShapeByName(const std::string& name) {
-	auto shapes = project->GetWorkNif()->GetShapes();
-	for (auto* shape : shapes) {
-		if (shape->name.get() == name)
-			return shape;
-	}
-	return nullptr;
-}
-
-std::vector<NiShape*> AutomationDialog::ResolveTargetShapes(const AutomationStep& step, bool includeBaseShapeOnEmpty) {
-	if (step.targetMeshes.empty()) {
-		auto allShapes = project->GetWorkNif()->GetShapes();
-		std::vector<NiShape*> result;
-		auto* baseShape = project->GetBaseShape();
-		for (auto* shape : allShapes) {
-			if (includeBaseShapeOnEmpty || shape != baseShape)
-				result.push_back(shape);
-		}
-		return result;
-	}
-
-	std::vector<NiShape*> result;
-	auto addUniqueShape = [&result](NiShape* shape) {
-		if (shape && std::find(result.begin(), result.end(), shape) == result.end())
-			result.push_back(shape);
-	};
-
-	if (step.targetRegex) {
-		auto allShapes = project->GetWorkNif()->GetShapes();
-		for (const auto& pattern : step.targetMeshes) {
-			try {
-				std::regex re(pattern, std::regex::icase);
-				bool matched = false;
-				for (auto* shape : allShapes) {
-					if (std::regex_search(shape->name.get(), re)) {
-						addUniqueShape(shape);
-						matched = true;
-					}
-				}
-				if (!matched)
-					wxLogWarning("Automation: Target shape regex '%s' matched no shapes.", pattern);
-			}
-			catch (const std::regex_error& e) {
-				wxLogWarning("Automation: Invalid target shape regex '%s' (%s); skipping pattern.", pattern, e.what());
-			}
-		}
-	}
-	else {
-		for (const auto& name : step.targetMeshes) {
-			NiShape* shape = FindShapeByName(name);
-			if (shape)
-				addUniqueShape(shape);
-			else
-				wxLogWarning("Automation: Target shape '%s' not found.", name);
-		}
-	}
-
-	return result;
 }
 
 std::string AutomationDialog::GetAutomationsFolder() {
@@ -2246,6 +2077,7 @@ wxString AutomationDialog::SanitizePath(const wxString& name) {
 
 int AutomationDialog::RunHeadless(const wxString& scriptName, const wxArrayString& batchInputs) {
 	headlessMode = true;
+	runner.SetHeadless(true);
 	lastRunErrors = 0;
 
 	// Nobody is there to answer prompts, and the window outlives this dialog
@@ -2607,7 +2439,7 @@ void AutomationDialog::OnDeleteScript(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void AutomationDialog::OnOpenFolder(wxCommandEvent& WXUNUSED(event)) {
-	wxString folder = MakeAbsoluteToProject(wxString::FromUTF8(GetAutomationsFolder()));
+	wxString folder = AutomationRunner::MakeAbsoluteToProject(wxString::FromUTF8(GetAutomationsFolder()));
 	if (!wxDir::Exists(folder))
 		wxFileName::Mkdir(folder, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 
@@ -2970,29 +2802,6 @@ void AutomationDialog::OnClose(wxCommandEvent& WXUNUSED(event)) {
 	if (selectedStep >= 0)
 		UpdateStepFromUI();
 	EndModal(wxID_CLOSE);
-}
-
-int AutomationDialog::ImportOBJFile(const std::string& fileName) {
-	if (headlessMode)
-		return project->ImportOBJ(fileName, ObjImportOptions());
-
-	return outfitStudio->ImportOBJWithDialog(fileName);
-}
-
-#ifdef USE_FBXSDK
-int AutomationDialog::ImportFBXFile(const std::string& fileName) {
-	if (headlessMode)
-		return project->ImportFBX(fileName, FBXImportOptions());
-
-	return outfitStudio->ImportFBXWithDialog(fileName);
-}
-#endif
-
-void AutomationDialog::ResetAndClearProject() {
-	project->SetBaseShape(nullptr, false);
-	project->GetWorkAnim()->Clear();
-	project->GetWorkNif()->Clear();
-	outfitStudio->ResetProject();
 }
 
 void AutomationDialog::OnAddVariable(wxCommandEvent& WXUNUSED(event)) {
@@ -3367,7 +3176,7 @@ void AutomationDialog::OnAddTexturePath(wxCommandEvent& WXUNUSED(event)) {
 			return;
 	}
 
-	const TexturePathDef* def = FindTexturePathDefByIndex(index);
+	const AutomationTexturePathDef* def = FindAutomationTexturePathDef(index);
 	if (!def)
 		return;
 
@@ -3488,18 +3297,6 @@ wxString AutomationDialog::MakeRelativeToProject(const wxString& absolutePath) c
 		return fn.GetFullPath();
 
 	return absolutePath; // Couldn't make relative, return as-is
-}
-
-wxString AutomationDialog::MakeAbsoluteToProject(const wxString& path) const {
-	if (path.empty())
-		return path;
-
-	wxFileName fn(path);
-	if (!fn.IsRelative())
-		return path;
-
-	fn.MakeAbsolute(wxString::FromUTF8(ProjectUtil::GetProjectPath()));
-	return fn.GetFullPath();
 }
 
 void AutomationDialog::PopulateVariablesUI() {
@@ -3784,7 +3581,7 @@ void AutomationDialog::OnAddSliderToField(wxCommandEvent& event) {
 std::vector<std::string> AutomationDialog::GatherBatchFiles() {
 	std::vector<std::string> result;
 
-	wxString folder = MakeAbsoluteToProject(wxString::FromUTF8(script.GetBatchFolder()));
+	wxString folder = AutomationRunner::MakeAbsoluteToProject(wxString::FromUTF8(script.GetBatchFolder()));
 	std::string ext = script.GetBatchExtension();
 	if (folder.IsEmpty() || ext.empty())
 		return result;
@@ -3877,6 +3674,75 @@ std::vector<std::pair<std::string, std::string>> AutomationDialog::GatherBatchSl
 	return result;
 }
 
+void AutomationDialog::ExecuteSteps(const std::vector<size_t>& stepIndices) {
+	lastRunErrors = 0;
+
+	// Make a copy so placeholder substitution doesn't modify the UI version
+	AutomationScript execScript;
+	for (size_t idx : stepIndices)
+		execScript.AddStep(script.GetSteps()[idx]);
+
+	// Apply placeholder substitution
+	auto vars = CollectVariables();
+	if (!vars.empty())
+		execScript.SubstitutePlaceholders(vars);
+
+	runner.BeginRun(vars);
+
+	StartProgress(_("Running automation script..."));
+
+	int totalSteps = static_cast<int>(execScript.GetSteps().size());
+	for (int i = 0; i < totalSteps; i++) {
+		const AutomationStep& step = execScript.GetSteps()[i];
+
+		wxString stepDesc = wxString::Format(_("Step %d/%d: %s"),
+			i + 1, totalSteps,
+			wxGetTranslation(GetAutomationStepInfo(step.type).displayName));
+
+		UpdateProgress(i * 100 / totalSteps, stepDesc);
+
+		if (cancelRequested) {
+			wxLogMessage("Automation: Cancelled by user.");
+			EndProgress(_("Automation cancelled."));
+			lastRunErrors++;
+			return;
+		}
+
+		wxLogMessage("Automation: %s", stepDesc);
+
+		int err = runner.RunStep(step);
+		if (err != 0) {
+			lastRunErrors++;
+			wxString errMsg = wxString::Format(
+				_("Step %d (%s) failed with error %d.\n\n%s\n\nContinue with remaining steps?"),
+				i + 1,
+				wxGetTranslation(GetAutomationStepInfo(step.type).displayName),
+				err,
+				wxString::FromUTF8(step.note));
+
+			if (headlessMode) {
+				wxLogError("Automation: %s", errMsg);
+				// Auto-continue in headless mode
+			}
+			else {
+				int result = wxMessageBox(errMsg, _("Automation Error"), wxYES_NO | wxICON_ERROR);
+				if (result != wxYES) {
+					EndProgress(_("Automation aborted."));
+					return;
+				}
+			}
+		}
+
+	}
+
+	EndProgress(_("Automation complete."));
+
+	if (!headlessMode) {
+		wxMessageBox(wxString::Format(_("Automation completed: %d step(s) executed."), totalSteps),
+					 _("Automation"), wxICON_INFORMATION);
+	}
+}
+
 void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, const std::vector<std::string>& selectedFiles, const std::vector<std::pair<std::string, std::string>>& selectedSets) {
 	auto batchMode = script.GetBatchMode();
 	lastRunErrors = 0;
@@ -3887,7 +3753,7 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 	Config.SetDefaultBoolValue("OptimizeForSSE", true);
 
 	// Clear project before starting batch to prevent current content from leaking into first iteration
-	ResetAndClearProject();
+	runner.ResetAndClearProject();
 
 	StartProgress(_("Preparing..."));
 
@@ -3934,18 +3800,17 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 
 			execScript.SubstitutePlaceholders(vars);
 
-			runBaseVariables = vars;
-			runtimeVariables.clear();
+			runner.BeginRun(vars);
 
 			// Clear project for fresh start
-			ResetAndClearProject();
+			runner.ResetAndClearProject();
 
 			size_t firstStepToExecute = 0;
 			if (!execScript.GetSteps().empty() && !stepIndices.empty() && stepIndices.front() == 0) {
 				const auto& firstStep = execScript.GetSteps().front();
 				if (firstStep.type == AutomationStepType::ImportFile && firstStep.importBeforeBatch) {
 					wxLogMessage("Automation: Importing first Import File step before batch file '%s'.", filePath);
-					int baseImportErr = ExecuteStepImportFile(firstStep);
+					int baseImportErr = runner.ExecuteStep(firstStep);
 					if (baseImportErr) {
 						wxLogError("Automation: Batch - failed to import base file before '%s' (error %d), skipping.", filePath, baseImportErr);
 						errorCount++;
@@ -3962,10 +3827,10 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 			if (ext == "nif")
 				importErr = project->ImportNIF(filePath, false);
 			else if (ext == "obj")
-				importErr = ImportOBJFile(filePath);
+				importErr = runner.ImportOBJFile(filePath);
 			else if (ext == "fbx")
 #ifdef USE_FBXSDK
-				importErr = ImportFBXFile(filePath);
+				importErr = runner.ImportFBXFile(filePath);
 #else
 				wxLogError("Automation: FBX import is not available (FBX SDK not compiled in).");
 #endif
@@ -3998,23 +3863,12 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 
 			bool stepFailed = false;
 			for (size_t i = firstStepToExecute; i < execScript.GetSteps().size(); i++) {
-				AutomationStep batchStep = execScript.GetSteps()[i];
-				if (!runtimeVariables.empty())
-					SubstituteStepPlaceholders(batchStep, runtimeVariables);
-
-				int err = ExecuteStep(batchStep);
+				int err = runner.RunStep(execScript.GetSteps()[i]);
 				if (err != 0) {
 					wxLogError("Automation: Batch - step %zu failed on '%s'.", i + 1, filePath);
 					stepFailed = true;
 					break;
 				}
-
-				outfitStudio->RefreshGUIFromProj();
-
-				if (StepChangesSliderSet(batchStep.type))
-					outfitStudio->CreateSetSliders();
-
-				outfitStudio->ApplySliders();
 			}
 
 			if (stepFailed)
@@ -4023,7 +3877,7 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 			processedCount++;
 
 			// Clear project after processing each entry
-			ResetAndClearProject();
+			runner.ResetAndClearProject();
 		}
 
 		EndProgress(cancelRequested ? _("Batch cancelled.") : _("Batch complete."));
@@ -4080,7 +3934,7 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 			vars["BATCH_DIR"] = fn.GetPath().ToUTF8().data();
 
 			// Clear and load the project
-			ResetAndClearProject();
+			runner.ResetAndClearProject();
 			bool loaded = outfitStudio->LoadProject(filePath, setName, true);
 
 			// LoadProject with clearProject=true recreates the project object
@@ -4103,8 +3957,7 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 
 			execScript.SubstitutePlaceholders(vars);
 
-			runBaseVariables = vars;
-			runtimeVariables.clear();
+			runner.BeginRun(vars);
 
 			for (auto& step : execScript.GetSteps()) {
 				// Apply copy-ref-from-project: override saveAutoCopyRef based on loaded project
@@ -4198,23 +4051,12 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 
 			bool stepFailed = false;
 			for (size_t i = 0; i < execScript.GetSteps().size(); i++) {
-				AutomationStep batchStep = execScript.GetSteps()[i];
-				if (!runtimeVariables.empty())
-					SubstituteStepPlaceholders(batchStep, runtimeVariables);
-
-				int err = ExecuteStep(batchStep);
+				int err = runner.RunStep(execScript.GetSteps()[i]);
 				if (err != 0) {
 					wxLogError("Automation: Batch - step %zu failed on '%s'.", i + 1, setName);
 					stepFailed = true;
 					break;
 				}
-
-				outfitStudio->RefreshGUIFromProj();
-
-				if (StepChangesSliderSet(batchStep.type))
-					outfitStudio->CreateSetSliders();
-
-				outfitStudio->ApplySliders();
 			}
 
 			if (stepFailed)
@@ -4223,7 +4065,7 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 			processedCount++;
 
 			// Clear project after processing each entry
-			ResetAndClearProject();
+			runner.ResetAndClearProject();
 		}
 
 		EndProgress(cancelRequested ? _("Batch cancelled.") : _("Batch complete."));
