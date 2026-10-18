@@ -325,7 +325,7 @@ void WeightCopyDialog::UndoPreview() {
 			if (bw.weights.empty())
 				continue;
 
-			project->GetWorkAnim()->AddShapeBone(m->shapeName, bw.boneName);
+			project->GetWorkAnim()->AddShapeBone(m->shapeName, bw.boneName, bw.skinToBone);
 			auto weights = project->GetWorkAnim()->GetWeightsPtr(m->shapeName, bw.boneName);
 			if (!weights)
 				continue;
@@ -363,7 +363,7 @@ void WeightCopyDialog::ApplyPreviewWeights() {
 			if (bw.weights.empty())
 				continue;
 
-			project->GetWorkAnim()->AddShapeBone(m->shapeName, bw.boneName);
+			project->GetWorkAnim()->AddShapeBone(m->shapeName, bw.boneName, bw.skinToBone);
 			auto weights = project->GetWorkAnim()->GetWeightsPtr(m->shapeName, bw.boneName);
 			if (!weights)
 				continue;

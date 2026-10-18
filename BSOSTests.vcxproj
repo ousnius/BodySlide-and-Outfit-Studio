@@ -224,6 +224,7 @@
     <ClInclude Include="lib\TinyXML-2\tinyxml2.h" />
     <ClInclude Include="src\components\ArchiveIndex.h" />
     <ClInclude Include="src\components\MaskTransfer.h" />
+    <ClInclude Include="src\components\ClothData.h" />
     <ClInclude Include="src\components\StarfieldSpace.h" />
     <ClInclude Include="src\files\HkxFile.h" />
     <ClInclude Include="src\files\SFMorphFile.h" />
@@ -232,6 +233,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="tests\SFMaterialDatabaseTest.cpp" />
+    <ClCompile Include="tests\AnimTest.cpp" />
+    <ClCompile Include="tests\ClothDataTest.cpp" />
     <ClCompile Include="tests\SFLayeredMaterialTest.cpp" />
     <ClCompile Include="tests\SFMaterialFileTest.cpp" />
     <ClCompile Include="tests\SFResourceHashTest.cpp" />
@@ -258,6 +261,7 @@
     <ClCompile Include="src\components\ClippingFixer.cpp" />
     <ClCompile Include="src\components\MaskTransfer.cpp" />
     <ClCompile Include="src\components\MeshAnalysis.cpp" />
+    <ClCompile Include="src\components\ClothData.cpp" />
     <ClCompile Include="src\components\Anim.cpp" />
     <ClCompile Include="src\components\Automorph.cpp" />
     <ClCompile Include="src\components\DiffData.cpp" />

@@ -7,6 +7,7 @@ See the included LICENSE file
 
 #include "../components/Anim.h"
 #include "../components/Automorph.h"
+#include "../components/ClothData.h"
 #include "../components/Mesh.h"
 #include "../components/UndoState.h"
 #include "../files/ObjFile.h"
@@ -193,8 +194,8 @@ class OutfitProject {
 	AnimInfo workAnim;
 	nifly::NiShape* baseShape = nullptr;
 
-	// All cloth data blocks that have been loaded during work
-	std::unordered_map<std::string, std::unique_ptr<nifly::BSClothExtraData>> clothData;
+	// Original cloth belongs to the imported shapes, not to an export-time choice.
+	ClothData clothData;
 
 	struct ShapeReferenceSource {
 		std::string projectFile;
@@ -313,6 +314,7 @@ public:
 		std::unordered_map<std::string, MaterialFile> shapeMaterialFiles;
 		std::unordered_map<std::string, std::shared_ptr<const SFLayeredMaterial>> shapeSFMaterials;
 		std::unordered_map<std::string, std::vector<std::string>> shapePhysicsFiles;
+		ClothData::ShapeSources clothSources;
 	};
 
 	std::unique_ptr<Snapshot> CaptureSnapshot();
@@ -379,7 +381,8 @@ public:
 	// Object" extra data to a readable stream (loose game data folder file,
 	// relative to the project's input NIF, or from loaded archives).
 	std::unique_ptr<std::istream> GetPhysicsXmlStream(const std::string& xmlPath);
-	std::unordered_map<std::string, std::unique_ptr<nifly::BSClothExtraData>>& GetClothData() { return clothData; }
+	const ClothData::Blocks& GetClothData() const { return clothData.GetBlocks(); }
+	void AddClothData(const std::string& source, std::unique_ptr<nifly::BSClothExtraData> block) { clothData.AddManual(source, std::move(block)); }
 
 	nifly::NiShape* GetBaseShape() { return baseShape; }
 	void SetBaseShape(nifly::NiShape* shape, const bool moveData = true);

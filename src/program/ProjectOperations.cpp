@@ -71,15 +71,15 @@ RefreshFlags ProjectOperations::ApplyShapeEdits(UndoStateProject& usp, bool bIsU
 	else {
 		if (usp.undoType == UndoType::Weight) {
 			for (auto& uss : usp.usss) {
-				Mesh* m = GetMesh(uss.shapeName);
-				if (!m)
+				// Headless automation has no viewport mesh, but still applies weight edits.
+				if (!project.GetWorkNif()->FindBlockByName<NiShape>(uss.shapeName))
 					continue;
 
 				for (auto& bw : uss.boneWeights) {
 					if (bw.weights.empty())
 						continue;
-					project.GetWorkAnim()->AddShapeBone(m->shapeName, bw.boneName);
-					auto weights = project.GetWorkAnim()->GetWeightsPtr(m->shapeName, bw.boneName);
+					project.GetWorkAnim()->AddShapeBone(uss.shapeName, bw.boneName, bw.skinToBone);
+					auto weights = project.GetWorkAnim()->GetWeightsPtr(uss.shapeName, bw.boneName);
 					if (!weights)
 						continue;
 					for (auto& p : bw.weights) {
@@ -92,7 +92,7 @@ RefreshFlags ProjectOperations::ApplyShapeEdits(UndoStateProject& usp, bool bIsU
 				}
 				// Weights change the posed positions
 				if (project.bPose)
-					project.GetHost().UpdateShapeMesh(m->shapeName);
+					project.GetHost().UpdateShapeMesh(uss.shapeName);
 			}
 		}
 		else if (usp.undoType == UndoType::Color) {
