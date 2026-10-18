@@ -107,7 +107,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(Catch2IncludeDirectories)..\wxWidgets\include\msvc;..\wxWidgets\include;src;lib;lib\nifly\include;lib\nifly\external;lib\nlohmannjson\include;lib\TinyXML-2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(Catch2IncludeDirectories)..\wxWidgets\include\msvc;..\wxWidgets\include;src;lib;lib\gli;lib\fkYAML\include;lib\nifly\include;lib\nifly\external;lib\nlohmannjson\include;lib\TinyXML-2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;BSOS_TEST_DATA_DIR="tests/data";WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -131,7 +131,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(Catch2IncludeDirectories)..\wxWidgets\include\msvc;..\wxWidgets\include;src;lib;lib\nifly\include;lib\nifly\external;lib\nlohmannjson\include;lib\TinyXML-2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(Catch2IncludeDirectories)..\wxWidgets\include\msvc;..\wxWidgets\include;src;lib;lib\gli;lib\fkYAML\include;lib\nifly\include;lib\nifly\external;lib\nlohmannjson\include;lib\TinyXML-2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;BSOS_TEST_DATA_DIR="tests/data";WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -156,7 +156,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(Catch2IncludeDirectories)..\wxWidgets\include\msvc;..\wxWidgets\include;src;lib;lib\nifly\include;lib\nifly\external;lib\nlohmannjson\include;lib\TinyXML-2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(Catch2IncludeDirectories)..\wxWidgets\include\msvc;..\wxWidgets\include;src;lib;lib\gli;lib\fkYAML\include;lib\nifly\include;lib\nifly\external;lib\nlohmannjson\include;lib\TinyXML-2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;BSOS_TEST_DATA_DIR="tests/data";WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>Level4</WarningLevel>
@@ -181,7 +181,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(Catch2IncludeDirectories)..\wxWidgets\include\msvc;..\wxWidgets\include;src;lib;lib\nifly\include;lib\nifly\external;lib\nlohmannjson\include;lib\TinyXML-2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(Catch2IncludeDirectories)..\wxWidgets\include\msvc;..\wxWidgets\include;src;lib;lib\gli;lib\fkYAML\include;lib\nifly\include;lib\nifly\external;lib\nlohmannjson\include;lib\TinyXML-2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;BSOS_TEST_DATA_DIR="tests/data";WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>Level4</WarningLevel>
@@ -235,7 +235,6 @@
     <ClCompile Include="tests\SFMaterialDatabaseTest.cpp" />
     <ClCompile Include="tests\AnimTest.cpp" />
     <ClCompile Include="tests\ClothDataTest.cpp" />
-    <ClCompile Include="src\components\Anim.cpp" />
     <ClCompile Include="tests\SFLayeredMaterialTest.cpp" />
     <ClCompile Include="tests\SFMaterialFileTest.cpp" />
     <ClCompile Include="tests\SFResourceHashTest.cpp" />
@@ -253,6 +252,7 @@
     <ClCompile Include="tests\MainThreadDispatcherTest.cpp" />
     <ClCompile Include="tests\MaskTransferTest.cpp" />
     <ClCompile Include="tests\MeshAnalysisTest.cpp" />
+    <ClCompile Include="tests\OutfitProjectTest.cpp" />
     <ClCompile Include="tests\SFMorphFileTest.cpp" />
     <ClCompile Include="tests\StarfieldSpaceTest.cpp" />
     <ClCompile Include="src\components\ArchiveIndex.cpp" />
@@ -262,6 +262,28 @@
     <ClCompile Include="src\components\MaskTransfer.cpp" />
     <ClCompile Include="src\components\MeshAnalysis.cpp" />
     <ClCompile Include="src\components\ClothData.cpp" />
+    <ClCompile Include="src\components\Anim.cpp" />
+    <ClCompile Include="src\components\Automorph.cpp" />
+    <ClCompile Include="src\components\DiffData.cpp" />
+    <ClCompile Include="src\components\MaskOps.cpp" />
+    <ClCompile Include="src\components\Mesh.cpp" />
+    <ClCompile Include="src\components\NormalGenLayers.cpp" />
+    <ClCompile Include="src\components\SliderData.cpp" />
+    <ClCompile Include="src\components\SliderSet.cpp" />
+    <ClCompile Include="src\components\WeightNorm.cpp" />
+    <ClCompile Include="src\files\MaterialFile.cpp" />
+    <ClCompile Include="src\files\ObjFile.cpp" />
+    <ClCompile Include="src\files\TriFile.cpp" />
+    <ClCompile Include="src\program\OutfitProject.cpp" />
+    <ClCompile Include="src\program\ProjectHost.cpp" />
+    <ClCompile Include="src\program\ProjectOperations.cpp" />
+    <ClCompile Include="src\program\BrushStrokeController.cpp" />
+    <ClCompile Include="src\components\TweakBrush.cpp" />
+    <ClCompile Include="src\components\PoseData.cpp" />
+    <ClCompile Include="src\components\PoseDataJson.cpp" />
+    <ClCompile Include="src\components\PoseDataYaml.cpp" />
+    <ClCompile Include="src\components\UndoHistory.cpp" />
+    <ClCompile Include="src\utils\ProjectUtil.cpp" />
     <ClCompile Include="src\files\HkxFile.cpp" />
     <ClCompile Include="src\files\SFMorphFile.cpp" />
     <ClCompile Include="src\utils\AABBTree.cpp" />
