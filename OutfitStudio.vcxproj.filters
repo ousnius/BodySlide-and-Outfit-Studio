@@ -47,6 +47,12 @@
     <Filter Include="Program">
       <UniqueIdentifier>{82ef2505-7b08-4871-b498-b758d860f25c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="MCP">
+      <UniqueIdentifier>{5d0c7a3e-2f41-4b8e-9c55-6a1e8f3b2d47}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Libraries\cpp-httplib">
+      <UniqueIdentifier>{9b7e4f12-3c6d-4a85-b1e0-2d8f6c4a9e31}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Rendering">
       <UniqueIdentifier>{def5c486-38d5-46f3-87b8-5d17825c309e}</UniqueIdentifier>
     </Filter>
@@ -1612,6 +1618,24 @@
     <ClInclude Include="src\program\AddProjectDialog.h">
       <Filter>Program</Filter>
     </ClInclude>
+    <ClInclude Include="src\mcp\McpArgs.h">
+      <Filter>MCP</Filter>
+    </ClInclude>
+    <ClInclude Include="src\mcp\McpProtocol.h">
+      <Filter>MCP</Filter>
+    </ClInclude>
+    <ClInclude Include="src\mcp\McpServer.h">
+      <Filter>MCP</Filter>
+    </ClInclude>
+    <ClInclude Include="src\mcp\McpSnapshots.h">
+      <Filter>MCP</Filter>
+    </ClInclude>
+    <ClInclude Include="src\mcp\OutfitStudioMcp.h">
+      <Filter>MCP</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\cpp-httplib\httplib.h">
+      <Filter>Libraries\cpp-httplib</Filter>
+    </ClInclude>
     <ClInclude Include="lib\gli\glm\ext\matrix_clip_space.hpp">
       <Filter>Libraries\gli\glm\ext</Filter>
     </ClInclude>
@@ -2480,6 +2504,51 @@
     </ClCompile>
     <ClCompile Include="src\program\AddProjectDialog.cpp">
       <Filter>Program</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpProtocol.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpServer.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\OutfitStudioMcp.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsAutomation.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsAnalysis.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsArchives.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsBones.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsEdit.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsShapes.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsSliderFiles.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsQuality.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpSnapshots.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsProject.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsSliders.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsView.cpp">
+      <Filter>MCP</Filter>
     </ClCompile>
     <ClCompile Include="src\render\GLDialog.cpp">
       <Filter>Rendering</Filter>

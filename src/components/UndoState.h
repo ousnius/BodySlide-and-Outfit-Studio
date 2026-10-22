@@ -29,6 +29,8 @@ struct UndoStateBoneWeights {
 	std::unordered_map<uint16_t, UndoStateVertexWeight> weights;
 	// Bind for a newly copied bone missing from the skeleton. Keep it with the weights so preview/apply/redo do not depend on a later reference shape.
 	std::optional<nifly::MatTransform> skinToBone;
+	// The edit added the bone to the shape, so undo removes it again when it's left without weights
+	bool addedBone = false;
 };
 
 struct UndoStateVertexBoneWeight {

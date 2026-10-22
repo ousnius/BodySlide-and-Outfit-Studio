@@ -120,11 +120,11 @@ struct ProjectFixture {
 	NiShape* body = nullptr;
 	NiShape* skirt = nullptr;
 
-	ProjectFixture() {
+	explicit ProjectFixture(float skirtHeight = 0.5f) {
 		host.project = &project;
 
 		REQUIRE(project.LoadReferenceNif(WriteGridNif(folder.path, "Body.nif", "Body", 10, 0.0f), "Body") == 0);
-		REQUIRE(project.ImportNIF(WriteGridNif(folder.path, "Skirt.nif", "Skirt", 6, 0.5f), false) == 0);
+		REQUIRE(project.ImportNIF(WriteGridNif(folder.path, "Skirt.nif", "Skirt", 6, skirtHeight), false) == 0);
 		body = project.GetWorkNif()->FindBlockByName<NiShape>("Body");
 		skirt = project.GetWorkNif()->FindBlockByName<NiShape>("Skirt");
 		REQUIRE(body);
@@ -305,4 +305,102 @@ TEST_CASE("Brush strokes run on meshes without input events", "[OutfitProject]")
 		CHECK(verts[center].z == Catch::Approx(0.5f));
 	else
 		CHECK(std::fabs(verts[center].z - 0.5f) > 0.01f);
+}
+
+TEST_CASE("Smoothing a mask turns its border into a gradient", "[OutfitProject]") {
+	ProjectFixture f;
+	Mesh* m = f.host.GetShapeMesh("Skirt");
+	REQUIRE(m);
+
+	// Columns 0 to 2 of the 7 x 7 skirt grid are masked
+	std::vector<float> mask(m->nVerts, 0.0f);
+	for (int y = 0; y <= 6; y++)
+		for (int x = 0; x <= 2; x++)
+			mask[y * 7 + x] = 1.0f;
+	REQUIRE(MaskOps::SetMask(*m, mask));
+
+	MaskOps::ApplyChanges(*m, MaskOps::SmoothChanges(*m, 0.5f));
+
+	const int row = 3 * 7;
+	CHECK(m->mask[row + 0] == Catch::Approx(1.0f));
+	CHECK(m->mask[row + 2] < 1.0f);
+	CHECK(m->mask[row + 2] > 0.5f);
+	CHECK(m->mask[row + 3] > 0.0f);
+	CHECK(m->mask[row + 3] < 0.5f);
+	CHECK(m->mask[row + 6] == Catch::Approx(0.0f));
+}
+
+TEST_CASE("Fixing clipping leaves masked vertices alone", "[OutfitProject]") {
+	// The skirt lies below the body grid, so it clips everywhere
+	ProjectFixture f(-0.3f);
+	Mesh* m = f.host.GetShapeMesh("Skirt");
+	REQUIRE(m);
+
+	std::vector<Vector3> before;
+	f.project.GetWorkNif()->GetVertsForShape(f.skirt, before);
+
+	// Columns 0 to 2 masked, column 3 half masked
+	std::vector<float> mask(m->nVerts, 0.0f);
+	for (int y = 0; y <= 6; y++) {
+		for (int x = 0; x <= 2; x++)
+			mask[y * 7 + x] = 1.0f;
+		mask[y * 7 + 3] = 0.5f;
+	}
+	REQUIRE(MaskOps::SetMask(*m, mask));
+
+	REQUIRE(f.ops.FixClipping({f.skirt}, ClippingFixMode::Shapes, 1.0f).ok);
+
+	std::vector<Vector3> after;
+	f.project.GetWorkNif()->GetVertsForShape(f.skirt, after);
+
+	// Out of the body is along its normal, whichever way the grid faces
+	const int row = 3 * 7;
+	const float fullMove = std::abs(after[row + 5].z - before[row + 5].z);
+	REQUIRE(fullMove > 0.01f);
+	CHECK(after[row + 1].z == Catch::Approx(before[row + 1].z));
+	CHECK(std::abs(after[row + 3].z - before[row + 3].z) == Catch::Approx(fullMove * 0.5f).margin(fullMove * 0.25f));
+}
+
+TEST_CASE("Rigidifying a slider keeps the unmasked part from bending, and can be undone", "[OutfitProject]") {
+	ProjectFixture f;
+	REQUIRE(f.ops.ConformSliders({f.skirt}, ConformOptions()).ok);
+
+	// A bump in the middle of the skirt's morph
+	REQUIRE(f.ops.SetSliderDeltas(f.skirt, "Grow", {{24, Vector3(0.0f, 0.0f, 2.0f)}}, false).ok);
+
+	std::vector<Vector3> before;
+	REQUIRE(f.ops.GetSliderDeltas(f.skirt, "Grow", before).ok);
+
+	// The first row is masked and keeps its deltas
+	Mesh* m = f.host.GetShapeMesh("Skirt");
+	REQUIRE(m);
+	std::vector<float> mask(m->nVerts, 0.0f);
+	for (int i = 0; i <= 6; i++)
+		mask[i] = 1.0f;
+	REQUIRE(MaskOps::SetMask(*m, mask));
+
+	UndoStateProject usp;
+	size_t parts = 0;
+	OpResult result = f.ops.RigidifySlider({f.skirt}, "Grow", RigidifyOptions(), usp, &parts);
+	REQUIRE(result.ok);
+	CHECK(parts == 1);
+	CHECK(usp.sliderName == "Grow");
+	REQUIRE(usp.usss.size() == 1);
+
+	std::vector<Vector3> after;
+	REQUIRE(f.ops.GetSliderDeltas(f.skirt, "Grow", after).ok);
+	for (int i = 0; i <= 6; i++)
+		CHECK(after[i].z == Catch::Approx(before[i].z));
+
+	// The rest moves as a whole: the bump is gone, the plate tilts at most a little
+	CHECK(after[24].z < 1.5f);
+	for (size_t i = 7; i < after.size(); i++)
+		CHECK(after[i].z == Catch::Approx(after[24].z).margin(0.1));
+
+	// Undo puts the bump back
+	f.ApplyRefresh(f.ops.ApplyShapeEdits(usp, true));
+	std::vector<Vector3> undone;
+	REQUIRE(f.ops.GetSliderDeltas(f.skirt, "Grow", undone).ok);
+	for (size_t i = 0; i < undone.size(); i++)
+		CHECK(undone[i].z == Catch::Approx(before[i].z).margin(1e-4));
 }

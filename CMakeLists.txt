@@ -417,6 +417,22 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/program/SliderDataDialog.cpp
 	src/program/SliderDataImportDialog.cpp
 	src/program/AddProjectDialog.cpp
+	src/mcp/McpProtocol.cpp
+	src/mcp/McpServer.cpp
+	src/mcp/McpSnapshots.cpp
+	src/mcp/OutfitStudioMcp.cpp
+	src/mcp/McpToolsAnalysis.cpp
+	src/mcp/McpToolsArchives.cpp
+	src/mcp/McpToolsAutomation.cpp
+	src/mcp/McpToolsBones.cpp
+	src/mcp/McpToolsEdit.cpp
+	src/mcp/McpToolsGames.cpp
+	src/mcp/McpToolsProject.cpp
+	src/mcp/McpToolsQuality.cpp
+	src/mcp/McpToolsShapes.cpp
+	src/mcp/McpToolsSliderFiles.cpp
+	src/mcp/McpToolsSliders.cpp
+	src/mcp/McpToolsView.cpp
 	src/render/GLCanvas.cpp
 	src/render/GLDialog.cpp
 )
@@ -456,6 +472,7 @@ set(BSOS_COMMON_INCLUDE_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/include
 	${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/external
 	${CMAKE_CURRENT_SOURCE_DIR}/lib/TinyXML-2
+	${CMAKE_CURRENT_SOURCE_DIR}/lib/cpp-httplib
 	${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
@@ -489,8 +506,10 @@ if(BSOS_BUILD_TESTS)
 		tests/HkxFileTest.cpp
 		tests/MainThreadDispatcherTest.cpp
 		tests/MaskTransferTest.cpp
+		tests/McpProtocolTest.cpp
 		tests/MeshAnalysisTest.cpp
 		tests/OutfitProjectTest.cpp
+		tests/PoseDataJsonTest.cpp
 		tests/SFMaterialDatabaseTest.cpp
 		tests/SFLayeredMaterialTest.cpp
 		tests/SFMaterialFileTest.cpp
@@ -519,12 +538,15 @@ if(BSOS_BUILD_TESTS)
 		src/files/TriFile.cpp
 		src/program/OutfitProject.cpp
 		src/program/ProjectHost.cpp
+		src/mcp/McpProtocol.cpp
+		src/mcp/McpServer.cpp
 		src/program/ProjectOperations.cpp
 		src/program/BrushStrokeController.cpp
 		src/components/TweakBrush.cpp
 		src/components/PoseData.cpp
 		src/components/PoseDataJson.cpp
 		src/components/PoseDataYaml.cpp
+		src/components/SliderPresets.cpp
 		src/components/UndoHistory.cpp
 		src/utils/ProjectUtil.cpp
 		src/files/HkxFile.cpp
@@ -573,6 +595,7 @@ if(BSOS_BUILD_TESTS)
 		${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/include
 		${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/external
 		${CMAKE_CURRENT_SOURCE_DIR}/lib/TinyXML-2
+		${CMAKE_CURRENT_SOURCE_DIR}/lib/cpp-httplib
 	)
 	target_compile_definitions(BSOSTests PRIVATE
 		${BSOS_PLATFORM_DEFINITIONS}

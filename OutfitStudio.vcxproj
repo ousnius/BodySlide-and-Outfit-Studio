@@ -96,7 +96,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\cpp-httplib;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -126,7 +126,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\2020.3.7\include;..\bullet3\install\include\bullet;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\2020.3.7\include;..\bullet3\install\include\bullet;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\cpp-httplib;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;USE_FBXSDK;USE_BULLET;BT_USE_SSE_IN_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -157,7 +157,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\cpp-httplib;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>
@@ -194,7 +194,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\2020.3.7\include;..\bullet3\install\include\bullet;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\2020.3.7\include;..\bullet3\install\include\bullet;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\cpp-httplib;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;USE_FBXSDK;USE_BULLET;BT_USE_SSE_IN_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>
@@ -892,6 +892,12 @@
     <ClInclude Include="src\program\SliderDataDialog.h" />
     <ClInclude Include="src\program\SliderDataImportDialog.h" />
     <ClInclude Include="src\program\AddProjectDialog.h" />
+    <ClInclude Include="src\mcp\McpArgs.h" />
+    <ClInclude Include="src\mcp\McpProtocol.h" />
+    <ClInclude Include="src\mcp\McpServer.h" />
+    <ClInclude Include="src\mcp\McpSnapshots.h" />
+    <ClInclude Include="src\mcp\OutfitStudioMcp.h" />
+    <ClInclude Include="lib\cpp-httplib\httplib.h" />
     <ClInclude Include="src\render\GLCanvas.h" />
     <ClInclude Include="src\render\GLDialog.h" />
     <ClInclude Include="src\render\GLExtensions.h" />
@@ -1026,6 +1032,21 @@
     <ClCompile Include="src\program\SliderDataDialog.cpp" />
     <ClCompile Include="src\program\SliderDataImportDialog.cpp" />
     <ClCompile Include="src\program\AddProjectDialog.cpp" />
+    <ClCompile Include="src\mcp\McpProtocol.cpp" />
+    <ClCompile Include="src\mcp\McpServer.cpp" />
+    <ClCompile Include="src\mcp\McpSnapshots.cpp" />
+    <ClCompile Include="src\mcp\OutfitStudioMcp.cpp" />
+    <ClCompile Include="src\mcp\McpToolsAutomation.cpp" />
+    <ClCompile Include="src\mcp\McpToolsAnalysis.cpp" />
+    <ClCompile Include="src\mcp\McpToolsArchives.cpp" />
+    <ClCompile Include="src\mcp\McpToolsBones.cpp" />
+    <ClCompile Include="src\mcp\McpToolsEdit.cpp" />
+    <ClCompile Include="src\mcp\McpToolsProject.cpp" />
+    <ClCompile Include="src\mcp\McpToolsQuality.cpp" />
+    <ClCompile Include="src\mcp\McpToolsShapes.cpp" />
+    <ClCompile Include="src\mcp\McpToolsSliderFiles.cpp" />
+    <ClCompile Include="src\mcp\McpToolsSliders.cpp" />
+    <ClCompile Include="src\mcp\McpToolsView.cpp" />
     <ClCompile Include="src\render\GLCanvas.cpp" />
     <ClCompile Include="src\render\GLDialog.cpp" />
     <ClCompile Include="src\render\GLExtensions.cpp" />

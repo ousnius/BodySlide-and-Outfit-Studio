@@ -187,6 +187,7 @@ void AddWeldedToVertexList(const Mesh::WeldVertsType& welcVerts, std::vector<boo
 class OutfitProject {
 	IProjectHost* host = nullptr;
 	std::unique_ptr<NonInteractiveHost> ownHost;
+	uint64_t instanceId = 0;
 
 	void UpdateProgress(int val, const wxString& msg = "");
 
@@ -327,6 +328,9 @@ public:
 
 	IProjectHost& GetHost() { return *host; }
 
+	// Unique for each project created while the program runs, unlike its address, which a new project can reuse
+	uint64_t GetInstanceId() const { return instanceId; }
+
 	wxString mFileName;
 	wxString mOutfitName;
 	wxString mDataDir;
@@ -405,6 +409,11 @@ public:
 	void GetSliderList(std::vector<std::string>& sliderNames);
 	void AddEmptySlider(const std::string& newName);
 	void AddZapSlider(const std::string& newName, std::unordered_map<uint16_t, float>& verts, nifly::NiShape* shape);
+	// Vertices of a shape that a zap slider removes. Falls back to the loaded morph results for a reference
+	// shape whose data isn't in the base diff data, like the body of a project loaded for comparison.
+	std::vector<bool> GetZappedVertices(nifly::NiShape* shape, const std::string& sliderName);
+	// Replaces the data of an existing zap slider on a shape, keeping the slider's settings
+	void SetZappedVertices(nifly::NiShape* shape, const std::string& sliderName, const std::vector<bool>& zapped);
 	void AddCombinedSlider(const std::string& newName);
 
 	nifly::NiShape* CreateNifShapeFromData(const std::string& shapeName,
