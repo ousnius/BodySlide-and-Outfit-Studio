@@ -8,6 +8,7 @@ See the included LICENSE file
 #include "EditorState.h"
 #include "OutfitProject.h"
 #include "../components/MeshAnalysis.h"
+#include "../components/MeshRefine.h"
 #include "../components/PoseData.h"
 #include "../components/SliderPresets.h"
 
@@ -168,6 +169,28 @@ struct RigidifyOptions {
 	float clearance = -1.0f;
 };
 
+// How PrepareAdaptiveRefine picks the edges to split
+struct AdaptiveRefineOptions {
+	MeshRefine::Options select;
+	// Put the new vertices in the middle of the straight edges instead of on the curve of the surface
+	bool noCurveOffset = false;
+	// Shape whose surface clipping and body detail are measured against, the reference shape when null
+	nifly::NiShape* body = nullptr;
+	// Triangles of that surface to measure against, e.g. without the ones zaps remove. All when empty.
+	std::vector<nifly::Triangle> bodyTriangles;
+	// Vertices left out of the clipping measurements, by shape name
+	std::map<std::string, std::vector<bool>> excluded;
+};
+
+// The edges PrepareAdaptiveRefine splits on one shape
+struct AdaptiveRefineShape {
+	std::string shapeName;
+	MeshRefine::Selection selection;
+	std::vector<nifly::Edge> edges; // By vertex index, p1 < p2, with the copies of each edge along split seams
+	size_t newVertices = 0;
+	size_t newTriangles = 0;
+};
+
 // Zap sliders of a shape, to give another shape the same zaps by proximity, e.g. the new body when the
 // reference changes
 struct ZapSource {
@@ -324,6 +347,14 @@ public:
 							const RigidifyOptions& options,
 							UndoStateProject& usp,
 							size_t* outParts = nullptr);
+
+	// Picks the edges of the shapes that lack detail, measured with the current slider values and pose, and prepares
+	// splitting them in usp like Refine Mesh, but only where the options ask for it. Fully masked vertices are left
+	// alone. Nothing changes until the caller applies usp (UndoType::Mesh).
+	OpResult PrepareAdaptiveRefine(const std::vector<nifly::NiShape*>& shapes,
+								   const AdaptiveRefineOptions& options,
+								   UndoStateProject& usp,
+								   std::vector<AdaptiveRefineShape>* outShapes = nullptr);
 
 	// The zap sliders with data on a shape of a project (the named ones, or all), with the shape's rest geometry
 	static ZapSource CaptureZaps(OutfitProject& fromProject, nifly::NiShape* shape, const std::vector<std::string>& sliderNames = {});

@@ -334,6 +334,7 @@ set(BSOS_COMMON_SOURCES
 	src/components/ClippingFixer.cpp
 	src/components/MaskOps.cpp
 	src/components/MeshAnalysis.cpp
+	src/components/MeshRefine.cpp
 	src/components/DiffData.cpp
 	src/components/Mesh.cpp
 	src/components/NormalGenLayers.cpp
@@ -510,6 +511,7 @@ if(BSOS_BUILD_TESTS)
 		tests/MaskTransferTest.cpp
 		tests/McpProtocolTest.cpp
 		tests/MeshAnalysisTest.cpp
+		tests/MeshRefineTest.cpp
 		tests/OutfitProjectTest.cpp
 		tests/PoseDataJsonTest.cpp
 		tests/SFMaterialDatabaseTest.cpp
@@ -526,6 +528,7 @@ if(BSOS_BUILD_TESTS)
 		src/components/ClothData.cpp
 		src/components/MaskTransfer.cpp
 		src/components/MeshAnalysis.cpp
+		src/components/MeshRefine.cpp
 		src/components/Anim.cpp
 		src/components/Automorph.cpp
 		src/components/DiffData.cpp

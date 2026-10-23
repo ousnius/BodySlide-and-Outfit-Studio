@@ -404,3 +404,77 @@ TEST_CASE("Rigidifying a slider keeps the unmasked part from bending, and can be
 	for (size_t i = 0; i < undone.size(); i++)
 		CHECK(undone[i].z == Catch::Approx(before[i].z).margin(1e-4));
 }
+
+TEST_CASE("Adaptive refining splits only the chosen edges and keeps the mesh closed", "[OutfitProject]") {
+	ProjectFixture f;
+	REQUIRE(f.ops.ConformSliders({f.skirt}, ConformOptions()).ok);
+
+	// The skirt's edges are 1.67 long, its diagonals 2.36
+	AdaptiveRefineOptions options;
+	options.select.maxEdgeLength = 2.0f;
+
+	// With columns 0 to 2 masked, only the diagonals of the last three columns of cells have both ends free
+	const bool masked = GENERATE(false, true);
+	if (masked) {
+		Mesh* m = f.host.GetShapeMesh("Skirt");
+		REQUIRE(m);
+		std::vector<float> mask(m->nVerts, 0.0f);
+		for (int y = 0; y <= 6; y++)
+			for (int x = 0; x <= 2; x++)
+				mask[y * 7 + x] = 1.0f;
+		REQUIRE(MaskOps::SetMask(*m, mask));
+	}
+	const size_t expected = masked ? 18 : 36;
+
+	UndoStateProject usp;
+	std::vector<AdaptiveRefineShape> found;
+	OpResult result = f.ops.PrepareAdaptiveRefine({f.skirt}, options, usp, &found);
+	REQUIRE(result.ok);
+	REQUIRE(found.size() == 1);
+	CHECK(found[0].selection.edges.size() == expected);
+	CHECK(found[0].edges.size() == expected);
+	CHECK(found[0].newVertices == expected);
+	CHECK(found[0].newTriangles == expected * 2);
+	CHECK(usp.undoType == UndoType::Mesh);
+	REQUIRE(usp.usss.size() == 1);
+
+	// Nothing changes until the state is applied
+	CHECK(f.skirt->GetNumVertices() == 49);
+
+	std::vector<float> noMask;
+	f.project.ApplyShapeMeshUndo(f.skirt, noMask, usp.usss[0], false);
+	f.ApplyRefresh(result.refresh);
+	CHECK(f.skirt->GetNumVertices() == 49 + expected);
+	CHECK(f.skirt->GetNumTriangles() == 72 + expected * 2);
+
+	// Every inner edge still has a triangle on each side: no cracks where an edge was split on one side only
+	std::vector<Triangle> tris;
+	f.skirt->GetTriangles(tris);
+	std::map<std::pair<uint16_t, uint16_t>, int> uses;
+	for (auto& t : tris)
+		for (int i = 0; i < 3; i++) {
+			auto e = t.GetEdge(i);
+			uses[{std::min(e.p1, e.p2), std::max(e.p1, e.p2)}]++;
+		}
+	size_t boundary = 0;
+	for (auto& u : uses) {
+		CHECK(u.second <= 2);
+		boundary += u.second == 1 ? 1 : 0;
+	}
+	CHECK(boundary == 24);
+
+	// The new vertices are on the flat skirt and follow its morph
+	std::vector<Vector3> verts, deltas;
+	f.project.GetWorkNif()->GetVertsForShape(f.skirt, verts);
+	REQUIRE(f.ops.GetSliderDeltas(f.skirt, "Grow", deltas).ok);
+	REQUIRE(deltas.size() == verts.size());
+	for (size_t v = 49; v < verts.size(); v++) {
+		CHECK(verts[v].z == Catch::Approx(0.5f).margin(1e-4));
+		CHECK(deltas[v].z == Catch::Approx(1.0f).margin(1e-3));
+	}
+
+	// Undoing takes them out again
+	f.project.ApplyShapeMeshUndo(f.skirt, noMask, usp.usss[0], true);
+	CHECK(f.skirt->GetNumVertices() == 49);
+	CHECK(f.skirt->GetNumTriangles() == 72);
+}

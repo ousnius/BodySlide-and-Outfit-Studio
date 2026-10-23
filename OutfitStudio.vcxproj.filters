@@ -769,6 +769,9 @@
     <ClInclude Include="src\components\MeshAnalysis.h">
       <Filter>Components</Filter>
     </ClInclude>
+    <ClInclude Include="src\components\MeshRefine.h">
+      <Filter>Components</Filter>
+    </ClInclude>
     <ClInclude Include="src\files\ObjFile.h">
       <Filter>Files</Filter>
     </ClInclude>
@@ -2209,6 +2212,9 @@
       <Filter>Components</Filter>
     </ClCompile>
     <ClCompile Include="src\components\MeshAnalysis.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\MeshRefine.cpp">
       <Filter>Components</Filter>
     </ClCompile>
     <ClCompile Include="src\components\DiffData.cpp">

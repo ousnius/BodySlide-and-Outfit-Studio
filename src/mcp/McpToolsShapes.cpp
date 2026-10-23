@@ -10,6 +10,7 @@ See the included LICENSE file
 #include <algorithm>
 #include <cfloat>
 #include <limits>
+#include <set>
 
 using nlohmann::json;
 using namespace nifly;
@@ -407,6 +408,160 @@ McpToolResult EditTopology(OutfitStudioMcp& mcp, const json& args) {
 	McpToolResult result;
 	result.data["vertices"] = shape->GetNumVertices();
 	result.data["triangles"] = shape->GetNumTriangles();
+	return result;
+}
+
+constexpr const char* RefinePreviewOverlay = "refineAdaptiveEdges:";
+
+// Vertices a refine pass added are excluded when all the old vertices they connect to are, so the exclusions of
+// analysis_exclusions keep covering the same area
+void GrowExclusions(OutfitStudioMcp& mcp, NiShape* shape, size_t oldCount) {
+	auto& all = mcp.Exclusions();
+	auto it = all.find(shape->name.get());
+	if (it == all.end() || it->second.size() != oldCount || shape->GetNumVertices() <= oldCount)
+		return;
+
+	std::vector<bool>& excluded = it->second;
+	const size_t count = shape->GetNumVertices();
+	std::vector<int> oldNeighbors(count, 0), excludedNeighbors(count, 0);
+	std::vector<Triangle> tris;
+	shape->GetTriangles(tris);
+	std::set<std::pair<uint16_t, uint16_t>> seen;
+	for (auto& tri : tris) {
+		for (int i = 0; i < 3; i++) {
+			Edge e = tri.GetEdge(i);
+			if (e.p1 >= count || e.p2 >= count || !seen.emplace(std::min(e.p1, e.p2), std::max(e.p1, e.p2)).second)
+				continue;
+			for (auto [added, other] : {std::make_pair(e.p1, e.p2), std::make_pair(e.p2, e.p1)}) {
+				if (added < oldCount || other >= oldCount)
+					continue;
+				oldNeighbors[added]++;
+				excludedNeighbors[added] += excluded[other] ? 1 : 0;
+			}
+		}
+	}
+
+	excluded.resize(count, false);
+	for (size_t v = oldCount; v < count; v++)
+		excluded[v] = oldNeighbors[v] > 0 && excludedNeighbors[v] == oldNeighbors[v];
+}
+
+json RefineSelectionToJson(const AdaptiveRefineShape& found) {
+	const MeshRefine::Selection& selection = found.selection;
+	json entry = {
+		{"edges", selection.edges.size()},
+		{"byReason",
+		 {{"length", selection.byLength},
+		  {"curvature", selection.byCurvature},
+		  {"clipping", selection.byClipping},
+		  {"bodyDetail", selection.byBodyDetail},
+		  {"conforming", selection.conforming}}},
+		{"newVertices", found.newVertices},
+		{"newTriangles", found.newTriangles},
+	};
+	if (selection.overLimit)
+		entry["overLimit"] = selection.overLimit;
+	if (selection.pokeThrough)
+		entry["pokeThrough"] = selection.pokeThrough;
+	return entry;
+}
+
+// Splits edges only where shapes lack detail, one undo state per pass
+McpToolResult RefineAdaptive(OutfitStudioMcp& mcp, const json& args) {
+	OutfitStudioFrame* frame = mcp.GetFrame();
+	OutfitProject& project = mcp.Project();
+	auto shapes = mcp.Shapes(args, "shapes");
+	if (frame->editor.bEditSlider)
+		throw McpToolError("The mesh can't be changed while a slider is in edit mode. Leave it with set_slider_edit first.");
+
+	AdaptiveRefineOptions options;
+	MeshRefine::Options& select = options.select;
+	select.maxEdgeLength = std::max(0.0f, McpArgs::Float(args, "maxEdgeLength", 0.0f));
+	select.maxAngle = std::max(0.0f, McpArgs::Float(args, "maxAngle", 0.0f));
+	select.creaseAngle = McpArgs::Float(args, "creaseAngle", select.creaseAngle);
+	select.clipping = McpArgs::Bool(args, "clipping", false);
+	select.clearance = McpArgs::Float(args, "clearance", select.clearance);
+	select.bodyDetail = std::max(0.0f, McpArgs::Float(args, "bodyDetail", 0.0f));
+	select.bodyDistance = std::max(0.0f, McpArgs::Float(args, "bodyDistance", select.bodyDistance));
+	select.minEdgeLength = std::max(0.0f, McpArgs::Float(args, "minEdgeLength", select.minEdgeLength));
+	select.conforming = McpArgs::Bool(args, "conforming", true);
+	const int maxEdges = McpArgs::Int(args, "maxEdges", 0);
+	if (maxEdges < 0)
+		McpArgs::Wrong("maxEdges", "0 for no limit, or a number of edges");
+	select.maxEdges = static_cast<size_t>(maxEdges);
+	options.noCurveOffset = McpArgs::Bool(args, "noCurveOffset", false);
+	if (select.maxEdgeLength == 0.0f && select.maxAngle == 0.0f && !select.clipping && select.bodyDetail == 0.0f)
+		throw McpToolError("Give at least one of maxEdgeLength, maxAngle, clipping and bodyDetail.");
+
+	const bool preview = McpArgs::Bool(args, "preview", false);
+	const int passes = preview ? 1 : std::clamp(McpArgs::Int(args, "passes", 1), 1, 5);
+	if (select.clipping || select.bodyDetail > 0.0f) {
+		options.body = McpAgainstShape(mcp, args, shapes.front());
+		options.bodyTriangles = mcp.SurfaceTriangles(options.body);
+	}
+
+	for (NiShape* shape : shapes)
+		frame->glView->gls.DeleteOverlay(RefinePreviewOverlay + shape->name.get());
+
+	UndoHistory& history = frame->editor.undoHistory;
+	json passList = json::array();
+	std::vector<AdaptiveRefineShape> lastFound;
+	for (int pass = 0; pass < passes; pass++) {
+		options.excluded.clear();
+		for (NiShape* shape : shapes)
+			if (auto* excluded = mcp.Excluded(shape))
+				options.excluded[shape->name.get()] = *excluded;
+
+		// Only pushed when it's applied: pushing drops the redo states, and the oldest one when the history is full
+		auto prepared = std::make_unique<UndoStateProject>();
+		std::vector<AdaptiveRefineShape> found;
+		OpResult result;
+		{
+			// Measured with the case's slider values, the window's are back before the change is applied
+			McpSliderValueScope sliders(project);
+			if (McpArgs::Bool(args, "zeroOthers", true) && McpHasSliderValuesArg(args))
+				sliders.Zero();
+			sliders.Set(McpSliderValuesArg(mcp, args));
+			result = mcp.Ops().PrepareAdaptiveRefine(shapes, options, *prepared, &found);
+		}
+
+		const bool apply = result.ok && !prepared->usss.empty() && !preview;
+		if (!result.ok)
+			throw McpToolError(result.error + (pass > 0 ? " The passes before it were applied." : ""));
+
+		json shapeEntries = json::object();
+		for (auto& f : found)
+			shapeEntries[f.shapeName] = RefineSelectionToJson(f);
+		passList.push_back({{"shapes", shapeEntries}});
+		lastFound = std::move(found);
+		if (!apply)
+			break;
+
+		std::map<std::string, size_t> oldCounts;
+		for (NiShape* shape : shapes)
+			oldCounts[shape->name.get()] = shape->GetNumVertices();
+
+		UndoStateProject* usp = history.PushState(std::move(prepared));
+		frame->glView->ApplyUndoState(usp, false);
+		frame->UpdateUndoTools();
+		frame->SetPendingChanges();
+
+		for (NiShape* shape : shapes)
+			GrowExclusions(mcp, shape, oldCounts[shape->name.get()]);
+	}
+
+	if (preview) {
+		for (auto& f : lastFound) {
+			Mesh* m = frame->glView->GetMesh(f.shapeName);
+			if (m && !f.edges.empty())
+				frame->glView->gls.AddVisEdges(m, f.edges, RefinePreviewOverlay + f.shapeName, Vector3(1.0f, 0.5f, 0.0f));
+		}
+		frame->glView->Render();
+	}
+
+	McpToolResult result = ShapeList(mcp);
+	result.data["preview"] = preview;
+	result.data["passes"] = passList;
 	return result;
 }
 
@@ -962,6 +1117,44 @@ void AddShapeTools(OutfitStudioMcp& mcp) {
 		return ShapeList(mcp);
 	};
 	mcp.AddTool(std::move(refine));
+
+	McpTool refineAdaptive;
+	refineAdaptive.name = "refine_mesh_adaptive";
+	refineAdaptive.description =
+		"Adds vertices only where shapes lack detail, by splitting edges, to make them look rounder and smoother or to "
+		"let them follow the body: across curves that look faceted (vertex normals turning by more than maxAngle, e.g. "
+		"over breasts and butt), longer than maxEdgeLength, where the reference shows through or bulges into the outfit "
+		"between its vertices (clipping), or much longer than the reference's edges under them (bodyDetail: the "
+		"topologies don't match). Give at least one. New vertices sit on the curve of the surface and get averaged "
+		"weights, slider data, UVs and colors. Fully masked vertices are left alone, so mask everything but the area. "
+		"Everything is measured with the current slider values and pose, or sliderValues or a preset, e.g. where a "
+		"large preset makes the breasts look faceted. preview: true only highlights the edges in the view. Each pass "
+		"is one undo state.";
+	json refineProperties = {
+		{"shapes", ShapesProp},
+		{"maxEdgeLength", McpProp("number", "Split edges longer than this, in NIF units. Off by default.")},
+		{"maxAngle", McpProp("number", "Split edges whose vertex normals turn by more than this many degrees, to round off curves, e.g. 20. Off by default.")},
+		{"creaseAngle", McpProp("number", "maxAngle leaves edges alone where the triangles meet at a sharper angle than this, to keep creases and hems sharp. Default 75.")},
+		{"clipping", McpProp("boolean", "Split edges where the reference shows through between the vertices. Default false.")},
+		{"clearance", McpProp("number", "With clipping: also split edges whose middle is closer to the reference than this, and closer than their ends. Default 0.")},
+		{"bodyDetail", McpProp("number", "Split edges near the reference that are longer than this many times its edges there, e.g. 2. Off by default.")},
+		{"bodyDistance", McpProp("number", "How close to the reference an edge has to be for bodyDetail. Default 1.")},
+		{"minEdgeLength", McpProp("number", "Never split edges shorter than this. Default 0.05.")},
+		{"maxEdges", McpProp("integer", "Split at most this many edges per shape and pass, the worst first (clipping goes first). Default no limit.")},
+		{"conforming", McpProp("boolean", "Also split the longest edges of the triangles around, so no long thin triangles are left. Default true.")},
+		{"noCurveOffset", McpProp("boolean", "Put the new vertices in the middle of the straight edges instead of on the curved surface. Default false.")},
+		{"passes", McpProp("integer", "Measure and split again this many times, up to 5, e.g. to round curves further. For clipping, fix_clipping between passes instead: the new vertices stay where the body bulges, so another pass only splits more. Default 1.")},
+		{"preview", McpProp("boolean", "Only find and highlight the edges, don't change anything. Default false.")},
+		{"against", McpProp("string", "Measure clipping against this shape instead of the reference, e.g. a layer of the outfit underneath")},
+		{"sliderValues", McpNumberMap("Slider values to measure clipping with, e.g. {\"BreastsNewSH\": 1}")},
+		{"zeroOthers", McpProp("boolean", "With sliderValues or preset: set the other sliders to 0. Default true.")},
+	};
+	const json presetProperties = McpPresetValueProperties();
+	for (auto& property : presetProperties.items())
+		refineProperties[property.key()] = property.value();
+	refineAdaptive.inputSchema = McpSchema(refineProperties);
+	refineAdaptive.handler = [&mcp](const json& args) { return RefineAdaptive(mcp, args); };
+	mcp.AddTool(std::move(refineAdaptive));
 
 	McpTool mirror;
 	mirror.name = "mirror_shapes";

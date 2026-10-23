@@ -11,6 +11,7 @@ See the included LICENSE file
 #include <cmath>
 #include <set>
 #include <cfloat>
+#include <limits>
 #include <unordered_set>
 #include <wx/filename.h>
 #include <wx/log.h>
@@ -405,6 +406,131 @@ OpResult ProjectOperations::RigidifySlider(const std::vector<NiShape*>& shapes, 
 
 	if (outParts)
 		*outParts = partCount;
+	return result;
+}
+
+OpResult ProjectOperations::PrepareAdaptiveRefine(const std::vector<NiShape*>& shapes,
+												  const AdaptiveRefineOptions& options,
+												  UndoStateProject& usp,
+												  std::vector<AdaptiveRefineShape>* outShapes) {
+	NifFile* nif = project.GetWorkNif();
+	if (!nif)
+		return OpResult::Fail("No project is loaded.");
+
+	const bool needsBody = options.select.clipping || options.select.bodyDetail > 0.0f;
+	NiShape* bodyShape = options.body ? options.body : project.GetBaseShape();
+	if (needsBody && !bodyShape)
+		return OpResult::Fail("No reference shape is loaded to measure clipping against.");
+
+	std::vector<Vector3> bodyVerts;
+	std::vector<Triangle> bodyTris;
+	if (needsBody) {
+		project.GetLiveVerts(bodyShape, bodyVerts);
+		if (options.bodyTriangles.empty())
+			bodyShape->GetTriangles(bodyTris);
+		else
+			bodyTris = options.bodyTriangles;
+	}
+	MeshRefine::BodySurface body;
+	if (needsBody) {
+		body.verts = &bodyVerts;
+		body.tris = &bodyTris;
+	}
+
+	constexpr size_t maxVerts = std::numeric_limits<uint16_t>::max();
+	size_t maxTris = std::numeric_limits<uint16_t>::max();
+	if (nif->GetHeader().GetVersion().IsFO4() || nif->GetHeader().GetVersion().IsFO76())
+		maxTris = std::numeric_limits<uint32_t>::max();
+
+	auto edgeKey = [](int a, int b) {
+		if (a > b)
+			std::swap(a, b);
+		return (static_cast<uint32_t>(a) << 16) | static_cast<uint32_t>(b);
+	};
+
+	usp.undoType = UndoType::Mesh;
+	OpResult result;
+	for (NiShape* shape : shapes) {
+		if (!shape)
+			continue;
+
+		const std::string name = shape->name.get();
+		if (needsBody && shape == bodyShape)
+			return OpResult::Fail("'" + name + "' can't be measured against itself.");
+
+		Mesh* m = GetMesh(name);
+		if (!m)
+			return OpResult::Fail("The shape '" + name + "' has no mesh.");
+		if (!m->bGotWeldVerts)
+			m->CalcWeldVerts();
+
+		std::vector<Vector3> verts;
+		project.GetLiveVerts(shape, verts);
+		if (static_cast<int>(verts.size()) != m->nVerts)
+			return OpResult::Fail("The shape '" + name + "' doesn't match its mesh.");
+
+		std::vector<Triangle> tris;
+		shape->GetTriangles(tris);
+
+		std::vector<int> weldIndex(verts.size());
+		std::vector<bool> include(verts.size(), true);
+		for (size_t v = 0; v < verts.size(); v++) {
+			weldIndex[v] = Mesh::LeastWeldedVertexIndex(m->weldVerts, static_cast<int>(v));
+			include[v] = !m->mask || m->mask[v] < 1.0f;
+		}
+
+		std::vector<bool> excluded;
+		auto ex = options.excluded.find(name);
+		if (ex != options.excluded.end() && ex->second.size() == verts.size())
+			excluded = ex->second;
+
+		AdaptiveRefineShape info;
+		info.shapeName = name;
+		info.selection = MeshRefine::SelectEdges(verts, tris, weldIndex, include, excluded, body, options.select);
+
+		std::unordered_set<uint32_t> split;
+		for (auto& edge : info.selection.edges)
+			split.insert(edgeKey(edge.p1, edge.p2));
+		auto splitEdge = [&](const Edge& e) { return split.count(edgeKey(weldIndex[e.p1], weldIndex[e.p2])) > 0; };
+
+		// Every copy of the chosen edges, from the triangles that have them
+		std::vector<bool> pincs(verts.size(), false);
+		std::set<std::pair<uint16_t, uint16_t>> copies;
+		for (auto& tri : tris) {
+			for (int i = 0; i < 3; i++) {
+				Edge e = tri.GetEdge(i);
+				if (e.p1 >= verts.size() || e.p2 >= verts.size() || !splitEdge(e))
+					continue;
+				pincs[e.p1] = true;
+				pincs[e.p2] = true;
+				copies.emplace(std::min(e.p1, e.p2), std::max(e.p1, e.p2));
+			}
+		}
+		for (auto& c : copies)
+			info.edges.emplace_back(c.first, c.second);
+
+		if (!split.empty()) {
+			UndoStateShape uss;
+			uss.shapeName = name;
+			std::vector<Edge> badEdges;
+			if (!project.PrepareRefineMesh(shape, uss, pincs, m->weldVerts, options.noCurveOffset, &badEdges, splitEdge))
+				return OpResult::Fail("'" + name + "' has " + std::to_string(std::max<size_t>(badEdges.size(), 1))
+									  + " edges with triangles of the same orientation on both sides. Fix the orientations before refining.");
+
+			info.newVertices = uss.addVerts.size();
+			info.newTriangles = uss.addTris.size() - uss.delTris.size();
+			if (shape->GetNumVertices() + info.newVertices > maxVerts || shape->GetNumTriangles() + info.newTriangles > maxTris)
+				return OpResult::Fail("Refining '" + name + "' would go over the vertex or triangle limit of the NIF. Limit the edges or refine a smaller area.");
+
+			usp.usss.push_back(std::move(uss));
+		}
+
+		if (outShapes)
+			outShapes->push_back(std::move(info));
+	}
+
+	if (!usp.usss.empty())
+		result.refresh = RefreshFlags::PendingChanges | RefreshFlags::Meshes;
 	return result;
 }
 

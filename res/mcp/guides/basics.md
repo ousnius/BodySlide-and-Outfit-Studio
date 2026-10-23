@@ -82,11 +82,24 @@ Numbers find problems, images confirm them. Render what the numbers point at, no
 - In slider edit mode (`set_slider_edit`) the change goes into that slider's morph instead of the base shape.
 - Keep inflate small (0.1–0.5) for clipping: it pushes the whole unmasked surface out, not only the clipping part.
 
+## Mesh detail
+
+Outfits made for a smaller or lower-poly body often look faceted once they're converted or a slider makes them bigger: flat panels over the breasts and butt, corners along curves. `refine_mesh_adaptive` adds vertices only where they're needed, on the curve of the surface, so the shape gets rounder and smoother. The new vertices take over weights, slider data and UVs from their neighbors.
+
+- `maxAngle` splits the edges whose vertex normals turn by more than that many degrees: where a curve looks faceted. Start at 20–25. Flat parts stay as they are, and creases sharper than `creaseAngle` (75) stay sharp.
+- Measure where it shows: with `preset` or `sliderValues` it picks the edges that are faceted with those values, e.g. the largest common preset.
+- Mask everything but the area, and look first with `preview: true`, which highlights the edges. Modelled cloth folds count as curves too: at 15 an unmasked dress would have gained 38% more vertices.
+- `passes: 2` rounds further, since each pass halves the angles it splits. Compare with `render_view` before and after.
+- `maxEdgeLength` splits long edges anywhere, `maxEdges` caps how many are split.
+- Every vertex costs: weights, morphs and the limit of 65535 per shape. `refine_mesh` splits every unmasked triangle instead.
+
+For clipping because the outfit is coarser than the body, see `fix-clipping`.
+
 ## Editing tools
 
 Most window commands have their own tool. `run_steps` runs automation steps (`get_step_schema` describes them), for script features like variables.
 
-- **Shapes:** `rename_shape`, `duplicate_shape`, `delete_shapes`, `set_reference_shape`, `delete_vertices` and `separate_vertices` (on the mask), `merge_shapes`, `refine_mesh`, `mirror_shapes`, `symmetrize_vertices`, `invert_uvs`, `recalc_normals`, `shape_transforms`, `set_base_shape`, `remove_unused_nodes`.
+- **Shapes:** `rename_shape`, `duplicate_shape`, `delete_shapes`, `set_reference_shape`, `delete_vertices` and `separate_vertices` (on the mask), `merge_shapes`, `refine_mesh` (every unmasked triangle), `refine_mesh_adaptive` (only where the mesh lacks detail, see `fix-clipping`), `mirror_shapes`, `symmetrize_vertices`, `invert_uvs`, `recalc_normals`, `shape_transforms`, `set_base_shape`, `remove_unused_nodes`.
 - **Vertices:** `get_shape_geometry`, `set_vertex_data`, `edit_topology`, `brush_stroke`.
 - **Properties:** `get_shape_properties`, `set_shader_properties`, `set_texture_paths`, `set_geometry_properties`, `set_extra_data` (e.g. BODYTRI on the root). Fallout 4 and 76 materials: `read_material`, `write_material` (see `cross-game`).
 - **Partitions and segments:** `get_partitions`, `set_partitions` (Skyrim and older), `set_segments` (Fallout 4), `copy_partitions` from the reference.

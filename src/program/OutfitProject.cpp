@@ -4626,11 +4626,17 @@ bool OutfitProject::PrepareFlipEdge(NiShape* shape, UndoStateShape& uss, const E
 }
 
 /*
-Ideally, PrepareRefineMesh would take a list of edges, not a list of
-vertices.  But OutfitStudio doesn't yet have an edge-mask tool.
+PrepareRefineMesh takes a list of vertices, and optionally a filter that
+picks which of the edges between them to split (see MeshRefine).
 Parameter "noCurveOffset" disables the smoothing/curving of the new vertex position within split edges.
 */
-bool OutfitProject::PrepareRefineMesh(NiShape* shape, UndoStateShape& uss, std::vector<bool>& pincs, const Mesh::WeldVertsType& weldVerts, const bool noCurveOffset, std::vector<Edge>* badEdges) {
+bool OutfitProject::PrepareRefineMesh(NiShape* shape,
+									  UndoStateShape& uss,
+									  std::vector<bool>& pincs,
+									  const Mesh::WeldVertsType& weldVerts,
+									  const bool noCurveOffset,
+									  std::vector<Edge>* badEdges,
+									  const std::function<bool(const Edge&)>& splitEdge) {
 	// Get vertex coordinates and triangle data
 	size_t nverts = pincs.size();
 	const std::vector<Vector3>* verts = workNif.GetVertsForShape(shape);
@@ -4699,6 +4705,8 @@ bool OutfitProject::PrepareRefineMesh(NiShape* shape, UndoStateShape& uss, std::
 		for (int tei = 0; tei < 3; ++tei) {
 			Edge e = tris[ti].GetEdge(tei);
 			if (!pincs[e.p1] || !pincs[e.p2])
+				continue;
+			if (splitEdge && !splitEdge(e))
 				continue;
 			if (singleEdges.find(e) != singleEdges.end()) {
 				// Multiple triangles for this edge

@@ -21,6 +21,7 @@ See the included LICENSE file
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <iosfwd>
 #include <map>
 #include <memory>
@@ -601,7 +602,15 @@ public:
 
 	bool PrepareCollapseVertex(nifly::NiShape* shape, UndoStateShape& uss, const std::vector<uint16_t>& indices);
 	bool PrepareFlipEdge(nifly::NiShape* shape, UndoStateShape& uss, const nifly::Edge& edge);
-	bool PrepareRefineMesh(nifly::NiShape* shape, UndoStateShape& uss, std::vector<bool>& pincs, const Mesh::WeldVertsType& weldVerts, const bool noCurveOffset, std::vector<nifly::Edge>* badEdges = nullptr);
+	// Splits the edges whose vertices are both in pincs, and that splitEdge accepts when it's given. splitEdge has to give
+	// both directions of an edge and its welded copies the same answer.
+	bool PrepareRefineMesh(nifly::NiShape* shape,
+						   UndoStateShape& uss,
+						   std::vector<bool>& pincs,
+						   const Mesh::WeldVertsType& weldVerts,
+						   const bool noCurveOffset,
+						   std::vector<nifly::Edge>* badEdges = nullptr,
+						   const std::function<bool(const nifly::Edge&)>& splitEdge = {});
 
 	bool IsVertexOnBoundary(nifly::NiShape* shape, int vi);
 	bool PointsHaveDifferingWeightsOrDiffs(nifly::NiShape* shape1, int p1, nifly::NiShape* shape2, int p2);

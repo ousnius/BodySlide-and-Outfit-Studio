@@ -47,6 +47,19 @@ Set this up right after loading the reference, before measuring anything. Result
 - A slider set low in a combination would need its morph changed many times over, so sliders below 0.5 count as 0.5: the combination comes out partly fixed.
 - Fixing an "n|p" slider at -1 can break its +1 case (one morph): sweep again afterwards.
 
+## Too coarse for the body
+
+Large outfit triangles can't follow the curves of a finer body: the body shows through between their vertices (`pokeThrough` in `analyze_clipping`), and a clipping fix can only move the vertices, so the flat triangles between them stay in the body or fold. Add vertices there first, then fix:
+
+1. Mask everything but the area, as for a fix (`mask_ops` `from_analysis`, `grow` 2–3). Fully masked vertices are left alone.
+2. `refine_mesh_adaptive` with `clipping: true`, the case's `sliderValues` or `preset`, and `preview: true`: it highlights the edges it would split and counts them `byReason`. Add `bodyDetail: 2` to also split edges near the body that are more than twice as long as the body's edges under them, where the topologies don't match. `maxEdges` caps how many are split, clipping first.
+3. Run it without `preview`. The new vertices sit on the curve of the outfit with averaged weights, slider data and UVs, so the shape and its morphs stay as they were, only finer, and the clipping counts don't drop yet. It's one undo step. Exclusions carry over to the new vertices.
+4. `fix_clipping` at a low strength as usual: with the new vertices the fix can follow the body. Measure, and only refine again after a fix. Another pass before it only splits more where the body still bulges: on a long dress a second pass split 1204 more edges after the first 670, with the body still poking through at 353 of 402 spots.
+
+On that dress (UBE conversion preset, the body poking out at 402 spots), the same masked fix at 0.1 left 16 spots up to 0.227 deep without refining, and 11 up to 0.180 after refining. It helps most where the body pokes out between large triangles; vertices that are inside the body don't need it.
+
+Rounding off faceted curves with the same tool is in `basics` (Mesh detail). Every split adds vertices to weight, morph and keep under the limit of 65535 per shape: refine only the area that needs it, and look at the result with `render_view` before refining again.
+
 ## Other fixes
 
 With everything but the area masked:
