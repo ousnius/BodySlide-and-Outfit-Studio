@@ -50,7 +50,7 @@ const std::set<std::string> AutoSnapshotTools = {
 // Tools that replace the project or overwrite files, which a snapshot doesn't bring back
 const std::set<std::string> DestructiveTools = {
 	"new_project", "load_project", "save_project", "export_file", "export_slider_data", "save_preset",
-	"save_pose", "mask_file", "snapshot_delete", "snapshot_restore",
+	"save_pose", "mask_file", "snapshot_delete", "snapshot_restore", "write_material",
 };
 
 const char* LevelName(HostMessageLevel level) {
