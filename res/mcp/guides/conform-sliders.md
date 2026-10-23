@@ -25,9 +25,9 @@ A conform bends buckles, gems, buttons, eyelets and armour plates with the body 
 
 1. `list_mesh_parts` lists the connected pieces of a shape with size, bounds and main bone. Pick the rigid ones.
 2. `mask_ops` `op: "parts"` with those parts, then `invert`, so only they are unmasked. For a rigid piece that's part of the cloth mesh, mask by hand or with `connected`.
-3. `rigidify_slider`. Without `sliders` it takes every morph slider with data on the shapes, and the result lists the sliders that moved the parts. Each part gets the move and turn that best fits its morph; `allowScale` lets it also grow evenly (plates on a thigh that gets thicker). `perPart: false` moves all unmasked vertices of a shape as one.
-4. A rigid part can't follow a valley a slider makes, so its edges would sink in. `rigidify_slider` moves each part out as a whole where needed, keeping it `clearance` (0.02) outside the body, or as far as it was at rest when that's less. `clearance: -1` turns it off.
-5. Rigidify a conversion slider too before baking it with `set_base_shape`, so the parts keep their shape on the new body.
+3. `rigidify_slider`. Without `sliders` it takes every morph slider with data on the shapes, and the result lists the sliders that moved the parts. Each part gets the move and turn that best fits its morph; `allowScale` lets it also grow evenly (plates on a thigh that gets thicker). `perPart: false` moves all unmasked vertices of a shape as one. It's one undo step per slider; the window has it as Slider > Rigidify Parts.
+4. A rigid part can't follow a valley a slider makes, so its edges would sink in. `rigidify_slider` moves each part out as a whole where needed, keeping it `clearance` (0.02) outside the body with the slider at 1, or as far as it was at rest when that's less. `clearance: -1` turns it off. The back buckle of a crop top sank 0.30 into the spine valley with one slider before this; now it stays outside.
+5. Rigidify a conversion slider too before baking it with `set_base_shape`, so the parts keep their shape on the new body. The 29 eyelets of a laced blouse stayed round on every breast slider this way.
 
 ## Hanging parts
 
@@ -55,8 +55,8 @@ A zap slider removes vertices in BodySlide instead of moving them: the body unde
   - `missingMorph`: the body moves with this slider but the shape doesn't. Usually a conform without that slider, or a mask was in the way.
   - `gap`: vertices the slider squashes into the body or pulls away from it.
 - **`analyze_slider`** looks at one slider; `withFlipped` returns the vertices of the folds to look at or mask.
-- **`analyze_fit`** checks that each slider keeps the outfit's distance to the body where it's close (`maxDistance`, default 2): `tightened` hug or squash into the body, `loosened` drift away.
-- **`analyze_seams`** finds vertices at the same place (split UV seams, shapes meeting, the outfit meeting the body at the neck or wrists) that sliders pull apart. **`weld_seams`** gives each seam one morph (the body's where the outfit meets it), with `weights: true` also the same weights.
+- **`analyze_fit`** checks that each slider keeps the outfit's distance to the body where it's close (`maxDistance`, default 2): `tightened` hug or squash into the body, `loosened` drift away. A good conform keeps the gap. Fix it with `mask_ops` `from_analysis` `metric: "gap_change"`, then smoothing or a brush on that slider.
+- **`analyze_seams`** finds vertices at the same place (split UV seams, shapes meeting, the outfit meeting the body at the neck or wrists) that sliders pull apart, and seams whose sides are weighted differently. **`weld_seams`** gives each seam one morph (the body's where the outfit meets it), with `weights: true` also the same weights.
 - **`render_view`** with `variants` at 0 and 1 of the worst sliders, and `show_heatmap` `kind: "slider"` for how far each vertex moves.
 
 ## Editing morphs by hand

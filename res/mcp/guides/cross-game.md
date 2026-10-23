@@ -20,8 +20,8 @@ The games differ in NIF format, skeleton, shaders and texture layout. The shape 
 Measured on a Fallout 4 CBBE wetsuit with sleeves, belt and thigh holsters, converted to Skyrim SE CBBE and then UBE:
 
 1. **Import** the outfit and its body with `import_from_game`, and set the body as reference.
-2. **Load the conversion reference** for the two bodies. Look for "Convert: …" templates in `list_reference_templates`, e.g. "Convert: FO4 CBBE To SSE CBBE" (also "SK CBBE To SSE CBBE" for Skyrim LE, and from other bodies like "Vanilla To CBBE" or "UNP … To CBBE"). At sliders 0 it should match the source body: `analyze_clipping` close to what step 1's body gave.
-3. **Conform it** (see `conform-sliders`). The Fallout 4 to Skyrim slider also lowers the arms from Fallout 4's rest pose to Skyrim's, which pushes the forearms through tight sleeves: `auto_fix_clipping` on that slider alone took the sleeves from 301 to 20 new clipping vertices. Rigidify the slider on buckles, clips and pouches, then bake it: slider at 1, `set_base_shape`.
+2. **Load the conversion reference** for the two bodies. Look for "Convert: …" templates in `list_reference_templates`, e.g. "Convert: FO4 CBBE To SSE CBBE" (also "SK CBBE To SSE CBBE" for Skyrim LE, and from other bodies like "Vanilla To CBBE" or "UNP … To CBBE"). At sliders 0 it should match the source body: `analyze_clipping` close to what step 1's body gave (the wetsuit 60 against 26, the belt 585 against 544).
+3. **Conform it** (see `conform-sliders`). The Fallout 4 to Skyrim slider also lowers the arms from Fallout 4's rest pose to Skyrim's, which pushes the forearms through tight sleeves: `auto_fix_clipping` on that slider alone took the sleeves from 301 to 20 new clipping vertices. Fix it again after `analysis_exclusions` `op: "zaps"` with `zaps: []`, so it also holds with the body zap off. Rigidify the slider on buckles, clips and pouches, then bake it: slider at 1, `set_base_shape`.
 4. **Load the target body** ("CBBE Body"), conform its sliders, rigidify again.
 5. **Weights:** `copy_bone_weights` from the target body (see `bone-weights`). When the source had breast and butt physics, copy from the physics variant ("CBBE Body Physics"). A body without hands leaves the old hand bones empty; `delete_bones` removes them.
 6. **Partitions or segments:** `copy_partitions` from the target body (below).
@@ -52,7 +52,7 @@ The shader (`BSLightingShaderProperty`) is in the NIF. `get_shape_properties` sh
 
 ### Fallout 4
 
-The NIF's shader names a material file (BGSM, or BGEM for effects) under `Materials\`, which the game reads instead of the NIF's values. `read_material` shows one.
+The NIF's shader names a material file (BGSM, or BGEM for effects) under `Materials\`, which the game reads instead of the NIF's values. `read_material` shows one; `write_material` writes one (below).
 
 - **BGSM textures:** diffuse (`_d`), normal (`_n`, usually BC5 with only red and green; the game rebuilds blue), smoothness/specular (`_s`: **red is specular, green is smoothness**), plus glow, environment, greyscale (palette color), inner layer, wrinkles and displacement maps.
 - Specular, smoothness, two-sided, alpha, rim and back lighting, subsurface and glow are material values.
@@ -72,7 +72,16 @@ The tools don't convert texture files. Tell the user which maps to make and how,
 
 ### Skyrim to Fallout 4
 
-The shapes need a BGSM per material, which no tool here writes: tell the user to make them with a material editor. Textures: the diffuse stays; the Skyrim normal map's alpha becomes the red of an `_s` map (with smoothness in green), and the normal map loses its alpha.
+The shapes need a BGSM per material (a BGEM for effect shaders). **`write_material`** writes them:
+
+- `shape` starts from a Skyrim shape's shader: textures, specular, smoothness from `SpecularPower`, two-sided, alpha, glow, rim, back and soft lighting. Its `notes` say what's missing.
+- `base` starts from another material file instead, e.g. a vanilla one with the right look; `properties` changes values on top, named as `read_material` returns them (`"textures": {"smoothSpec": "MyOutfit/suit_s.dds"}`).
+- Write into the mod's `Materials` folder, e.g. `D:/Mods/MyOutfit/Materials/MyOutfit/suit.bgsm`; texture paths are relative to `Textures`. Fallout 4 is version 2 (the default), Fallout 76 20 to 22.
+- In a Fallout 4 project, `assignToShapes` names the material in the shapes' shaders. The window shows it once the file is in the game's Data folder.
+
+Textures: the diffuse stays; the Skyrim normal map's alpha becomes the red of an `_s` map (with smoothness in green), and the normal map loses its alpha. Without an `_s` map the shape has no specular, so make one and set `smoothSpec`.
+
+A Fallout 4 shape's own material can be changed the same way: `write_material` with `shape` starts from the material file it has loaded.
 
 ### Starfield
 

@@ -6,9 +6,9 @@ Find and fix where the body shows through an outfit: at rest in the base shape, 
 ## Measuring
 
 - **`analyze_clipping`** counts outfit vertices inside the body (`penetrating`, `maxDepth`) and close to it, with the current slider values and preview pose, or with `sliderValues` or a `preset` (other sliders at 0 unless `zeroOthers: false`). `worstVertices` returns the deepest vertices.
-  - **The body poking through counts too.** Large outfit triangles over a curve of the body can let it show between their vertices while every vertex is outside. Those triangles' vertices count by how far the body pokes out, and `pokeThrough` says how many body vertices show.
-  - `against` measures one outfit shape against another, e.g. a cloak against the armour under it.
-- **`quality_sweep`** measures every slider on its own, plus `combinations`, `presets` and `poses`, and lists the worst cases. `clipping.newlyPenetrating` is what a case adds over sliders at 0: the clipping to fix. Sliders that go both ways ("n|p" in the name) are also checked at -1, and with presets each slider is also checked at the most extreme value the presets set (`presetExtremes`, e.g. -1.5 or 2).
+  - **The body poking through counts too.** Large outfit triangles over a curve of the body can let it show between their vertices while every vertex is outside (spots on the butt of a long dress with a UBE preset). Those triangles' vertices count by how far the body pokes out, and `pokeThrough` says how many body vertices show. The CBBE dress already had 21 at rest; an old UBE conversion of it had 87.
+  - `against` measures one outfit shape against another, e.g. a cloak against the armour under it. `quality_sweep` and `show_heatmap` take it too.
+- **`quality_sweep`** measures every slider on its own, plus `combinations`, `presets` and `poses`, and lists the worst cases. `clipping.newlyPenetrating` is what a case adds over sliders at 0: the clipping to fix. Sliders that go both ways ("n|p" in the name) are also checked at -1, and with presets each slider is also checked at the most extreme value outside 0 to 1 the presets set (`presetExtremes`: the UBE "for Converting Outfits" preset sets BreastsZero to -1.53 and BreastUnderCurve to 2).
 - **`show_heatmap`** `kind: "clipping"` with the case's `sliderValues` or `preset` shows where: red is inside, blue outside.
 - **Watch `maxDepth` as well as the count.** A fix that lowers the count can push the deepest vertices further in.
 - Measure the source outfit on its own body first. Many released outfits clip a bit at rest by design (a hem tucked under the breasts); judge what's new.
@@ -17,17 +17,17 @@ Find and fix where the body shows through an outfit: at rest in the base shape, 
 
 Set this up right after loading the reference, before measuring anything. Results report `excluded` and `hiddenByZaps` counts.
 
-- **Zaps:** clipping is measured the way BodySlide builds the outfit. What the zaps BodySlide turns on by default remove (`BodyZap` under a bodysuit) can't show through, so it doesn't count. `analysis_exclusions` `op: "zaps"` picks other zaps: `zaps: []` measures the whole body (for users who turn the zap off), or a list for a variant. Without `zaps` it goes back to the defaults.
+- **Zaps:** clipping is measured the way BodySlide builds the outfit. What the zaps BodySlide turns on by default remove (`BodyZap` under a bodysuit) can't show through, so it doesn't count: on a laced blouse BodyZap leaves 98 of 450 clipping vertices at rest, and under a bodysuit nothing counts. `analysis_exclusions` `op: "zaps"` picks other zaps: `zaps: []` measures the whole body (for users who turn the zap off), or a list for a variant. Without `zaps` it goes back to the defaults.
 - **Parts inside by design** count as clipping in every case and can dominate a sweep: end caps of sleeves inside the arm, cuffs past the body's open wrists and ankles, a hem tucked under the breasts. A fix there does nothing or pushes them through the limb. `analysis_exclusions` leaves them out of every measurement and keeps them out of every fix:
   - `op: "deep_at_rest"`: deeper than `minDepth` (1) inside the body at rest, grown by 2 rings. Real clipping rarely goes that deep.
   - `op: "reference_edges"`: where the body has an open edge (neck, wrists, ankles), within `edgeDistance` (1.5).
   - `from_mask`, `vertices`, `show` (puts them into the mask to look at), `clear`. They add up unless `replace: true`, and are dropped when another project opens.
-  - On a bodysuit, the two together took 310 vertices inside at rest to 5, and what was left was real clipping at the underbust and the gluteal fold.
+  - On a bodysuit, the two together took 310 vertices inside at rest (max depth 3.82) to 5 (0.25), and the sleeves from 342 to 33. What was left was real clipping at the underbust and the gluteal fold. Before them, one slider's "142 new" were nearly all shoulder caps.
 
 ## Fixing one case by hand
 
 1. Find the area: `show_heatmap` or `analyze_clipping` with a large `worstVertices`.
-2. Mask everything but the area, with a soft border, in one call: `mask_ops` `op: "from_analysis"`, `metric: "clipping"`, the case's `sliderValues` or `preset`, `grow` 2–3, `feather` 3–5. Partly masked vertices around the area take part of the fix, so it blends in instead of leaving a step. Check the mask with `render_view` `display.mask`.
+2. Mask everything but the area, with a soft border, in one call: `mask_ops` `op: "from_analysis"`, `metric: "clipping"`, the case's `sliderValues` or `preset`, `grow` 2–3, `feather` 3–5. Partly masked vertices around the area take part of the fix, so it blends in instead of leaving a step. Check the mask with `render_view` `display.mask` and `focus` `{shape, unmasked: true}`. By hand: `set_mask` with the vertices, `mask_ops` `grow` and `smooth`, then `invert`.
 3. `fix_clipping` with `strength` 0.1 (the default):
    - `mode: "shapes"` for clipping at rest, in the base shape. It measures with the current slider values, so `zero_sliders` first.
    - `mode: "sliders"` with only the case's slider(s), for clipping a slider adds. The fix goes into those sliders' morphs.
@@ -39,10 +39,11 @@ Set this up right after loading the reference, before measuring anything. Result
 
 **`auto_fix_clipping`** runs that loop on every slider with at least `minNew` (5) new clipping vertices, or on given `sliders`, `combinations` and `presets`, and puts the mask back after. Read `before` and `after` per case, then sweep and render.
 
-- **`rest: true`** first fixes the clipping at sliders 0 in the base shape, and measures everything else from the fixed base. Use it when the conversion added clipping at rest (a long dress: 88→0 in one step).
-- **Presets:** each slider is first fixed on its own at the extreme values the presets set, then the presets in combination mode. With the body's "for converting outfits" preset, a long dress went from 93 to 1 new clipping vertices.
-- **Steps:** the strength rises from `strength` (0.1) by `strengthStep` (0.05) to `maxStrength` (0.3). A step is taken back when it adds folds (`maxFlippedIncrease`, `maxFlippedRatio`, `maxFlippedPerMoved`), roughness (`maxRoughnessIncrease`, `minRoughnessAllowance`), deeper clipping, more clipping vertices, or nothing.
-- **Tight sleeves pinch in the armpit.** On a bodysuit's sleeves the fix was stopped by folds that were all in the armpit crease where nobody sees them; `maxFlippedPerMoved: 0.06` fixed the visible clipping and looked clean. Find where the folds are with `analyze_slider` `withFlipped` before loosening a limit.
+- **`rest: true`** first fixes the clipping at sliders 0 in the base shape, and measures everything else from the fixed base. Use it when the conversion added clipping at rest (a long dress: 88→0 in one step; a bodysuit against the whole body: 340→14). Compare with the source first, since some of it is by design: exclude a hem tucked under the breasts with `deep_at_rest` and a lower `minDepth`.
+- **Presets:** each slider is first fixed on its own at the extreme values the presets set, then the presets in combination mode. With UBE's "for Converting Outfits" preset (high), a long dress went from 93 to 1 new clipping vertices, and another UBE preset from 26 to 0, which removed the spots on the butt. A halter crop top went from 313 to 142 (max depth 0.77→0.46): the rest was deep in the cleavage where the cups pinch together, and a stronger fix made it worse. Sweep the single sliders afterwards.
+- **Steps:** the strength rises from `strength` (0.1) by `strengthStep` (0.05) to `maxStrength` (0.3). A step is taken back when it adds folds (more than 5, 15% of the start, or 1 per 100 vertices the fix moved: `maxFlippedIncrease`, `maxFlippedRatio`, `maxFlippedPerMoved`), roughness (10% or 0.005: `maxRoughnessIncrease`, `minRoughnessAllowance`), deeper clipping (0.05), more clipping vertices, or nothing.
+- **Tight sleeves pinch in the armpit.** On a bodysuit's sleeves, the arm muscles of a strong preset poked out on the outside and the fix was stopped by folds that were all in the armpit crease where nobody sees them; `maxFlippedPerMoved: 0.06` took it from 359 to 145 and looked clean. Find where the folds are with `analyze_slider` `withFlipped` and `get_shape_geometry` positions before loosening a limit.
+- **A tight bodysuit's clipping is at the creases** (underbust, gluteal fold). Fixes there add slivers quickly, so stop early.
 - A slider set low in a combination would need its morph changed many times over, so sliders below 0.5 count as 0.5: the combination comes out partly fixed.
 - Fixing an "n|p" slider at -1 can break its +1 case (one morph): sweep again afterwards.
 
@@ -55,7 +56,16 @@ With everything but the area masked:
 - `transform_shapes` `inflate` 0.1–0.5 pushes the unmasked surface out along its normals, for clipping at rest.
 - `mask_ops` `from_analysis` also masks by `roughness`, `flipped`, `gap_change` and `seam_gap`, to smooth what a fix roughened.
 
-What fixing whole shapes costs (an open-cleavage top, one breast slider, no mask): the fix at 0.5 took new clipping from 83 to 6 but flipped triangles from 182 to 232; smoothing after took them to 92 but clipping back up to 54. Masked, low-strength fixes keep that cost to the area that needs it.
+What fixing whole shapes costs, measured on an open-cleavage top converted to 3BA (BreastsNewSH, no mask):
+
+| Step | New clipping | Flipped triangles | Roughness |
+|---|---|---|---|
+| after conform | 83 | 182 | 0.053 |
+| `fix_clipping` sliders, strength 0.5, whole shape | 6 | 232 | 0.056 |
+| + `smooth_slider_deltas` 3 × 0.5 | 54 | 92 | 0.035 |
+| + `fix_clipping` sliders 0.3 on three sliders | 0 | 135 | 0.038 |
+
+The clipping fix trades clipping for folds, and smoothing does the opposite. Masked, low-strength fixes keep that cost to the area that needs it.
 
 ## Clipping in poses
 

@@ -39,32 +39,35 @@ When the target body has another shape at rest than the source body, the outfit 
 3. `conform_sliders`, set the conversion slider to 1 (`set_slider_values`), then `set_base_shape`. The outfit now has the new body's shape at rest.
 4. `load_reference` with the target body, then conform, weights and checks as usual. Clipping at rest should be close to the source.
 
-Hanging parts take the curtain variants of both templates. Split the shape by part with masks, and:
+CBBE SE to UBE: "11 3BA to UBE 2.0" (one slider, `3ba`), then "UBE SE 2.0 Body". The crop top had 88 clipping vertices at rest after it, against 82 on CBBE.
+
+Hanging parts take the curtain variants of both templates: "11 3ba lower curtain to UBE 2.0" for the shape (its slider is `CBBE Dress to UBE`, not `3ba`) and "11 UBE SE 2.0 Uni_Lower_Curtain" for the sliders. Split the shape by part with masks (`list_mesh_parts`, `mask_ops` `op: "parts"` on the part that shouldn't change), and:
 
 - `clear_slider_data` with `useMask: true` clears the body's conversion data from the unmasked part before the curtain conversion is conformed onto it.
 - Set every conversion slider to 1 for `set_base_shape`. Their names can differ from the template's name (check `list_sliders`).
-- Curtain references bring helper sliders that only move the curtain (e.g. `BiggerBody_ForOutfits`). After loading the body again with `mergeSliders: true, appendNewSliders: false`, `delete_sliders` with `notOnReference: true` deletes every slider the body has no data for.
-- Conform the curtain's sliders with `clearMissing: true` on the hanging part, so it drops body sliders the curtain doesn't have (inner thighs, knees). `validate_project` lists those as `missingMorphs`, which is on purpose there.
+- Curtain references bring helper sliders that only move the curtain (`BiggerBody_ForOutfits`, `BiggerBreasts_ForOutfits`, penis and hand sliders). Delete them unless the whole outfit has them: after loading the body again with `mergeSliders: true, appendNewSliders: false`, `delete_sliders` with `notOnReference: true` deletes every slider the body has no data for.
+- Conform the curtain's sliders with `clearMissing: true` on the hanging part, so it drops body sliders the curtain doesn't have (inner thighs, knees, glute folds). On a long dress the sweep showed no clipping from them. `validate_project` lists those as `missingMorphs`, which is on purpose there.
+- Measure clipping against the body, not the curtain: a long dress had 860 "clipping" vertices at rest against the curtain shell it sits inside.
 - **Don't copy weights from a curtain reference** when it weights the legs to a placeholder bone (named like "Don't copy this"); see `bone-weights`.
 
 To make a conversion slider of your own, set the sliders of a loaded body to the target shape (or `apply_preset`) and use `make_conversion_reference`. It clears the undo history, so take a snapshot first, and check which way the new slider goes with `analyze_clipping` at 0 and 1 before baking anything with it.
 
 ## Keeping the body and its zaps
 
-- Save with the body when the source had it (`copyReference`), or BodySlide builds the outfit without a body.
+- Save with the body when the source had it (`copyReference`), or BodySlide builds the outfit without a body. Each of four outfit sets converted to UBE had it.
 - Zap data lives on the body. `load_reference` moves it onto the new body by the closest surface point (`transferZaps`, on by default). For a conversion where it was lost, `transfer_zaps` takes it from the original project (`file`, `set`, and its body as `shape`). Missing zap sliders are created with the source's defaults and flags.
-- Check a zap with `mask_ops` `op: "slider_affected"` on the body and `render_view` `display.mask`; the view doesn't hide zapped vertices.
+- Check a zap with `mask_ops` `op: "slider_affected"` on the body and `render_view` `display.mask`; the view doesn't hide zapped vertices. On a bodysuit, BodyZap removes 13550 of 13554 CBBE vertices and 29291 of 29298 UBE ones, BodyZapKeepArms 83% and 81%.
 - `validate_project` warns about zap sliders without data on any shape (`emptyZaps`).
 - Loading a set with the body and saving it again keeps its link to the reference template.
 
 ## Body presets
 
-- `list_presets` lists the installed presets. `quality_sweep` checks them with `presets` or `presetFilter`, at both weights (`sliders: []` checks only presets).
-- `analyze_clipping`, `fix_clipping`, `show_heatmap`, `mask_ops` `from_analysis` and `render_view` take `preset` and `presetWeight` instead of `sliderValues`.
-- `apply_preset` sets the sliders in the window, and they stay set: `zero_sliders` afterwards.
-- The preset meant for converting to the body (e.g. a "for Converting Outfits" preset) matters most. Fix what the common presets show.
-- Some extreme presets never look perfect on a given outfit. Judge a preset by what it adds over the typical ones, and tell the user about the extreme ones rather than distorting the outfit for them.
+- `list_presets` lists the installed presets (the `SliderPresets` folder). `quality_sweep` checks them with `presets` or `presetFilter` (e.g. "CBBE"), at both weights (`sliders: []` checks only presets). 22 CBBE presets at both weights took 0.8 s on a top.
+- `analyze_clipping`, `fix_clipping`, `show_heatmap`, `mask_ops` `from_analysis` and `render_view` (and its `variants`) take `preset` and `presetWeight` instead of `sliderValues`, e.g. `variants: [{}, {"preset": "UBE Necoco V1"}]`.
+- `apply_preset` sets the sliders in the window like Load Preset and returns the values other than 0 (`returnValues: false` returns only the count). They stay set and show in every later render: `zero_sliders` afterwards, or render with `zeroOthers: true`.
+- The preset meant for converting to the body (e.g. "UBE Necoco for Converting Outfits" for UBE) matters most. Fix what the common presets show; `auto_fix_clipping` with `presets` does it (see `fix-clipping`).
+- Some extreme presets never look perfect on a given outfit, depending on its shape, topology and mesh resolution: "CBBE Big & Strong" pushed 364 vertices of a top into the body where most presets added under 40. Judge a preset by what it adds over the typical ones, and tell the user about the extreme ones rather than distorting the outfit for them.
 
 ## Scoring against a finished conversion
 
-When a released conversion of the same outfit exists, `compare_to_project` with its slider set file and set matches shapes by name (or `shapeMap`) and compares each slider. A plain conform matched 62 of 157 sliders of a released 3BA top exactly; the rest were sliders fixed or edited by hand, or that only one side has. Use it to check you're in the right ballpark, not as the target.
+When a released conversion of the same outfit exists, `compare_to_project` with its slider set file and set matches shapes by name (or `shapeMap`) and compares each slider. A plain conform matched 62 of 157 sliders of a released 3BA top exactly, and a laced blouse converted to UBE through 3BA 76 of 197 of a released UBE conversion; the rest were sliders fixed, rigidified or edited by hand, or that only one side has (`onlyHere`). Use it to check you're in the right ballpark, not as the target.
