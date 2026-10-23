@@ -6,6 +6,8 @@ See the included LICENSE file
 #include "MaterialFile.h"
 #include "../utils/StringStuff.h"
 
+#include <algorithm>
+
 using namespace nifly;
 
 MaterialFile::MaterialFile(const Type& signature) {
@@ -87,7 +89,6 @@ int MaterialFile::Read(std::istream& input) {
 	if (version >= 6)
 		input.read((char*)&maskWrites, 1);
 
-	uint32_t length = 0;
 	if (signature == BGSM) {
 		diffuseTexture = ReadString(input);
 		normalTexture = ReadString(input);
@@ -155,9 +156,7 @@ int MaterialFile::Read(std::istream& input) {
 			}
 		}
 
-		input.read((char*)&length, 4);
-		rootMaterialPath.resize(length);
-		input.read((char*)&rootMaterialPath.front(), length);
+		rootMaterialPath = ReadString(input);
 
 		input.read((char*)&anisoLighting, 1);
 		input.read((char*)&emitEnabled, 1);
@@ -240,6 +239,22 @@ int MaterialFile::Read(std::istream& input) {
 			glowTexture = ReadString(input);
 		}
 
+		if (version >= 21) {
+			glassRoughnessScratchTexture = ReadString(input);
+			glassDirtOverlayTexture = ReadString(input);
+			input.read((char*)&glassEnabled, 1);
+
+			if (glassEnabled) {
+				input.read((char*)&glassFresnelColor, 12);
+				input.read((char*)&glassBlurScaleBase, 4);
+
+				if (version >= 22)
+					input.read((char*)&glassBlurScaleFactor, 4);
+
+				input.read((char*)&glassRefractionScaleBase, 4);
+			}
+		}
+
 		if (version >= 10) {
 			input.read((char*)&environmentMapping, 1);
 			input.read((char*)&environmentMappingMaskScale, 4);
@@ -253,6 +268,7 @@ int MaterialFile::Read(std::istream& input) {
 		input.read((char*)&softEnabled, 1);
 
 		input.read((char*)&baseColor, 12);
+		input.read((char*)&baseColorScale, 4);
 		input.read((char*)&falloffStartAngle, 4);
 		input.read((char*)&falloffStopAngle, 4);
 		input.read((char*)&falloffStartOpacity, 4);
@@ -277,7 +293,21 @@ int MaterialFile::Read(std::istream& input) {
 			input.read((char*)&effectPbrSpecular, 1);
 	}
 
+	// Truncated file
+	if (!input)
+		return 2;
+
 	return 0;
+}
+
+int MaterialFile::Write(const std::string& fileName) {
+	std::ofstream output(fileName, std::ofstream::binary);
+	if (!output)
+		return 1;
+
+	Write(output);
+	output.close();
+	return output ? 0 : 1;
 }
 
 int MaterialFile::Write(std::ostream& output) {
@@ -331,7 +361,6 @@ int MaterialFile::Write(std::ostream& output) {
 	if (version >= 6)
 		output.write((char*)&maskWrites, 1);
 
-	uint32_t length = 0;
 	if (signature == BGSM) {
 		WriteString(output, diffuseTexture);
 		WriteString(output, normalTexture);
@@ -399,9 +428,7 @@ int MaterialFile::Write(std::ostream& output) {
 			}
 		}
 
-		length = static_cast<uint32_t>(rootMaterialPath.length());
-		output.write((char*)&length, 4);
-		output.write(rootMaterialPath.c_str(), length);
+		WriteString(output, rootMaterialPath);
 
 		output.write((char*)&anisoLighting, 1);
 		output.write((char*)&emitEnabled, 1);
@@ -484,6 +511,22 @@ int MaterialFile::Write(std::ostream& output) {
 			WriteString(output, glowTexture);
 		}
 
+		if (version >= 21) {
+			WriteString(output, glassRoughnessScratchTexture);
+			WriteString(output, glassDirtOverlayTexture);
+			output.write((char*)&glassEnabled, 1);
+
+			if (glassEnabled) {
+				output.write((char*)&glassFresnelColor, 12);
+				output.write((char*)&glassBlurScaleBase, 4);
+
+				if (version >= 22)
+					output.write((char*)&glassBlurScaleFactor, 4);
+
+				output.write((char*)&glassRefractionScaleBase, 4);
+			}
+		}
+
 		if (version >= 10) {
 			output.write((char*)&environmentMapping, 1);
 			output.write((char*)&environmentMappingMaskScale, 4);
@@ -497,6 +540,7 @@ int MaterialFile::Write(std::ostream& output) {
 		output.write((char*)&softEnabled, 1);
 
 		output.write((char*)&baseColor, 12);
+		output.write((char*)&baseColorScale, 4);
 		output.write((char*)&falloffStartAngle, 4);
 		output.write((char*)&falloffStopAngle, 4);
 		output.write((char*)&falloffStartOpacity, 4);
@@ -524,19 +568,26 @@ int MaterialFile::Write(std::ostream& output) {
 	return 0;
 }
 
+// Strings are stored with their terminating null, which isn't kept
 std::string MaterialFile::ReadString(std::istream& input) {
 	uint32_t length = 0;
 	input.read((char*)&length, 4);
+	if (!input || length == 0)
+		return {};
 
 	std::string tmp;
 	tmp.resize(length);
-	input.read((char*)&tmp.front(), length);
+	input.read(&tmp.front(), length);
 
+	tmp.resize(tmp.find('\0') != std::string::npos ? tmp.find('\0') : tmp.length());
 	return ToOSSlashes(tmp);
 }
 
+// Paths are written with forward slashes like the game's own materials, empty strings as just the null
 void MaterialFile::WriteString(std::ostream& output, const std::string& str) {
-	std::string tmp = ToBackslashes(str);
+	std::string tmp = str.substr(0, str.find('\0'));
+	std::replace(tmp.begin(), tmp.end(), '\\', '/');
+	tmp.push_back('\0');
 	uint32_t length = static_cast<uint32_t>(tmp.length());
 
 	output.write((char*)&length, 4);

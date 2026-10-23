@@ -9,3 +9,7 @@ tests/data/starfield/** filter=lfs diff=lfs merge=lfs -text
 
 # NetImmerse/Gamebryo meshes
 *.nif filter=lfs diff=lfs merge=lfs -text
+
+# Fallout 4 and 76 material files
+*.bgsm binary
+*.bgem binary

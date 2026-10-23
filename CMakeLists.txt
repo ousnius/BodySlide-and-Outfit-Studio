@@ -505,6 +505,7 @@ if(BSOS_BUILD_TESTS)
 		tests/AutomationJsonTest.cpp
 		tests/ArchiveTest.cpp
 		tests/HkxFileTest.cpp
+		tests/MaterialFileTest.cpp
 		tests/MainThreadDispatcherTest.cpp
 		tests/MaskTransferTest.cpp
 		tests/McpProtocolTest.cpp
