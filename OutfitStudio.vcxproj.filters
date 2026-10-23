@@ -2550,6 +2550,12 @@
     <ClCompile Include="src\mcp\McpToolsView.cpp">
       <Filter>MCP</Filter>
     </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsGames.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsGuides.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
     <ClCompile Include="src\render\GLDialog.cpp">
       <Filter>Rendering</Filter>
     </ClCompile>

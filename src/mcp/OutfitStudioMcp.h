@@ -123,6 +123,7 @@ void AddBoneTools(OutfitStudioMcp& mcp);
 void AddSliderFileTools(OutfitStudioMcp& mcp);
 void AddQualityTools(OutfitStudioMcp& mcp);
 void AddGameTools(OutfitStudioMcp& mcp);
+void AddGuideTools(OutfitStudioMcp& mcp);
 
 struct AutomationStep;
 class PresetCollection;

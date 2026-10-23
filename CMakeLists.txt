@@ -427,6 +427,7 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/mcp/McpToolsBones.cpp
 	src/mcp/McpToolsEdit.cpp
 	src/mcp/McpToolsGames.cpp
+	src/mcp/McpToolsGuides.cpp
 	src/mcp/McpToolsProject.cpp
 	src/mcp/McpToolsQuality.cpp
 	src/mcp/McpToolsShapes.cpp

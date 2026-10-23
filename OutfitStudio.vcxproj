@@ -1047,6 +1047,8 @@
     <ClCompile Include="src\mcp\McpToolsSliderFiles.cpp" />
     <ClCompile Include="src\mcp\McpToolsSliders.cpp" />
     <ClCompile Include="src\mcp\McpToolsView.cpp" />
+    <ClCompile Include="src\mcp\McpToolsGames.cpp" />
+    <ClCompile Include="src\mcp\McpToolsGuides.cpp" />
     <ClCompile Include="src\render\GLCanvas.cpp" />
     <ClCompile Include="src\render\GLDialog.cpp" />
     <ClCompile Include="src\render\GLExtensions.cpp" />
