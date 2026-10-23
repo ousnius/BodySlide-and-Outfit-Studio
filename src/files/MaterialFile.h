@@ -23,7 +23,7 @@ public:
 
 	// Base
 	Type signature = Type::BGSM;
-	uint32_t version = 1;
+	uint32_t version = 2;
 	bool tileU = true;
 	bool tileV = true;
 	nifly::Vector2 uvOffset;
@@ -88,7 +88,7 @@ public:
 	float wetnessControlFresnelPower = -1.0f;
 	float wetnessControlMetalness = -1.0f;
 	bool pbr = false;
-	float customPorosity = 0.0f;
+	bool customPorosity = false;
 	float porosityValue = 0.0f;
 	std::string rootMaterialPath;
 	bool anisoLighting = false;
@@ -136,6 +136,13 @@ public:
 	std::string fxEnvmapTexture;
 	std::string fxNormalTexture;
 	std::string envmapMaskTexture;
+	std::string glassRoughnessScratchTexture;
+	std::string glassDirtOverlayTexture;
+	bool glassEnabled = false;
+	nifly::Vector3 glassFresnelColor = {1.0f, 1.0f, 1.0f};
+	float glassBlurScaleBase = 0.4f;
+	float glassBlurScaleFactor = 1.0f;
+	float glassRefractionScaleBase = 0.05f;
 	bool bloodEnabled = false;
 	bool effectLightingEnabled = false;
 	bool falloffEnabled = false;
@@ -160,6 +167,7 @@ public:
 
 	int Read(std::istream&);
 	int Write(std::ostream&);
+	int Write(const std::string& fileName);
 
 	std::string ReadString(std::istream&);
 	void WriteString(std::ostream&, const std::string&);

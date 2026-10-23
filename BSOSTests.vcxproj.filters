@@ -149,6 +149,9 @@
     <ClCompile Include="tests\HkxFileTest.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
+    <ClCompile Include="tests\MaterialFileTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
     <ClCompile Include="tests\MaskTransferTest.cpp">
       <Filter>Tests</Filter>
     </ClCompile>

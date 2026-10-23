@@ -248,6 +248,7 @@
     <ClCompile Include="tests\ArchiveIndexTest.cpp" />
     <ClCompile Include="tests\ArchiveTest.cpp" />
     <ClCompile Include="tests\HkxFileTest.cpp" />
+    <ClCompile Include="tests\MaterialFileTest.cpp" />
     <ClCompile Include="tests\AutomationJsonTest.cpp" />
     <ClCompile Include="tests\MainThreadDispatcherTest.cpp" />
     <ClCompile Include="tests\MaskTransferTest.cpp" />
