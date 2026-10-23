@@ -842,6 +842,7 @@
     <ClInclude Include="src\files\SFResourceHash.h" />
     <ClInclude Include="src\files\EXRImage.h" />
     <ClInclude Include="src\files\ObjFile.h" />
+    <ClInclude Include="src\files\PhysicsXmlFile.h" />
     <ClInclude Include="src\files\ResourceLoader.h" />
     <ClInclude Include="src\files\SFMorphFile.h" />
     <ClInclude Include="src\files\TriFile.h" />
@@ -992,6 +993,7 @@
     <ClCompile Include="src\files\SFResourceHash.cpp" />
     <ClCompile Include="src\files\EXRImage.cpp" />
     <ClCompile Include="src\files\ObjFile.cpp" />
+    <ClCompile Include="src\files\PhysicsXmlFile.cpp" />
     <ClCompile Include="src\files\ResourceLoader.cpp" />
     <ClCompile Include="src\files\SFMorphFile.cpp" />
     <ClCompile Include="src\files\TriFile.cpp" />

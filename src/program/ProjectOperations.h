@@ -13,6 +13,7 @@ See the included LICENSE file
 #include "../components/SliderPresets.h"
 
 #include <cstdint>
+#include <functional>
 #include <map>
 #include <memory>
 #include <string>
@@ -71,6 +72,25 @@ struct BoneWeightCopyOptions {
 	bool copySkinTransform = false;
 	// Move the geometry along when the skin transform changes, so the shapes keep their place
 	bool transformGeometry = false;
+	// Bones of a shape that the reference doesn't have (physics chains, bones only the outfit has) keep their
+	// weights, and the copied bones share what's left of each vertex. Off, the copied bones take each vertex over
+	// and the other bones only keep what they leave, which after a copy of all bones is nothing.
+	bool keepOtherBones = false;
+	// Connected parts weighted at least 0.99 to one of the copied bones on every vertex keep their weights, so
+	// rigid props like buckles and plates don't bend with the body under them
+	bool keepRigidParts = false;
+	// Whether a copied bone that a shape doesn't have yet may be added to it. Without it, every one may.
+	std::function<bool(const std::string& shapeName, const std::string& bone)> mayAddBone;
+};
+
+// What a bone weight copy did to one shape beyond copying
+struct BoneWeightCopyReport {
+	// Bones with weights on the shape that kept them (keepOtherBones)
+	std::vector<std::string> keptBones;
+	// Copied bones that weren't added to the shape (mayAddBone)
+	std::vector<std::string> notAdded;
+	// Parts that kept their weights (keepRigidParts): their vertex count and the bone they're on
+	std::vector<std::pair<size_t, std::string>> rigidParts;
 };
 
 // Bones a weight brush works on, from the active bone and the normalization settings
@@ -332,7 +352,10 @@ public:
 
 	// Copies bone weights from the reference shape to the masked-out vertices of the shapes.
 	// The changes are recorded in usp, so the caller can keep them as an undo step.
-	OpResult CopyBoneWeights(const std::vector<nifly::NiShape*>& shapes, const BoneWeightCopyOptions& options, UndoStateProject& usp);
+	OpResult CopyBoneWeights(const std::vector<nifly::NiShape*>& shapes,
+							 const BoneWeightCopyOptions& options,
+							 UndoStateProject& usp,
+							 std::map<std::string, BoneWeightCopyReport>* outReport = nullptr);
 
 	// Adds changes (NIF coordinates) to the morph of a slider on an outfit shape. They are recorded in usp
 	// like a brush stroke in slider edit mode, so the caller can keep them as an undo step; all changes

@@ -1654,6 +1654,30 @@ McpToolResult ValidateProject(OutfitStudioMcp& mcp, const json& args) {
 
 			if (!shape->GetTransformToParent().IsNearlyEqualTo(MatTransform()))
 				f.Add(f.info, name, "shapeTransform", "The skinned shape has its own transform. shape_transforms apply bakes it into the vertices.");
+
+			// SMP adds the bones a simulated shape is weighted to that its XML doesn't declare with the default bone
+			// template. With a mass above 0 there, they're dynamic and fall, e.g. body bones a weight copy added.
+			std::vector<std::string> missingXmls;
+			for (auto& file : project.ReadPhysicsXmls(name, &missingXmls)) {
+				const PhysicsXmlFile::Shape* simulated = file.second.FindShape(name);
+				if (!simulated || simulated->implicitMass <= 0.0f)
+					continue;
+
+				std::vector<std::string> dynamic;
+				for (auto& bone : project.GetWorkAnim()->shapeBones[name]) {
+					auto weights = project.GetWorkAnim()->GetWeightsPtr(name, bone);
+					if (weights && !weights->empty() && !simulated->Declares(bone))
+						dynamic.push_back(bone);
+				}
+				if (!dynamic.empty())
+					f.Add(f.warnings, name, "undeclaredPhysicsBones",
+						  "The SMP physics XML simulates this shape but doesn't declare these bones, so SMP makes them dynamic with its default "
+						  "bone template (mass above 0) and they fall in game. Unless the original had them, remove their weights "
+						  "(reassign_weights, delete_bones) or copy weights again with addBones false.",
+						  {{"xml", file.first}, {"bones", dynamic}, {"defaultMass", simulated->implicitMass}});
+			}
+			if (!missingXmls.empty())
+				f.Add(f.info, name, "physicsXmlNotFound", "The shape links SMP physics XML files that weren't found, so its physics bones weren't checked.", {{"files", missingXmls}});
 		}
 		else if (reference && reference->IsSkinned()) {
 			f.Add(f.warnings, name, "notSkinned", "The shape isn't skinned, so it won't move with the body.");

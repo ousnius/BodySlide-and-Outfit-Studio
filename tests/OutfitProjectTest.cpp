@@ -229,6 +229,108 @@ TEST_CASE("Bone weights are copied from the reference to unmasked vertices", "[O
 	}
 }
 
+TEST_CASE("Weight copies can keep the weights of bones they don't copy", "[OutfitProject]") {
+	ProjectFixture f;
+
+	// A physics chain bone only the skirt has
+	f.project.AddCustomBoneRef("Chain", "", nifly::MatTransform());
+	f.project.GetWorkAnim()->RemoveShapeBone("Body", "Chain");
+	std::unordered_map<uint16_t, float> chain{{10, 0.4f}, {20, 1.0f}};
+	f.project.GetWorkAnim()->SetWeights("Skirt", "Chain", chain);
+
+	BoneWeightCopyOptions options;
+	options.keepOtherBones = GENERATE(false, true);
+	UndoStateProject usp;
+	std::map<std::string, BoneWeightCopyReport> reports;
+	REQUIRE(f.ops.CopyBoneWeights({f.skirt}, options, usp, &reports).ok);
+
+	if (options.keepOtherBones) {
+		CHECK(reports["Skirt"].keptBones == std::vector<std::string>{"Chain"});
+		CHECK(f.Weight(f.skirt, "Chain", 10) == Catch::Approx(0.4f));
+		CHECK(f.Weight(f.skirt, "Chain", 20) == Catch::Approx(1.0f));
+		// The copied bones share what's left
+		CHECK(f.Weight(f.skirt, "BoneLeft", 10) + f.Weight(f.skirt, "BoneRight", 10) == Catch::Approx(0.6f).margin(1e-3));
+		CHECK(f.Weight(f.skirt, "BoneLeft", 20) + f.Weight(f.skirt, "BoneRight", 20) == Catch::Approx(0.0f).margin(1e-3));
+	}
+	else {
+		// Like the window: the copied bones take the vertices over
+		CHECK(reports["Skirt"].keptBones.empty());
+		CHECK(f.Weight(f.skirt, "Chain", 10) == 0.0f);
+		CHECK(f.Weight(f.skirt, "Chain", 20) == 0.0f);
+		CHECK(f.Weight(f.skirt, "BoneLeft", 20) + f.Weight(f.skirt, "BoneRight", 20) == Catch::Approx(1.0f).margin(1e-3));
+	}
+}
+
+TEST_CASE("Weight copies don't keep reference bones they leave out", "[OutfitProject]") {
+	ProjectFixture f;
+
+	// The skirt is all on BoneRight, which the copy leaves out like an excluded bone
+	std::unordered_map<uint16_t, float> right;
+	for (uint16_t i = 0; i < f.skirt->GetNumVertices(); i++)
+		right[i] = 1.0f;
+	f.project.GetWorkAnim()->SetWeights("Skirt", "BoneRight", right);
+
+	BoneWeightCopyOptions options;
+	options.keepOtherBones = true;
+	options.selectedBones = {"BoneLeft"};
+	UndoStateProject usp;
+	std::map<std::string, BoneWeightCopyReport> reports;
+	REQUIRE(f.ops.CopyBoneWeights({f.skirt}, options, usp, &reports).ok);
+
+	CHECK(reports["Skirt"].keptBones.empty());
+	// The left edge of the skirt is all BoneLeft on the body, so BoneRight gives way there
+	CHECK(f.Weight(f.skirt, "BoneLeft", 0) > 0.9f);
+	CHECK(f.Weight(f.skirt, "BoneRight", 0) < 0.1f);
+}
+
+TEST_CASE("Weight copies only add the bones they may", "[OutfitProject]") {
+	ProjectFixture f;
+	f.project.GetWorkAnim()->RemoveShapeBone("Skirt", "BoneRight");
+
+	BoneWeightCopyOptions options;
+	options.mayAddBone = [](const std::string& shapeName, const std::string& bone) { return !(shapeName == "Skirt" && bone == "BoneRight"); };
+	UndoStateProject usp;
+	std::map<std::string, BoneWeightCopyReport> reports;
+	REQUIRE(f.ops.CopyBoneWeights({f.skirt}, options, usp, &reports).ok);
+
+	CHECK(reports["Skirt"].notAdded == std::vector<std::string>{"BoneRight"});
+	const auto& bones = f.project.GetWorkAnim()->shapeBones["Skirt"];
+	CHECK(std::find(bones.begin(), bones.end(), "BoneRight") == bones.end());
+	CHECK(f.Weight(f.skirt, "BoneLeft", 0) > 0.9f);
+}
+
+TEST_CASE("Weight copies can keep parts on one bone rigid", "[OutfitProject]") {
+	ProjectFixture f;
+
+	// The whole skirt is one part, on BoneLeft
+	std::unordered_map<uint16_t, float> left;
+	for (uint16_t i = 0; i < f.skirt->GetNumVertices(); i++)
+		left[i] = 1.0f;
+	const bool rigid = GENERATE(true, false);
+	if (!rigid)
+		left[24] = 0.9f;
+	f.project.GetWorkAnim()->SetWeights("Skirt", "BoneLeft", left);
+
+	BoneWeightCopyOptions options;
+	options.keepRigidParts = true;
+	UndoStateProject usp;
+	std::map<std::string, BoneWeightCopyReport> reports;
+	REQUIRE(f.ops.CopyBoneWeights({f.skirt}, options, usp, &reports).ok);
+
+	// The last skirt vertex sits at the right edge, where the body is all BoneRight
+	const uint16_t corner = static_cast<uint16_t>(f.skirt->GetNumVertices() - 1);
+	if (rigid) {
+		REQUIRE(reports["Skirt"].rigidParts.size() == 1);
+		CHECK(reports["Skirt"].rigidParts[0].first == f.skirt->GetNumVertices());
+		CHECK(reports["Skirt"].rigidParts[0].second == "BoneLeft");
+		CHECK(f.Weight(f.skirt, "BoneLeft", corner) == 1.0f);
+	}
+	else {
+		CHECK(reports["Skirt"].rigidParts.empty());
+		CHECK(f.Weight(f.skirt, "BoneRight", corner) > 0.5f);
+	}
+}
+
 TEST_CASE("A snapshot brings back slider data, weights and masks", "[OutfitProject]") {
 	ProjectFixture f;
 	REQUIRE(f.ops.ConformSliders({f.skirt}, ConformOptions()).ok);

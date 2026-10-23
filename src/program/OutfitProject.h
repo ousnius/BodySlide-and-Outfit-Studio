@@ -11,6 +11,7 @@ See the included LICENSE file
 #include "../components/Mesh.h"
 #include "../components/UndoState.h"
 #include "../files/ObjFile.h"
+#include "../files/PhysicsXmlFile.h"
 #include "../files/SFMaterialResolver.h"
 #include "ProjectHost.h"
 #include "../utils/TargetGame.h"
@@ -386,6 +387,9 @@ public:
 	// Object" extra data to a readable stream (loose game data folder file,
 	// relative to the project's input NIF, or from loaded archives).
 	std::unique_ptr<std::istream> GetPhysicsXmlStream(const std::string& xmlPath);
+	// Reads the physics XML files linked to a shape (shapePhysicsFiles), by path. Paths that can't be found or
+	// parsed go to outMissing.
+	std::vector<std::pair<std::string, PhysicsXmlFile>> ReadPhysicsXmls(const std::string& shapeName, std::vector<std::string>* outMissing = nullptr);
 	const ClothData::Blocks& GetClothData() const { return clothData.GetBlocks(); }
 	void AddClothData(const std::string& source, std::unique_ptr<nifly::BSClothExtraData> block) { clothData.AddManual(source, std::move(block)); }
 

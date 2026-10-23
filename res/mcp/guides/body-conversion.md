@@ -1,5 +1,5 @@
 # Converting to another body
-Convert an outfit to another body of the same game with reference templates, e.g. CBBE SE to CBBE 3BA or UBE: choosing the reference, bodies without a direct template, keeping the body and its zaps, checking and scoring the result.
+Convert an outfit to another body of the same game with reference templates, e.g. CBBE SE to CBBE 3BA or UBE: reading the source, choosing the reference, bodies without a direct template, keeping the body and its zaps, openings and hems, many outfits at once, what only the game shows, building, checking and scoring the result.
 
 A conversion moves the outfit onto the new body's shape, gives it the new body's sliders and weights, and fixes what that breaks. The steps below link to the other guides for the details: `conform-sliders`, `bone-weights` and `fix-clipping`. For an outfit of another game, read `cross-game` first.
 
@@ -21,6 +21,16 @@ A conversion moves the outfit onto the new body's shape, gives it the new body's
    - `render_view` with `variants` of the worst cases.
 7. **Fix one problem at a time**, masked and at low strength (see `fix-clipping`), then check again.
 8. **`validate_project`**, then **`save_project`** under a new name, keeping the body when the source had it.
+
+## Reading the source
+
+Most mistakes of a conversion come from reading the source wrong, not from the fit.
+
+- **Convert the project that builds the mesh the game loads.** In a setup with many mods, several sets can build a mesh of the same name. Pick the one whose output path and file name (`get_status`) match the mesh that wins in the game's data, not just the newest or highest-priority set. The wrong one converts a different design: a pair of sandals came out as socks.
+- **The body may be cut down.** Some sets cut the body under the armour, and first-person sets only have arms. Cut the new body to the same footprint after loading it (mask what the old body didn't cover, `delete_vertices`), and keep the zaps.
+- **High heels.** Sets for high heels pose the body's feet for the heels. Pose the new body's feet to match before conforming (`apply_pose_to_mesh` on the feet, with the rest masked).
+- **Shapes that belong to the body** (genitals, hand and foot stubs that come with it) go with the body: replace or remove them along with it instead of converting them as outfit shapes.
+- **Head parts** (BSDynamicTriShape, `get_shape_properties` shows `geometry.dynamic`) don't follow the body: leave them as they are.
 
 ## Choosing the reference
 
@@ -59,6 +69,31 @@ To make a conversion slider of your own, set the sliders of a loaded body to the
 - Check a zap with `mask_ops` `op: "slider_affected"` on the body and `render_view` `display.mask`; the view doesn't hide zapped vertices. On a bodysuit, BodyZap removes 13550 of 13554 CBBE vertices and 29291 of 29298 UBE ones, BodyZapKeepArms 83% and 81%.
 - `validate_project` warns about zap sliders without data on any shape (`emptyZaps`).
 - Loading a set with the body and saving it again keeps its link to the reference template.
+
+## Openings and hems
+
+- **Keep the rings at the body's openings whole.** The neck, wrist and ankle openings of the new body can sit further out than the old body's. Zaps taken from the old body then cut into the ring at the opening and leave a see-through band where the outfit ends. Check each opening with `mask_ops` `op: "slider_affected"` and `render_view`. To unzap a ring, mask everything but the ring and `clear_slider_data` on the zap slider with `useMask: true`. In one batch of conversions this took exposed necks from 45 to 1.
+- **Hems at an opening that moved.** When an opening of the new body sits lower or higher than the old one, hems that ended at it leave a gap. Move the hem band (`transform_shapes` with everything else masked, sliders at 0), positions only.
+
+## Many outfits at once
+
+- **Match one known-good conversion first** (`compare_to_project`), then scale up.
+- **Take rules from what most released conversions agree on**, and ask the user where they disagree.
+- **Check the whole batch, not a sample.** A fix that helps one outfit can break another. After each fix, run every outfit it can touch again, and check that the ones it shouldn't change come out the same. In one batch a sample of 40 found 1 case of a fault that the full scan found 6 times.
+- **Outfits a check skips hide bugs.** "Nothing to judge" is a result to look at, not a pass.
+- **Write down what was decided** and why, so the next session doesn't propose it again.
+
+## What only the game shows
+
+The tools find regressions; they don't judge quality. In one large batch of conversions, 8 of 9 kinds of fault were found in game, not by the checks: motion, physics, head turns, how cloth hangs. Give the user a short list of what to look at for each outfit: equip it, walk, run, crouch, switch presets, and look closely at the worst cases the checks found.
+
+## Building and the game side
+
+- **BodySlide can build without its window:** `BodySlide x64.exe -gbuild "<group>" -p "<preset>" -t "<folder>" -tri` (or `-b "<set>"` for one set). Always pass `-t`, or the meshes go wherever BodySlide's settings point. Under a mod manager, run it through the manager so it sees the mods' files.
+- **BODYTRI:** BodySlide rewrites the BODYTRI string when it builds with tri morphs (`-tri`). Built without them, the mesh keeps the string of the source NIF, which can point the game at the old body's morphs: the outfit then follows the wrong sliders in game.
+- Tell the user what the converted meshes need outside BodySlide:
+  - **Slots and partitions.** A shape only shows when one of its partitions matches a slot of the armor addon. A new body with a partition the old one didn't have needs that slot on the armor addon, or there's a gap.
+  - **Alternate textures** of armor records count shapes by position. Adding, removing or reordering shapes (e.g. replacing the body shape) shifts them.
 
 ## Body presets
 

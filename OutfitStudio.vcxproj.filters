@@ -775,6 +775,9 @@
     <ClInclude Include="src\files\ObjFile.h">
       <Filter>Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\files\PhysicsXmlFile.h">
+      <Filter>Files</Filter>
+    </ClInclude>
     <ClInclude Include="src\files\ResourceLoader.h">
       <Filter>Files</Filter>
     </ClInclude>
@@ -2221,6 +2224,9 @@
       <Filter>Components</Filter>
     </ClCompile>
     <ClCompile Include="src\files\ObjFile.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\files\PhysicsXmlFile.cpp">
       <Filter>Files</Filter>
     </ClCompile>
     <ClCompile Include="src\files\ResourceLoader.cpp">

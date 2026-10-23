@@ -8,6 +8,7 @@ Find and fix where the body shows through an outfit: at rest in the base shape, 
 - **`analyze_clipping`** counts outfit vertices inside the body (`penetrating`, `maxDepth`) and close to it, with the current slider values and preview pose, or with `sliderValues` or a `preset` (other sliders at 0 unless `zeroOthers: false`). `worstVertices` returns the deepest vertices.
   - **The body poking through counts too.** Large outfit triangles over a curve of the body can let it show between their vertices while every vertex is outside (spots on the butt of a long dress with a UBE preset). Those triangles' vertices count by how far the body pokes out, and `pokeThrough` says how many body vertices show. The CBBE dress already had 21 at rest; an old UBE conversion of it had 87.
   - `against` measures one outfit shape against another, e.g. a cloak against the armour under it. `quality_sweep` and `show_heatmap` take it too.
+  - **The head counts too.** A reference without a head lets chokers, collars and hoods sink into the neck without any count showing it. Import a head mesh as a shape (`import_file`), measure those parts `against` it, and delete it before saving.
 - **`quality_sweep`** measures every slider on its own, plus `combinations`, `presets` and `poses`, and lists the worst cases. `clipping.newlyPenetrating` is what a case adds over sliders at 0: the clipping to fix. Sliders that go both ways ("n|p" in the name) are also checked at -1, and with presets each slider is also checked at the most extreme value outside 0 to 1 the presets set (`presetExtremes`: the UBE "for Converting Outfits" preset sets BreastsZero to -1.53 and BreastUnderCurve to 2).
 - **`show_heatmap`** `kind: "clipping"` with the case's `sliderValues` or `preset` shows where: red is inside, blue outside.
 - **Watch `maxDepth` as well as the count.** A fix that lowers the count can push the deepest vertices further in.
@@ -34,6 +35,8 @@ Set this up right after loading the reference, before measuring anything. Result
    - `mode: "combination"` with the combination's `sliderValues` or a `preset`, for clipping only a combination has. It shares the push among the sliders by how far each moves the vertex.
 4. Check with `analyze_clipping` or `quality_sweep` for that case (new clipping, flipped triangles, roughness), and a `render_view`. If clipping remains, raise the strength by 0.05–0.1 and repeat. **Stop as soon as flipped triangles or roughness rise noticeably**: a second pass at 0.2 made one slider's clipping deeper (0.14→0.27) with more folds.
 5. `mask_ops` `op: "clear"`.
+
+After a conform, a vertex that lost its gap over the skin only needs to go back out a little: a few tenths of a unit at most. If a fix needs more than that, the cause is usually elsewhere (the wrong reference, weights, a slider that falls behind the body).
 
 ## Fixing automatically
 

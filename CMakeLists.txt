@@ -391,6 +391,7 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/files/FBXWrangler.cpp
 	src/files/MaskFile.cpp
 	src/files/ObjFile.cpp
+	src/files/PhysicsXmlFile.cpp
 	src/files/SFMaterialDatabase.cpp
 	src/files/SFMaterialFile.cpp
 	src/files/SFMaterialGraph.cpp
@@ -513,6 +514,7 @@ if(BSOS_BUILD_TESTS)
 		tests/MeshAnalysisTest.cpp
 		tests/MeshRefineTest.cpp
 		tests/OutfitProjectTest.cpp
+		tests/PhysicsXmlFileTest.cpp
 		tests/PoseDataJsonTest.cpp
 		tests/SFMaterialDatabaseTest.cpp
 		tests/SFLayeredMaterialTest.cpp
@@ -540,6 +542,7 @@ if(BSOS_BUILD_TESTS)
 		src/components/WeightNorm.cpp
 		src/files/MaterialFile.cpp
 		src/files/ObjFile.cpp
+		src/files/PhysicsXmlFile.cpp
 		src/files/TriFile.cpp
 		src/program/OutfitProject.cpp
 		src/program/ProjectHost.cpp

@@ -666,9 +666,12 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 	weights.description =
 		"Copies bone weights from the reference shape to outfit shapes, blending nearby reference vertices. Masked "
 		"vertices keep their weights. Bones that references mark as not to copy (named like \"Don't copy this\", e.g. the "
-		"placeholder of the UBE curtain references) are skipped, and so are excludeBones. The copied vertices are cleaned to "
-		"the game's bone limit and normalized in the same step. One undo takes it all back, bones it added included. The "
-		"result lists the bones added and skipped and the weight problems left per shape.";
+		"placeholder of curtain references) are skipped, and so are excludeBones. By default, bones the reference doesn't "
+		"have (physics chains, bones only the outfit has) keep their weights, and parts weighted to one bone stay rigid. A shape "
+		"that a linked SMP physics XML simulates only gets new bones the XML declares: SMP makes every other bone "
+		"dynamic when the XML raised the default mass. The copied vertices are cleaned to the game's bone limit and "
+		"normalized in the same step. One undo takes it all back, bones it added included. The result lists per shape "
+		"the bones added, kept and not added, the rigid parts and the weight problems left.";
 	weights.inputSchema = McpSchema({
 		{"shapes", ShapesProp},
 		{"bones", McpStringList("Bones to copy, all bones of the reference by default")},
@@ -679,6 +682,18 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 		{"transformGeometry", McpProp("boolean", "With copySkinTransform, move the geometry along so it stays in place. Default false.")},
 		{"cleanup", McpProp("boolean", "Limit the copied vertices to the game's bones per vertex (4, Starfield 8) and normalize them. Default true.")},
 		{"removeEmptyBones", McpProp("boolean", "Remove the bones the copy added to a shape that ended up without weights on it, e.g. the leg bones of a top. Default true.")},
+		{"keepOtherBones",
+		 McpProp("boolean",
+				 "Bones of the shapes that the reference doesn't have keep their weights, and the copied bones share the rest of "
+				 "each vertex. Excluded reference bones don't count as kept. "
+				 "Default true. false lets the copy replace them, like the window does, e.g. for weights of an old body's bones "
+				 "that the new one doesn't have (keptBones in the result lists them).")},
+		{"addBones",
+		 McpProp("boolean",
+				 "Add copied bones that a shape doesn't have yet. Default true. false only copies the bones each shape has, for an "
+				 "outfit that is weighted already: no genital, head or forearm weights on a top.")},
+		{"keepRigidParts",
+		 McpProp("boolean", "Connected parts weighted at least 0.99 to one copied bone on every vertex (buckles, plates, props) keep their weights. Default true.")},
 	});
 	weights.handler = [&mcp, frame](const json& args) {
 		OutfitProject& project = mcp.Project();
@@ -720,10 +735,44 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 		for (auto* shape : shapes)
 			bonesBefore[shape->name.get()] = anim->shapeBones[shape->name.get()];
 
+		options.keepOtherBones = McpArgs::Bool(args, "keepOtherBones", true);
+		options.keepRigidParts = McpArgs::Bool(args, "keepRigidParts", true);
+		const bool addBones = McpArgs::Bool(args, "addBones", true);
+
+		// A shape that an SMP physics XML simulates takes every bone it's weighted to into the physics, and the ones
+		// the XML doesn't declare get its default bone template: dynamic, if the XML raised its mass. So these shapes
+		// only get new bones the XML declares.
+		std::map<std::string, std::vector<const PhysicsXmlFile::Shape*>> physicsShapes;
+		std::vector<std::pair<std::string, PhysicsXmlFile>> physicsFiles;
+		std::vector<std::string> physicsMissing;
+		for (auto* shape : shapes) {
+			for (auto& file : project.ReadPhysicsXmls(shape->name.get(), &physicsMissing))
+				physicsFiles.push_back(std::move(file));
+		}
+		for (auto* shape : shapes)
+			for (auto& file : physicsFiles)
+				if (const PhysicsXmlFile::Shape* simulated = file.second.FindShape(shape->name.get()))
+					physicsShapes[shape->name.get()].push_back(simulated);
+
+		std::map<std::string, std::vector<std::string>> notAddedForPhysics;
+		options.mayAddBone = [&](const std::string& shapeName, const std::string& bone) {
+			if (!addBones)
+				return false;
+			auto simulated = physicsShapes.find(shapeName);
+			if (simulated == physicsShapes.end())
+				return true;
+			for (auto* s : simulated->second)
+				if (s->Declares(bone))
+					return true;
+			notAddedForPhysics[shapeName].push_back(bone);
+			return false;
+		};
+
 		// Recorded like the window does, so it can be undone
 		UndoHistory& history = frame->editor.undoHistory;
 		UndoStateProject* usp = history.PushState();
-		OpResult result = mcp.Ops().CopyBoneWeights(shapes, options, *usp);
+		std::map<std::string, BoneWeightCopyReport> reports;
+		OpResult result = mcp.Ops().CopyBoneWeights(shapes, options, *usp, &reports);
 		if (!result.ok || usp->usss.empty()) {
 			history.PopState();
 			usp = nullptr;
@@ -742,6 +791,8 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 						vertices.insert(w.first);
 
 				std::vector<std::string> bones = anim->shapeBones[uss.shapeName];
+				const std::vector<std::string>& kept = reports[uss.shapeName].keptBones;
+				auto isKept = [&kept](const std::string& bone) { return std::find(kept.begin(), kept.end(), bone) != kept.end(); };
 				for (uint16_t v : vertices) {
 					std::vector<std::pair<float, std::string>> list;
 					for (auto& bone : bones) {
@@ -755,13 +806,23 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 					if (list.empty())
 						continue;
 
-					std::sort(list.begin(), list.end(), [](const auto& a, const auto& b) { return a.first > b.first; });
+					// Kept bones (physics chains) come first and keep their weights, even small ones; the copied
+					// bones fill the rest of the vertex
+					std::sort(list.begin(), list.end(), [&](const auto& a, const auto& b) {
+						const bool keptA = isKept(a.second);
+						const bool keptB = isKept(b.second);
+						return keptA != keptB ? keptA : a.first > b.first;
+					});
 					std::map<std::string, float> goal;
-					float sum = 0.0f;
+					float keptSum = 0.0f;
+					float copiedSum = 0.0f;
 					for (size_t i = 0; i < list.size() && i < limit; i++)
-						sum += list[i].first;
+						(isKept(list[i].second) ? keptSum : copiedSum) += list[i].first;
+					const float keptShare = std::min(keptSum, 1.0f);
+					const float keptFactor = keptSum <= 0.0f ? 0.0f : (copiedSum > 0.0f ? keptShare : 1.0f) / keptSum;
+					const float copiedFactor = copiedSum <= 0.0f ? 0.0f : (1.0f - keptShare) / copiedSum;
 					for (size_t i = 0; i < list.size(); i++)
-						goal[list[i].second] = i < limit && sum > 0.0f ? list[i].first / sum : 0.0f;
+						goal[list[i].second] = i < limit ? list[i].first * (isKept(list[i].second) ? keptFactor : copiedFactor) : 0.0f;
 
 					bool changed = false;
 					for (auto& item : list) {
@@ -844,9 +905,36 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 			// Vertices with no reference vertex within the radius lose their weights, e.g. the hem of a long skirt
 			if (stats.unweighted)
 				tool.data["shapes"][name]["hint"] = "Vertices farther than proximityRadius from the reference are left without weights. Undo and copy again with a larger proximityRadius (a long dress needed 25).";
+
+			auto report = reports.find(name);
+			if (report == reports.end())
+				continue;
+			json& out = tool.data["shapes"][name];
+			if (!report->second.keptBones.empty())
+				out["keptBones"] = report->second.keptBones;
+			if (!report->second.notAdded.empty())
+				out["bonesNotAdded"] = report->second.notAdded;
+			auto physics = notAddedForPhysics.find(name);
+			if (physics != notAddedForPhysics.end()) {
+				out["bonesNotDeclaredByPhysics"] = physics->second;
+				out["physicsHint"] =
+					"The shape is simulated by an SMP physics XML that doesn't declare these bones. SMP would add them with its default "
+					"bone template, which makes them fall when its mass is above 0. add_bones before the copy if they're needed anyway.";
+			}
+			if (!report->second.rigidParts.empty()) {
+				json parts = json::array();
+				for (auto& part : report->second.rigidParts)
+					parts.push_back({{"vertices", part.first}, {"bone", part.second}});
+				out["rigidPartsKept"] = parts;
+			}
 		}
 		if (!skipped.empty())
 			tool.data["skippedBones"] = skipped;
+		if (!physicsMissing.empty()) {
+			std::sort(physicsMissing.begin(), physicsMissing.end());
+			physicsMissing.erase(std::unique(physicsMissing.begin(), physicsMissing.end()), physicsMissing.end());
+			tool.data["physicsXmlNotFound"] = physicsMissing;
+		}
 		tool.data["cleanedVertices"] = cleaned;
 		if (emptyRemoved)
 			tool.data["emptyBonesRemoved"] = emptyRemoved;

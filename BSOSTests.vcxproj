@@ -216,6 +216,7 @@
     <ClInclude Include="lib\LZ4F\xxhash.h" />
     <ClInclude Include="lib\nifly\include\Object3d.hpp" />
     <ClInclude Include="src\files\GameDataStream.h" />
+    <ClInclude Include="src\files\PhysicsXmlFile.h" />
     <ClInclude Include="src\files\SFMaterialResolver.h" />
     <ClInclude Include="src\utils\ConfigurationManager.h" />
     <ClInclude Include="lib\FSEngine\FSEngine.h" />
@@ -256,6 +257,7 @@
     <ClCompile Include="tests\MeshAnalysisTest.cpp" />
     <ClCompile Include="tests\MeshRefineTest.cpp" />
     <ClCompile Include="tests\OutfitProjectTest.cpp" />
+    <ClCompile Include="tests\PhysicsXmlFileTest.cpp" />
     <ClCompile Include="tests\PoseDataJsonTest.cpp" />
     <ClCompile Include="tests\SFMorphFileTest.cpp" />
     <ClCompile Include="tests\StarfieldSpaceTest.cpp" />
@@ -304,6 +306,7 @@
     <ClCompile Include="lib\nifly\src\Object3d.cpp" />
     <ClCompile Include="tests\StarfieldDataTest.cpp" />
     <ClCompile Include="src\files\GameDataStream.cpp" />
+    <ClCompile Include="src\files\PhysicsXmlFile.cpp" />
     <ClCompile Include="src\files\SFMaterialResolver.cpp" />
     <ClCompile Include="src\utils\ConfigurationManager.cpp" />
     <ClCompile Include="lib\FSEngine\FSEngine.cpp" />

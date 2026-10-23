@@ -1,5 +1,5 @@
 # Bone weights
-Copy and fix bone weights so an outfit moves well in poses and clips less: copying from the body, checking in poses, skirts and dresses, rigid parts, physics bones, and each game's main skeleton bones.
+Copy and fix bone weights so an outfit moves well in poses and clips less: copying from the body, keeping or copying weights, where copies go wrong, checking in poses, skirts and dresses, rigid parts, physics bones and SMP XMLs, and each game's main skeleton bones.
 
 Bone weights decide how each vertex follows the skeleton. Where the outfit sits on the body, it should move like the body under it, or the body pokes through in motion. Where it hangs free (skirts, capes, sleeves that flare), copying the body's weights tears it apart. Weights only show their problems when the body moves, so always check in poses.
 
@@ -8,6 +8,10 @@ Bone weights decide how each vertex follows the skeleton. Where the outfit sits 
 1. Load the body as reference (see `conform-sliders`) and mask what should keep its weights: hanging parts you'll weight separately, rigid pieces, parts weighted to physics bones of their own.
 2. **`copy_bone_weights`**: each vertex blends the weights of the nearby body vertices.
    - It skips placeholder bones named like "Don't copy this" (curtain references weight the legs to one) and `excludeBones`.
+   - **Bones the reference doesn't have keep their weights** (`keepOtherBones`, on by default): physics chains, skirt bones, bones only the outfit has. Reference bones left out with `excludeBones` aren't kept. The copied bones share what's left of each vertex, and the cleanup never drops a kept bone for a copied one. The result lists them per shape as `keptBones`. When they're bones of the old body that the new one replaces, `undo` and copy again with `keepOtherBones: false`, which lets the copy take each vertex over like the window does.
+   - **Parts on one bone stay rigid** (`keepRigidParts`, on by default): a connected part weighted at least 0.99 to one of the copied bones on every vertex (a buckle, a plate, a prop) keeps its weights, listed as `rigidPartsKept`. A copy would bend it with the body under it.
+   - **`addBones: false`** only copies the bones each shape has already, and lists the others as `bonesNotAdded`. Use it on an outfit that's weighted already: a full copy can add bones nobody would weight there, like genital or head bones on a vest, or forearm bones on hip pieces that hang next to the hands.
+   - A shape that a linked SMP physics XML simulates only gets the new bones the XML declares (`bonesNotDeclaredByPhysics`); see Physics below.
    - `cleanup` (on) limits the copied vertices to the game's bones per vertex (4, Starfield 8) and normalizes them. Bones it added that end up without weights (the leg bones of a top) are removed again (`removeEmptyBones`).
    - The result lists `bonesAdded`, `skippedBones` and the weight problems left. One `undo` takes it all back, added bones included.
    - Vertices farther than `proximityRadius` (10) from the body get no weights: the hem of a long dress left 158 vertices `unweighted` (the result has a `hint`). `undo` and copy again with a larger radius, e.g. 25.
@@ -15,6 +19,28 @@ Bone weights decide how each vertex follows the skeleton. Where the outfit sits 
 4. **Check in poses** (below).
 
 `transfer_weights` copies by vertex index instead, for shapes made from the body mesh (same vertex count and order).
+
+## Keep or copy
+
+An outfit that's weighted already doesn't need a copy on every shape. Decide per shape, or per part:
+
+- **Weights that were copied from the old body** follow it: copy them again from the new one. Find them before loading the new reference: `analyze_weights` with `compareToReference` against the source's own body. A low `deviation` where the shape sits close to the body means a body copy.
+- **Hand-made weights** carry what the author meant: a high deviation, gradients the body doesn't have, skirt or helper bones. Mask them and keep them, and copy only where the new body's shape breaks them.
+- Released conversions mostly do both: authors copy body-copied weights again and keep hand-made ones.
+- Copy with `addBones: false` on shapes that keep most of their bones.
+
+## Where copies go wrong
+
+Each of these shows only in motion, and mostly only in game. Check the poses named, and tell the user what to look at in game.
+
+- **Arms next to the hips.** Hip pieces, belts and pouches near the hands take forearm or hand weights and swing with the arms. Copy with `addBones: false` or `excludeBones`, and look at `render_view` `weightBone` on the forearms.
+- **The armpit.** A nearest copy cuts a hard border between the arm and torso bones, which tears with the arms up. Keep the source's gradient there (mask it before the copy), or `smooth_weights` on the arm and torso bones across it. Check "Arms Up" with `analyze_poses`, or `mask_ops` `from_analysis` `metric: "weight_jump"`.
+- **Split seams.** The copies of a vertex along a UV seam have to keep the same weights, or the seam opens in poses: `analyze_seams` finds them, `weld_seams` with `weights: true` fixes them.
+- **Stacked layers at the centre line.** Layers on top of each other (pants under a wrap, a shirt under a vest) have to split left and right at the same place, or the inner one shows through when walking. Weight the inner layer from the outer one where they overlap: `set_reference_shape` to the outer layer, mask the inner layer to the overlap, `copy_bone_weights`, then set the body back as the reference. Check with `analyze_clipping` `against` the outer layer in leg poses.
+- **Wrists and ankles.** Weights made for another body's hands or feet poke over the new ones when the wrist or ankle bends. Near the opening of the body, take the new body's weights on every layer of a glove or boot.
+- **Hoods and collars.** A face band or collar that lost its head or neck weights lags behind a turned head. No pose in the list turns the head: `set_preview_pose` with `aim` on the head bone, or ask the user to check in game.
+- **Belts and props held on the torso** shouldn't ride the thighs. `keepRigidParts` keeps parts on one bone; check the rest with `weightBone` on the thighs.
+- **Rigid or bending is a trade-off.** A rigid plate on the arm clips when the arm swings, a bending one warps. Copying is the default; ask the user which pieces should stay rigid.
 
 ## Checking in poses
 
@@ -32,6 +58,7 @@ Bone weights decide how each vertex follows the skeleton. Where the outfit sits 
 Every vertex of a weight copy takes the nearest body weights, so a skirt panel between the legs is split down the middle between the two thighs (or calves), with a hard border. It tears in every leg pose.
 
 1. **Don't copy from a curtain reference** whose legs are weighted to a placeholder bone: the panels would get no leg weights. Mask the panels and keep their original weights, or copy from the body and fix them.
+   - **When the source ties the cloth across both legs** (panels weighted to both thighs, or to skirt bones), keep its weights and its skirt bones: mask the panels before the copy. Copying the body's weights there makes the skirt pinch between the legs.
 2. **Hanging parts shouldn't follow the calves:** `reassign_weights` `from` the calf bones `to` the thigh of the same side (Skyrim: `NPC L Calf [LClf]` and `NPC L RearCalf [LrClf]` to `NPC L Thigh [LThg]`, the same for the right). Otherwise the hem folds with the knees. `toParent: true` moves each bone onto its parent instead. Remove emptied bones with `delete_bones` and `shapes` afterwards.
 3. **Mask what sits tight on the body** (`mask_ops` `parts` with the bodice or waistband), so it keeps the body's weights.
 4. **`auto_fix_weights`** with the poses (default all). It finds where a pose stretches the shape more than the body, blends there only the bones whose weights jump across those edges (the two thighs), over a radius that grows per step (2, 4, … 12), and keeps a step only when the peaks over all poses go down without one pose rising more than `maxPoseIncrease`. It applies the result as one undo step.
@@ -72,6 +99,12 @@ Physics mods move extra bones of the body (breasts, butt, belly, thighs) or clot
 - **Genital and anus bones** of bodies like 3BA and UBE are driven by physics too. A suit's crotch shouldn't follow them: copy with `excludeBones` for them (e.g. `Clitoral1`, `VaginaB1`, `NPC L Pussy02`, `NPC R Pussy02`, `NPC LB Anus2`, `NPC RB Anus2`, `NPC LT Anus2`, `NPC RT Anus2`; check the body's bones with `list_bones`).
 - **Rigid or stiff parts** (armour plates, belts) shouldn't jiggle: keep breast and butt physics bones off them with `reassign_weights` `toParent: true`.
 - **Skyrim SMP cloth** (skirts, capes) uses bones or per-vertex physics set up in an XML that the NIF links to. Keep the bones and weights the XML names when converting; renaming or removing them breaks the physics.
+  - The link is a string extra data named "HDT Skinned Mesh Physics Object" on the root node. Keep it as it is. The XML often belongs to another mod: don't change or ship it, and tell the user if it needs changes.
+  - **Bones the XML doesn't declare can fall.** SMP takes every bone a simulated shape is weighted to. A bone the XML doesn't declare before the shape gets the default bone template in force at that line, and when the XML raised its mass above 0, the bone is dynamic and falls: fur that a body weight copy gave body bones stretched to the floor. `copy_bone_weights` doesn't add such bones to simulated shapes, and `validate_project` warns about them (`undeclaredPhysicsBones`). Both read the XML from the game's data folder, next to the source NIF or from the loaded archives, and say when they can't find it (`physicsXmlNotFound`).
+  - Keep chain bones whole: don't prune their small weights with `clean_weights`. `keepOtherBones` keeps them in a weight copy.
+  - **Colliders** are shapes the XML uses to push the cloth away, often hidden body-shaped meshes. Conform them to the new body so they keep their distance to it. Hand-weighted colliders keep their weights. A collider that covers the whole body is copied again from the new body, or its old weights sink into it in motion.
+  - Body bounce bones (from other physics mods, e.g. CBPC) go on a collider only when the XML declares them.
+  - The tools only check the structure. Ask the user to judge physics in game.
 - **Fallout 4 cloth** is Havok cloth data (HKX) in the NIF: `physics_data` lists, imports and exports it. It's made for its mesh, so a mesh with changed vertices may need its cloth data rebuilt in other tools; tell the user.
 - No tool runs the window's physics preview. Ask the user to check physics in the window or in game.
 

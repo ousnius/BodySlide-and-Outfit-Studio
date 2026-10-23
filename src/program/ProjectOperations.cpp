@@ -111,6 +111,66 @@ void KeepPartsOutside(const std::vector<Vector3>& verts,
 		if (parts[v] >= 0 && influence[v] > 0.0f)
 			deltas[v] += offset[parts[v]] * influence[v];
 }
+
+// Masks the connected parts of a shape that are weighted at least 0.99 to one of the bones on every vertex, so
+// a weight copy leaves them as they are. Parts that are masked already in part are left alone.
+void MaskRigidParts(OutfitProject& project,
+					NiShape* shape,
+					const std::vector<std::string>& bones,
+					std::unordered_map<uint16_t, float>& mask,
+					std::vector<std::pair<size_t, std::string>>& outParts) {
+	constexpr float rigidWeight = 0.99f;
+
+	std::vector<Vector3> verts;
+	project.GetWorkNif()->GetVertsForShape(shape, verts);
+	std::vector<Triangle> tris;
+	shape->GetTriangles(tris);
+	int partCount = 0;
+	const std::vector<int> parts = MeshAnalysis::ConnectedParts(verts, tris, 0.001f, nullptr, &partCount);
+	if (partCount == 0)
+		return;
+
+	// The bone each part is on, -1 while none is found yet and -2 when it isn't rigid
+	std::vector<int> partBone(partCount, -1);
+	std::vector<size_t> partSize(partCount, 0);
+	std::vector<bool> partMasked(partCount, false);
+	std::vector<const std::unordered_map<uint16_t, float>*> weights;
+	for (auto& bone : bones)
+		weights.push_back(project.GetWorkAnim()->GetWeightsPtr(shape->name.get(), bone));
+
+	for (size_t v = 0; v < verts.size() && v < parts.size(); v++) {
+		const int p = parts[v];
+		if (p < 0)
+			continue;
+		partSize[p]++;
+		auto m = mask.find(static_cast<uint16_t>(v));
+		if (m != mask.end() && m->second > 0.0f)
+			partMasked[p] = true;
+		if (partBone[p] == -2)
+			continue;
+
+		int on = -2;
+		for (size_t b = 0; b < weights.size(); b++) {
+			if (!weights[b])
+				continue;
+			auto w = weights[b]->find(static_cast<uint16_t>(v));
+			if (w != weights[b]->end() && w->second >= rigidWeight) {
+				on = static_cast<int>(b);
+				break;
+			}
+		}
+		partBone[p] = partBone[p] == -1 || partBone[p] == on ? on : -2;
+	}
+
+	for (int p = 0; p < partCount; p++) {
+		if (partBone[p] < 0 || partMasked[p])
+			continue;
+		for (size_t v = 0; v < parts.size(); v++)
+			if (parts[v] == p)
+				mask[static_cast<uint16_t>(v)] = 1.0f;
+		outParts.emplace_back(partSize[p], bones[partBone[p]]);
+	}
+}
 } // namespace
 
 RefreshFlags ProjectOperations::ApplyShapeEdits(UndoStateProject& usp, bool bIsUndo) {
@@ -534,7 +594,10 @@ OpResult ProjectOperations::PrepareAdaptiveRefine(const std::vector<NiShape*>& s
 	return result;
 }
 
-OpResult ProjectOperations::CopyBoneWeights(const std::vector<NiShape*>& shapes, const BoneWeightCopyOptions& options, UndoStateProject& usp) {
+OpResult ProjectOperations::CopyBoneWeights(const std::vector<NiShape*>& shapes,
+											const BoneWeightCopyOptions& options,
+											UndoStateProject& usp,
+											std::map<std::string, BoneWeightCopyReport>* outReport) {
 	NiShape* baseShape = project.GetBaseShape();
 	if (!baseShape)
 		return OpResult::Fail("No reference shape is loaded.");
@@ -589,7 +652,26 @@ OpResult ProjectOperations::CopyBoneWeights(const std::vector<NiShape*>& shapes,
 			continue;
 		}
 
-		wxLogMessage("Copying bone weights to '%s'...", shape->name.get());
+		const std::string shapeName = shape->name.get();
+		const std::vector<std::string> bonesBefore = workAnim.shapeBones[shapeName];
+		auto hadBone = [&bonesBefore](const std::string& bone) { return std::find(bonesBefore.begin(), bonesBefore.end(), bone) != bonesBefore.end(); };
+		BoneWeightCopyReport report;
+
+		// The bones copied to this shape, without those it may not get
+		std::vector<std::string> copied(baseBones.begin(), baseBones.begin() + nCopyBones);
+		if (options.mayAddBone) {
+			auto blocked = std::remove_if(copied.begin(), copied.end(), [&](const std::string& bone) { return !hadBone(bone) && !options.mayAddBone(shapeName, bone); });
+			report.notAdded.assign(blocked, copied.end());
+			copied.erase(blocked, copied.end());
+		}
+		if (copied.empty()) {
+			wxLogWarning("No bones are left to copy to '%s'.", shapeName);
+			if (outReport)
+				(*outReport)[shapeName] = std::move(report);
+			continue;
+		}
+
+		wxLogMessage("Copying bone weights to '%s'...", shapeName);
 		host.StartSubProgress(static_cast<int>(i) * inc, static_cast<int>(i) * inc + inc);
 
 		if (options.copySkinTransform) {
@@ -606,24 +688,60 @@ OpResult ProjectOperations::CopyBoneWeights(const std::vector<NiShape*>& shapes,
 		}
 
 		usp.usss.resize(usp.usss.size() + 1);
-		usp.usss.back().shapeName = shape->name.get();
+		usp.usss.back().shapeName = shapeName;
 
 		std::unordered_map<uint16_t, float> mask;
-		if (Mesh* m = GetMesh(shape->name.get()))
+		if (Mesh* m = GetMesh(shapeName))
 			mask = MaskOps::GetMasked(*m);
 
-		std::vector<std::string> mergedBones = baseBones;
+		if (options.keepRigidParts)
+			MaskRigidParts(project, shape, copied, mask, report.rigidParts);
 
-		// For full copy, also add shape-specific bones not already in baseBones
-		if (options.selectedBones.empty()) {
-			std::vector<std::string> bones = workAnim.shapeBones[shape->name.get()];
-			for (auto& b : bones)
-				if (!std::binary_search(baseBones.begin(), baseBones.end(), b))
-					mergedBones.push_back(b);
+		std::vector<std::string> mergedBones = copied;
+		std::vector<std::string> shapeLockedBones = lockedBones;
+		bool shapeSpreadWeight = bSpreadWeight;
+
+		if (options.keepOtherBones) {
+			// Bones of the shape that the reference doesn't have keep their weights. Reference bones left out of the
+			// copy (excluded ones) are normalized with the copied bones as before.
+			const std::vector<std::string>& referenceBones = workAnim.shapeBones[baseShape->name.get()];
+			shapeLockedBones.clear();
+			shapeSpreadWeight = false;
+			for (auto& bone : bonesBefore) {
+				if (std::find(copied.begin(), copied.end(), bone) != copied.end())
+					continue;
+				if (std::find(referenceBones.begin(), referenceBones.end(), bone) != referenceBones.end()) {
+					mergedBones.push_back(bone);
+					continue;
+				}
+				shapeLockedBones.push_back(bone);
+				auto weights = workAnim.GetWeightsPtr(shapeName, bone);
+				if (weights && !weights->empty())
+					report.keptBones.push_back(bone);
+			}
+		}
+		else {
+			mergedBones.insert(mergedBones.end(), baseBones.begin() + nCopyBones, baseBones.end());
+
+			// For full copy, also add shape-specific bones not already in baseBones
+			if (options.selectedBones.empty()) {
+				for (auto& b : bonesBefore)
+					if (!std::binary_search(baseBones.begin(), baseBones.end(), b))
+						mergedBones.push_back(b);
+			}
 		}
 
-		const std::vector<std::string> bonesBefore = workAnim.shapeBones[shape->name.get()];
-		project.CopyBoneWeights(shape, options.proximityRadius, options.maxResults, mask, mergedBones, nCopyBones, lockedBones, usp.usss.back(), bSpreadWeight);
+		project.CopyBoneWeights(shape,
+								options.proximityRadius,
+								options.maxResults,
+								mask,
+								mergedBones,
+								static_cast<int>(copied.size()),
+								shapeLockedBones,
+								usp.usss.back(),
+								shapeSpreadWeight);
+		if (outReport)
+			(*outReport)[shapeName] = std::move(report);
 		for (auto& bw : usp.usss.back().boneWeights)
 			bw.addedBone = std::find(bonesBefore.begin(), bonesBefore.end(), bw.boneName) == bonesBefore.end();
 		host.EndProgress();

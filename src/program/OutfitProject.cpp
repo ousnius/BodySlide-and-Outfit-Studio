@@ -7540,6 +7540,23 @@ std::unique_ptr<std::istream> OutfitProject::GetPhysicsXmlStream(const std::stri
 	return GameDataStream::OpenPhysicsXml(xmlPath, activeSet.GetInputFileName());
 }
 
+std::vector<std::pair<std::string, PhysicsXmlFile>> OutfitProject::ReadPhysicsXmls(const std::string& shapeName, std::vector<std::string>* outMissing) {
+	std::vector<std::pair<std::string, PhysicsXmlFile>> files;
+	auto links = shapePhysicsFiles.find(shapeName);
+	if (links == shapePhysicsFiles.end())
+		return files;
+
+	for (auto& xmlPath : links->second) {
+		PhysicsXmlFile file;
+		auto stream = GetPhysicsXmlStream(xmlPath);
+		if (stream && file.Load(*stream))
+			files.emplace_back(xmlPath, std::move(file));
+		else if (outMissing)
+			outMissing->push_back(xmlPath);
+	}
+	return files;
+}
+
 void OutfitProject::ValidateNIF(NifFile& nif, const std::string& nifFilePath) {
 	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 	bool match = false;

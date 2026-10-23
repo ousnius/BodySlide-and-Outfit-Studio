@@ -56,6 +56,8 @@ A zap slider removes vertices in BodySlide instead of moving them: the body unde
   - `gap`: vertices the slider squashes into the body or pulls away from it.
 - **`analyze_slider`** looks at one slider; `withFlipped` returns the vertices of the folds to look at or mask.
 - **`analyze_fit`** checks that each slider keeps the outfit's distance to the body where it's close (`maxDistance`, default 2): `tightened` hug or squash into the body, `loosened` drift away. A good conform keeps the gap. Fix it with `mask_ops` `from_analysis` `metric: "gap_change"`, then smoothing or a brush on that slider.
+  - **A slider may not leave the outfit behind the skin** by more than the gap it has. Skin-tight shapes that move a little less than the body under them poke through at high slider values, even when every slider looks fine at 0.5.
+- **Layers crossing at rest.** A conform works on each shape on its own, so an outer layer can cross the one under it after a conform. Released conversions show it too: fix it only where it shows (`analyze_clipping` `against` the inner layer, then `render_view`).
 - **`analyze_seams`** finds vertices at the same place (split UV seams, shapes meeting, the outfit meeting the body at the neck or wrists) that sliders pull apart, and seams whose sides are weighted differently. **`weld_seams`** gives each seam one morph (the body's where the outfit meets it), with `weights: true` also the same weights.
 - **`render_view`** with `variants` at 0 and 1 of the worst sliders, and `show_heatmap` `kind: "slider"` for how far each vertex moves.
 
