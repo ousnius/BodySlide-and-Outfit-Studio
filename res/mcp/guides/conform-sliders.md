@@ -1,5 +1,5 @@
 # Conforming sliders
-Give an outfit a body's sliders so it morphs with the body in BodySlide: loading the reference, conforming, rigid parts, hanging parts, zap sliders, editing morphs by hand, and checking each slider.
+Give an outfit a body's sliders so it morphs with the body in BodySlide: loading the reference, conforming, rigid parts, hanging parts, zap sliders, editing morphs by hand, body morphs that only one outfit has, and checking each slider.
 
 Conforming copies the body's slider morphs onto the outfit: each outfit vertex takes the morphs of the nearby body vertices. It's how an outfit without sliders gets them, and the core step of a body conversion (see `body-conversion`). It only works where the outfit has the body's shape at rest; if it doesn't, convert the shape first.
 
@@ -69,4 +69,22 @@ A zap slider removes vertices in BodySlide instead of moving them: the body unde
 - `get_slider_deltas` and `set_slider_deltas` read and write morphs directly.
 - `new_slider` (`empty`, `zap`, or `combined` from the current slider values), `clone_slider`, `negate_sliders`, `clear_slider_data` (`useMask` for the unmasked part only), `delete_sliders`.
 - `import_slider_data` reads OSD and TRI files, or a NIF, OBJ, FBX or BSD file with the same vertex order as one slider (e.g. a morph sculpted elsewhere). `export_slider_data` writes them.
+  - A BSD file holds only the moved vertices: a uint32 count, then per vertex a uint32 index and three floats, the delta in NIF units as `get_slider_deltas` shows it. With `fromFolder`, files named `Shape#Slider.bsd` fill that slider of that shape. That makes it the simplest way to bring in a morph computed by a script.
 - Sliders that go both ways ("n|p" or "p|n" in the name) share one morph for both directions: fixing it at -1 can break +1, so sweep both after.
+
+## Outfit-specific body morphs
+
+When the body is saved with the outfit (`copyReference`), a slider can move the body too, and only under this outfit: tight fabric pressing into the skin, flesh bulging over an edge or a strap. Make it on the body, then let the outfit follow:
+
+1. `new_slider` (empty). Set the slider values the morph is meant for first: a morph made on one body shape (a preset) won't line up with the outfit's edges on a much different one. Save it in that preset, or give it `defaultSmall`/`defaultBig` 100 when it should always be on.
+2. Edit the body's morph. Tools that change geometry or morphs (`transform_shapes`, `scale_slider_deltas`, `clear_slider_data`) refuse the reference: `set_reference_shape` `unset: true`, edit, then `set_reference_shape` back. Changing the reference sets the slider values back to 0, so set them again before measuring or rendering.
+3. `conform_sliders` with only that slider onto the outfit, so it sits on the moved body. Or compute the outfit's deltas together with the body's (below).
+4. `analyze_clipping` with the slider and the values it's made for (`zeroOthers: false`), and `render_view` before and after.
+
+**Masks give hard edges.** Box masks with a move or inflate leave creases at the mask border that `mask_ops` `smooth` doesn't remove, and outfit and body masks soften differently (different mesh density), so the outfit sinks in or floats. For a smooth result, compute the deltas instead:
+
+- Read positions, normals and triangles with `get_shape_geometry` (in ranges of up to 20000 vertices). The body's weights (`get_weights` `all: true`) tell the limbs apart, e.g. to keep a bulge off the arms; bodies often weight the sides of the breasts to the upper arm too, so use the weight values, not `bone_weighted`.
+- Mark the body vertices under the fabric (within a few tenths of a unit of an outfit triangle) and take the signed distance to the edge of that area, negative under the fabric.
+- Move the body along its normals by a smooth profile of that distance: sinking under the fabric, gently from the edge inwards, and bulging just outside, peaking about a unit past the edge and fading out. Zero slope on both sides of the edge avoids a crease; the fabric edge then sits in a groove between the two. Smooth the result over neighbours within a radius.
+- Give each outfit vertex the body's displacement under it (blend the nearest body vertices), then write both as BSD files and import them.
+- Parts that bridge a gap over the body (a band across the cleavage, straps between knots) sit away from the surface. Check them after a conform: they can take uneven morphs and kink, or end up behind a bulge. `set_slider_deltas` with `add: true` moves them by hand.

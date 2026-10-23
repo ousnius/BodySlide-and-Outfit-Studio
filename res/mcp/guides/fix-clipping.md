@@ -31,8 +31,8 @@ Set this up right after loading the reference, before measuring anything. Result
 2. Mask everything but the area, with a soft border, in one call: `mask_ops` `op: "from_analysis"`, `metric: "clipping"`, the case's `sliderValues` or `preset`, `grow` 2–3, `feather` 3–5. Partly masked vertices around the area take part of the fix, so it blends in instead of leaving a step. Check the mask with `render_view` `display.mask` and `focus` `{shape, unmasked: true}`. By hand: `set_mask` with the vertices, `mask_ops` `grow` and `smooth`, then `invert`.
 3. `fix_clipping` with `strength` 0.1 (the default):
    - `mode: "shapes"` for clipping at rest, in the base shape. It measures with the current slider values, so `zero_sliders` first.
-   - `mode: "sliders"` with only the case's slider(s), for clipping a slider adds. The fix goes into those sliders' morphs.
-   - `mode: "combination"` with the combination's `sliderValues` or a `preset`, for clipping only a combination has. It shares the push among the sliders by how far each moves the vertex.
+   - `mode: "sliders"` with only the case's slider(s), for clipping a slider adds. The fix goes into those sliders' morphs. It measures each slider with all others at 0.
+   - `mode: "combination"` with the combination's `sliderValues` or a `preset`, for clipping only a combination has. It shares the push among the sliders by how far each moves the vertex. A morph made for one body shape (e.g. an outfit-specific body morph, see `conform-sliders`) is fixed this way, with `sliders` set to only it: `"sliders"` mode measures it on the body at 0 and can make it worse.
 4. Check with `analyze_clipping` or `quality_sweep` for that case (new clipping, flipped triangles, roughness), and a `render_view`. If clipping remains, raise the strength by 0.05–0.1 and repeat. **Stop as soon as flipped triangles or roughness rise noticeably**: a second pass at 0.2 made one slider's clipping deeper (0.14→0.27) with more folds.
 5. `mask_ops` `op: "clear"`.
 
