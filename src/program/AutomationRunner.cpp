@@ -1688,6 +1688,18 @@ int AutomationRunner::ExecuteStepExportFile(const AutomationStep& step) {
 	wxString ext = wxFileName(wxString::FromUTF8(exportPath)).GetExt().Lower();
 	options.withReference = step.exportWithRef || ext == "obj" || ext == "fbx";
 
+	// A head TRI file holds the morphs of a single shape. Without target meshes, that's the only non-reference shape.
+	if (ext == "tri" && step.exportHeadTri) {
+		auto shapes = ResolveTargetShapes(step, false);
+		if (shapes.size() != 1) {
+			wxLogError("Automation: ExportFile - a head TRI file needs exactly one target shape, found %zu. Specify the shape in Target Meshes.", shapes.size());
+			return 1;
+		}
+
+		options.headTri = true;
+		options.shapes.push_back(shapes.front()->name.get());
+	}
+
 	OpResult result = ProjectOperations(*project, outfitStudio->editor).ExportFile(exportPath, options);
 	if (!result.ok) {
 		wxLogError("Automation: ExportFile - %s", result.error);

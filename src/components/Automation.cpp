@@ -257,6 +257,7 @@ std::vector<AutomationStepInfo> BuildStepTypes() {
 		{
 			FieldString("FilePath", &Step::exportFilePath, nullptr),
 			FieldBool("WithRef", &Step::exportWithRef, true, "chkExportWithRef"),
+			FieldBool("HeadTri", &Step::exportHeadTri, false, "chkExportHeadTri"),
 			FieldBool("UseOriginalPath", &Step::exportUseOriginalPath, false),
 			FieldString("Prefix", &Step::exportPrefix, "txtExportPrefix"),
 			FieldString("Suffix", &Step::exportSuffix, "txtExportSuffix"),
