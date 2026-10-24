@@ -6,6 +6,7 @@ See the included LICENSE file
 #pragma once
 
 #include "../components/Automation.h"
+#include "../files/ObjFile.h"
 
 #include <map>
 #include <string>
@@ -29,6 +30,8 @@ public:
 
 	// Unattended runs import with default options instead of asking for them
 	void SetHeadless(bool headless) { headlessMode = headless; }
+	// Options of unattended OBJ imports
+	void SetObjImportOptions(const ObjImportOptions& options) { objImportOptions = options; }
 
 	// Starts a run with the script's variables. Set Variable steps add to them during the run.
 	void BeginRun(const std::map<std::string, std::string>& baseVariables);
@@ -61,6 +64,7 @@ private:
 	OutfitStudioFrame* outfitStudio = nullptr;
 	OutfitProject* project = nullptr;
 	bool headlessMode = false;
+	ObjImportOptions objImportOptions;
 
 	// Variables defined by Set Variable steps while a script runs. Substituted into
 	// every following step, on top of the up front pass over the placeholder table.

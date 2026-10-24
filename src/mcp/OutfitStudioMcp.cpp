@@ -30,7 +30,7 @@ constexpr const char* Instructions =
 	"window can't undo take an automatic snapshot first (autoSnapshot in their result); snapshot_restore goes back "
 	"to it and snapshot_diff shows what changed. Before saving, validate_project checks for problems in game. "
 	"Before a task, read its guide with get_guide: basics (read first), body-conversion, conform-sliders, "
-	"fix-clipping, bone-weights, cross-game and posing.";
+	"fix-clipping, bone-weights, cross-game, external-models and posing.";
 
 // Tools that change the project in ways the window's undo can't take back. An automatic snapshot is taken
 // before each, so an agent can always go back.
@@ -45,12 +45,13 @@ const std::set<std::string> AutoSnapshotTools = {
 	"edit_bone", "delete_bones", "set_bone_transforms", "transfer_weights", "remove_skinning",
 	"apply_pose_to_mesh", "fix_bad_bones", "new_slider", "clone_slider", "negate_sliders", "clear_slider_data",
 	"delete_sliders", "set_slider_properties", "import_slider_data", "physics_data", "transfer_zaps", "auto_fix_clipping", "import_from_game",
+	"fit_to_body",
 };
 
 // Tools that replace the project or overwrite files, which a snapshot doesn't bring back
 const std::set<std::string> DestructiveTools = {
 	"new_project", "load_project", "save_project", "export_file", "export_slider_data", "save_preset",
-	"save_pose", "mask_file", "snapshot_delete", "snapshot_restore", "write_material",
+	"save_pose", "mask_file", "snapshot_delete", "snapshot_restore", "write_material", "convert_textures",
 };
 
 const char* LevelName(HostMessageLevel level) {
@@ -95,6 +96,8 @@ OutfitStudioMcp::OutfitStudioMcp(OutfitStudioFrame* inFrame)
 	AddBoneTools(*this);
 	AddSliderFileTools(*this);
 	AddQualityTools(*this);
+	AddFittingTools(*this);
+	AddTextureTools(*this);
 	AddGameTools(*this);
 	AddGuideTools(*this);
 }

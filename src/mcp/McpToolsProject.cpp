@@ -11,6 +11,11 @@ See the included LICENSE file
 #include "../utils/GameUtil.h"
 #include "../utils/ProjectUtil.h"
 
+#include <cctype>
+#include <filesystem>
+#include <fstream>
+#include <sstream>
+
 #include <wx/dir.h>
 #include <wx/filename.h>
 
@@ -63,6 +68,65 @@ void CheckPendingChanges(OutfitStudioFrame* frame, const json& args) {
 		throw McpToolError("The project has unsaved changes. Save it with save_project first, or pass discardChanges: true to drop them.");
 
 	frame->SetPendingChanges(false);
+}
+
+// The objects of an OBJ file with their material and its texture maps from the .mtl files it names
+json ObjObjects(const std::string& path) {
+	std::ifstream file(std::filesystem::u8path(path));
+	std::vector<std::string> mtlFiles;
+	json objects = json::array();
+	std::string line;
+	while (std::getline(file, line)) {
+		std::istringstream iss(line);
+		std::string cmd, value;
+		iss >> cmd >> value;
+		if (cmd == "o" || cmd == "g")
+			objects.push_back({{"name", value}});
+		else if (cmd == "usemtl" && !objects.empty() && !objects.back().contains("material"))
+			objects.back()["material"] = value;
+		else if (cmd == "mtllib") {
+			// File names can have spaces
+			std::string rest;
+			if (std::getline(iss, rest))
+				value += rest;
+			while (!value.empty() && std::isspace(static_cast<unsigned char>(value.back())))
+				value.pop_back();
+			if (!value.empty())
+				mtlFiles.push_back(value);
+		}
+	}
+
+	// Map statements to their texture files, relative paths made absolute to the .mtl
+	std::map<std::string, json> materials;
+	const std::filesystem::path folder = std::filesystem::u8path(path).parent_path();
+	for (auto& mtlFile : mtlFiles) {
+		std::ifstream mtl(folder / std::filesystem::u8path(mtlFile));
+		std::string current;
+		while (std::getline(mtl, line)) {
+			if (!line.empty() && line.back() == '\r')
+				line.pop_back();
+			std::istringstream iss(line);
+			std::string cmd;
+			iss >> cmd;
+			if (cmd == "newmtl")
+				iss >> current;
+			else if (cmd.rfind("map_", 0) == 0 && !current.empty()) {
+				// The file is the last token, after options like "-bm 1.0"
+				std::string token, texture;
+				while (iss >> token)
+					texture = token;
+				if (!texture.empty())
+					materials[current][cmd] = (folder / std::filesystem::u8path(texture)).lexically_normal().u8string();
+			}
+		}
+	}
+
+	for (auto& object : objects) {
+		auto mat = materials.find(object.value("material", std::string()));
+		if (mat != materials.end())
+			object["textures"] = mat->second;
+	}
+	return objects;
 }
 
 const json DiscardChangesProp = McpProp("boolean", "Drop unsaved changes of the open project. Default false, which refuses when there are any.");
@@ -352,12 +416,22 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 		"Imports a NIF, OBJ, FBX or head TRI file into the project as outfit shapes, with default import options, or "
 		"with fromFolder every such file of a folder. TRI files next to a NIF add their morphs as sliders, and a head "
 		"TRI file becomes a shape with its morphs as sliders. Slider data of existing shapes comes from "
-		"import_slider_data.";
+		"import_slider_data. OBJ files from other programs (Blender, sculpting tools) take upAxis, scale, objects and "
+		"skipObjects; each of their objects becomes a shape, and the result lists the objects with their material and "
+		"its texture files from the .mtl. OBJ units are imported times 10, like Outfit Studio's OBJ export divides "
+		"them; a figure made at real-world height in meters comes in at about a tenth of the game's size.";
 	importFile.inputSchema = McpSchema(
 		{
 			{"path", McpProp("string", "File or folder to import (absolute or relative to the BodySlide folder)")},
 			{"fromFolder", McpProp("boolean", "path is a folder. Default false.")},
 			{"triSliders", McpProp("boolean", "Load the morphs of TRI files as sliders. Default true.")},
+			{"upAxis",
+			 {{"type", "string"},
+			  {"enum", {"z", "y"}},
+			  {"description", "OBJ: the file's up axis. \"y\" for files that are Y up and face +Z (Blender's default OBJ export): they are turned to Z up, facing +Y like the games. Default \"z\"."}}},
+			{"scale", McpProp("number", "OBJ: scale on import, on top of the factor 10. Default 1.")},
+			{"objects", McpStringList("OBJ: only import these objects")},
+			{"skipObjects", McpStringList("OBJ: don't import these objects")},
 		},
 		{"path"});
 	importFile.handler = [&mcp, frame](const json& args) {
@@ -366,8 +440,43 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 		if (fromFolder ? !wxFileName::DirExists(wxString::FromUTF8(path)) : !wxFileName::FileExists(wxString::FromUTF8(path)))
 			throw McpToolError("There is no " + std::string(fromFolder ? "folder" : "file") + " '" + path + "'.");
 
-		McpRunStep(mcp, {{"type", "ImportFile"}, {"FilePath", path}, {"FromFolder", fromFolder}, {"TRISliders", McpArgs::Bool(args, "triSliders", true)}});
-		return GetStatus(frame);
+		ObjImportOptions objOptions;
+		objOptions.YUp = McpArgs::String(args, "upAxis", "z") == "y";
+		objOptions.Scale = McpArgs::Float(args, "scale", 1.0f);
+		if (objOptions.Scale <= 0.0f)
+			throw McpToolError("Argument 'scale' has to be above 0.");
+
+		const bool isObj = !fromFolder && wxFileName(wxString::FromUTF8(path)).GetExt().Lower() == "obj";
+		json objects;
+		if (isObj) {
+			objects = ObjObjects(path);
+			std::vector<std::string> only = McpArgs::Strings(args, "objects");
+			std::vector<std::string> skip = McpArgs::Strings(args, "skipObjects");
+			if (!only.empty() || !skip.empty()) {
+				objOptions.ImportAll = false;
+				std::set<std::string> known;
+				for (auto& object : objects)
+					known.insert(object["name"].get<std::string>());
+				for (auto& name : only)
+					if (!known.count(name))
+						throw McpToolError("The OBJ file has no object '" + name + "'.");
+				for (auto& name : known)
+					if ((only.empty() || std::find(only.begin(), only.end(), name) != only.end()) && std::find(skip.begin(), skip.end(), name) == skip.end())
+						objOptions.ImportShapes.insert(name);
+				if (objOptions.ImportShapes.empty())
+					throw McpToolError("objects and skipObjects leave no object to import.");
+			}
+		}
+
+		McpRunStep(mcp, {{"type", "ImportFile"}, {"FilePath", path}, {"FromFolder", fromFolder}, {"TRISliders", McpArgs::Bool(args, "triSliders", true)}}, &objOptions);
+
+		McpToolResult result = GetStatus(frame);
+		if (isObj) {
+			for (auto& object : objects)
+				object["imported"] = objOptions.ImportAll || objOptions.ImportShapes.count(object["name"].get<std::string>()) > 0;
+			result.data["objObjects"] = objects;
+		}
+		return result;
 	};
 	mcp.AddTool(std::move(importFile));
 

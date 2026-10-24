@@ -61,6 +61,8 @@ void ObjFile::LoadNoFaces(std::istream& ins, const ObjImportOptions& options) {
 		if (cmd == "v") {
 			Vector3 v;
 			lineiss >> v.x >> v.y >> v.z;
+			if (options.YUp)
+				v = Vector3(-v.x, v.z, v.y);
 			v = mat * v;
 			d.verts.push_back(v);
 		}
@@ -152,6 +154,8 @@ void ObjFile::LoadForNif(std::istream& ins, const ObjImportOptions& options) {
 		if (cmd == "v") {
 			Vector3 v;
 			lineiss >> v.x >> v.y >> v.z;
+			if (options.YUp)
+				v = Vector3(-v.x, v.z, v.y);
 			v = mat * v;
 			verts.push_back(v);
 		}
@@ -175,6 +179,8 @@ void ObjFile::LoadForNif(std::istream& ins, const ObjImportOptions& options) {
 		else if (cmd == "vn") {
 			Vector3 vn;
 			lineiss >> vn.x >> vn.y >> vn.z;
+			if (options.YUp)
+				vn = Vector3(-vn.x, vn.z, vn.y);
 			vn = matRot * vn;
 			norms.push_back(vn);
 		}

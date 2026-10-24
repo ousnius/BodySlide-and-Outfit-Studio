@@ -335,7 +335,10 @@ set(BSOS_COMMON_SOURCES
 	src/components/MaskOps.cpp
 	src/components/MeshAnalysis.cpp
 	src/components/MeshRefine.cpp
+	src/components/PoseFit.cpp
 	src/components/PoseMath.cpp
+	src/components/SurfaceFit.cpp
+	src/components/TextureConvert.cpp
 	src/components/DiffData.cpp
 	src/components/Mesh.cpp
 	src/components/NormalGenLayers.cpp
@@ -429,6 +432,7 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/mcp/McpToolsAutomation.cpp
 	src/mcp/McpToolsBones.cpp
 	src/mcp/McpToolsEdit.cpp
+	src/mcp/McpToolsFitting.cpp
 	src/mcp/McpToolsGames.cpp
 	src/mcp/McpToolsGuides.cpp
 	src/mcp/McpToolsProject.cpp
@@ -436,6 +440,7 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/mcp/McpToolsShapes.cpp
 	src/mcp/McpToolsSliderFiles.cpp
 	src/mcp/McpToolsSliders.cpp
+	src/mcp/McpToolsTextures.cpp
 	src/mcp/McpToolsView.cpp
 	src/render/GLCanvas.cpp
 	src/render/GLDialog.cpp
@@ -517,6 +522,7 @@ if(BSOS_BUILD_TESTS)
 		tests/OutfitProjectTest.cpp
 		tests/PhysicsXmlFileTest.cpp
 		tests/PoseDataJsonTest.cpp
+		tests/PoseFitTest.cpp
 		tests/PoseMathTest.cpp
 		tests/SFMaterialDatabaseTest.cpp
 		tests/SFLayeredMaterialTest.cpp
@@ -525,6 +531,8 @@ if(BSOS_BUILD_TESTS)
 		tests/SFResourceHashTest.cpp
 		tests/StarfieldDataTest.cpp
 		tests/StarfieldSpaceTest.cpp
+		tests/SurfaceFitTest.cpp
+		tests/TextureConvertTest.cpp
 		src/components/ArchiveIndex.cpp
 		src/components/Automation.cpp
 		src/components/AutomationJson.cpp
@@ -533,7 +541,10 @@ if(BSOS_BUILD_TESTS)
 		src/components/MaskTransfer.cpp
 		src/components/MeshAnalysis.cpp
 		src/components/MeshRefine.cpp
+		src/components/PoseFit.cpp
 		src/components/PoseMath.cpp
+		src/components/SurfaceFit.cpp
+		src/components/TextureConvert.cpp
 		src/components/Anim.cpp
 		src/components/Automorph.cpp
 		src/components/DiffData.cpp

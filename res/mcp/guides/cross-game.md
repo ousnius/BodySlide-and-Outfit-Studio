@@ -68,7 +68,7 @@ The NIF's shader names a material file (BGSM, or BGEM for effects) under `Materi
 - **BGEM effect materials** need an effect shader in Skyrim; only their textures are set.
 - **PBR materials** (Fallout 76) don't map to Skyrim's lighting shader.
 
-The tools don't convert texture files. Tell the user which maps to make and how, or use a texture tool (e.g. texconv) if one is available to you.
+`convert_textures` makes Skyrim and Fallout 4 maps from PBR maps (base color, normal, roughness or gloss, metallic, ambient occlusion, opacity); see `external-models`. For channel work it doesn't cover, like rebuilding a Fallout 4 normal map's blue channel, tell the user which maps to make and how, or use a texture tool (e.g. texconv) if one is available to you.
 
 ### Skyrim to Fallout 4
 

@@ -79,7 +79,12 @@ McpToolResult StepsResult(const json& steps, bool failed) {
 
 } // namespace
 
-json McpRunSteps(OutfitStudioMcp& mcp, const std::vector<AutomationStep>& steps, const std::map<std::string, std::string>& variables, bool stopOnError, bool& failed) {
+json McpRunSteps(OutfitStudioMcp& mcp,
+				 const std::vector<AutomationStep>& steps,
+				 const std::map<std::string, std::string>& variables,
+				 bool stopOnError,
+				 bool& failed,
+				 const ObjImportOptions* objOptions) {
 	OutfitStudioFrame* frame = mcp.GetFrame();
 	failed = false;
 
@@ -93,6 +98,8 @@ json McpRunSteps(OutfitStudioMcp& mcp, const std::vector<AutomationStep>& steps,
 	AutomationRunner runner(frame);
 	// Imports take their default options instead of asking
 	runner.SetHeadless(true);
+	if (objOptions)
+		runner.SetObjImportOptions(*objOptions);
 	runner.BeginRun(variables);
 
 	json results = json::array();
@@ -124,14 +131,14 @@ json McpRunSteps(OutfitStudioMcp& mcp, const std::vector<AutomationStep>& steps,
 	return results;
 }
 
-void McpRunStep(OutfitStudioMcp& mcp, const json& stepJson) {
+void McpRunStep(OutfitStudioMcp& mcp, const json& stepJson, const ObjImportOptions* objOptions) {
 	AutomationStep step;
 	std::string error;
 	if (!AutomationStepFromJson(stepJson, step, error))
 		throw McpToolError(error);
 
 	bool failed = false;
-	McpRunSteps(mcp, {step}, {}, true, failed);
+	McpRunSteps(mcp, {step}, {}, true, failed, objOptions);
 	if (failed)
 		throw McpToolError("The " + stepJson.value("type", std::string()) + " step failed, see 'log'.");
 }

@@ -724,7 +724,7 @@ std::vector<NiShape*> AutomationRunner::ResolveTargetShapes(const AutomationStep
 }
 int AutomationRunner::ImportOBJFile(const std::string& fileName) {
 	if (headlessMode)
-		return project->ImportOBJ(fileName, ObjImportOptions());
+		return project->ImportOBJ(fileName, objImportOptions);
 
 	return outfitStudio->ImportOBJWithDialog(fileName);
 }

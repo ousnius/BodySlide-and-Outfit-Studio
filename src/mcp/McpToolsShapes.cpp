@@ -662,6 +662,7 @@ McpToolResult GetShapeProperties(OutfitStudioMcp& mcp, const json& args) {
 				 {"skinTinted", shader->IsSkinTinted()},
 				 {"environmentMapping", shader->HasEnvironmentMapping()},
 				 {"emissive", shader->IsEmissive()},
+				 {"specular", shader->HasSpecular()},
 			 }},
 		};
 	}
@@ -1373,22 +1374,68 @@ void AddShapeTools(OutfitStudioMcp& mcp) {
 		"SpecularColor [r, g, b], SpecularStrength, SpecularPower, EmissiveColor [r, g, b, a], EmissiveMultiple, "
 		"Alpha, EnvMapScale, EyeCubemapScale, UVOffset [u, v], UVScale [u, v], LightingEffect1, LightingEffect2, "
 		"SkinTintColor [r, g, b], HairTintColor [r, g, b], RefractionStrength. Properties the shader doesn't have "
-		"are skipped with a log entry.";
-	shaderProps.inputSchema = McpSchema(
-		{
-			{"shapes", ShapesProp},
-			{"properties", {{"type", "object"}, {"description", "Property name to a number, a list of numbers or text"}}},
-		},
-		{"properties"});
+		"are skipped with a log entry. flags turns shader flags of Skyrim's lighting shader on or off, e.g. "
+		"{\"doubleSided\": true} for a cape seen from both sides, {\"specular\": true} for the normal map's specular "
+		"mask, {\"emissive\": false}.";
+	shaderProps.inputSchema = McpSchema({
+		{"shapes", ShapesProp},
+		{"properties", {{"type", "object"}, {"description", "Property name to a number, a list of numbers or text"}}},
+		{"flags",
+		 {{"type", "object"},
+		  {"additionalProperties", {{"type", "boolean"}}},
+		  {"description", "Flag name to on or off: specular, environmentMapping, emissive (own emit), castShadows, receiveShadows, "
+						  "modelSpaceNormals, doubleSided, vertexColors, glowMap, softLighting, rimLighting, backLighting"}}},
+	});
 	shaderProps.handler = [&mcp](const json& args) {
 		const json* props = McpArgs::Find(args, "properties");
-		if (!props || !props->is_object() || props->empty())
-			McpArgs::Wrong("properties", "an object of property names to values");
-		json list = json::array();
-		for (auto& item : props->items())
-			list.push_back(ShaderPropertyEntry(item.key(), item.value()));
-		json names = Names(mcp.Shapes(args, "shapes", true));
-		McpRunStep(mcp, {{"type", "SetShaderProperties"}, {"TargetMeshes", names}, {"ShaderProperties", list}});
+		const json* flags = McpArgs::Find(args, "flags");
+		if ((!props || !props->is_object() || props->empty()) && (!flags || !flags->is_object() || flags->empty()))
+			McpArgs::Wrong("properties", "an object of property names to values, or flags an object of flag names to true or false");
+		std::vector<NiShape*> shapes = mcp.Shapes(args, "shapes", true);
+		json names = Names(shapes);
+
+		if (flags && flags->is_object()) {
+			// Flag name to its word (1 or 2) and bit
+			static const std::map<std::string, std::pair<int, uint32_t>> flagBits = {
+				{"specular", {1, SLSF1_SPECULAR}},
+				{"environmentMapping", {1, SLSF1_ENVIRONMENT_MAPPING}},
+				{"emissive", {1, SLSF1_OWN_EMIT}},
+				{"castShadows", {1, SLSF1_CAST_SHADOWS}},
+				{"receiveShadows", {1, SLSF1_RECEIVE_SHADOWS}},
+				{"modelSpaceNormals", {1, SLSF1_MODEL_SPACE_NORMALS}},
+				{"doubleSided", {2, SLSF2_DOUBLE_SIDED}},
+				{"vertexColors", {2, SLSF2_VERTEX_COLORS}},
+				{"glowMap", {2, SLSF2_GLOW_MAP}},
+				{"softLighting", {2, SLSF2_SOFT_LIGHTING}},
+				{"rimLighting", {2, SLSF2_RIM_LIGHTING}},
+				{"backLighting", {2, SLSF2_BACK_LIGHTING}},
+			};
+			for (auto& item : flags->items())
+				if (!flagBits.count(item.key()) || !item.value().is_boolean())
+					throw McpToolError("'" + item.key() + "' isn't a shader flag this takes, or its value isn't true or false.");
+
+			OutfitProject& project = mcp.Project();
+			for (NiShape* shape : shapes) {
+				auto* shader = dynamic_cast<BSLightingShaderProperty*>(project.GetWorkNif()->GetShader(shape));
+				if (!shader)
+					throw McpToolError("'" + shape->name.get() + "' has no lighting shader (BSLightingShaderProperty) for these flags.");
+				for (auto& item : flags->items()) {
+					const auto& bit = flagBits.at(item.key());
+					uint32_t& word = bit.first == 1 ? shader->shaderFlags1 : shader->shaderFlags2;
+					word = item.value().get<bool>() ? (word | bit.second) : (word & ~bit.second);
+				}
+				project.SetTextures(shape);
+			}
+			mcp.GetFrame()->SetPendingChanges(true);
+			mcp.GetFrame()->glView->Render();
+		}
+
+		if (props && props->is_object() && !props->empty()) {
+			json list = json::array();
+			for (auto& item : props->items())
+				list.push_back(ShaderPropertyEntry(item.key(), item.value()));
+			McpRunStep(mcp, {{"type", "SetShaderProperties"}, {"TargetMeshes", names}, {"ShaderProperties", list}});
+		}
 		return GetShapeProperties(mcp, {{"shape", names.front()}});
 	};
 	mcp.AddTool(std::move(shaderProps));

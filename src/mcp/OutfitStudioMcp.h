@@ -123,10 +123,13 @@ void AddShapeTools(OutfitStudioMcp& mcp);
 void AddBoneTools(OutfitStudioMcp& mcp);
 void AddSliderFileTools(OutfitStudioMcp& mcp);
 void AddQualityTools(OutfitStudioMcp& mcp);
+void AddFittingTools(OutfitStudioMcp& mcp);
+void AddTextureTools(OutfitStudioMcp& mcp);
 void AddGameTools(OutfitStudioMcp& mcp);
 void AddGuideTools(OutfitStudioMcp& mcp);
 
 struct AutomationStep;
+struct ObjImportOptions;
 class PresetCollection;
 class PoseData;
 
@@ -152,15 +155,16 @@ bool McpHasSliderValuesArg(const nlohmann::json& args);
 nlohmann::json McpPresetValueProperties();
 
 // Runs automation steps the way a script does, with {variables} filled in. Returns one entry per
-// step, failed is set when one failed. Main thread only.
+// step, failed is set when one failed. Main thread only. OBJ imports use objOptions, else the defaults.
 nlohmann::json McpRunSteps(OutfitStudioMcp& mcp,
 						   const std::vector<AutomationStep>& steps,
 						   const std::map<std::string, std::string>& variables,
 						   bool stopOnError,
-						   bool& failed);
+						   bool& failed,
+						   const ObjImportOptions* objOptions = nullptr);
 
 // Runs one automation step built from JSON the way run_steps takes it, and throws when it fails
-void McpRunStep(OutfitStudioMcp& mcp, const nlohmann::json& step);
+void McpRunStep(OutfitStudioMcp& mcp, const nlohmann::json& step, const ObjImportOptions* objOptions = nullptr);
 
 // Absolute path of a file given absolute or relative to the BodySlide folder
 std::string McpFilePath(const std::string& path);

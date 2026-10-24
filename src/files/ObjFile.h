@@ -20,6 +20,8 @@ struct ObjImportOptions {
 	float RotateX = 0.0f;
 	float RotateY = 0.0f;
 	float RotateZ = 0.0f;
+	// The file is Y up and faces +Z, as Blender and most tools export: turned to Z up, facing +Y like the games
+	bool YUp = false;
 
 	bool ImportAll = true;
 	std::set<std::string> ImportShapes;
