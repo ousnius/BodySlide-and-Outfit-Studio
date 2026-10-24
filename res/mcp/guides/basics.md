@@ -8,6 +8,7 @@ Outfit Studio (OS) shows everything the tools do in its window, and most edits c
 - `fix-clipping`: clipping at rest, with sliders and presets, and in poses.
 - `bone-weights`: copying and fixing bone weights, skirts and dresses, physics bones, each game's skeleton.
 - `cross-game`: an outfit from one game to another, e.g. Fallout 4 to Skyrim, with shaders, materials and textures.
+- `posing`: posing the skeleton, matching a reference picture, natural stances, hands and fingers.
 
 ## Ground rules
 
@@ -57,26 +58,7 @@ Numbers find problems, images confirm them. Render what the numbers point at, no
 
 ## Posing
 
-Global axes: +X is the character's right, +Y her front, +Z up. Positions and distances are in mesh units, like `list_shapes` bounds, also for Starfield, whose skeleton is in meters.
-
-- `list_poses` lists the poses; `set_preview_pose` shows one (by name, a pose file, or `keepCurrent` to adjust step by step); `clear_preview_pose` ends it.
-- **Know the skeleton first:** `list_skeleton_bones` with `mainOnly` and `withPoseInfo` lists the joints (pelvis, spine, neck, head, clavicles, arms, legs) with their role, natural range of motion, length, unposed direction and the twist bones of each limb. The games name them differently: Skyrim `NPC L Forearm [LLar]`, Fallout 4 `LArm_ForeArm1` (to `ForeArm3`, a chain), Starfield `L_Biceps`, `L_Forearm`, `L_Wrist`, Fallout 3 and Oblivion `Bip01 L Forearm`.
-- **Change bones in the character's terms**, not with axis-angle guesses. Within one call, changes apply parents first: `shift`, `worldRotation`, `aim`, `tilt`, `twist`, then `reach`, then `plant`.
-  - `tilt: {"<bone>": {"right": 10, "front": -5, "up": 0}}` moves the bone's next joint towards her right, front or up by degrees (negative: left, back, down). Lean the chest with the spine bones, nod with the neck and head.
-  - `aim: {"<bone>": [x, y, z]}` points a bone at a direction with the smallest turn. That keeps any twist the bone had, so after earlier turns give `{"direction": [...], "twist": 0}`.
-  - `twist: {"<bone>": degrees}` sets a bone's twist about its own length and spreads it over the limb's twist bones, so the skin turns gradually: the hand over the forearm, the upper arm over its own twist bones. Twisting a limb bone alone wrings the skin.
-  - **`reach`** solves a whole arm or leg: `{"NPC L Hand [LHnd]": {"target": {"bone": "NPC Head [Head]", "offset": [-6, -8, 4]}, "pole": [-1, 0, 0]}}` puts the hand behind the head with the elbow out to her left. Both bones are solved from scratch, so no roll from earlier attempts stays, and the elbow or knee bends the way it naturally does. The result says `reachable` and how far it `missed`. Aim or twist the hand afterwards.
-  - `shift: {"NPC COM [COM ]": [3, 0, -1]}` moves the body; with **`plant: ["<left foot>", "<right foot>"]`** the feet stay put and the legs bend to follow. Hips pushed out to one side, with the spine tilted back the other way and the head upright, make a contrapposto.
-  - Prefer `reach` and `tilt` over `worldRotation` and `bones`.
-- **Check the pose:**
-  - The result of `set_preview_pose` has `warnings` for limbs twisted too far, hinges bent backwards and joints folded past their range.
-  - `get_pose` `withTransforms` (`mainBones: true`) gives each joint's position, direction, `twist`, `bend` and `bendsBackwards`.
-  - `balance: true` says whether the body's mass is over the feet.
-  - `contacts: [{"from": "Hands", "to": "FemaleHead"}]` measures how close shapes come and whether they go into each other, e.g. a hand on the head.
-- **See the skeleton:** `render_view` `skeleton: true` draws the posed main bones over the images, red on her right side, blue on her left, labelled with short names. `skeleton: {"only": true}` draws a stick figure without shapes. Compare it line by line with a reference picture or a skeleton the user drew on one.
-- `save_pose` saves to the pose list, or to `.hkx` (a game pose), `.yaml` or `.json`.
-- Bodies without hands or feet (the CBBE 3BA body) look odd in poses: add "CBBE Hands" and "CBBE Feet" (in `CBBE.osp`) with `add_project` for renders. A head and hair from the game's archives (`load_from_archive`, e.g. a facegen NIF) complete the figure.
-- For a shot from below, use an orbit with negative pitch, a short distance and a wide `fov`.
+Posing has its own guide, `posing`: the posing tools, checking a pose, matching a reference picture and what makes a pose look good. For a shot from below, use an orbit with negative pitch, a short distance and a wide `fov`.
 
 ## Bringing meshes in
 

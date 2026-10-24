@@ -30,7 +30,7 @@ constexpr const char* Instructions =
 	"window can't undo take an automatic snapshot first (autoSnapshot in their result); snapshot_restore goes back "
 	"to it and snapshot_diff shows what changed. Before saving, validate_project checks for problems in game. "
 	"Before a task, read its guide with get_guide: basics (read first), body-conversion, conform-sliders, "
-	"fix-clipping, bone-weights and cross-game.";
+	"fix-clipping, bone-weights, cross-game and posing.";
 
 // Tools that change the project in ways the window's undo can't take back. An automatic snapshot is taken
 // before each, so an agent can always go back.
