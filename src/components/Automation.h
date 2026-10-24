@@ -301,6 +301,7 @@ struct AutomationStep {
 	// ExportFile params
 	std::string exportFilePath;
 	bool exportWithRef = true;
+	bool exportHeadTri = false;         // TRI: head morphs of the one target shape instead of the body morphs
 	bool exportUseOriginalPath = false; // Use original file path from batch mode
 	std::string exportPrefix;
 	std::string exportSuffix;

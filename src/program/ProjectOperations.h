@@ -122,6 +122,10 @@ struct ExportOptions {
 	bool withReference = false;
 	// OBJ and FBX: positions in global space instead of the space of each shape
 	bool global = false;
+	// Only these shapes, like exporting the selected shapes in the window. All outfit shapes when empty.
+	std::vector<std::string> shapes;
+	// TRI: the head morphs of the one shape in shapes instead of the body morphs of the project
+	bool headTri = false;
 };
 
 // Differences between the shapes of the open project and the same shapes in another project

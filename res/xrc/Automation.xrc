@@ -661,6 +661,12 @@
 																			<checked>1</checked>
 																		</object>
 																	</object>
+																	<object class="sizeritem">
+																		<object class="wxCheckBox" name="chkExportHeadTri">
+																			<label>Export head morphs of the target mesh (.tri only)</label>
+																			<tooltip>Writes a head TRI file with the slider morphs of the one target mesh instead of a body TRI file with the morphs of all shapes.</tooltip>
+																		</object>
+																	</object>
 																</object>
 															</object>
 

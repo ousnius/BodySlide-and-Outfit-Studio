@@ -750,9 +750,17 @@ OpResult ProjectOperations::ExportFile(const std::string& fileName, const Export
 	wxString ext = wxFileName(wxString::FromUTF8(fileName)).GetExt().Lower();
 
 	std::vector<NiShape*> shapes;
-	for (auto* s : project.GetWorkNif()->GetShapes())
-		if (options.withReference || !project.IsBaseShape(s))
+	for (auto* s : project.GetWorkNif()->GetShapes()) {
+		if (!options.shapes.empty()) {
+			if (std::find(options.shapes.begin(), options.shapes.end(), s->name.get()) != options.shapes.end())
+				shapes.push_back(s);
+		}
+		else if (options.withReference || !project.IsBaseShape(s))
 			shapes.push_back(s);
+	}
+
+	if (shapes.size() < options.shapes.size())
+		return OpResult::Fail("Some of the shapes to export don't exist.");
 
 	int err = 0;
 	if (ext == "nif") {
@@ -775,6 +783,11 @@ OpResult ProjectOperations::ExportFile(const std::string& fileName, const Export
 	}
 	else if (ext == "osd")
 		err = project.SaveSliderData(fileName) ? 0 : 1;
+	else if (ext == "tri" && options.headTri) {
+		if (shapes.size() != 1)
+			return OpResult::Fail("A head TRI file is written for one shape.");
+		err = project.WriteHeadTRI(shapes.front(), fileName) ? 0 : 1;
+	}
 	else if (ext == "tri")
 		err = project.WriteMorphTRI(fileName) ? 0 : 1;
 	else
