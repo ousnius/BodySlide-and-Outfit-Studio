@@ -389,6 +389,23 @@ void GLSurface::ProjectPointToScreen(const Vector3& p, int& x, int& y) {
 	y = std::round(vpH - res.y);
 }
 
+bool GLSurface::ProjectPointToImage(const Vector3& p, uint32_t width, uint32_t height, float& x, float& y) const {
+	if (width == 0 || height == 0)
+		return false;
+
+	glm::mat4x4 projection;
+	glm::mat4x4 view;
+	ComputeCameraMatrices(static_cast<float>(width) / static_cast<float>(height), projection, view);
+
+	glm::vec4 clip = projection * view * glm::vec4(p.x, p.y, p.z, 1.0f);
+	if (clip.w <= 1e-6f)
+		return false;
+
+	x = (clip.x / clip.w * 0.5f + 0.5f) * static_cast<float>(width);
+	y = (0.5f - clip.y / clip.w * 0.5f) * static_cast<float>(height);
+	return true;
+}
+
 void GLSurface::GetPickRay(int ScreenX, int ScreenY, Mesh* m, Vector3& dirVect, Vector3& outNearPos) {
 	glm::vec4 vp(0.0f, 0.0f, (float)vpW, (float)vpH);
 	glm::vec3 winS(ScreenX, vp[3] - ScreenY, 0.0f);
@@ -795,11 +812,14 @@ void GLSurface::GetSize(uint32_t& w, uint32_t& h) {
 }
 
 void GLSurface::UpdateProjection() {
-	float aspect = (float)vpW / (float)vpH;
+	ComputeCameraMatrices((float)vpW / (float)vpH, matProjection, matView);
+}
+
+void GLSurface::ComputeCameraMatrices(float aspect, glm::mat4x4& outProjection, glm::mat4x4& outView) const {
 	if (perspective)
-		matProjection = glm::perspective(glm::radians(mFov), aspect, zNear, zFar);
+		outProjection = glm::perspective(glm::radians(mFov), aspect, zNear, zFar);
 	else
-		matProjection = glm::ortho((camPos.z + camOffset.z) / 2.0f * aspect,
+		outProjection = glm::ortho((camPos.z + camOffset.z) / 2.0f * aspect,
 								   (-camPos.z + camOffset.z) / 2.0f * aspect,
 								   (camPos.z + camOffset.z) / 2.0f,
 								   (-camPos.z + camOffset.z) / 2.0f,
@@ -807,12 +827,12 @@ void GLSurface::UpdateProjection() {
 								   zFar);
 
 	auto mat = glm::identity<glm::mat4x4>();
-	matView = glm::translate(mat, glm::vec3(camPos.x, camPos.y, camPos.z));
-	matView = glm::translate(matView, glm::vec3(camRotOffset.x, camRotOffset.y, camRotOffset.z));
-	matView = glm::rotate(matView, glm::radians(camRot.x), glm::vec3(1.0f, 0.0f, 0.0f));
-	matView = glm::rotate(matView, glm::radians(camRot.y), glm::vec3(0.0f, 1.0f, 0.0f));
-	matView = glm::translate(matView, -glm::vec3(camRotOffset.x, camRotOffset.y, camRotOffset.z));
-	matView = glm::translate(matView, glm::vec3(camOffset.x, camOffset.y, camOffset.z));
+	outView = glm::translate(mat, glm::vec3(camPos.x, camPos.y, camPos.z));
+	outView = glm::translate(outView, glm::vec3(camRotOffset.x, camRotOffset.y, camRotOffset.z));
+	outView = glm::rotate(outView, glm::radians(camRot.x), glm::vec3(1.0f, 0.0f, 0.0f));
+	outView = glm::rotate(outView, glm::radians(camRot.y), glm::vec3(0.0f, 1.0f, 0.0f));
+	outView = glm::translate(outView, -glm::vec3(camRotOffset.x, camRotOffset.y, camRotOffset.z));
+	outView = glm::translate(outView, glm::vec3(camOffset.x, camOffset.y, camOffset.z));
 }
 
 void GLSurface::RenderFullScreenQuad(GLMaterial* renderShader, unsigned int w, unsigned int h) {

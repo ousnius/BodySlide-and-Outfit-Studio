@@ -2267,6 +2267,11 @@
 				<label>Pack Projects...</label>
 				<help>Pack one or more projects into a folder or archive for sharing.</help>
 			</object>
+			<object class="wxMenuItem" name="fileMcpServer">
+				<label>MCP Server</label>
+				<help>Lets AI agents on this computer control Outfit Studio through the Model Context Protocol.</help>
+				<checkable>1</checkable>
+			</object>
 			<object class="wxMenuItem" name="fileSettings">
 				<label>Settings</label>
 				<help>Open settings dialog.</help>
@@ -2648,6 +2653,11 @@
 			<object class="wxMenuItem" name="sliderNegate">
 				<label>Negate Slider</label>
 				<help>Negates the current slider, reversing it's effect</help>
+				<enabled>0</enabled>
+			</object>
+			<object class="wxMenuItem" name="sliderRigidify">
+				<label>Rigidify Parts...</label>
+				<help>Makes the unmasked parts of the selected shapes, like buckles and plates, follow the current slider without bending.</help>
 				<enabled>0</enabled>
 			</object>
 			<object class="wxMenuItem" name="sliderMask">

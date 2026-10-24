@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "OutfitStudio.h"
+#include "../mcp/OutfitStudioMcp.h"
 #include "../components/MaskOps.h"
 #include "../components/SliderGroup.h"
 #include "../components/SliderPresets.h"
@@ -186,6 +187,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(wxID_ANY, OutfitStudioFrame::OnMenuItem)
 	EVT_MENU(XRCID("packProjects"), OutfitStudioFrame::OnPackProjects)
 	EVT_MENU(XRCID("fileSettings"), OutfitStudioFrame::OnSettings)
+	EVT_MENU(XRCID("fileMcpServer"), OutfitStudioFrame::OnMcpServer)
 	EVT_MENU(XRCID("btnNewProject"), OutfitStudioFrame::OnNewProject)
 	EVT_MENU(XRCID("btnLoadProject"), OutfitStudioFrame::OnLoadProject)
 	EVT_MENU(XRCID("btnAddProject"), OutfitStudioFrame::OnAddProject)
@@ -313,6 +315,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("sliderNewCombined"), OutfitStudioFrame::OnNewCombinedSlider)
 	EVT_MENU(XRCID("sliderClone"), OutfitStudioFrame::OnSliderClone)
 	EVT_MENU(XRCID("sliderNegate"), OutfitStudioFrame::OnSliderNegate)
+	EVT_MENU(XRCID("sliderRigidify"), OutfitStudioFrame::OnSliderRigidify)
 	EVT_MENU(XRCID("sliderMask"), OutfitStudioFrame::OnMaskAffected)
 	EVT_MENU(XRCID("sliderClear"), OutfitStudioFrame::OnClearSlider)
 	EVT_MENU(XRCID("sliderDelete"), OutfitStudioFrame::OnDeleteSlider)
@@ -835,6 +838,11 @@ bool OutfitStudio::OnInit() {
 
 	Bind(wxEVT_CHAR_HOOK, &OutfitStudio::CharHook, this);
 
+	// Only --mcp asks for the server explicitly. Started from the settings, a second Outfit Studio
+	// whose port is taken by the first one just says so in the status bar.
+	if (cmdMcp || OutfitStudioConfig.GetBoolValue("MCP/Enabled"))
+		frame->StartMcpServer(cmdMcpPort > 0 ? static_cast<int>(cmdMcpPort) : -1, cmdMcp);
+
 	frame->UpdateTitle();
 	wxLogMessage("Outfit Studio initialized.");
 	return true;
@@ -848,6 +856,8 @@ void OutfitStudio::OnInitCmdLine(wxCmdLineParser& parser) {
 bool OutfitStudio::OnCmdLineParsed(wxCmdLineParser& parser) {
 	parser.Found("proj", &cmdProject);
 	parser.Found("automation", &cmdAutomation);
+	cmdMcp = parser.Found("mcp");
+	parser.Found("mcp-port", &cmdMcpPort);
 
 	wxString singleInstanceArg;
 	if (parser.Found("single", &singleInstanceArg)) {
@@ -1324,6 +1334,8 @@ void ToolBarButtonHider::Show(int toolId, bool show) {
 }
 
 
+OutfitStudioFrame::~OutfitStudioFrame() {}
+
 OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	// Other threads wake the dispatcher through the event queue, which wx makes thread safe
 	dispatcher = std::make_unique<MainThreadDispatcher>([this]() { CallAfter([this]() { dispatcher->ProcessPending(); }); });
@@ -1716,6 +1728,10 @@ void OutfitStudioFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
 
 	if (archiveBrowser)
 		archiveBrowser->Close();
+
+	// Before the project goes. Calls from agents that wait for this thread are let through first.
+	StopMcpServer();
+	dispatcher->Shutdown();
 
 	if (project) {
 		ShutdownPhysics();
@@ -2364,6 +2380,59 @@ void OutfitStudioFrame::SettingsFillDataFiles(wxCheckListBox* dataFileList, wxSt
 	}
 }
 
+bool OutfitStudioFrame::StartMcpServer(int port, bool showError) {
+	if (!mcp)
+		mcp = std::make_unique<OutfitStudioMcp>(this);
+
+	if (!mcp->IsRunning()) {
+		if (port <= 0)
+			port = OutfitStudioConfig.GetIntValue("MCP/Port", McpDefaultPort);
+
+		std::string error;
+		if (!mcp->Start(port, OutfitStudioConfig["MCP/Token"], error)) {
+			if (showError) {
+				wxLogError("MCP server: %s", error);
+				wxMessageBox(wxString::Format(_("The MCP server couldn't start:\n%s"), error), _("MCP Server"), wxOK | wxICON_ERROR, this);
+			}
+			else {
+				wxLogWarning("MCP server: %s", error);
+				if (statusBar)
+					statusBar->SetStatusText(_("The MCP server couldn't start, its port is in use."));
+			}
+			UpdateMcpMenu();
+			return false;
+		}
+
+		if (statusBar)
+			statusBar->SetStatusText(wxString::Format(_("MCP server: %s"), mcp->GetUrl()));
+	}
+
+	UpdateMcpMenu();
+	return true;
+}
+
+void OutfitStudioFrame::StopMcpServer() {
+	if (mcp && mcp->IsRunning()) {
+		mcp->Stop();
+		if (statusBar)
+			statusBar->SetStatusText(_("MCP server stopped."));
+	}
+
+	UpdateMcpMenu();
+}
+
+void OutfitStudioFrame::UpdateMcpMenu() {
+	if (menuBar && menuBar->FindItem(XRCID("fileMcpServer")))
+		menuBar->Check(XRCID("fileMcpServer"), mcp && mcp->IsRunning());
+}
+
+void OutfitStudioFrame::OnMcpServer(wxCommandEvent& event) {
+	if (event.IsChecked())
+		StartMcpServer();
+	else
+		StopMcpServer();
+}
+
 void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 	CloseBrushSettings();
 
@@ -2392,6 +2461,12 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		wxChoice* choiceSingleInstanceBehavior = XRCCTRL(*settings, "choiceSingleInstanceBehavior", wxChoice);
 		choiceSingleInstanceBehavior->SetSelection(OutfitStudioConfig.GetIntValue("SingleInstanceBehavior", 0));
 
+		wxCheckBox* cbMcpServer = XRCCTRL(*settings, "cbMcpServer", wxCheckBox);
+		wxSpinCtrl* spinMcpPort = XRCCTRL(*settings, "spinMcpPort", wxSpinCtrl);
+		const int mcpPort = OutfitStudioConfig.GetIntValue("MCP/Port", McpDefaultPort);
+		cbMcpServer->SetValue(OutfitStudioConfig.GetBoolValue("MCP/Enabled"));
+		spinMcpPort->SetValue(mcpPort);
+
 		SettingsFillDataFiles(commonControls.dataFileList, gameDataPath, Config.GetIntValue("TargetGame"));
 
 		commonControls.choiceTargetGame->Bind(wxEVT_CHOICE, &OutfitStudioFrame::OnChooseTargetGame, this);
@@ -2412,6 +2487,8 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 				needsRestart);
 
 			OutfitStudioConfig.SetValue("SingleInstanceBehavior", choiceSingleInstanceBehavior->GetSelection());
+			OutfitStudioConfig.SetBoolValue("MCP/Enabled", cbMcpServer->IsChecked());
+			OutfitStudioConfig.SetValue("MCP/Port", spinMcpPort->GetValue());
 			OutfitStudioConfig.SaveConfig(Config["AppDir"] + "/OutfitStudio.xml", "OutfitStudioConfig");
 
 			// Apply colors to GL view (SaveCommonSettingsDialog already saved them to config)
@@ -2447,6 +2524,15 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 
 			Config.SaveConfig(Config["AppDir"] + "/Config.xml");
 		GameUtil::InitArchives();
+
+			// A running server moves to the new port, and turning it on starts it right away
+			const bool mcpRunning = mcp && mcp->IsRunning();
+			if (mcpRunning && spinMcpPort->GetValue() != mcpPort) {
+				StopMcpServer();
+				StartMcpServer();
+			}
+			else if (!mcpRunning && cbMcpServer->IsChecked())
+				StartMcpServer();
 
 			// The browser refers to the archives that were just reloaded
 			if (archiveBrowser)
@@ -2893,6 +2979,10 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName,
 		if (shape) {
 			std::string shapeName = shape->name.get();
 
+			// The reference template the set names, which deleting and reloading the shape clears. It's saved again.
+			const std::string refProjectFile = project->mRefProjectFile;
+			const std::string refProjectName = project->mRefProjectName;
+
 			// Prevent duplication if valid reference was found
 			project->DeleteShape(shape);
 
@@ -2904,6 +2994,12 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName,
 				EndProgress();
 				RefreshGUIFromProj();
 				return false;
+			}
+
+			if (!refProjectFile.empty() && project->GetBaseShape()) {
+				project->mRefProjectFile = refProjectFile;
+				project->mRefProjectName = refProjectName;
+				project->SetShapeReferenceSource(shapeName, refProjectFile, refProjectName);
 			}
 		}
 
@@ -3878,6 +3974,7 @@ void OutfitStudioFrame::MenuEnterSliderEdit() {
 	menuBar->Enable(XRCID("menuExportSlider"), true);
 	menuBar->Enable(XRCID("sliderClone"), true);
 	menuBar->Enable(XRCID("sliderNegate"), true);
+	menuBar->Enable(XRCID("sliderRigidify"), true);
 	menuBar->Enable(XRCID("sliderMask"), true);
 	menuBar->Enable(XRCID("sliderProperties"), true);
 }
@@ -3887,6 +3984,7 @@ void OutfitStudioFrame::MenuExitSliderEdit() {
 	menuBar->Enable(XRCID("menuExportSlider"), false);
 	menuBar->Enable(XRCID("sliderClone"), false);
 	menuBar->Enable(XRCID("sliderNegate"), false);
+	menuBar->Enable(XRCID("sliderRigidify"), false);
 	menuBar->Enable(XRCID("sliderMask"), false);
 	menuBar->Enable(XRCID("sliderProperties"), false);
 }
@@ -4809,7 +4907,7 @@ void OutfitStudioFrame::OnBrowseArchives(wxCommandEvent& WXUNUSED(event)) {
 	archiveBrowser->Raise();
 }
 
-void OutfitStudioFrame::LoadMeshFromArchive(const std::string& relPath, const std::string& archivePath, bool import) {
+bool OutfitStudioFrame::LoadMeshFromArchive(const std::string& relPath, const std::string& archivePath, bool import) {
 	auto stream = GameDataStream::OpenArchive(relPath, archivePath);
 	if (!stream) {
 		wxLogError("Could not read '%s' from archive '%s'!", relPath, archivePath);
@@ -4817,7 +4915,7 @@ void OutfitStudioFrame::LoadMeshFromArchive(const std::string& relPath, const st
 					 _("Archive Error"),
 					 wxICON_ERROR,
 					 this);
-		return;
+		return false;
 	}
 
 	CloseBrushSettings();
@@ -4826,7 +4924,7 @@ void OutfitStudioFrame::LoadMeshFromArchive(const std::string& relPath, const st
 		StartProgress(_("Importing NIF file..."));
 		UpdateProgress(1, _("Importing NIF file..."));
 
-		project->ImportNIF(*stream, relPath, false);
+		bool loaded = project->ImportNIF(*stream, relPath, false) == 0;
 
 		UpdateProgress(60, _("Refreshing GUI..."));
 		project->SetTextures();
@@ -4836,7 +4934,7 @@ void OutfitStudioFrame::LoadMeshFromArchive(const std::string& relPath, const st
 
 		UpdateTitle();
 		EndProgress();
-		return;
+		return loaded;
 	}
 
 	menuBar->Enable(XRCID("fileSave"), false);
@@ -4855,7 +4953,7 @@ void OutfitStudioFrame::LoadMeshFromArchive(const std::string& relPath, const st
 	if (project->ImportNIF(*stream, relPath, true)) {
 		EndProgress();
 		RefreshGUIFromProj();
-		return;
+		return false;
 	}
 
 	project->SetTextures();
@@ -4868,6 +4966,7 @@ void OutfitStudioFrame::LoadMeshFromArchive(const std::string& relPath, const st
 
 	wxLogMessage("Outfit loaded.");
 	EndProgress();
+	return true;
 }
 
 void OutfitStudioFrame::OnUnloadProject(wxCommandEvent& WXUNUSED(event)) {
@@ -7558,6 +7657,13 @@ void OutfitStudioFrame::RefreshActivePartitionTree() {
 		CreatePartitionTree(nullptr);
 }
 
+void OutfitStudioFrame::RefreshActiveSegmentTree() {
+	if (activeItem)
+		CreateSegmentTree(activeItem->GetShape());
+	else
+		CreateSegmentTree(nullptr);
+}
+
 void OutfitStudioFrame::CreatePartitionTree(NiShape* shape) {
 	if (partitionTree->GetChildrenCount(partitionRoot) > 0) {
 		triParts.clear(); // DeleteChildren calls OnPartitionSelect
@@ -9067,34 +9173,8 @@ void OutfitStudioFrame::OnLoadPreset(wxCommandEvent& WXUNUSED(event)) {
 
 		wxLogMessage("Applying preset '%s' with option '%s'.", choice, hi ? "High" : "Low");
 
-		float v;
-		bool r;
-		for (size_t i = 0; i < project->SliderCount(); i++) {
-			if (project->SliderClamp(i))
-				continue;
-
-			if (hi)
-				r = presets.GetBigPreset(choice, project->GetSliderName(i), v);
-			else
-				r = presets.GetSmallPreset(choice, project->GetSliderName(i), v);
-
-			if (!r) {
-				// Zaps without a value in the preset are cleared so they don't show up as protruding shapes
-				if (project->SliderZap(i)) {
-					SetSliderValue(i, 0);
-					continue;
-				}
-
-				// Sliders without a value in the preset fall back to their default for the chosen weight
-				v = project->SliderDefault(i, hi) / 100.0f;
-			}
-
-			if (project->SliderInvert(i))
-				v = 1.0f - v;
-
-			v *= 100.0f;
-			SetSliderValue(i, v);
-		}
+		for (auto& value : ProjectOperations(*project, editor).GetPresetValues(presets, choice, hi))
+			SetSliderValue(value.first, value.second * 100.0f);
 
 		ApplySliders();
 	}
@@ -10018,6 +10098,63 @@ void OutfitStudioFrame::OnSliderNegate(wxCommandEvent& WXUNUSED(event)) {
 	SetPendingChanges();
 }
 
+void OutfitStudioFrame::OnSliderRigidify(wxCommandEvent& WXUNUSED(event)) {
+	if (!ShapeSelectionCheck())
+		return;
+
+	if (!editor.bEditSlider) {
+		wxMessageBox(_("There is no slider in edit mode to rigidify!"), _("Error"));
+		return;
+	}
+
+	std::vector<NiShape*> shapes;
+	for (auto& i : selectedItems)
+		if (!project->IsBaseShape(i->GetShape()))
+			shapes.push_back(i->GetShape());
+
+	if (shapes.empty()) {
+		wxMessageBox(_("Select the outfit shapes to rigidify. The reference shape isn't changed."), _("Error"));
+		return;
+	}
+
+	if (!ConfirmSliderDataLocalForEdit(shapes, std::vector<std::string>{editor.activeSlider}))
+		return;
+
+	wxArrayString choices;
+	choices.Add(_("Each part moves and turns, keeping its size"));
+	choices.Add(_("Each part moves, turns and scales evenly"));
+	choices.Add(_("All unmasked vertices of a shape move as one part"));
+
+	int choice = wxGetSingleChoiceIndex(_("The unmasked parts of the selected shapes will follow the slider without bending, e.g. buckles, gems "
+										  "and armor plates. Mask everything else first. Masked vertices keep their morph, partly masked ones blend."),
+										_("Rigidify Parts"),
+										choices,
+										0,
+										this);
+	if (choice < 0)
+		return;
+
+	RigidifyOptions options;
+	options.allowScale = choice == 1;
+	options.perPart = choice != 2;
+
+	wxLogMessage("Rigidifying slider '%s' for the selected shapes.", editor.activeSlider);
+
+	UndoStateProject* usp = glView->GetUndoHistory()->PushState();
+	size_t parts = 0;
+	OpResult result = ProjectOperations(*project, editor).RigidifySlider(shapes, editor.activeSlider, options, *usp, &parts);
+	if (!result.ok || usp->usss.empty())
+		glView->GetUndoHistory()->PopState();
+
+	ApplyRefresh(result.refresh);
+	UpdateUndoTools();
+
+	if (!result.ok)
+		wxMessageBox(wxString::FromUTF8(result.error), _("Rigidify Parts"), wxOK | wxICON_WARNING, this);
+	else
+		wxLogMessage("Rigidified %d parts.", static_cast<int>(parts));
+}
+
 void OutfitStudioFrame::OnMaskAffected(wxCommandEvent& WXUNUSED(event)) {
 	if (!ShapeSelectionCheck())
 		return;
@@ -10340,7 +10477,7 @@ void OutfitStudioFrame::FixClippingForShape(const std::vector<Vector3>& bodyVert
 											const std::vector<Vector3>& outfitVerts,
 											const ClippingFixOptions& options,
 											UndoStateProject* usp,
-											const std::unordered_set<uint16_t>* allowedVerts) {
+											const std::vector<float>& fixWeights) {
 	if (!ClippingFixer::IsEligibleForFix(*project->GetWorkNif(), shape))
 		return;
 
@@ -10356,15 +10493,16 @@ void OutfitStudioFrame::FixClippingForShape(const std::vector<Vector3>& bodyVert
 	uss.shapeName = shape->name.get();
 
 	for (size_t i = 0; i < outfitVerts.size(); i++) {
+		// Masked vertices keep their place, a soft mask border blends into the fix
 		Vector3 diff = fixedVerts[i] - outfitVerts[i];
+		if (i < fixWeights.size())
+			diff *= fixWeights[i];
+
 		if (diff.IsZero(true))
 			continue;
 
-		if (allowedVerts && allowedVerts->find(static_cast<uint16_t>(i)) == allowedVerts->end())
-			continue;
-
 		uss.pointStartState[i] = Mesh::TransformPosNifToMesh(outfitVerts[i]);
-		uss.pointEndState[i] = Mesh::TransformPosNifToMesh(fixedVerts[i]);
+		uss.pointEndState[i] = Mesh::TransformPosNifToMesh(outfitVerts[i] + diff);
 	}
 
 	if (!uss.pointStartState.empty())
@@ -10389,6 +10527,7 @@ void OutfitStudioFrame::OnSliderFixClipping(wxCommandEvent& WXUNUSED(event)) {
 
 	ClippingFixOptions options;
 	options.strength = strength;
+	options.fixPokeThrough = true;
 
 	UndoStateProject* usp = glView->GetUndoHistory()->PushState();
 	usp->undoType = UndoType::VertexPosition;
@@ -10414,23 +10553,22 @@ void OutfitStudioFrame::OnSliderFixClipping(wxCommandEvent& WXUNUSED(event)) {
 		if (!diffSet || diffSet->empty())
 			continue;
 
-		std::unordered_map<uint16_t, float> unmasked;
-		glView->GetShapeUnmasked(unmasked, shape->name.get());
-
+		// Masked vertices keep their place, a soft mask border blends into the fix
+		std::vector<float> fixWeights = MaskOps::FixWeights(glView->GetMesh(shape->name.get()));
 		std::unordered_set<uint16_t> allowed;
-		const std::unordered_set<uint16_t>* allowedVerts = nullptr;
-		if (!unmasked.empty()) {
-			for (auto& v : unmasked)
-				allowed.insert(v.first);
+		for (size_t i = 0; i < fixWeights.size(); i++)
+			if (fixWeights[i] > 0.0f)
+				allowed.insert(static_cast<uint16_t>(i));
 
-			if (allowed.empty())
-				continue;
-
-			allowedVerts = &allowed;
-		}
+		if (!fixWeights.empty() && allowed.empty())
+			continue;
 
 		TargetDataDiffs morphDiffs;
-		project->CalcSliderClippingCorrection(shape, editor.activeSlider, options.strength, morphDiffs, allowedVerts);
+		project->CalcSliderClippingCorrection(shape, editor.activeSlider, options.strength, morphDiffs, fixWeights.empty() ? nullptr : &allowed);
+		for (auto& diff : morphDiffs)
+			if (diff.first < fixWeights.size())
+				diff.second *= fixWeights[diff.first];
+
 		if (morphDiffs.empty())
 			continue;
 
@@ -11527,6 +11665,7 @@ void OutfitStudioFrame::OnFixClippingShape(wxCommandEvent& event) {
 
 	ClippingFixOptions options;
 	options.strength = strength;
+	options.fixPokeThrough = true;
 
 	// Get reference shape geometry (unmorphed)
 	std::vector<Vector3> bodyVerts;
@@ -11545,18 +11684,10 @@ void OutfitStudioFrame::OnFixClippingShape(wxCommandEvent& event) {
 		if (!ClippingFixer::IsEligibleForFix(*project->GetWorkNif(), shape))
 			continue;
 
-		std::unordered_map<uint16_t, float> unmasked;
-		glView->GetShapeUnmasked(unmasked, shape->name.get());
-
-		std::unordered_set<uint16_t> allowed;
-		if (!unmasked.empty())
-			for (auto& u : unmasked)
-				allowed.insert(u.first);
-
 		std::vector<Vector3> outfitVerts;
 		project->GetWorkNif()->GetVertsForShape(shape, outfitVerts);
 
-		FixClippingForShape(bodyVerts, bodyTris, shape, outfitVerts, options, usp, allowed.empty() ? nullptr : &allowed);
+		FixClippingForShape(bodyVerts, bodyTris, shape, outfitVerts, options, usp, MaskOps::FixWeights(glView->GetMesh(shape->name.get())));
 	}
 
 	if (usp->usss.empty()) {
@@ -14014,70 +14145,9 @@ void OutfitStudioFrame::OnSavePose(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	// If a pose with this name already exists, update it in place;
-	// otherwise create a new entry (replacing the old Save As behavior).
-	int existingSel = cPoseName->FindString(poseName);
-	PoseData* poseData = nullptr;
-	if (existingSel != wxNOT_FOUND) {
-		poseData = reinterpret_cast<PoseData*>(cPoseName->GetClientData(existingSel));
-		if (poseData) {
-			if (poseData->readOnly)
-				return;
-			poseData->boneData.clear();
-		}
-		else {
-			// Defensive: an existing entry with null client data (shouldn't
-			// happen for non-sentinel names). Treat as new.
-			poseData = new PoseData(poseName.ToUTF8().data());
-			cPoseName->SetClientData(existingSel, poseData);
-		}
-	}
-	else {
-		poseData = new PoseData(poseName.ToUTF8().data());
-	}
-
-	std::vector<std::string> bones;
-	AnimSkeleton::getInstance().GetBoneNames(bones);
-
-	for (const auto& boneName : bones) {
-		AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
-		if (!bone)
-			continue;
-
-		if (bone->IsUnposed())
-			continue;
-
-		PoseBoneData poseBoneData{};
-		poseBoneData.name = bone->boneName;
-		poseBoneData.rotation = bone->poseRotVec;
-		poseBoneData.translation = bone->poseTranVec;
-		poseBoneData.scale = bone->poseScale;
-		poseData->boneData.push_back(poseBoneData);
-	}
-
-	if (existingSel != wxNOT_FOUND) {
-		cPoseName->SetSelection(existingSel);
-	}
-	else {
-		int poseSel = cPoseName->Append(poseName, poseData);
-		cPoseName->SetSelection(poseSel);
-	}
-
-	wxString dirName = wxString::FromUTF8(ProjectUtil::GetProjectPath()) + "/PoseData";
-	wxFileName::Mkdir(dirName, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
-
-	wxString fileName = dirName + "/" + wxString::FromUTF8(PoseDataCollection::SanitizeFileStem(poseData->name).c_str()) + ".xml";
-
-	PoseDataFile poseDataFile;
-	poseDataFile.New(fileName.ToUTF8().data());
-
-	std::vector<PoseData> poses;
-	poses.push_back(*poseData);
-
-	poseDataFile.SetData(poses);
-	poseDataFile.Save();
-
-	UpdatePoseButtonStates();
+	std::string error = SaveCurrentPose(poseName.ToUTF8().data());
+	if (!error.empty())
+		wxMessageBox(wxString::FromUTF8(error), _("Save Pose"), wxICON_ERROR);
 }
 
 void OutfitStudioFrame::OnDeletePose(wxCommandEvent& WXUNUSED(event)) {
@@ -14145,66 +14215,113 @@ void OutfitStudioFrame::OnSaveHkxPose(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	wxString savePath = EnsurePoseFileExtension(saveDlg.GetPath(), saveDlg.GetFilterIndex());
-	wxFileName saveFn(savePath);
-	PoseFileFormat format = PoseDataCollection::GetPoseFileFormat(std::string(savePath.ToUTF8().data()));
-	std::string skeletonHkxPath;
-	HKX::Format hkxFormat = HKX::Format::Unknown;
-
-	if (format == PoseFileFormat::Hkx) {
-		if (!GetPoseHkxFormat(wxGetApp().targetGame, &hkxFormat)) {
-			wxMessageBox(_("Saving HKX poses is currently only supported for Skyrim Legendary Edition, Skyrim Special Edition, Skyrim VR, Fallout 4 and Fallout 4 VR."),
-						 _("Save Pose File"),
-						 wxOK | wxICON_INFORMATION,
-						 this);
-			return;
-		}
-
-		wxString defSkelNif = wxString::FromUTF8(Config["Anim/DefaultSkeletonReference"]);
-		if (defSkelNif.IsEmpty()) {
-			wxMessageBox(_("No reference skeleton is configured. Please set a reference skeleton in the application settings before saving an HKX pose."),
-						 _("Save Pose File"),
-						 wxOK | wxICON_ERROR,
-						 this);
-			return;
-		}
-
-		wxFileName defSkelFn(defSkelNif);
-		if (defSkelFn.IsRelative())
-			defSkelFn = wxFileName(wxString::FromUTF8(Config["AppDir"]) + PathSepChar + defSkelNif);
-		defSkelFn.SetExt("hkx");
-
-		wxString skelHkx = defSkelFn.GetFullPath();
-		if (!wxFileExists(skelHkx)) {
-			wxMessageBox(wxString::Format(_("No Havok skeleton file was found next to the configured reference skeleton.\n\nExpected file:\n%s\n\nTo save HKX poses, place a matching .hkx skeleton file alongside the .nif reference skeleton."), skelHkx),
-						 _("Save Pose File"),
-						 wxOK | wxICON_ERROR,
-						 this);
-			return;
-		}
-
-		skeletonHkxPath = std::string(skelHkx.ToUTF8().data());
-	}
-	else if (format != PoseFileFormat::Json && format != PoseFileFormat::Yaml) {
-		wxMessageBox(_("Please save the pose with a .hkx, .json, .yaml or .yml extension."), _("Save Pose File"), wxOK | wxICON_ERROR, this);
-		return;
-	}
-
-	PoseData pd;
-	PoseDataCollection::CaptureCurrentPose(std::string(saveFn.GetName().ToUTF8().data()), format != PoseFileFormat::Yaml, pd);
-	if (pd.boneData.empty()) {
-		wxMessageBox(_("No skeleton bones are available to export a pose."), _("Save Pose File"), wxOK | wxICON_ERROR, this);
-		return;
-	}
-
-	std::string saveError;
-	if (!PoseDataCollection::SavePoseFile(std::string(savePath.ToUTF8().data()), pd, skeletonHkxPath, hkxFormat, &saveError)) {
-		wxString message = saveError.empty() ? _("Failed to save the pose file.") : wxString::FromUTF8(saveError);
-		wxMessageBox(message, _("Save Pose File"), wxOK | wxICON_ERROR, this);
+	std::string error = SaveCurrentPoseFile(savePath.ToUTF8().data());
+	if (!error.empty()) {
+		wxMessageBox(wxString::FromUTF8(error), _("Save Pose File"), wxOK | wxICON_ERROR, this);
 		return;
 	}
 
 	if (statusBar)
 		statusBar->SetStatusText(_("Pose file saved."), 0);
+}
+
+std::string OutfitStudioFrame::SaveCurrentPose(const std::string& poseName) {
+	wxComboBox* cPoseName = (wxComboBox*)FindWindowByName("cPoseName");
+	int existingSel = cPoseName ? cPoseName->FindString(wxString::FromUTF8(poseName)) : wxNOT_FOUND;
+
+	PoseData* poseData = nullptr;
+	if (existingSel != wxNOT_FOUND)
+		poseData = reinterpret_cast<PoseData*>(cPoseName->GetClientData(existingSel));
+	if (!poseData) {
+		for (auto& pose : poseDataCollection.poseData)
+			if (pose.name == poseName)
+				poseData = &pose;
+	}
+
+	if (poseData && poseData->readOnly)
+		return "The pose '" + poseName + "' is read-only.";
+
+	// Kept in the collection, so the pose list can point at it
+	if (!poseData)
+		poseData = poseDataCollection.AddPose(PoseData(poseName));
+
+	poseData->boneData.clear();
+	poseData->absoluteLocal = false;
+
+	std::vector<std::string> bones;
+	AnimSkeleton::getInstance().GetBoneNames(bones);
+
+	for (const auto& boneName : bones) {
+		AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
+		if (!bone)
+			continue;
+
+		if (bone->IsUnposed())
+			continue;
+
+		PoseBoneData poseBoneData{};
+		poseBoneData.name = bone->boneName;
+		poseBoneData.rotation = bone->poseRotVec;
+		poseBoneData.translation = bone->poseTranVec;
+		poseBoneData.scale = bone->poseScale;
+		poseData->boneData.push_back(poseBoneData);
+	}
+
+	if (cPoseName) {
+		if (existingSel != wxNOT_FOUND) {
+			cPoseName->SetClientData(existingSel, poseData);
+			cPoseName->SetSelection(existingSel);
+		}
+		else {
+			int poseSel = cPoseName->Append(wxString::FromUTF8(poseName), poseData);
+			cPoseName->SetSelection(poseSel);
+		}
+	}
+
+	wxString dirName = wxString::FromUTF8(ProjectUtil::GetProjectPath()) + "/PoseData";
+	wxFileName::Mkdir(dirName, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+
+	wxString fileName = dirName + "/" + wxString::FromUTF8(PoseDataCollection::SanitizeFileStem(poseData->name).c_str()) + ".xml";
+
+	PoseDataFile poseDataFile;
+	poseDataFile.New(fileName.ToUTF8().data());
+
+	std::vector<PoseData> poses;
+	poses.push_back(*poseData);
+
+	poseDataFile.SetData(poses);
+	poseDataFile.Save();
+
+	UpdatePoseButtonStates();
+	return {};
+}
+
+std::string OutfitStudioFrame::SaveCurrentPoseFile(const std::string& fileName) {
+	PoseFileFormat format = PoseDataCollection::GetPoseFileFormat(fileName);
+	std::string skeletonHkxPath;
+	HKX::Format hkxFormat = HKX::Format::Unknown;
+
+	if (format == PoseFileFormat::Hkx) {
+		if (!GetPoseHkxFormat(wxGetApp().targetGame, &hkxFormat))
+			return _("Saving HKX poses is currently only supported for Skyrim Legendary Edition, Skyrim Special Edition, Skyrim VR, Fallout 4 and Fallout 4 VR.").ToUTF8().data();
+
+		wxString error;
+		if (!PoseDataCollection::FindReferenceSkeletonHkx(skeletonHkxPath, error))
+			return error.ToUTF8().data();
+	}
+	else if (format != PoseFileFormat::Json && format != PoseFileFormat::Yaml)
+		return _("Please save the pose with a .hkx, .json, .yaml or .yml extension.").ToUTF8().data();
+
+	PoseData pd;
+	PoseDataCollection::CaptureCurrentPose(wxFileName(wxString::FromUTF8(fileName)).GetName().ToUTF8().data(), format != PoseFileFormat::Yaml, pd);
+	if (pd.boneData.empty())
+		return _("No skeleton bones are available to export a pose.").ToUTF8().data();
+
+	std::string saveError;
+	if (!PoseDataCollection::SavePoseFile(fileName, pd, skeletonHkxPath, hkxFormat, &saveError))
+		return saveError.empty() ? std::string(_("Failed to save the pose file.").ToUTF8().data()) : saveError;
+
+	return {};
 }
 
 void OutfitStudioFrame::OnLoadHkxPose(wxCommandEvent& WXUNUSED(event)) {
@@ -15246,6 +15363,11 @@ wxGLPanel::~wxGLPanel() {
 }
 
 bool wxGLPanel::SaveViewImage(const wxString& fileName, int width, int height) {
+	wxImage image;
+	return RenderViewImage(width, height, image) && image.SaveFile(fileName, wxBITMAP_TYPE_PNG);
+}
+
+bool wxGLPanel::RenderViewImage(int width, int height, wxImage& outImage) {
 	std::vector<uint8_t> rgba;
 	if (!gls.RenderToImage(static_cast<uint32_t>(width), static_cast<uint32_t>(height), rgba))
 		return false;
@@ -15258,8 +15380,8 @@ bool wxGLPanel::SaveViewImage(const wxString& fileName, int width, int height) {
 		rgb[i * 3 + 2] = rgba[i * 4 + 2];
 	}
 
-	wxImage image(width, height, rgb);
-	return image.SaveFile(fileName, wxBITMAP_TYPE_PNG);
+	outImage = wxImage(width, height, rgb);
+	return true;
 }
 
 bool wxGLPanel::IsStrokeActive() const {
@@ -17358,10 +17480,14 @@ void wxGLPanel::UnstashMasks(const std::unordered_map<std::string, std::vector<f
 }
 
 void wxGLPanel::ApplyMaskChanges(const std::function<std::unordered_map<int, float>(Mesh&)>& changesForMesh) {
+	ApplyMaskChanges(gls.GetActiveMeshes(), changesForMesh);
+}
+
+void wxGLPanel::ApplyMaskChanges(const std::vector<Mesh*>& meshes, const std::function<std::unordered_map<int, float>(Mesh&)>& changesForMesh) {
 	UndoStateProject* usp = GetUndoHistory()->PushState();
 	usp->undoType = UndoType::Mask;
 
-	for (auto& m : gls.GetActiveMeshes()) {
+	for (auto& m : meshes) {
 		usp->usss.emplace_back();
 		UndoStateShape& uss = usp->usss.back();
 		uss.shapeName = m->shapeName;

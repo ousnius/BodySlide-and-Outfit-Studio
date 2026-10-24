@@ -109,6 +109,30 @@ static nifly::Vector3 SafEulerToRotVec(float yawDeg, float pitchDeg, float rollD
 	return nifly::RotMatToVec(m);
 }
 
+// The yaw, pitch and roll (degrees) that SafEulerToRotVec turns back into the rotation, for version 1
+// files. At a pitch of +-90 degrees only yaw and roll together are defined, so all of it goes into yaw.
+// nifly's Matrix3::ToEulerAngles gets yaw backwards at -90 degrees, which turned bones on a round trip.
+static void RotVecToSafEuler(const nifly::Vector3& rotVec, float& yawDeg, float& pitchDeg, float& rollDeg) {
+	const float rad2deg = 180.0f / 3.14159265358979323846f;
+	nifly::Matrix3 m = nifly::RotVecToMat(rotVec);
+
+	float cosPitch = std::sqrt(m[0][0] * m[0][0] + m[0][1] * m[0][1]);
+	float pitch = std::atan2(m[0][2], cosPitch);
+	float yaw = 0.0f;
+	float roll = 0.0f;
+	// Close to +-90 degrees, the matrix entries that tell yaw from roll are mostly rounding error
+	if (cosPitch > 1e-4f) {
+		yaw = std::atan2(-m[1][2], m[2][2]);
+		roll = std::atan2(-m[0][1], m[0][0]);
+	}
+	else
+		yaw = std::atan2(m[2][1], m[1][1]);
+
+	yawDeg = yaw * rad2deg;
+	pitchDeg = pitch * rad2deg;
+	rollDeg = roll * rad2deg;
+}
+
 static bool ParseSafPoseJson(const std::string& filePath, PoseData& outPose) {
 	nlohmann::json root;
 	try {
@@ -200,7 +224,7 @@ bool PoseDataCollection::SaveJsonPose(const std::string& filePath, const PoseDat
 		float yawDeg = 0.0f;
 		float pitchDeg = 0.0f;
 		float rollDeg = 0.0f;
-		nifly::RotVecToMat(bone.rotation).ToEulerDegrees(yawDeg, pitchDeg, rollDeg);
+		RotVecToSafEuler(bone.rotation, yawDeg, pitchDeg, rollDeg);
 
 		nlohmann::json transform = nlohmann::json::object();
 		transform["x"] = bone.translation.x;

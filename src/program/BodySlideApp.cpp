@@ -37,6 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <thread>
 #include <unordered_map>
 #include <utility>
+#include <wx/spinctrl.h>
 #include <wx/wrapsizer.h>
 #include <wx/debugrpt.h>
 #include <wx/textctrl.h>
@@ -7518,6 +7519,8 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		// Hide the single instance setting (only relevant for Outfit Studio)
 		XRCCTRL(*settings, "lbSingleInstanceBehavior", wxStaticText)->Hide();
 		XRCCTRL(*settings, "choiceSingleInstanceBehavior", wxChoice)->Hide();
+		XRCCTRL(*settings, "cbMcpServer", wxCheckBox)->Hide();
+		XRCCTRL(*settings, "spinMcpPort", wxSpinCtrl)->Hide();
 
 		SettingsFillDataFiles(commonControls.dataFileList, gameDataPath, Config.GetIntValue("TargetGame"));
 

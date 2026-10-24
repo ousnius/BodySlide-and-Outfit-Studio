@@ -23,10 +23,19 @@ std::unordered_map<int, float> GrowShrinkChanges(Mesh& m, bool grow);
 // Every vertex with its inverted mask value
 std::unordered_map<int, float> InvertChanges(const Mesh& m);
 
+// One step of smoothing the mask: each vertex moves towards the mean of its neighbors by strength
+// (0 to 1), so a hard mask border becomes a gradient. Welded vertices get the same value.
+std::unordered_map<int, float> SmoothChanges(Mesh& m, float strength = 0.5f);
+
 // Every vertex with a mask value of zero
 std::unordered_map<int, float> ClearChanges(const Mesh& m);
 
 void ApplyChanges(Mesh& m, const std::unordered_map<int, float>& changes);
+
+// How much of a fix like the clipping fix each vertex takes: 1 - mask, so masked vertices keep their
+// place and a smoothed mask border blends into the fix. Empty when nothing is masked, which means all
+// of it everywhere.
+std::vector<float> FixWeights(const Mesh* m);
 
 // The masked vertices with their mask values
 std::unordered_map<uint16_t, float> GetMasked(const Mesh& m);

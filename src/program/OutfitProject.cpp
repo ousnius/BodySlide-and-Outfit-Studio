@@ -22,6 +22,7 @@ See the included LICENSE file
 #include "FSEngine/FSManager.h"
 
 #include <algorithm>
+#include <atomic>
 #include <cfloat>
 #include <limits>
 #include <regex>
@@ -285,6 +286,9 @@ void RemapExtraDataStrings(NifFile& nif, NiExtraData* extraData) {
 }
 
 OutfitProject::OutfitProject(IProjectHost* inHost, bool loadSkeleton) {
+	static std::atomic<uint64_t> lastInstanceId{0};
+	instanceId = ++lastInstanceId;
+
 	host = inHost;
 	if (!host) {
 		ownHost = std::make_unique<NonInteractiveHost>();
@@ -918,6 +922,56 @@ void OutfitProject::AddZapSlider(const std::string& newName, std::unordered_map<
 	}
 	else
 		morpher.SetResultDiff(target, newName, diffData);
+}
+
+std::vector<bool> OutfitProject::GetZappedVertices(NiShape* shape, const std::string& sliderName) {
+	std::vector<bool> zapped;
+	if (!shape)
+		return zapped;
+
+	const size_t count = shape->GetNumVertices();
+	std::vector<Vector3> diffs(count);
+	GetSliderDiff(shape, sliderName, diffs);
+
+	bool any = false;
+	for (auto& d : diffs)
+		any = any || !d.IsZero(true);
+
+	if (!any && IsBaseShape(shape)) {
+		diffs.assign(count, Vector3());
+		morpher.ApplyResultToVerts(sliderName, ShapeToTarget(shape->name.get()), &diffs);
+	}
+
+	zapped.resize(count);
+	for (size_t v = 0; v < count; v++)
+		zapped[v] = !diffs[v].IsZero(true);
+	return zapped;
+}
+
+void OutfitProject::SetZappedVertices(NiShape* shape, const std::string& sliderName, const std::vector<bool>& zapped) {
+	if (!shape || !ValidSlider(sliderName))
+		return;
+
+	std::string target = SliderDataTargetForShape(shape);
+	std::string dataName = EnsureSliderDataLocal(sliderName, shape);
+	if (dataName.empty())
+		return;
+
+	// Zap data only marks vertices, the direction of the delta doesn't matter
+	std::unordered_map<uint16_t, Vector3> diffData;
+	for (size_t v = 0; v < zapped.size(); v++)
+		if (zapped[v])
+			diffData[static_cast<uint16_t>(v)] = Vector3(0.0f, 1.0f, 0.0f);
+
+	if (IsBaseShape(shape)) {
+		activeSet.AddShapeTarget(shape->name.get(), target);
+		baseDiffData.AddEmptySet(dataName, target);
+		baseDiffData.EmptySet(dataName, target);
+		for (auto& d : diffData)
+			baseDiffData.SumDiff(dataName, target, d.first, d.second);
+	}
+	else
+		morpher.SetResultDiff(target, sliderName, diffData);
 }
 
 void OutfitProject::AddCombinedSlider(const std::string& newName) {
@@ -3702,6 +3756,7 @@ bool OutfitProject::BuildClippingCorrectionCache(NiShape* shape, float strength,
 
 	ClippingFixOptions fixOptions;
 	fixOptions.strength = std::max(0.0f, std::min(1.0f, strength));
+	fixOptions.fixPokeThrough = true;
 
 	cache.fixedNeutralVerts = cache.neutralOutfitVerts;
 	ClippingFixer::FixClipping(cache.neutralBodyVerts, cache.bodyTris, cache.fixedNeutralVerts, cache.outfitTris, fixOptions);
@@ -3794,6 +3849,7 @@ void OutfitProject::CalcSliderClippingCorrection(NiShape* shape,
 
 	ClippingFixOptions fixOptions;
 	fixOptions.strength = std::max(0.0f, std::min(1.0f, strength));
+	fixOptions.fixPokeThrough = true;
 
 	std::vector<Vector3> fixedNeutralVerts;
 	const std::vector<Vector3>* fixedNeutralVertsPtr = nullptr;
@@ -4570,11 +4626,17 @@ bool OutfitProject::PrepareFlipEdge(NiShape* shape, UndoStateShape& uss, const E
 }
 
 /*
-Ideally, PrepareRefineMesh would take a list of edges, not a list of
-vertices.  But OutfitStudio doesn't yet have an edge-mask tool.
+PrepareRefineMesh takes a list of vertices, and optionally a filter that
+picks which of the edges between them to split (see MeshRefine).
 Parameter "noCurveOffset" disables the smoothing/curving of the new vertex position within split edges.
 */
-bool OutfitProject::PrepareRefineMesh(NiShape* shape, UndoStateShape& uss, std::vector<bool>& pincs, const Mesh::WeldVertsType& weldVerts, const bool noCurveOffset, std::vector<Edge>* badEdges) {
+bool OutfitProject::PrepareRefineMesh(NiShape* shape,
+									  UndoStateShape& uss,
+									  std::vector<bool>& pincs,
+									  const Mesh::WeldVertsType& weldVerts,
+									  const bool noCurveOffset,
+									  std::vector<Edge>* badEdges,
+									  const std::function<bool(const Edge&)>& splitEdge) {
 	// Get vertex coordinates and triangle data
 	size_t nverts = pincs.size();
 	const std::vector<Vector3>* verts = workNif.GetVertsForShape(shape);
@@ -4643,6 +4705,8 @@ bool OutfitProject::PrepareRefineMesh(NiShape* shape, UndoStateShape& uss, std::
 		for (int tei = 0; tei < 3; ++tei) {
 			Edge e = tris[ti].GetEdge(tei);
 			if (!pincs[e.p1] || !pincs[e.p2])
+				continue;
+			if (splitEdge && !splitEdge(e))
 				continue;
 			if (singleEdges.find(e) != singleEdges.end()) {
 				// Multiple triangles for this edge
@@ -7474,6 +7538,23 @@ int OutfitProject::ExportFBX(const std::string& fileName, const std::vector<NiSh
 
 std::unique_ptr<std::istream> OutfitProject::GetPhysicsXmlStream(const std::string& xmlPath) {
 	return GameDataStream::OpenPhysicsXml(xmlPath, activeSet.GetInputFileName());
+}
+
+std::vector<std::pair<std::string, PhysicsXmlFile>> OutfitProject::ReadPhysicsXmls(const std::string& shapeName, std::vector<std::string>* outMissing) {
+	std::vector<std::pair<std::string, PhysicsXmlFile>> files;
+	auto links = shapePhysicsFiles.find(shapeName);
+	if (links == shapePhysicsFiles.end())
+		return files;
+
+	for (auto& xmlPath : links->second) {
+		PhysicsXmlFile file;
+		auto stream = GetPhysicsXmlStream(xmlPath);
+		if (stream && file.Load(*stream))
+			files.emplace_back(xmlPath, std::move(file));
+		else if (outMissing)
+			outMissing->push_back(xmlPath);
+	}
+	return files;
 }
 
 void OutfitProject::ValidateNIF(NifFile& nif, const std::string& nifFilePath) {

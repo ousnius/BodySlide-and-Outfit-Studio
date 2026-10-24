@@ -8,9 +8,12 @@ See the included LICENSE file
 #include "EditorState.h"
 #include "OutfitProject.h"
 #include "../components/MeshAnalysis.h"
+#include "../components/MeshRefine.h"
 #include "../components/PoseData.h"
+#include "../components/SliderPresets.h"
 
 #include <cstdint>
+#include <functional>
 #include <map>
 #include <memory>
 #include <string>
@@ -69,6 +72,25 @@ struct BoneWeightCopyOptions {
 	bool copySkinTransform = false;
 	// Move the geometry along when the skin transform changes, so the shapes keep their place
 	bool transformGeometry = false;
+	// Bones of a shape that the reference doesn't have (physics chains, bones only the outfit has) keep their
+	// weights, and the copied bones share what's left of each vertex. Off, the copied bones take each vertex over
+	// and the other bones only keep what they leave, which after a copy of all bones is nothing.
+	bool keepOtherBones = false;
+	// Connected parts weighted at least 0.99 to one of the copied bones on every vertex keep their weights, so
+	// rigid props like buckles and plates don't bend with the body under them
+	bool keepRigidParts = false;
+	// Whether a copied bone that a shape doesn't have yet may be added to it. Without it, every one may.
+	std::function<bool(const std::string& shapeName, const std::string& bone)> mayAddBone;
+};
+
+// What a bone weight copy did to one shape beyond copying
+struct BoneWeightCopyReport {
+	// Bones with weights on the shape that kept them (keepOtherBones)
+	std::vector<std::string> keptBones;
+	// Copied bones that weren't added to the shape (mayAddBone)
+	std::vector<std::string> notAdded;
+	// Parts that kept their weights (keepRigidParts): their vertex count and the bone they're on
+	std::vector<std::pair<size_t, std::string>> rigidParts;
 };
 
 // Bones a weight brush works on, from the active bone and the normalization settings
@@ -122,6 +144,10 @@ struct ExportOptions {
 	bool withReference = false;
 	// OBJ and FBX: positions in global space instead of the space of each shape
 	bool global = false;
+	// Only these shapes, like exporting the selected shapes in the window. All outfit shapes when empty.
+	std::vector<std::string> shapes;
+	// TRI: the head morphs of the one shape in shapes instead of the body morphs of the project
+	bool headTri = false;
 };
 
 // Differences between the shapes of the open project and the same shapes in another project
@@ -146,6 +172,66 @@ struct ProjectComparison {
 	std::vector<WeightDifference> weights;
 	// Shapes that couldn't be compared, with the reason
 	std::vector<std::pair<std::string, std::string>> skippedShapes;
+};
+
+// How RigidifySlider fits the parts of a shape
+struct RigidifyOptions {
+	// Let the parts also grow or shrink evenly with the morph, instead of only moving and turning
+	bool allowScale = false;
+	// Fit each connected part of the unmasked vertices on its own, e.g. every buckle. Otherwise all
+	// unmasked vertices of a shape move as one.
+	bool perPart = true;
+	// Vertices closer than this count as joined, like the copies of a vertex along a split seam
+	float weldDistance = 0.001f;
+	// Keep the parts this far outside the reference with the slider at 1, by moving each part out as a whole where
+	// it would sink in (a rigid buckle can't follow a valley the slider makes). A part that's closer or inside with
+	// all sliders at 0 only has to stay as it is there. Negative leaves the parts where the fit puts them.
+	float clearance = -1.0f;
+};
+
+// How PrepareAdaptiveRefine picks the edges to split
+struct AdaptiveRefineOptions {
+	MeshRefine::Options select;
+	// Put the new vertices in the middle of the straight edges instead of on the curve of the surface
+	bool noCurveOffset = false;
+	// Shape whose surface clipping and body detail are measured against, the reference shape when null
+	nifly::NiShape* body = nullptr;
+	// Triangles of that surface to measure against, e.g. without the ones zaps remove. All when empty.
+	std::vector<nifly::Triangle> bodyTriangles;
+	// Vertices left out of the clipping measurements, by shape name
+	std::map<std::string, std::vector<bool>> excluded;
+};
+
+// The edges PrepareAdaptiveRefine splits on one shape
+struct AdaptiveRefineShape {
+	std::string shapeName;
+	MeshRefine::Selection selection;
+	std::vector<nifly::Edge> edges; // By vertex index, p1 < p2, with the copies of each edge along split seams
+	size_t newVertices = 0;
+	size_t newTriangles = 0;
+};
+
+// Zap sliders of a shape, to give another shape the same zaps by proximity, e.g. the new body when the
+// reference changes
+struct ZapSource {
+	struct Zap {
+		std::vector<bool> zapped;
+		float defSmallValue = 0.0f;
+		float defBigValue = 0.0f;
+		bool hidden = false;
+	};
+
+	std::string shapeName;
+	std::vector<nifly::Vector3> verts;
+	std::vector<nifly::Triangle> tris;
+	std::map<std::string, Zap> zaps; // By slider name, only zaps with data on the shape
+};
+
+struct ZapTransfer {
+	std::string slider;
+	size_t sourceZapped = 0; // Vertices the zap removes on the source shape
+	size_t zapped = 0;		 // and on the target shape now
+	bool created = false;	 // The project didn't have the slider yet
 };
 
 // Project data and shape masks, to return to after trying out a change
@@ -178,6 +264,11 @@ public:
 
 	// Sets all sliders that aren't clamped to zero
 	RefreshFlags ZeroSliders();
+
+	// Slider values (0 to 1) of a body preset, for the high (big) or low (small) weight body, the way the
+	// window applies presets: sliders the preset doesn't have take their default, zap sliders without a
+	// value are turned off, and clamp sliders are left out.
+	std::map<std::string, float> GetPresetValues(PresetCollection& presets, const std::string& preset, bool high);
 
 	// Sets slider values by name, 0 to 1. Fails on the first unknown slider without changing any.
 	OpResult SetSliderValues(const std::map<std::string, float>& values);
@@ -228,7 +319,21 @@ public:
 
 	// Pushes the shapes out of the reference shape. Shapes mode fixes the base geometry,
 	// sliders mode fixes the morph of each slider (all non-zap, non-UV sliders without names).
+	// Each vertex takes the fix scaled by how unmasked it is, so masked vertices keep their
+	// place and a smoothed mask border blends into the fix.
 	OpResult FixClipping(const std::vector<nifly::NiShape*>& shapes, ClippingFixMode mode, float strength, const std::vector<std::string>& sliderNames = {});
+
+	// Fixes the clipping of a slider combination (the other sliders at zero) that no slider has on its own, e.g.
+	// a body preset. The push out of the reference is shared among the receiving sliders (all sliders of the
+	// combination with a value by default) by how far each moves the vertex, and scaled by its value, so the
+	// combination comes out fixed and each slider takes its part. Sliders below 0.5 are scaled as if at 0.5, so a
+	// slider set low doesn't get a spike, and the combination comes out partly fixed then. Masked vertices are left
+	// alone like FixClipping.
+	OpResult FixClippingCombination(const std::vector<nifly::NiShape*>& shapes,
+									const std::map<std::string, float>& values,
+									const std::vector<std::string>& receivers,
+									float strength,
+									size_t* outChanged = nullptr);
 
 	// Shows the weights of a bone as weight colors on the meshes of the shapes and of the reference.
 	// The other meshes are cleared. Weight colors have to be turned on to see them.
@@ -247,7 +352,47 @@ public:
 
 	// Copies bone weights from the reference shape to the masked-out vertices of the shapes.
 	// The changes are recorded in usp, so the caller can keep them as an undo step.
-	OpResult CopyBoneWeights(const std::vector<nifly::NiShape*>& shapes, const BoneWeightCopyOptions& options, UndoStateProject& usp);
+	OpResult CopyBoneWeights(const std::vector<nifly::NiShape*>& shapes,
+							 const BoneWeightCopyOptions& options,
+							 UndoStateProject& usp,
+							 std::map<std::string, BoneWeightCopyReport>* outReport = nullptr);
+
+	// Adds changes (NIF coordinates) to the morph of a slider on an outfit shape. They are recorded in usp
+	// like a brush stroke in slider edit mode, so the caller can keep them as an undo step; all changes
+	// recorded in one usp have to be for the same slider.
+	OpResult ChangeSliderDeltas(nifly::NiShape* shape, const std::string& sliderName, const std::unordered_map<uint16_t, nifly::Vector3>& changes, UndoStateProject& usp);
+
+	// Makes the unmasked parts of the shapes follow the morph of a slider as a whole, without bending: each
+	// part gets the motion that best fits its deltas, e.g. so buckles and armor plates keep their shape.
+	// Partly masked vertices blend between the morph and that motion. The changes are recorded in usp.
+	OpResult RigidifySlider(const std::vector<nifly::NiShape*>& shapes,
+							const std::string& sliderName,
+							const RigidifyOptions& options,
+							UndoStateProject& usp,
+							size_t* outParts = nullptr);
+
+	// Picks the edges of the shapes that lack detail, measured with the current slider values and pose, and prepares
+	// splitting them in usp like Refine Mesh, but only where the options ask for it. Fully masked vertices are left
+	// alone. Nothing changes until the caller applies usp (UndoType::Mesh).
+	OpResult PrepareAdaptiveRefine(const std::vector<nifly::NiShape*>& shapes,
+								   const AdaptiveRefineOptions& options,
+								   UndoStateProject& usp,
+								   std::vector<AdaptiveRefineShape>* outShapes = nullptr);
+
+	// The zap sliders with data on a shape of a project (the named ones, or all), with the shape's rest geometry
+	static ZapSource CaptureZaps(OutfitProject& fromProject, nifly::NiShape* shape, const std::vector<std::string>& sliderNames = {});
+
+	// The same for a shape of a set of another slider set file, by shape or target name
+	OpResult CaptureZapsFromProject(const std::string& file,
+									const std::string& set,
+									const std::string& shapeName,
+									const std::vector<std::string>& sliderNames,
+									ZapSource& outSource);
+
+	// Zaps the vertices of a shape whose closest point on the source shape's surface (within maxDistance) is
+	// nearest to a zapped source vertex, replacing the shape's data of those zap sliders. Zap sliders the
+	// project doesn't have are created with the source's settings.
+	OpResult ApplyZaps(const ZapSource& source, nifly::NiShape* target, float maxDistance, std::vector<ZapTransfer>& outTransfers);
 
 private:
 	OutfitProject& project;

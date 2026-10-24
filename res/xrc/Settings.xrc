@@ -334,6 +334,35 @@
 								<option>1</option>
 								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 								<border>5</border>
+								<object class="wxCheckBox" name="cbMcpServer">
+									<tooltip>Starts the MCP server with Outfit Studio, which lets AI agents control it through the Model Context Protocol at http://127.0.0.1:port/mcp. Only programs on this computer can connect.</tooltip>
+									<label>MCP Server</label>
+									<checked>0</checked>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>2</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
+								<object class="wxSpinCtrl" name="spinMcpPort">
+									<tooltip>Port of the MCP server.</tooltip>
+									<value>47823</value>
+									<min>1024</min>
+									<max>65535</max>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND|wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
 								<object class="wxStaticText" name="lbLanguage">
 									<size>100,-1</size>
 									<label>Language</label>

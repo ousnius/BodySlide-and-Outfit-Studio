@@ -41,6 +41,7 @@ BodySlide and Outfit Studio, a tool to convert, create, and customize outfits an
 * [TinyXML-2](https://github.com/leethomason/tinyxml2)
 * [nlohmann/json](https://github.com/nlohmann/json)
 * [fkYAML](https://github.com/fktn-k/fkYAML)
+* [cpp-httplib](https://github.com/yhirose/cpp-httplib) (MCP server)
 * [Catch2 v3](https://github.com/catchorg/Catch2) (optional tests)
 * FSEngine (BSA/BA2 library)
 * [Autodesk FBX SDK](https://aps.autodesk.com/developer/overview/fbx-sdk) (optional FBX import/export)
