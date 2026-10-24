@@ -251,7 +251,7 @@ void main(void)
 					// Model Space Normal Map
 					normal = normalize(normalMap.rgb * 2.0 - 1.0);
 					normal.r = -normal.r;
-					normal = mat3(matView) * normal;
+					normal = mv_tbn * normal;
 					normal = normalize(normal);
 
 					if (bSpecular)

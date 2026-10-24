@@ -2216,12 +2216,15 @@ int OutfitProject::GetVertexCount(NiShape* shape) {
 	return 0;
 }
 
-void OutfitProject::GetLiveVerts(NiShape* shape, std::vector<Vector3>& outVerts, std::vector<Vector2>* outUVs) {
+void OutfitProject::GetLiveVerts(NiShape* shape, std::vector<Vector3>& outVerts, std::vector<Vector2>* outUVs, std::vector<Matrix3>* outPoseRotations) {
 	GetMorphedVerts(shape, outVerts, outUVs);
+
+	if (outPoseRotations)
+		outPoseRotations->clear();
 
 	if (bPose) {
 		bool isSF = workNif.GetHeader().GetVersion().IsSF();
-		ApplySkinningToVerts(workAnim, shape, isSF, physicsPose, outVerts);
+		ApplySkinningToVerts(workAnim, shape, isSF, physicsPose, outVerts, outPoseRotations);
 	}
 }
 

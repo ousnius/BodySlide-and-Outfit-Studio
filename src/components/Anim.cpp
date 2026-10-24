@@ -1176,10 +1176,19 @@ int LoadDefaultSkeletonReference() {
 	return AnimSkeleton::getInstance().LoadFromNif(defSkelFile);
 }
 
-void ApplySkinningToVerts(AnimInfo& anim, NiShape* shape, bool isSF, const AnimPoseOverrideMap* poseOverrides, std::vector<Vector3>& verts) {
+void ApplySkinningToVerts(AnimInfo& anim,
+						  NiShape* shape,
+						  bool isSF,
+						  const AnimPoseOverrideMap* poseOverrides,
+						  std::vector<Vector3>& verts,
+						  std::vector<Matrix3>* outRotations) {
 	size_t nv = verts.size();
 	std::vector<Vector3> pv(nv);
 	std::vector<float> wv(nv, 0.0f);
+
+	// Rotations are summed, so they start at zero
+	if (outRotations)
+		outRotations->assign(nv, Matrix3() * 0.0f);
 	AnimSkin& animSkin = anim.shapeSkinning[shape->name.get()];
 	MatTransform globalToSkin = anim.GetTransformGlobalToShape(shape);
 
@@ -1210,14 +1219,19 @@ void ApplySkinningToVerts(AnimInfo& anim, NiShape* shape, bool isSF, const AnimP
 				float w = wIt.second;
 				pv[ind] += w * transform.ApplyTransform(verts[ind]);
 				wv[ind] += w;
+				if (outRotations)
+					(*outRotations)[ind] += transform.rotation * w;
 			}
 		}
 	}
 
 	// Check if total weight for each vertex was 1
 	for (size_t ind = 0; ind < nv; ++ind) {
-		if (wv[ind] < EPSILON) // If weights are missing for this vertex
+		if (wv[ind] < EPSILON) { // If weights are missing for this vertex
 			pv[ind] = verts[ind];
+			if (outRotations)
+				(*outRotations)[ind] = Matrix3();
+		}
 		else if (std::fabs(wv[ind] - 1.0f) >= EPSILON) // If weights are bad for this vertex
 			pv[ind] /= wv[ind];
 		// else do nothing because weights totaled 1.

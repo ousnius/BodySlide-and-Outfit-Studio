@@ -803,6 +803,51 @@ void Mesh::ColorChannelFill(int channel, float value) {
 	queueUpdate[UpdateType::VertexColors] = true;
 }
 
+void Mesh::SetPoseRotations(const std::vector<Matrix3>& rotations) {
+	if (!modelSpace || rotations.size() != static_cast<size_t>(nVerts)) {
+		ClearPoseRotations();
+		return;
+	}
+
+	if (!poseRotations)
+		poseRotations = std::make_unique<glm::vec4[]>(nVerts);
+
+	// The same change of axes as xformNifToMesh, which is its own inverse
+	const Matrix3& nifToMesh = xformNifToMesh.rotation;
+
+	for (int i = 0; i < nVerts; i++) {
+		Matrix3 r = nifToMesh * rotations[i] * nifToMesh;
+
+		// Blending the bones of a vertex leaves no proper rotation, so it's made one again
+		Vector3 x(r[0][0], r[1][0], r[2][0]);
+		Vector3 y(r[0][1], r[1][1], r[2][1]);
+		Vector3 z = x.cross(y);
+		if (x.IsZero(true) || z.IsZero(true)) {
+			poseRotations[i] = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+			continue;
+		}
+
+		x.Normalize();
+		z.Normalize();
+		y = z.cross(x);
+
+		glm::quat q = glm::quat_cast(glm::mat3(glm::vec3(x.x, x.y, x.z), glm::vec3(y.x, y.y, y.z), glm::vec3(z.x, z.y, z.z)));
+
+		// Neighboring vertices get interpolated across their triangles, so all of them take the same sign
+		if (q.w < 0.0f)
+			q = -q;
+
+		poseRotations[i] = glm::vec4(q.x, q.y, q.z, q.w);
+	}
+
+	queueUpdate[UpdateType::PoseRotations] = true;
+}
+
+void Mesh::ClearPoseRotations() {
+	poseRotations.reset();
+	queueUpdate[UpdateType::PoseRotations] = false;
+}
+
 void Mesh::CalcTangentSpace() {
 	if (!norms || !texcoord)
 		return;

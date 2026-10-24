@@ -1,4 +1,5 @@
 #include "../src/components/Anim.h"
+#include "../src/components/Mesh.h"
 #include "../src/components/UndoState.h"
 
 #include <catch2/catch_test_macros.hpp>
@@ -429,4 +430,46 @@ TEST_CASE("Verify cloth weight copy workflow export", "[.cloth-copy-verify]") {
 			CHECK(bounds.radius < 0.0001f);
 		}
 	}
+}
+
+TEST_CASE("Pose rotations turn model space normals in mesh coordinates", "[anim][pose]") {
+	Mesh m;
+	m.nVerts = 3;
+	m.modelSpace = true;
+
+	// 90 degrees around the NIF Z axis, a blend of that with no rotation, and a vertex without weights
+	const Matrix3 turn(0.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	const std::vector<Matrix3> rotations{turn, (turn + Matrix3()) * 0.5f, Matrix3()};
+	m.SetPoseRotations(rotations);
+	REQUIRE(m.poseRotations);
+
+	auto turnInMesh = [&](int vertex, const Vector3& nifDir) {
+		const glm::vec4& r = m.poseRotations[vertex];
+		const glm::quat q(r.w, r.x, r.y, r.z);
+		const Vector3 meshDir = Mesh::TransformDirNifToMesh(nifDir);
+		const glm::vec3 turned = q * glm::vec3(meshDir.x, meshDir.y, meshDir.z);
+		return Vector3(turned.x, turned.y, turned.z);
+	};
+
+	for (const Vector3& dir : {Vector3(1.0f, 0.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f), Vector3(0.0f, 0.0f, 1.0f)}) {
+		CHECK(turnInMesh(0, dir).IsNearlyEqualTo(Mesh::TransformDirNifToMesh(turn * dir)));
+		CHECK(turnInMesh(2, dir).IsNearlyEqualTo(Mesh::TransformDirNifToMesh(dir)));
+	}
+
+	// The blend is made a proper rotation again, halfway around
+	const Vector3 halfway = turnInMesh(1, Vector3(1.0f, 0.0f, 0.0f));
+	CHECK(halfway.IsNearlyEqualTo(Mesh::TransformDirNifToMesh(Vector3(1.0f, 1.0f, 0.0f) / std::sqrt(2.0f))));
+	for (int i = 0; i < m.nVerts; ++i) {
+		CHECK(m.poseRotations[i].w >= 0.0f);
+		CHECK(std::fabs(glm::length(m.poseRotations[i]) - 1.0f) < 0.0001f);
+	}
+
+	// Tangent space normals have no use for them, and neither do rotations for other vertices
+	m.SetPoseRotations(std::vector<Matrix3>(2));
+	CHECK(!m.poseRotations);
+
+	m.SetPoseRotations(rotations);
+	m.modelSpace = false;
+	m.SetPoseRotations(rotations);
+	CHECK(!m.poseRotations);
 }

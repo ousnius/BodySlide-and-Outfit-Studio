@@ -80,6 +80,12 @@ void Mesh::CreateBuffers() {
 		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector2), texcoord2.get(), GL_STATIC_DRAW);
 	}
 
+	if (poseRotations) {
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[10]);
+		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(glm::vec4), poseRotations.get(), GL_DYNAMIC_DRAW);
+		queueUpdate[UpdateType::PoseRotations] = false;
+	}
+
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	// Element index array
@@ -158,6 +164,13 @@ void Mesh::UpdateBuffers() {
 			glBindBuffer(GL_ARRAY_BUFFER, vbo[UpdateType::Weight]);
 			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(float), weight.get());
 			queueUpdate[UpdateType::Weight] = false;
+		}
+
+		if (poseRotations && queueUpdate[UpdateType::PoseRotations]) {
+			// Not sub data, the buffer only gets its storage once a pose first turns the mesh
+			glBindBuffer(GL_ARRAY_BUFFER, vbo[UpdateType::PoseRotations]);
+			glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(glm::vec4), poseRotations.get(), GL_DYNAMIC_DRAW);
+			queueUpdate[UpdateType::PoseRotations] = false;
 		}
 
 		glBindBuffer(GL_ARRAY_BUFFER, 0);

@@ -482,7 +482,12 @@ public:
 	const std::string& ShapeToTarget(const std::string& shapeName);
 	const std::string& TargetToShape(const std::string& targetName);
 	int GetVertexCount(nifly::NiShape* shape);
-	void GetLiveVerts(nifly::NiShape* shape, std::vector<nifly::Vector3>& outVerts, std::vector<nifly::Vector2>* outUVs = nullptr);
+	// outPoseRotations, if given, gets the skinning rotation of each vertex while posed (see
+	// ApplySkinningToVerts) and is emptied otherwise.
+	void GetLiveVerts(nifly::NiShape* shape,
+					  std::vector<nifly::Vector3>& outVerts,
+					  std::vector<nifly::Vector2>* outUVs = nullptr,
+					  std::vector<nifly::Matrix3>* outPoseRotations = nullptr);
 	// GetLiveVerts without the pose: the shape as the sliders morph it
 	void GetMorphedVerts(nifly::NiShape* shape, std::vector<nifly::Vector3>& outVerts, std::vector<nifly::Vector2>* outUVs = nullptr);
 	void GetSliderDiff(nifly::NiShape* shape, const std::string& sliderName, std::vector<nifly::Vector3>& outVerts);

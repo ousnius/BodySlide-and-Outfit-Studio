@@ -1276,6 +1276,9 @@ public:
 	// Shows the slider values of the project on the slider panels
 	void SyncSliderPanels();
 
+	// Shows the shape as the sliders and pose have it, along with the pose rotations its model space
+	// normals need
+	void UpdateLiveMesh(nifly::NiShape* shape, bool updateBVH, bool updateUVs = false);
 	void ApplySliders(bool recalcBVH = true);
 
 	void ShowSliderEffect(const std::string& sliderName, bool show = true);

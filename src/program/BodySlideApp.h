@@ -233,9 +233,16 @@ private:
 	// Moves the skeleton to a different pose or frame in one go and shows it
 	void JumpPreviewSkeleton();
 	// Skins the shape's morphed vertices with the current skeleton pose, or the
-	// simulated bone transforms if a simulation drives the shape.
-	void ApplyPreviewSkinning(size_t projectIdx, const std::string& shapeName, std::vector<nifly::Vector3>& verts);
-	void ApplyPreviewReferenceSkinning(std::vector<nifly::Vector3>& verts);
+	// simulated bone transforms if a simulation drives the shape. outPoseRotations
+	// gets the rotations for PreviewPanel::UpdateMeshes, and stays empty if the
+	// shape wasn't skinned or its mesh doesn't need them.
+	void ApplyPreviewSkinning(size_t projectIdx,
+							  const std::string& shapeName,
+							  std::vector<nifly::Vector3>& verts,
+							  std::vector<nifly::Matrix3>* outPoseRotations = nullptr);
+	void ApplyPreviewReferenceSkinning(std::vector<nifly::Vector3>& verts, std::vector<nifly::Matrix3>* outPoseRotations = nullptr);
+	// The pose rotation output for a shape, which is null when its mesh has no use for them
+	std::vector<nifly::Matrix3>* PoseRotationsFor(const std::string& shapeName, std::vector<nifly::Matrix3>* outPoseRotations);
 	// Shows the loose NIFs posed, or as stored without a pose. Doesn't render.
 	void UpdatePreviewLooseMeshes();
 	// Skins all cached morphed shapes again, or only those a simulation drives

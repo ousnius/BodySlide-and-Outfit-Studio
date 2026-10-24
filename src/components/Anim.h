@@ -266,5 +266,12 @@ using AnimPoseOverrideMap = std::unordered_map<std::string, nifly::MatTransform>
 // Applies CPU linear-blend skinning with the current pose to the given
 // shape-space vertices of the shape. Bones present in poseOverrides use the
 // override transform instead of their AnimBone::xformPoseToGlobal.
-void ApplySkinningToVerts(
-	AnimInfo& anim, nifly::NiShape* shape, bool isSF, const AnimPoseOverrideMap* poseOverrides, std::vector<nifly::Vector3>& verts);
+// outRotations, if given, gets the weight-blended bone rotation of each vertex
+// in shape space, for turning model space normals along with the pose. Being
+// blended, they aren't proper rotations.
+void ApplySkinningToVerts(AnimInfo& anim,
+						  nifly::NiShape* shape,
+						  bool isSF,
+						  const AnimPoseOverrideMap* poseOverrides,
+						  std::vector<nifly::Vector3>& verts,
+						  std::vector<nifly::Matrix3>* outRotations = nullptr);
