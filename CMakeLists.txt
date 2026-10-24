@@ -335,6 +335,7 @@ set(BSOS_COMMON_SOURCES
 	src/components/MaskOps.cpp
 	src/components/MeshAnalysis.cpp
 	src/components/MeshRefine.cpp
+	src/components/PoseMath.cpp
 	src/components/DiffData.cpp
 	src/components/Mesh.cpp
 	src/components/NormalGenLayers.cpp
@@ -516,6 +517,7 @@ if(BSOS_BUILD_TESTS)
 		tests/OutfitProjectTest.cpp
 		tests/PhysicsXmlFileTest.cpp
 		tests/PoseDataJsonTest.cpp
+		tests/PoseMathTest.cpp
 		tests/SFMaterialDatabaseTest.cpp
 		tests/SFLayeredMaterialTest.cpp
 		tests/SFMaterialFileTest.cpp
@@ -531,6 +533,7 @@ if(BSOS_BUILD_TESTS)
 		src/components/MaskTransfer.cpp
 		src/components/MeshAnalysis.cpp
 		src/components/MeshRefine.cpp
+		src/components/PoseMath.cpp
 		src/components/Anim.cpp
 		src/components/Automorph.cpp
 		src/components/DiffData.cpp

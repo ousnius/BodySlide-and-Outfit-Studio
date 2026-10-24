@@ -6,7 +6,10 @@ See the included LICENSE file
 #include "OutfitStudioMcp.h"
 #include "McpSnapshots.h"
 #include "../program/AutomationRunner.h"
+#include "../components/ClippingFixer.h"
+#include "../components/PoseMath.h"
 #include "../components/SliderPresets.h"
+#include "../components/StarfieldSpace.h"
 #include "../utils/ConfigurationManager.h"
 #include "../utils/ProjectUtil.h"
 #include "../program/OutfitStudio.h"
@@ -14,6 +17,7 @@ See the included LICENSE file
 #include <wx/filename.h>
 
 #include <algorithm>
+#include <cfloat>
 #include <cmath>
 #include <set>
 
@@ -144,92 +148,231 @@ std::string ProjectFile(const std::string& path) {
 	return AutomationRunner::MakeAbsoluteToProject(wxString::FromUTF8(path)).ToUTF8().data();
 }
 
-// The direction from a bone to the child it reaches, e.g. from the thigh to the knee, in global space
-bool ReachDirection(AnimBone* bone, Vector3& outDirection) {
-	AnimBone* reach = nullptr;
-	float longest = 0.0f;
-	for (AnimBone* child : bone->children) {
-		float length = child->xformToParent.translation.length();
-		if (length > longest) {
-			longest = length;
-			reach = child;
-		}
-	}
-
-	if (!reach || longest <= 1e-4f)
-		return false;
-
-	outDirection = reach->xformPoseToGlobal.translation - bone->xformPoseToGlobal.translation;
-	outDirection.Normalize();
-	return true;
+double Degrees(float radians) {
+	return std::round(radians / DEG2RAD * 10.0f) / 10.0;
 }
 
-// Where a bone is and which way it points in the skeleton's global space, with the pose
-json BoneTransform(AnimBone* bone) {
-	json entry = {{"position", VectorToJson(bone->xformPoseToGlobal.translation)}};
+std::vector<AnimBone*> SkeletonBones() {
+	AnimSkeleton& skeleton = AnimSkeleton::getInstance();
+	std::vector<std::string> names;
+	skeleton.GetBoneNames(names);
+
+	std::vector<AnimBone*> bones;
+	for (auto& name : names)
+		if (AnimBone* bone = skeleton.GetBonePtr(name))
+			bones.push_back(bone);
+	return bones;
+}
+
+AnimBone* SkeletonBone(const std::string& name) {
+	AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(name);
+	if (!bone)
+		throw McpToolError("There is no bone '" + name + "' in the skeleton. list_skeleton_bones lists them.");
+	return bone;
+}
+
+int BoneDepth(const AnimBone* bone) {
+	int depth = 0;
+	for (AnimBone* p = bone->parent; p; p = p->parent)
+		depth++;
+	return depth;
+}
+
+bool HasAxis(const AnimBone* bone) {
+	// A bone with no joint below, like the head, turns about the direction of its parent
+	Vector3 axis;
+	return PoseMath::BoneAxis(bone, axis);
+}
+
+// A position given in mesh units, in the skeleton's units
+Vector3 ToBoneUnits(const Vector3& v, float units) {
+	return v / units;
+}
+
+// Where a bone is (in mesh units) and which way it points in the skeleton's global space, with the pose, and how its
+// joint is twisted and bent
+json BoneTransform(AnimBone* bone, const PoseMath::TwistContext& context, float units) {
+	json entry = {{"position", VectorToJson(bone->xformPoseToGlobal.translation * units)}};
 
 	Vector3 direction;
-	if (ReachDirection(bone, direction))
+	if (HasAxis(bone) && PoseMath::BoneAxis(bone, direction)) {
 		entry["direction"] = VectorToJson(direction);
+		if (PoseMath::JointParent(bone))
+			entry["bend"] = Degrees(PoseMath::BendAngle(bone));
+	}
+	entry["twist"] = Degrees(PoseMath::SegmentTwist(bone, context));
+	if (PoseMath::GetBoneRole(bone->boneName).role.find("hinge") != std::string::npos && PoseMath::BendsBackwards(bone))
+		entry["bendsBackwards"] = true;
 	return entry;
 }
 
-// Turns a bone about the skeleton's global axes by a rotation vector in radians
-void TurnBoneGlobal(AnimBone* bone, const Vector3& rotation) {
-	// The bone's frame before its own pose rotation: parent pose, then the bone's rest transform
-	Matrix3 frameRotation = bone->xformToParent.rotation;
-	if (bone->parent)
-		frameRotation = bone->parent->xformPoseToGlobal.rotation * frameRotation;
-
-	// RotVecToMat matrices turn the opposite way round in this composition, so the rotation is negated to turn
-	// right-handed about the global axis
-	Matrix3 local = frameRotation.Transpose() * RotVecToMat(rotation * -1.0f) * frameRotation * RotVecToMat(bone->poseRotVec);
-	bone->poseRotVec = RotMatToVec(local);
-	bone->UpdatePoseTransform();
+bool IsLimbRole(const std::string& role) {
+	for (const char* limb : {"upper arm", "forearm", "hand", "thigh", "calf"})
+		if (role.rfind(limb, 0) == 0)
+			return true;
+	return false;
 }
 
-// The smallest turn that points a bone in a global direction
-Vector3 AimRotation(AnimBone* bone, Vector3 target) {
-	Vector3 current;
-	if (!ReachDirection(bone, current))
-		throw McpToolError("The bone '" + bone->boneName + "' has no child to aim with.");
+// Joints of the pose that deform the mesh badly: twisted limbs, hinges bent backwards or folded flat
+json PoseWarnings(const PoseMath::TwistContext& context) {
+	json warnings = json::array();
+	for (AnimBone* bone : PoseMath::MainBones(context.bones)) {
+		if (bone->poseRotVec.IsZero(true))
+			continue;
 
-	target.Normalize();
-	const float cosine = std::clamp(current.dot(target), -1.0f, 1.0f);
-	Vector3 axis = current.cross(target);
-	if (axis.length() < 1e-6f) {
-		if (cosine > 0.0f)
-			return Vector3();
-		// Opposite: any axis across the bone does
-		axis = std::abs(current.x) < 0.9f ? current.cross(Vector3(1.0f, 0.0f, 0.0f)) : current.cross(Vector3(0.0f, 1.0f, 0.0f));
+		// A twist spread over the twist bones of the limb deforms well up to a point, one on the bone alone doesn't
+		const std::string role = PoseMath::GetBoneRole(bone->boneName).role;
+		const double twist = Degrees(PoseMath::SegmentTwist(bone, context));
+		const bool spread = !PoseMath::SegmentTwistBones(bone, context).empty() && PoseMath::TwistSpreadError(bone, context) < 10.0f * DEG2RAD;
+		if (IsLimbRole(role) && std::abs(twist) > (spread ? 150.0 : 60.0))
+			warnings.push_back(bone->boneName + " is twisted " + wxString::Format("%g", twist).ToStdString() + " degrees about its own length"
+							   + (spread ? ", more than the skin can follow." : " without its twist bones, which wrings the skin.")
+							   + " Set it with twist (spread over the twist bones), aim with a twist, or solve the limb with reach and another pole.");
+
+		if (role.find("hinge") == std::string::npos)
+			continue;
+		if (PoseMath::BendsBackwards(bone))
+			warnings.push_back(bone->boneName + " bends backwards, against the way the joint bends. Bend it the other way or solve the limb with reach and a pole.");
+		const double bend = Degrees(PoseMath::BendAngle(bone));
+		if (bend > 150.0)
+			warnings.push_back(bone->boneName + " is folded " + wxString::Format("%g", bend).ToStdString() + " degrees, more than the joint can.");
 	}
+	return warnings;
+}
 
-	axis.Normalize();
-	return axis * std::acos(cosine);
+// The body's mass center over the feet, with the current pose: the reference shape, or all skinned shapes when the
+// body is part of the outfit
+json Balance(OutfitStudioMcp& mcp) {
+	OutfitProject& project = mcp.Project();
+	std::vector<NiShape*> bodies;
+	for (auto* shape : project.GetWorkNif()->GetShapes())
+		if (project.IsBaseShape(shape))
+			bodies.push_back(shape);
+	const bool reference = !bodies.empty();
+	if (!reference)
+		for (auto* shape : project.GetWorkNif()->GetShapes())
+			if (shape->IsSkinned())
+				bodies.push_back(shape);
+
+	Vector3 center;
+	size_t count = 0;
+	for (NiShape* body : bodies) {
+		std::vector<Vector3> verts = McpGlobalLiveVerts(mcp, body);
+		for (auto& v : verts)
+			center += v;
+		count += verts.size();
+	}
+	if (count == 0)
+		throw McpToolError("balance has no skinned shape to weigh.");
+	center /= static_cast<float>(count);
+
+	const float units = McpBoneUnits(mcp);
+	std::vector<Vector3> feet;
+	for (AnimBone* bone : PoseMath::MainBones(SkeletonBones()))
+		if (PoseMath::GetBoneRole(bone->boneName).role.rfind("foot", 0) == 0)
+			feet.push_back(bone->xformPoseToGlobal.translation * units);
+
+	json balance = {{"centerOfMass", VectorToJson(center)}};
+	if (feet.empty())
+		return balance;
+
+	Vector3 support;
+	float spread = 0.0f;
+	for (auto& foot : feet)
+		support += foot;
+	support /= static_cast<float>(feet.size());
+	for (auto& foot : feet)
+		spread = std::max(spread, std::hypot(foot.x - support.x, foot.y - support.y));
+
+	const float offsetX = center.x - support.x;
+	const float offsetY = center.y - support.y;
+	balance["feetCenter"] = VectorToJson(support);
+	balance["offset"] = json::array({offsetX, offsetY});
+	// Standing needs the mass over the feet, give or take a foot's length
+	balance["balanced"] = std::hypot(offsetX, offsetY) <= spread + 5.0f;
+	balance["note"] = "offset is the mass center minus the middle of the feet, in x (her right) and y (her front).";
+	return balance;
+}
+
+// How close shapes come to each other with the current pose, e.g. a hand to the head
+json Contacts(OutfitStudioMcp& mcp, const json& list) {
+	if (!list.is_array())
+		McpArgs::Wrong("contacts", "a list of {from, to}");
+
+	json contacts = json::array();
+	for (auto& item : list) {
+		NiShape* from = mcp.Shape(McpArgs::String(item, "from"));
+		NiShape* to = mcp.Shape(McpArgs::String(item, "to"));
+
+		// In global space: a head's vertices are in its own space, a hand's in the skeleton's
+		std::vector<Triangle> triangles;
+		to->GetTriangles(triangles);
+		std::vector<float> distances = ClippingFixer::SignedDistancesToBody(McpGlobalLiveVerts(mcp, to), triangles, McpGlobalLiveVerts(mcp, from), 20.0f);
+
+		float closest = FLT_MAX;
+		int closestVertex = -1;
+		size_t penetrating = 0;
+		size_t touching = 0;
+		for (size_t v = 0; v < distances.size(); v++) {
+			const float d = distances[v];
+			if (d == FLT_MAX)
+				continue;
+			if (d < closest) {
+				closest = d;
+				closestVertex = static_cast<int>(v);
+			}
+			if (d < 0.0f)
+				penetrating++;
+			else if (d < 0.5f)
+				touching++;
+		}
+
+		json entry = {{"from", from->name.get()}, {"to", to->name.get()}, {"penetrating", penetrating}, {"touching", touching}};
+		if (closestVertex >= 0) {
+			entry["closestDistance"] = std::round(closest * 100.0f) / 100.0f;
+			entry["closestVertex"] = closestVertex;
+		}
+		else
+			entry["closestDistance"] = nullptr;
+		contacts.push_back(entry);
+	}
+	return contacts;
 }
 
 // The bones of the current pose that differ from the unposed skeleton, as set_preview_pose takes them.
 // With withTransforms, also the global position and direction of the bones.
-McpToolResult GetPose(bool posed, const json& args = json::object()) {
+McpToolResult GetPose(OutfitStudioMcp& mcp, bool posed, const json& args = json::object()) {
 	McpToolResult result;
 	result.data["posed"] = posed;
 
 	if (McpArgs::Bool(args, "withTransforms", false)) {
+		const PoseMath::TwistContext context = McpTwistContext(mcp);
 		std::vector<std::string> names = McpArgs::Strings(args, "bones");
 		if (names.empty()) {
-			AnimSkeleton::getInstance().GetBoneNames(names);
-			names.erase(std::remove_if(names.begin(), names.end(), [](const std::string& n) { return n.rfind("NPC ", 0) != 0; }), names.end());
+			// Skyrim's NPC bones, or the main bones of skeletons that don't name them so
+			const bool npc = std::any_of(context.bones.begin(), context.bones.end(), [](const AnimBone* b) { return b->boneName.rfind("NPC ", 0) == 0; });
+			if (McpArgs::Bool(args, "mainBones", false) || !npc) {
+				for (AnimBone* bone : PoseMath::MainBones(context.bones))
+					names.push_back(bone->boneName);
+			}
+			else {
+				for (AnimBone* bone : context.bones)
+					if (bone->boneName.rfind("NPC ", 0) == 0)
+						names.push_back(bone->boneName);
+			}
 		}
 
+		const float units = McpBoneUnits(mcp);
 		json transforms = json::object();
-		for (auto& name : names) {
-			AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(name);
-			if (!bone)
-				throw McpToolError("There is no bone '" + name + "' in the skeleton.");
-			transforms[name] = BoneTransform(bone);
-		}
+		for (auto& name : names)
+			transforms[name] = BoneTransform(SkeletonBone(name), context, units);
 		result.data["transforms"] = transforms;
 	}
+
+	if (McpArgs::Bool(args, "balance", false))
+		result.data["balance"] = Balance(mcp);
+	if (const json* contacts = McpArgs::Find(args, "contacts"))
+		result.data["contacts"] = Contacts(mcp, *contacts);
 
 	if (!posed) {
 		result.data["bones"] = json::object();
@@ -294,6 +437,74 @@ std::map<std::string, float> McpSliderValuesArg(OutfitStudioMcp& mcp, const json
 	for (auto& value : McpArgs::FloatMap(args, "sliderValues"))
 		values[value.first] = value.second;
 	return values;
+}
+
+std::vector<Vector3> McpGlobalLiveVerts(OutfitStudioMcp& mcp, NiShape* shape) {
+	OutfitProject& project = mcp.Project();
+	std::vector<Vector3> verts;
+	project.GetLiveVerts(shape, verts);
+
+	const MatTransform toGlobal = project.GetWorkAnim()->GetTransformGlobalToShape(shape).InverseTransform();
+	if (!toGlobal.IsNearlyEqualTo(MatTransform()))
+		for (auto& v : verts)
+			v = toGlobal.ApplyTransform(v);
+	return verts;
+}
+
+float McpBoneUnits(OutfitStudioMcp& mcp) {
+	return mcp.Project().GetWorkNif()->GetHeader().GetVersion().IsSF() ? sfHavokScale : 1.0f;
+}
+
+PoseMath::TwistContext McpTwistContext(OutfitStudioMcp& mcp) {
+	PoseMath::TwistContext context;
+	context.bones = SkeletonBones();
+
+	OutfitProject& project = mcp.Project();
+	AnimInfo* anim = project.GetWorkAnim();
+	NifFile* nif = project.GetWorkNif();
+	const float units = McpBoneUnits(mcp);
+
+	// The unposed vertices of each shape in the skeleton's space and units, read once
+	std::map<std::string, std::vector<Vector3>> shapeVerts;
+	auto vertsOf = [&](NiShape* shape) -> const std::vector<Vector3>& {
+		auto found = shapeVerts.find(shape->name.get());
+		if (found != shapeVerts.end())
+			return found->second;
+
+		std::vector<Vector3> verts;
+		nif->GetVertsForShape(shape, verts);
+		auto skin = anim->shapeSkinning.find(shape->name.get());
+		const MatTransform toGlobal = skin != anim->shapeSkinning.end() ? skin->second.xformGlobalToSkin.InverseTransform() : MatTransform();
+		for (auto& v : verts)
+			v = toGlobal.ApplyTransform(v) / units;
+		return shapeVerts.emplace(shape->name.get(), std::move(verts)).first->second;
+	};
+
+	for (AnimBone* bone : context.bones) {
+		std::string lower = bone->boneName;
+		std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+		if (lower.find("twist") == std::string::npos)
+			continue;
+
+		Vector3 sum;
+		double total = 0.0;
+		for (NiShape* shape : nif->GetShapes()) {
+			auto* weights = anim->GetWeightsPtr(shape->name.get(), bone->boneName);
+			if (!weights || weights->empty())
+				continue;
+			const std::vector<Vector3>& verts = vertsOf(shape);
+			for (auto& weight : *weights) {
+				if (weight.first < verts.size()) {
+					sum += verts[weight.first] * weight.second;
+					total += weight.second;
+				}
+			}
+		}
+
+		if (total > 1e-6)
+			context.skinCenters[bone] = bone->xformToGlobal.InverseTransform().ApplyTransform(sum / static_cast<float>(total));
+	}
+	return context;
 }
 
 bool McpHasSliderValuesArg(const json& args) {
@@ -1064,8 +1275,12 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 	pose.description =
 		"Poses the skeleton to look at the outfit in a pose, e.g. to check clipping when moving. The shapes stay "
 		"unposed in the project. Start from a pose of list_poses, a pose file, the current pose (keepCurrent) or "
-		"the unposed skeleton, and change single bones with 'bones'. Bones that 'bones' leaves out keep the start "
-		"pose. get_pose shows the result, save_pose saves it.";
+		"the unposed skeleton, and change bones on top. Global axes: +X is the character's right, +Y her front, +Z up. "
+		"For posing by eye, prefer tilt, aim, twist and reach, which say which way in the character's terms, over "
+		"'bones' and worldRotation. Changes apply parents first: bones, then shift, worldRotation, aim, tilt and twist "
+		"per bone, then reach, then plant. Bones left out keep the start pose. The result has the pose (as get_pose), "
+		"the reach and plant results, and warnings about twisted, backwards or folded joints. get_pose shows more, "
+		"save_pose saves it.";
 	pose.inputSchema = McpSchema({
 		{"pose", McpProp("string", "Start from this pose of list_poses")},
 		{"file", McpProp("string", "Start from a .hkx, .json, .yaml or .yml pose file (absolute or relative to the BodySlide folder)")},
@@ -1078,18 +1293,64 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 		  {"description", "Bone name to {rotation, translation: [x, y, z], scale} relative to the bone's unposed transform. "
 						  "The rotation is the rotation axis scaled by the angle in degrees, e.g. [0, 0, 45] turns 45 degrees around the bone's Z axis. "
 						  "Fields that are left out keep the start pose."}}},
+		{"shift",
+		 {{"type", "object"},
+		  {"additionalProperties", {{"type", "array"}, {"items", {{"type", "number"}}}}},
+		  {"description", "Bone name to a move [x, y, z] in mesh units (as list_shapes bounds) with its children, e.g. {\"NPC COM [COM ]\": [3, 0, -1]} "
+						  "moves the body 3 units to her right and 1 down. With plant, the feet stay and the legs bend to follow."}}},
 		{"worldRotation",
 		 {{"type", "object"},
 		  {"additionalProperties", {{"type", "array"}, {"items", {{"type", "number"}}}}},
-		  {"description", "Bone name to a turn about the skeleton's global axes, applied after 'bones' and parents first: the rotation "
-						  "axis scaled by the angle in degrees. Global axes: +X is the character's right, +Y her front, +Z up. Easier than "
-						  "'bones' for posing by eye, as each bone's own axes point in different directions."}}},
+		  {"description", "Bone name to a turn about the skeleton's global axes: the rotation axis scaled by the angle in degrees, "
+						  "right-handed. [0, 10, 0] turns about her front axis and tips the top of an upright bone 10 degrees "
+						  "towards her right; [10, 0, 0] tips it back; [0, 0, 10] turns her to her left. tilt says the same in plainer terms."}}},
 		{"aim",
 		 {{"type", "object"},
-		  {"additionalProperties", {{"type", "array"}, {"items", {{"type", "number"}}}}},
-		  {"description", "Bone name to a global direction [x, y, z] to point the bone in, towards its next joint (e.g. the "
-						  "upper arm towards the elbow), with the smallest turn. Applied with worldRotation, parents first. "
-						  "get_pose with withTransforms shows the directions bones point in now."}}},
+		  {"additionalProperties",
+		   {{"anyOf",
+			 {{{"type", "array"}, {"items", {{"type", "number"}}}},
+			  {{"type", "object"},
+			   {"properties",
+				{{"direction", {{"type", "array"}, {"items", {{"type", "number"}}}}},
+				 {"twist", McpProp("number", "Twist about the bone's length afterwards, as twist sets it")}}}}}}}},
+		  {"description", "Bone name to a global direction [x, y, z] to point the bone in, towards its next joint (e.g. the upper "
+						  "arm towards the elbow), with the smallest turn from where it points now. Aiming a bone that was turned "
+						  "before keeps that twist: give {direction, twist: 0} to set the twist too, or use reach for a whole limb."}}},
+		{"tilt",
+		 {{"type", "object"},
+		  {"additionalProperties",
+		   {{"type", "object"},
+			{"properties", {{"right", {{"type", "number"}}}, {"front", {{"type", "number"}}}, {"up", {{"type", "number"}}}}}}},
+		  {"description", "Bone name to {right, front, up} in degrees: turns the bone so its end (the next joint) moves towards "
+						  "her right (+X), her front (+Y) or up (+Z); negative values move it to her left, back or down. Applied in "
+						  "that order from where the bone points, e.g. {\"NPC Spine1 [Spn1]\": {\"right\": -10}} leans the chest "
+						  "to her left and {\"NPC Head [Head]\": {\"front\": 15}} nods the head forward. A bone that points along "
+						  "an axis can't tilt towards it."}}},
+		{"twist",
+		 {{"type", "object"},
+		  {"additionalProperties", {{"type", "number"}}},
+		  {"description", "Bone name to its twist about its own length in degrees, right-handed about the direction it points, "
+						  "compared to its unposed twist (get_pose withTransforms shows it). The twist bones along the limb take a "
+						  "share by how far along they are, so the skin turns gradually: twisting the hand spreads over the forearm "
+						  "twist bones, the upper arm over its own. 0 removes the twist."}}},
+		{"reach",
+		 {{"type", "object"},
+		  {"additionalProperties",
+		   {{"type", "object"},
+			{"properties",
+			 {{"target",
+			   {{"description", "Global position [x, y, z] in mesh units, a bone name, or {bone, offset: [x, y, z]} for a point next to a bone"}}},
+			  {"pole", {{"type", "array"}, {"items", {{"type", "number"}}}, {"description", "Global direction the middle joint (elbow, knee) points to"}}}}}}},
+		  {"description", "Two-bone IK: end bone (hand or foot) to {target, pole}. Turns the upper and lower bone of the limb so the "
+						  "end bone's joint reaches the target, e.g. {\"NPC L Hand [LHnd]\": {\"target\": {\"bone\": \"NPC Head [Head]\", "
+						  "\"offset\": [-6, -8, 4]}, \"pole\": [-1, 0, 0]}} puts the left hand behind the head with the elbow out to "
+						  "her left. Both bones are solved from their unposed rotation, rolled so the joint bends the way it does "
+						  "naturally, so no twist is left. Without a pole the joint points the way the unposed limb bends. The "
+						  "result says whether the target was in reach and how far it missed. The end bone isn't turned: aim or "
+						  "tilt it afterwards in the same call."}}},
+		{"plant", McpStringList("End bones (feet, or hands on something) to keep where the start pose has them, with their "
+								"orientation: after everything else, their limbs are solved with reach. Use with shift or pelvis "
+								"turns, so the hips move and the legs follow.")},
 	});
 	pose.handler = [&mcp, frame](const json& args) {
 		OutfitProject& project = mcp.Project();
@@ -1131,6 +1392,35 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 		else if (!McpArgs::Bool(args, "keepCurrent", false) || !project.bPose)
 			ops.ResetPose();
 
+		// End bones to keep where the start pose has them, with the way their middle joint points
+		struct Plant {
+			AnimBone* bone = nullptr;
+			Vector3 position;
+			Vector3 pole;
+			PoseMath::BoneOrientation orientation;
+		};
+		std::vector<Plant> plants;
+		for (auto& name : McpArgs::Strings(args, "plant")) {
+			AnimBone* bone = SkeletonBone(name);
+			AnimBone* upper = nullptr;
+			AnimBone* lower = nullptr;
+			if (!PoseMath::LimbChain(bone, upper, lower))
+				throw McpToolError("'" + name + "' can't be planted: it isn't the end of a limb, like a foot below its calf and thigh.");
+
+			Plant plant;
+			plant.bone = bone;
+			plant.position = bone->xformPoseToGlobal.translation;
+			plant.orientation = PoseMath::CaptureOrientation(bone);
+			const Vector3 start = upper->xformPoseToGlobal.translation;
+			Vector3 line = plant.position - start;
+			line.Normalize();
+			plant.pole = lower->xformPoseToGlobal.translation - start;
+			plant.pole -= line * plant.pole.dot(line);
+			if (plant.pole.length() < 1e-3f)
+				plant.pole = Vector3(0.0f, 1.0f, 0.0f);
+			plants.push_back(plant);
+		}
+
 		// The start pose relative to the unposed skeleton, with the bones changed on top
 		PoseData data;
 		PoseDataCollection::CaptureCurrentPose("MCP", false, data);
@@ -1160,48 +1450,183 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 
 		data.ApplyToSkeleton();
 
-		// Turns about the skeleton's global axes and aims, parents first, so a child turns from where its
-		// parent put it
-		struct Turn {
+		// Changes in global terms, parents first so a child changes from where its parent put it
+		enum class Kind { Shift, Turn, Aim, Tilt, Twist };
+		struct Change {
 			AnimBone* bone = nullptr;
+			Kind kind = Kind::Turn;
 			Vector3 value;
-			bool aim = false;
+			float twist = 0.0f;
+			bool hasTwist = false;
 		};
-		std::vector<Turn> turns;
+		std::vector<Change> changes;
 
-		auto collect = [&](const char* name, bool aim) {
+		auto objectArg = [&](const char* name) -> const json* {
 			const json* list = McpArgs::Find(args, name);
-			if (!list)
-				return;
-			if (!list->is_object())
-				McpArgs::Wrong(name, "an object of bone names to [x, y, z]");
+			if (list && !list->is_object())
+				McpArgs::Wrong(name, "an object of bone names to values");
+			return list;
+		};
 
+		const float units = McpBoneUnits(mcp);
+		if (const json* list = objectArg("shift"))
+			for (auto& item : list->items())
+				changes.push_back({SkeletonBone(item.key()), Kind::Shift, ToBoneUnits(VectorFromJson(item.value(), "shift of " + item.key()), units)});
+		if (const json* list = objectArg("worldRotation"))
+			for (auto& item : list->items())
+				changes.push_back({SkeletonBone(item.key()), Kind::Turn, VectorFromJson(item.value(), "worldRotation of " + item.key()) * DEG2RAD});
+		if (const json* list = objectArg("aim")) {
 			for (auto& item : list->items()) {
-				AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(item.key());
-				if (!bone)
-					throw McpToolError("There is no bone '" + item.key() + "' in the skeleton.");
-				Vector3 value = VectorFromJson(item.value(), std::string(name) + " of " + item.key());
-				turns.push_back({bone, aim ? value : value * DEG2RAD, aim});
+				Change change{SkeletonBone(item.key()), Kind::Aim};
+				if (item.value().is_object()) {
+					if (!item.value().contains("direction"))
+						throw McpToolError("aim of " + item.key() + " needs a direction.");
+					change.value = VectorFromJson(item.value()["direction"], "aim direction of " + item.key());
+					if (item.value().contains("twist") && item.value()["twist"].is_number()) {
+						change.twist = item.value()["twist"].get<float>() * DEG2RAD;
+						change.hasTwist = true;
+					}
+				}
+				else
+					change.value = VectorFromJson(item.value(), "aim of " + item.key());
+				if (change.value.length() < 1e-6f)
+					throw McpToolError("aim of " + item.key() + " has no direction.");
+				changes.push_back(change);
 			}
-		};
-		collect("worldRotation", false);
-		collect("aim", true);
+		}
+		if (const json* list = objectArg("tilt")) {
+			for (auto& item : list->items()) {
+				if (!item.value().is_object())
+					throw McpToolError("tilt of " + item.key() + " has to be {right, front, up}.");
+				Vector3 degrees(McpArgs::Float(item.value(), "right", 0.0f), McpArgs::Float(item.value(), "front", 0.0f), McpArgs::Float(item.value(), "up", 0.0f));
+				changes.push_back({SkeletonBone(item.key()), Kind::Tilt, degrees * DEG2RAD});
+			}
+		}
+		if (const json* list = objectArg("twist")) {
+			for (auto& item : list->items()) {
+				if (!item.value().is_number())
+					throw McpToolError("twist of " + item.key() + " has to be a number of degrees.");
+				Change change{SkeletonBone(item.key()), Kind::Twist};
+				change.twist = item.value().get<float>() * DEG2RAD;
+				changes.push_back(change);
+			}
+		}
 
-		auto depth = [](AnimBone* bone) {
-			int d = 0;
-			for (AnimBone* p = bone->parent; p; p = p->parent)
-				d++;
-			return d;
-		};
-		std::stable_sort(turns.begin(), turns.end(), [&](const Turn& a, const Turn& b) { return depth(a.bone) < depth(b.bone); });
+		std::stable_sort(changes.begin(), changes.end(), [](const Change& a, const Change& b) { return BoneDepth(a.bone) < BoneDepth(b.bone); });
 
-		for (auto& turn : turns)
-			TurnBoneGlobal(turn.bone, turn.aim ? AimRotation(turn.bone, turn.value) : turn.value);
+		const PoseMath::TwistContext twistContext = McpTwistContext(mcp);
+		for (auto& change : changes) {
+			AnimBone* bone = change.bone;
+			switch (change.kind) {
+				case Kind::Shift: PoseMath::ShiftBoneGlobal(bone, change.value); break;
+				case Kind::Turn: PoseMath::TurnBoneGlobal(bone, change.value); break;
+				case Kind::Aim:
+					if (!HasAxis(bone))
+						throw McpToolError("The bone '" + bone->boneName + "' reaches no joint to aim with.");
+					PoseMath::TurnBoneGlobal(bone, PoseMath::AimRotation(bone, change.value));
+					if (change.hasTwist)
+						PoseMath::SetTwistSpread(bone, change.twist, twistContext);
+					break;
+				case Kind::Tilt: {
+					const Vector3 axes[] = {Vector3(1.0f, 0.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f), Vector3(0.0f, 0.0f, 1.0f)};
+					const char* names[] = {"right", "front", "up"};
+					const float angles[] = {change.value.x, change.value.y, change.value.z};
+					for (int i = 0; i < 3; i++) {
+						if (std::abs(angles[i]) < 1e-6f)
+							continue;
+						Vector3 direction;
+						if (!HasAxis(bone) || !PoseMath::BoneAxis(bone, direction))
+							throw McpToolError("The bone '" + bone->boneName + "' reaches no joint to tilt with.");
+						Vector3 turnAxis = direction.cross(axes[i]);
+						if (turnAxis.length() < 0.05f)
+							throw McpToolError("'" + bone->boneName + "' points almost straight along the " + names[i]
+											   + " axis, so it can't tilt towards it. Tilt it towards another axis, or use aim.");
+						turnAxis.Normalize();
+						PoseMath::TurnBoneGlobal(bone, turnAxis * angles[i]);
+					}
+					break;
+				}
+				case Kind::Twist: PoseMath::SetTwistSpread(bone, change.twist, twistContext); break;
+			}
+		}
+
+		// Limbs to a target, parents first
+		json reachResults = json::object();
+		if (const json* list = objectArg("reach")) {
+			struct Reach {
+				AnimBone* bone = nullptr;
+				json spec;
+			};
+			std::vector<Reach> reaches;
+			for (auto& item : list->items()) {
+				AnimBone* bone = SkeletonBone(item.key());
+				AnimBone* upper = nullptr;
+				AnimBone* lower = nullptr;
+				if (!PoseMath::LimbChain(bone, upper, lower))
+					throw McpToolError("'" + item.key() + "' can't reach: it isn't the end of a limb, like a hand below its forearm and upper arm.");
+				if (!item.value().is_object() || !item.value().contains("target"))
+					throw McpToolError("reach of " + item.key() + " needs a target.");
+				reaches.push_back({bone, item.value()});
+			}
+			std::stable_sort(reaches.begin(), reaches.end(), [](const Reach& a, const Reach& b) { return BoneDepth(a.bone) < BoneDepth(b.bone); });
+
+			for (auto& reach : reaches) {
+				const json& target = reach.spec["target"];
+				Vector3 position;
+				if (target.is_string())
+					position = SkeletonBone(target.get<std::string>())->xformPoseToGlobal.translation;
+				else if (target.is_object()) {
+					position = SkeletonBone(McpArgs::String(target, "bone"))->xformPoseToGlobal.translation;
+					if (target.contains("offset"))
+						position += ToBoneUnits(VectorFromJson(target["offset"], "reach offset of " + reach.bone->boneName), units);
+				}
+				else
+					position = ToBoneUnits(VectorFromJson(target, "reach target of " + reach.bone->boneName), units);
+
+				Vector3 pole;
+				const bool hasPole = reach.spec.contains("pole");
+				if (hasPole)
+					pole = VectorFromJson(reach.spec["pole"], "reach pole of " + reach.bone->boneName);
+
+				auto solved = PoseMath::ReachTwoBone(reach.bone, position, hasPole ? &pole : nullptr);
+				// The roll that turns the joint into the pole's plane goes over the upper bone's twist bones
+				if (solved.upper)
+					PoseMath::SetTwistSpread(solved.upper, PoseMath::SegmentTwist(solved.upper, twistContext), twistContext);
+				reachResults[reach.bone->boneName] = {
+					{"reachable", solved.reachable},
+					{"missed", std::round(solved.missed * units * 100.0f) / 100.0f},
+					{"target", VectorToJson(position * units)},
+					{"middleJoint", VectorToJson(solved.midPosition * units)},
+				};
+				if (!solved.reachable)
+					reachResults[reach.bone->boneName]["note"] = "Out of reach: the limb points at the target as far as it goes.";
+			}
+		}
+
+		json planted = json::object();
+		for (auto& plant : plants) {
+			auto solved = PoseMath::ReachTwoBone(plant.bone, plant.position, &plant.pole);
+			if (solved.upper)
+				PoseMath::SetTwistSpread(solved.upper, PoseMath::SegmentTwist(solved.upper, twistContext), twistContext);
+			PoseMath::RestoreOrientation(plant.bone, plant.orientation);
+			planted[plant.bone->boneName] = {{"reachable", solved.reachable}, {"missed", std::round(solved.missed * units * 100.0f) / 100.0f}};
+			if (!solved.reachable)
+				planted[plant.bone->boneName]["note"] = "The leg can't reach the planted spot any more: move the body less far.";
+		}
 
 		PoseData posed;
 		PoseDataCollection::CaptureCurrentPose("MCP", false, posed);
 		frame->ApplyRefresh(ops.SetPreviewPose(posed));
-		return GetPose(true);
+
+		McpToolResult result = GetPose(mcp, true);
+		if (!reachResults.empty())
+			result.data["reach"] = reachResults;
+		if (!planted.empty())
+			result.data["planted"] = planted;
+		json warnings = PoseWarnings(twistContext);
+		if (!warnings.empty())
+			result.data["warnings"] = warnings;
+		return result;
 	};
 	mcp.AddTool(std::move(pose));
 
@@ -1211,13 +1636,22 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 		"Returns the bones of the current preview pose that differ from the unposed skeleton, in the form "
 		"set_preview_pose takes them: rotation as axis times angle in degrees, translation and scale. With "
 		"withTransforms, also where bones are in the skeleton's global space (+X the character's right, +Y her front, "
-		"+Z up) and which way they point towards their next joint.";
+		"+Z up), which way they point towards their next joint, their twist about their own length and how far "
+		"their joint bends, in degrees, with bendsBackwards for a hinge bent the wrong way. balance weighs the "
+		"reference body over the feet; contacts measures how close shapes come, e.g. a hand to the head.";
 	getPose.inputSchema = McpSchema({
-		{"withTransforms", McpProp("boolean", "Also return global positions and directions. Default false.")},
+		{"withTransforms", McpProp("boolean", "Also return global positions, directions, twist and bend. Default false.")},
 		{"bones", McpStringList("With withTransforms: only these bones, all NPC bones by default")},
+		{"mainBones", McpProp("boolean", "With withTransforms and no bones: only the main bones (spine, neck, head, arms, legs). Default false.")},
+		{"balance", McpProp("boolean", "Where the reference body's mass center is compared to the middle of the feet, and whether she'd stand. Default false.")},
+		{"contacts",
+		 {{"type", "array"},
+		  {"items", {{"type", "object"}, {"properties", {{"from", McpProp("string", "Shape")}, {"to", McpProp("string", "Shape")}}}}},
+		  {"description", "Pairs of shapes to measure with the pose: closest distance of from's vertices to to's surface "
+						  "(negative inside), how many vertices go in (penetrating) and how many are within 0.5 (touching)."}}},
 	});
 	getPose.readOnly = true;
-	getPose.handler = [&mcp](const json& args) { return GetPose(mcp.Project().bPose, args); };
+	getPose.handler = [&mcp](const json& args) { return GetPose(mcp, mcp.Project().bPose, args); };
 	mcp.AddTool(std::move(getPose));
 
 	McpTool savePose;

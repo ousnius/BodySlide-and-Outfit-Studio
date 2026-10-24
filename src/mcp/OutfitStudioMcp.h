@@ -8,6 +8,7 @@ See the included LICENSE file
 #include "McpArgs.h"
 #include "McpProtocol.h"
 #include "McpServer.h"
+#include "../components/PoseMath.h"
 
 #include <atomic>
 #include <chrono>
@@ -202,6 +203,19 @@ private:
 
 // The shape named in args["against"], or the reference shape. Throws when there is none, or it's the shape itself.
 nifly::NiShape* McpAgainstShape(OutfitStudioMcp& mcp, const nlohmann::json& args, nifly::NiShape* shape);
+
+// How many mesh units one unit of the skeleton is: Starfield's skeleton is in meters, its meshes about 70 times
+// larger. Positions of bones are multiplied by it to compare them with vertices, and distances given in mesh units
+// divided by it to move bones.
+float McpBoneUnits(OutfitStudioMcp& mcp);
+
+// The vertices of a shape as shown, with the current slider values and pose, in the skeleton's global space. The
+// project's live vertices are in each shape's own skin space, which only matches the global space for shapes like
+// bodies and outfits: a facegen head's is the head's.
+std::vector<nifly::Vector3> McpGlobalLiveVerts(OutfitStudioMcp& mcp, nifly::NiShape* shape);
+
+// The skeleton's bones with where the skin of each twist bone is, from the weights of the project's shapes
+PoseMath::TwistContext McpTwistContext(OutfitStudioMcp& mcp);
 
 // Signed distances of the vertices of a shape to the surface of another, as both are shown with the current slider
 // values and pose. Negative inside, FLT_MAX where the surface is farther than searchRadius.

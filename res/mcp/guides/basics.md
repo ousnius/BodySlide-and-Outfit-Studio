@@ -53,15 +53,30 @@ Numbers find problems, images confirm them. Render what the numbers point at, no
 - **`show_heatmap`**: `kind` `clipping` (red inside the body, blue outside), `slider` (how far each vertex moves), `weights` (one bone), or a metric of `from_analysis`. `kind: "off"` turns it off. The mask display hides vertex colors, so heatmaps turn it off (`maskDisplayTurnedOff`).
 - **`toggle_display`** flips display toggles (`toggle: ["wireframe", "textures"]`) or sets them (`set: {"textures": false}`), and returns them all. Plain grey shapes show clipping best; wireframe shows folds and how dense the mesh is where the body pokes through.
 - **`set_preview_pose`** shows clipping in motion, e.g. raised arms for tops and bent legs for skirts.
-- `frame_view`, `set_view_state` and `get_view_state` control the camera. `set_view_state` `offset` is minus the look-at point in NIF units / 10, `position[2]` the distance.
+- `frame_view`, `set_view_state` and `get_view_state` control the camera. **`orbit`** (in `set_view_state` and `render_view`) places it in the character's terms: `{"target": "<bone or shape>", "yaw": 20, "pitch": -5, "distance": 150, "fov": 50}`. Yaw 0 looks at her front, 90 from her right, -90 from her left, 180 from behind; positive pitch looks from above. `get_view_state` returns the camera as an orbit too.
 
 ## Posing
 
+Global axes: +X is the character's right, +Y her front, +Z up. Positions and distances are in mesh units, like `list_shapes` bounds, also for Starfield, whose skeleton is in meters.
+
 - `list_poses` lists the poses; `set_preview_pose` shows one (by name, a pose file, or `keepCurrent` to adjust step by step); `clear_preview_pose` ends it.
-- `aim: {"<bone>": [x, y, z]}` points a bone (shoulder to elbow, hip to knee) in a global direction, parents first; bone names come from `list_shapes` with `withBones`. `worldRotation` turns a bone about the global axes in degrees. `get_pose` with `withTransforms` shows where the joints are and which way the bones point.
+- **Know the skeleton first:** `list_skeleton_bones` with `mainOnly` and `withPoseInfo` lists the joints (pelvis, spine, neck, head, clavicles, arms, legs) with their role, natural range of motion, length, unposed direction and the twist bones of each limb. The games name them differently: Skyrim `NPC L Forearm [LLar]`, Fallout 4 `LArm_ForeArm1` (to `ForeArm3`, a chain), Starfield `L_Biceps`, `L_Forearm`, `L_Wrist`, Fallout 3 and Oblivion `Bip01 L Forearm`.
+- **Change bones in the character's terms**, not with axis-angle guesses. Within one call, changes apply parents first: `shift`, `worldRotation`, `aim`, `tilt`, `twist`, then `reach`, then `plant`.
+  - `tilt: {"<bone>": {"right": 10, "front": -5, "up": 0}}` moves the bone's next joint towards her right, front or up by degrees (negative: left, back, down). Lean the chest with the spine bones, nod with the neck and head.
+  - `aim: {"<bone>": [x, y, z]}` points a bone at a direction with the smallest turn. That keeps any twist the bone had, so after earlier turns give `{"direction": [...], "twist": 0}`.
+  - `twist: {"<bone>": degrees}` sets a bone's twist about its own length and spreads it over the limb's twist bones, so the skin turns gradually: the hand over the forearm, the upper arm over its own twist bones. Twisting a limb bone alone wrings the skin.
+  - **`reach`** solves a whole arm or leg: `{"NPC L Hand [LHnd]": {"target": {"bone": "NPC Head [Head]", "offset": [-6, -8, 4]}, "pole": [-1, 0, 0]}}` puts the hand behind the head with the elbow out to her left. Both bones are solved from scratch, so no roll from earlier attempts stays, and the elbow or knee bends the way it naturally does. The result says `reachable` and how far it `missed`. Aim or twist the hand afterwards.
+  - `shift: {"NPC COM [COM ]": [3, 0, -1]}` moves the body; with **`plant: ["<left foot>", "<right foot>"]`** the feet stay put and the legs bend to follow. Hips pushed out to one side, with the spine tilted back the other way and the head upright, make a contrapposto.
+  - Prefer `reach` and `tilt` over `worldRotation` and `bones`.
+- **Check the pose:**
+  - The result of `set_preview_pose` has `warnings` for limbs twisted too far, hinges bent backwards and joints folded past their range.
+  - `get_pose` `withTransforms` (`mainBones: true`) gives each joint's position, direction, `twist`, `bend` and `bendsBackwards`.
+  - `balance: true` says whether the body's mass is over the feet.
+  - `contacts: [{"from": "Hands", "to": "FemaleHead"}]` measures how close shapes come and whether they go into each other, e.g. a hand on the head.
+- **See the skeleton:** `render_view` `skeleton: true` draws the posed main bones over the images, red on her right side, blue on her left, labelled with short names. `skeleton: {"only": true}` draws a stick figure without shapes. Compare it line by line with a reference picture or a skeleton the user drew on one.
 - `save_pose` saves to the pose list, or to `.hkx` (a game pose), `.yaml` or `.json`.
-- Bodies without hands or feet (the CBBE 3BA body) look odd in poses: add "CBBE Hands" and "CBBE Feet" (in `CBBE.osp`) with `add_project` for renders.
-- For a shot from below, set a low, close camera with a wide `fov` (`set_view_state`).
+- Bodies without hands or feet (the CBBE 3BA body) look odd in poses: add "CBBE Hands" and "CBBE Feet" (in `CBBE.osp`) with `add_project` for renders. A head and hair from the game's archives (`load_from_archive`, e.g. a facegen NIF) complete the figure.
+- For a shot from below, use an orbit with negative pitch, a short distance and a wide `fov`.
 
 ## Bringing meshes in
 

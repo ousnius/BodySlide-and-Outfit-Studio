@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
+#include "../components/PoseMath.h"
 #include "../program/OutfitStudio.h"
 
 #include <wx/dcmemory.h>
@@ -11,7 +12,9 @@ See the included LICENSE file
 
 #include <algorithm>
 #include <cfloat>
+#include <cmath>
 #include <optional>
+#include <set>
 
 using nlohmann::json;
 using namespace nifly;
@@ -179,6 +182,209 @@ void FrameTarget(OutfitStudioMcp& mcp, const json& args) {
 	}
 }
 
+// The point a camera target names in mesh units: a bone where the pose has it, the middle of a shape as shown, or
+// a position
+Vector3 CameraTarget(OutfitStudioMcp& mcp, const json& target) {
+	if (!target.is_string())
+		return VectorFromJson(target, "orbit target");
+
+	const std::string name = target.get<std::string>();
+	if (AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(name))
+		return (mcp.Project().bPose ? bone->xformPoseToGlobal : bone->xformToGlobal).translation * McpBoneUnits(mcp);
+
+	NiShape* shape = mcp.Project().GetWorkNif()->FindBlockByName<NiShape>(name);
+	if (!shape)
+		throw McpToolError("The orbit target '" + name + "' is neither a bone of the skeleton nor a shape.");
+
+	std::vector<Vector3> verts = McpGlobalLiveVerts(mcp, shape);
+	if (verts.empty())
+		throw McpToolError("The shape '" + name + "' has no vertices to look at.");
+
+	Vector3 lo = verts[0], hi = verts[0];
+	for (auto& v : verts) {
+		lo.x = std::min(lo.x, v.x);
+		lo.y = std::min(lo.y, v.y);
+		lo.z = std::min(lo.z, v.z);
+		hi.x = std::max(hi.x, v.x);
+		hi.y = std::max(hi.y, v.y);
+		hi.z = std::max(hi.z, v.z);
+	}
+	return (lo + hi) * 0.5f;
+}
+
+// Puts the camera on a sphere around a target: yaw 0 looks at her front, 90 from her right, pitch from above
+void ApplyOrbit(OutfitStudioMcp& mcp, GLSurface::CameraState& camera, const json& orbit) {
+	if (!orbit.is_object())
+		McpArgs::Wrong("orbit", "an object with target, yaw, pitch and distance");
+
+	Vector3 target = Mesh::TransformPosMeshToNif(camera.camOffset * -1.0f);
+	if (const json* value = McpArgs::Find(orbit, "target"))
+		target = CameraTarget(mcp, *value);
+
+	const float distance = McpArgs::Float(orbit, "distance", -camera.camPos.z * 10.0f);
+	if (distance <= 0.0f)
+		McpArgs::Wrong("distance", "a distance above 0");
+
+	camera.camOffset = Mesh::TransformPosNifToMesh(target) * -1.0f;
+	camera.camPos = Vector3(0.0f, 0.0f, -distance / 10.0f);
+	camera.camRot = Vector3(McpArgs::Float(orbit, "pitch", camera.camRot.x), McpArgs::Float(orbit, "yaw", camera.camRot.y), 0.0f);
+	camera.camRotOffset = Vector3();
+	if (McpArgs::Has(orbit, "fov")) {
+		camera.fov = std::clamp(McpArgs::Float(orbit, "fov", camera.fov), 10.0f, 150.0f);
+		camera.perspective = true;
+	}
+}
+
+// The camera as an orbit, when it turns around the point it looks at
+json OrbitToJson(const GLSurface::CameraState& camera) {
+	if (!camera.camRotOffset.IsZero(true) || std::abs(camera.camPos.x) > 1e-4f || std::abs(camera.camPos.y) > 1e-4f)
+		return nullptr;
+	return {
+		{"target", VectorToJson(Mesh::TransformPosMeshToNif(camera.camOffset * -1.0f))},
+		{"yaw", camera.camRot.y},
+		{"pitch", camera.camRot.x},
+		{"distance", -camera.camPos.z * 10.0f},
+		{"fov", camera.fov},
+	};
+}
+
+const json OrbitSchema = {
+	{"type", "object"},
+	{"description", "Camera around a point, in the character's terms: yaw 0 looks at her front, 90 from her right, -90 from her "
+					"left, 180 from behind; pitch looks from above (positive) or below (negative); distance in mesh units "
+					"(a body is about 120 tall). Fields left out keep the camera's."},
+	{"properties",
+	 {{"target", {{"description", "A bone name (where the pose has it), a shape name (its middle) or a position [x, y, z] in mesh units"}}},
+	  {"yaw", McpProp("number", "Degrees around her, 0 in front, 90 at her right")},
+	  {"pitch", McpProp("number", "Degrees up (positive, looking down) or down (negative, looking up)")},
+	  {"distance", McpProp("number", "From the target in mesh units")},
+	  {"fov", McpProp("number", "Field of view in degrees")}}},
+};
+
+// Bones drawn over a render: the main bones or a list, each linked to the closest ancestor drawn
+struct SkeletonOverlay {
+	std::vector<AnimBone*> bones;
+	bool labels = true;
+	bool only = false;
+};
+
+std::optional<SkeletonOverlay> SkeletonArg(const json& args) {
+	const json* value = McpArgs::Find(args, "skeleton");
+	if (!value || (value->is_boolean() && !value->get<bool>()))
+		return std::nullopt;
+
+	SkeletonOverlay overlay;
+	std::string mode = "main";
+	std::vector<std::string> names;
+	if (value->is_object()) {
+		overlay.labels = McpArgs::Bool(*value, "labels", true);
+		overlay.only = McpArgs::Bool(*value, "only", false);
+		if (const json* bones = McpArgs::Find(*value, "bones")) {
+			if (bones->is_string())
+				mode = bones->get<std::string>();
+			else {
+				mode = "list";
+				names = McpArgs::Strings(*value, "bones");
+			}
+		}
+	}
+	else if (!value->is_boolean())
+		McpArgs::Wrong("skeleton", "true or {bones, labels, only}");
+
+	AnimSkeleton& skeleton = AnimSkeleton::getInstance();
+	if (mode == "list") {
+		for (auto& name : names) {
+			AnimBone* bone = skeleton.GetBonePtr(name);
+			if (!bone)
+				throw McpToolError("There is no bone '" + name + "' in the skeleton.");
+			overlay.bones.push_back(bone);
+		}
+	}
+	else if (mode == "main" || mode == "all") {
+		std::vector<std::string> all;
+		skeleton.GetBoneNames(all);
+		for (auto& name : all)
+			if (AnimBone* bone = skeleton.GetBonePtr(name))
+				overlay.bones.push_back(bone);
+		if (mode == "main")
+			overlay.bones = PoseMath::MainBones(overlay.bones);
+	}
+	else
+		McpArgs::Wrong("skeleton.bones", "\"main\", \"all\" or a list of bone names");
+
+	if (overlay.bones.empty())
+		throw McpToolError("The skeleton has no bones to draw.");
+	return overlay;
+}
+
+// Draws the bones over a rendered image as seen by the camera: lines to the parent drawn, joints as dots, and the
+// short names. Red is her right side, blue her left, green the middle.
+void DrawSkeleton(wxImage& image, const GLSurface& surface, const SkeletonOverlay& overlay, bool posed, float units) {
+	const int width = image.GetWidth();
+	const int height = image.GetHeight();
+
+	auto project = [&](const AnimBone* bone, wxPoint& out) {
+		const Vector3 position = (posed ? bone->xformPoseToGlobal : bone->xformToGlobal).translation * units;
+		float x = 0.0f, y = 0.0f;
+		if (!surface.ProjectPointToImage(Mesh::TransformPosNifToMesh(position), static_cast<uint32_t>(width), static_cast<uint32_t>(height), x, y))
+			return false;
+		out = wxPoint(static_cast<int>(std::round(x)), static_cast<int>(std::round(y)));
+		return true;
+	};
+	auto colour = [&](const AnimBone* bone) {
+		// The side the bone reaches to: a clavicle can start across the middle (Starfield's)
+		float x = bone->xformToGlobal.translation.x;
+		if (AnimBone* reach = PoseMath::ReachChild(bone))
+			x += reach->xformToGlobal.translation.x;
+		x *= units;
+		if (x > 0.5f)
+			return wxColour(230, 60, 60);
+		if (x < -0.5f)
+			return wxColour(60, 130, 255);
+		return wxColour(40, 200, 80);
+	};
+
+	std::set<const AnimBone*> drawn(overlay.bones.begin(), overlay.bones.end());
+	auto drawnParent = [&](const AnimBone* bone) -> const AnimBone* {
+		for (const AnimBone* p = bone->parent; p; p = p->parent)
+			if (drawn.count(p))
+				return p;
+		return nullptr;
+	};
+
+	wxBitmap bitmap(image);
+	{
+		wxMemoryDC dc(bitmap);
+		const int lineWidth = std::max(2, height / 300);
+		const int radius = std::max(3, height / 200);
+
+		for (const AnimBone* bone : overlay.bones) {
+			const AnimBone* parent = drawnParent(bone);
+			wxPoint from, to;
+			if (!parent || !project(bone, to) || !project(parent, from))
+				continue;
+			dc.SetPen(wxPen(colour(bone), lineWidth));
+			dc.DrawLine(from, to);
+		}
+
+		dc.SetFont(wxFont(wxFontInfo(std::max(8, height / 75))));
+		dc.SetTextForeground(*wxWHITE);
+		dc.SetTextBackground(wxColour(0, 0, 0));
+		dc.SetBackgroundMode(wxBRUSHSTYLE_SOLID);
+		for (const AnimBone* bone : overlay.bones) {
+			wxPoint at;
+			if (!project(bone, at))
+				continue;
+			dc.SetPen(wxPen(*wxBLACK, 1));
+			dc.SetBrush(wxBrush(colour(bone)));
+			dc.DrawCircle(at, radius);
+			if (overlay.labels)
+				dc.DrawText(wxString::FromUTF8(PoseMath::ShortBoneName(bone->boneName)), at.x + radius + 1, at.y - radius - 1);
+		}
+	}
+	image = bitmap.ConvertToImage();
+}
+
 std::vector<uint8_t> EncodePNG(const wxImage& image) {
 	wxMemoryOutputStream stream;
 	if (!image.SaveFile(stream, wxBITMAP_TYPE_PNG))
@@ -280,6 +486,14 @@ McpToolResult RenderView(OutfitStudioMcp& mcp, const json& args) {
 		mcp.Shape(name);
 		state.shapes[name] = ShapeDisplayMode::Ghost;
 	}
+
+	if (const json* orbit = McpArgs::Find(args, "orbit"))
+		ApplyOrbit(mcp, state.camera, *orbit);
+
+	std::optional<SkeletonOverlay> skeleton = SkeletonArg(args);
+	if (skeleton && skeleton->only)
+		for (auto& shape : state.shapes)
+			shape.second = ShapeDisplayMode::Hidden;
 
 	std::string weightBone = McpArgs::String(args, "weightBone", "");
 	if (!weightBone.empty()) {
@@ -459,6 +673,8 @@ McpToolResult RenderView(OutfitStudioMcp& mcp, const json& args) {
 		}
 
 		for (auto& view : views) {
+			// Every view starts from the camera of the render, not from the preset or framing of the image before
+			Surface(frame).SetCamera(state.camera);
 			if (view != "current")
 				Surface(frame).SetViewPreset(view);
 			if (!frameShapes.empty())
@@ -469,6 +685,8 @@ McpToolResult RenderView(OutfitStudioMcp& mcp, const json& args) {
 			wxImage image;
 			if (!frame->glView->RenderViewImage(width, height, image))
 				throw McpToolError("Rendering failed. The window may be minimized or the graphics driver doesn't support offscreen rendering.");
+			if (skeleton)
+				DrawSkeleton(image, Surface(frame), *skeleton, project.bPose, McpBoneUnits(mcp));
 
 			images.push_back(image);
 			labels.push_back(variant.label.empty() ? view : view + " - " + variant.label);
@@ -508,6 +726,8 @@ McpToolResult RenderView(OutfitStudioMcp& mcp, const json& args) {
 	result.data["width"] = width;
 	result.data["height"] = height;
 	result.data["images"] = labels;
+	if (skeleton)
+		result.data["skeleton"] = {{"bones", skeleton->bones.size()}, {"colors", "red: her right side, blue: her left side, green: the middle"}};
 	if (!facingAway.empty())
 		result.data["focusFacesAway"] = {{"views", facingAway}, {"note", "The focus vertices face away from these views, so they are hidden there. Pick a view from the side they face (get_shape_geometry normals)."}};
 	if (!otherSliders.empty()) {
@@ -643,6 +863,7 @@ void AddViewTools(OutfitStudioMcp& mcp) {
 		Surface(frame);
 		McpToolResult result;
 		result.data = ViewStateToJson(frame->GetViewState());
+		result.data["camera"]["orbit"] = OrbitToJson(frame->GetViewState().camera);
 		result.data["overlays"] = OverlaysToJson(frame);
 		return result;
 	};
@@ -651,11 +872,13 @@ void AddViewTools(OutfitStudioMcp& mcp) {
 	McpTool setView;
 	setView.name = "set_view_state";
 	setView.description =
-		"Changes the view the user sees: a camera preset, the camera as get_view_state returns it, display toggles, "
-		"overlays (bones, nodes, floor) and shape display modes. Only what's given changes.";
+		"Changes the view the user sees: a camera preset, the camera as get_view_state returns it, an orbit around a "
+		"bone, shape or point (yaw and pitch in the character's terms), display toggles, overlays (bones, nodes, floor) "
+		"and shape display modes. Only what's given changes.";
 	setView.inputSchema = McpSchema({
 		{"preset", {{"type", "string"}, {"enum", ViewPresets}, {"description", "Turn the camera to look from this side"}}},
 		{"camera", {{"type", "object"}, {"description", "Camera fields as get_view_state returns them"}}},
+		{"orbit", OrbitSchema},
 		{"display", DisplaySchema},
 		{"overlays", OverlaysSchema},
 		{"shapes", ShapeModesSchema},
@@ -666,6 +889,8 @@ void AddViewTools(OutfitStudioMcp& mcp) {
 
 		if (const json* camera = McpArgs::Find(args, "camera"))
 			ApplyCamera(state.camera, *camera);
+		if (const json* orbit = McpArgs::Find(args, "orbit"))
+			ApplyOrbit(mcp, state.camera, *orbit);
 		if (const json* display = McpArgs::Find(args, "display"))
 			ApplyDisplay(state.display, *display);
 		if (const json* shapes = McpArgs::Find(args, "shapes")) {
@@ -690,6 +915,7 @@ void AddViewTools(OutfitStudioMcp& mcp) {
 
 		McpToolResult result;
 		result.data = ViewStateToJson(frame->GetViewState());
+		result.data["camera"]["orbit"] = OrbitToJson(frame->GetViewState().camera);
 		result.data["overlays"] = OverlaysToJson(frame);
 		return result;
 	};
@@ -762,6 +988,7 @@ void AddViewTools(OutfitStudioMcp& mcp) {
 
 		McpToolResult result;
 		result.data["camera"] = ViewStateToJson(frame->GetViewState())["camera"];
+		result.data["camera"]["orbit"] = OrbitToJson(frame->GetViewState().camera);
 		return result;
 	};
 	mcp.AddTool(std::move(frameView));
@@ -772,6 +999,7 @@ void AddViewTools(OutfitStudioMcp& mcp) {
 		"Renders the view to PNG images to look at the outfit, e.g. from several sides, with slider values, "
 		"wireframe, the mask or the weights of a bone. focus zooms in on vertices (a problem area), variants renders the "
 		"views for several slider values or poses, and grid puts everything into one labeled image to compare. "
+		"orbit places the camera around a bone or shape by yaw and pitch, skeleton draws the posed bones over the images. "
 		"Everything given only applies to the images, the view the user sees, the pose and the slider values stay as they were.";
 	render.inputSchema = McpSchema({
 		{"width", McpProp("integer", "Image width in pixels, 64 to 2048. Default 768.")},
@@ -808,6 +1036,17 @@ void AddViewTools(OutfitStudioMcp& mcp) {
 			  {"pose", McpProp("string", "A pose of list_poses, or \"none\" for unposed")}}}}},
 		  {"description", "Render each view once per variant, e.g. [{\"sliderValues\": {\"Breasts\": 0}}, {\"sliderValues\": {\"Breasts\": 1}}] or [{}, {\"preset\": \"UBE Necoco V1\"}] to compare"}}},
 		{"grid", McpProp("boolean", "Put all images into one, a row per variant and a column per view, each labeled. Easier to compare. Default false.")},
+		{"orbit", OrbitSchema},
+		{"skeleton",
+		 {{"anyOf",
+		   {{{"type", "boolean"}},
+			{{"type", "object"},
+			 {"properties",
+			  {{"bones", {{"description", "\"main\" (default: spine, neck, head, arms, legs), \"all\", or a list of bone names"}}},
+			   {"labels", McpProp("boolean", "Label the joints with their short names (LUar for NPC L UpperArm [LUar]). Default true.")},
+			   {"only", McpProp("boolean", "Hide all shapes and draw only the skeleton, like a stick figure. Default false.")}}}}}},
+		  {"description", "Draw the skeleton with the pose over the images: lines to the parent, joints as dots, red on her right "
+						  "side, blue on her left, green in the middle. Compare it line by line with a reference picture."}}},
 	});
 	const json presetProperties = McpPresetValueProperties();
 	for (auto& property : presetProperties.items())

@@ -813,6 +813,7 @@
     <ClInclude Include="src\components\MaskOps.h" />
     <ClInclude Include="src\components\MeshAnalysis.h" />
     <ClInclude Include="src\components\MeshRefine.h" />
+    <ClInclude Include="src\components\PoseMath.h" />
     <ClInclude Include="src\components\ClothData.h" />
     <ClInclude Include="src\components\DiffData.h" />
     <ClInclude Include="src\components\Mesh.h" />
@@ -963,6 +964,7 @@
     <ClCompile Include="src\components\MaskOps.cpp" />
     <ClCompile Include="src\components\MeshAnalysis.cpp" />
     <ClCompile Include="src\components\MeshRefine.cpp" />
+    <ClCompile Include="src\components\PoseMath.cpp" />
     <ClCompile Include="src\components\DiffData.cpp" />
     <ClCompile Include="src\components\Mesh.cpp" />
     <ClCompile Include="src\components\NormalGenLayers.cpp" />

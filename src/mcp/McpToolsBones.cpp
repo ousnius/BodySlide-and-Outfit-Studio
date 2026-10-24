@@ -5,9 +5,11 @@ See the included LICENSE file
 
 #include "OutfitStudioMcp.h"
 #include "../components/Anim.h"
+#include "../components/PoseMath.h"
 #include "../program/OutfitStudio.h"
 
 #include <algorithm>
+#include <cmath>
 
 using nlohmann::json;
 using namespace nifly;
@@ -44,6 +46,34 @@ json BoneJson(const AnimBone& bone) {
 		{"rotation", Vec(RotMatToVec(bone.xformToParent.rotation))},
 		{"globalPosition", Vec(bone.xformToGlobal.translation)},
 	};
+}
+
+// What a bone does in posing: its role and range, length and unposed direction, and the twist bones of its segment
+json BonePoseInfo(const AnimBone& bone, bool main, const PoseMath::TwistContext& context, float units) {
+	json info = {{"main", main}, {"shortName", PoseMath::ShortBoneName(bone.boneName)}};
+
+	PoseMath::BoneRole role = PoseMath::GetBoneRole(bone.boneName);
+	if (!role.role.empty()) {
+		info["role"] = role.role;
+		info["range"] = role.limits;
+	}
+
+	if (AnimBone* child = PoseMath::ReachChild(&bone)) {
+		Vector3 direction = child->xformToGlobal.translation - bone.xformToGlobal.translation;
+		info["length"] = direction.length() * units;
+		direction.Normalize();
+		info["unposedDirection"] = Vec(direction);
+		info["reaches"] = child->boneName;
+	}
+
+	if (main) {
+		json twistBones = json::array();
+		for (auto& share : PoseMath::SegmentTwistBones(&bone, context))
+			twistBones.push_back({{"bone", share.bone->boneName}, {"fraction", std::round(share.fraction * 100.0f) / 100.0f}});
+		if (!twistBones.empty())
+			info["twistBones"] = twistBones;
+	}
+	return info;
 }
 
 McpToolResult BoneResult(const std::string& name) {
@@ -85,20 +115,37 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 	skeleton.name = "list_skeleton_bones";
 	skeleton.description =
 		"Lists the bones of the reference skeleton and the custom bones, with parent, transform to the parent, "
-		"global position and whether the project uses them. add_bones takes bones from this list.";
+		"global position and whether the project uses them. add_bones takes bones from this list. For posing, "
+		"mainOnly lists only the body's main joints and withPoseInfo adds each bone's role and natural range, length, "
+		"unposed direction and the twist bones that share its twist, with how far along the limb they are. "
+		"translation and globalPosition are in the skeleton's units (meters for Starfield, see units), length in mesh units.";
 	skeleton.inputSchema = McpSchema({
 		{"filter", McpProp("string", "Only bones whose name contains this text, ignoring case")},
 		{"inProject", McpProp("boolean", "Only the bones the project uses. Default false.")},
+		{"mainOnly", McpProp("boolean", "Only the main bones: pelvis, spine, neck, head, clavicles, arms, hands, legs and feet. Default false.")},
+		{"withPoseInfo", McpProp("boolean", "Add role, range of motion, length, unposed direction and twist bones. Default false.")},
 	});
 	skeleton.readOnly = true;
-	skeleton.handler = [](const json& args) {
+	skeleton.handler = [&mcp](const json& args) {
 		std::string filter = McpArgs::String(args, "filter", "");
 		std::transform(filter.begin(), filter.end(), filter.begin(), ::tolower);
 		const bool inProject = McpArgs::Bool(args, "inProject", false);
+		const bool mainOnly = McpArgs::Bool(args, "mainOnly", false);
+		const bool withPoseInfo = McpArgs::Bool(args, "withPoseInfo", false);
 
 		AnimSkeleton& skel = AnimSkeleton::getInstance();
 		std::vector<std::string> names;
 		skel.GetBoneNames(names);
+
+		std::vector<AnimBone*> all;
+		for (auto& name : names)
+			if (AnimBone* bone = skel.GetBonePtr(name))
+				all.push_back(bone);
+		const std::vector<AnimBone*> mainBones = PoseMath::MainBones(all);
+		PoseMath::TwistContext context;
+		if (withPoseInfo)
+			context = McpTwistContext(mcp);
+		const float units = McpBoneUnits(mcp);
 
 		json bones = json::array();
 		for (auto& name : names) {
@@ -109,11 +156,19 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 			std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
 			if (!filter.empty() && lower.find(filter) == std::string::npos)
 				continue;
-			bones.push_back(BoneJson(*bone));
+			const bool main = std::find(mainBones.begin(), mainBones.end(), bone) != mainBones.end();
+			if (mainOnly && !main)
+				continue;
+
+			json entry = BoneJson(*bone);
+			if (withPoseInfo)
+				entry.update(BonePoseInfo(*bone, main, context, units));
+			bones.push_back(entry);
 		}
 
 		McpToolResult result;
 		result.data["bones"] = bones;
+		result.data["units"] = {{"meshUnitsPerSkeletonUnit", units}};
 		return result;
 	};
 	mcp.AddTool(std::move(skeleton));
