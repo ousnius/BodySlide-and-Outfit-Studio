@@ -1186,6 +1186,12 @@ void GLSurface::RenderMesh(Mesh* m) {
 			glVertexAttribPointer(8, 1, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Weight
 		}
 
+		if (m->poseRotations) {
+			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[10]);
+			glEnableVertexAttribArray(10);
+			glVertexAttribPointer(10, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Pose rotations
+		}
+
 		GLuint subMeshesSize = 0;
 		if (!m->subMeshes.empty()) {
 			auto& lastSubMesh = m->subMeshes.back();
@@ -1234,6 +1240,8 @@ void GLSurface::RenderMesh(Mesh* m) {
 			glDisableVertexAttribArray(9);
 		}
 
+		// Without its array the attribute is the identity rotation, (0, 0, 0, 1) being GL's default
+		glDisableVertexAttribArray(10);
 		glDisableVertexAttribArray(5);
 		glDisableVertexAttribArray(4);
 		glDisableVertexAttribArray(3);

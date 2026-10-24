@@ -3185,14 +3185,28 @@ void OutfitStudioFrame::SetSliderValue(const std::string& name, int val) {
 	}
 }
 
-void OutfitStudioFrame::ApplySliders(bool recalcBVH) {
+void OutfitStudioFrame::UpdateLiveMesh(NiShape* shape, bool updateBVH, bool updateUVs) {
+	// Only model space normals need the rotations, tangent space ones follow the vertex normals
+	Mesh* m = glView->GetMesh(shape->name.get());
+	const bool wantsRotations = m && m->modelSpace;
+
 	std::vector<Vector3> verts;
 	std::vector<Vector2> uvs;
+	std::vector<Matrix3> poseRotations;
+	project->GetLiveVerts(shape, verts, updateUVs ? &uvs : nullptr, wantsRotations ? &poseRotations : nullptr);
+	glView->UpdateMeshVertices(shape->name.get(), &verts, updateBVH, true, false, updateUVs ? &uvs : nullptr);
 
-	for (auto& shape : project->GetWorkNif()->GetShapes()) {
-		project->GetLiveVerts(shape, verts, &uvs);
-		glView->UpdateMeshVertices(shape->name.get(), &verts, recalcBVH, true, false, &uvs);
+	if (m) {
+		if (poseRotations.empty())
+			m->ClearPoseRotations();
+		else
+			m->SetPoseRotations(poseRotations);
 	}
+}
+
+void OutfitStudioFrame::ApplySliders(bool recalcBVH) {
+	for (auto& shape : project->GetWorkNif()->GetShapes())
+		UpdateLiveMesh(shape, recalcBVH, true);
 
 	UpdatePhysicsShapes();
 
@@ -13829,11 +13843,8 @@ void OutfitStudioFrame::ApplyPose() {
 	// deferred to the single ApplyPose that PauseAnimationPlayback does.
 	const bool updateBVH = !animPlaying && !physicsPumpActive;
 
-	for (auto& shape : project->GetWorkNif()->GetShapes()) {
-		std::vector<Vector3> verts;
-		project->GetLiveVerts(shape, verts);
-		glView->UpdateMeshVertices(shape->name.get(), &verts, updateBVH, true, false);
-	}
+	for (auto& shape : project->GetWorkNif()->GetShapes())
+		UpdateLiveMesh(shape, updateBVH);
 
 	// Bone overlays cost one GL mesh created and destroyed per bone, not worth
 	// paying for every frame while they are not being drawn.

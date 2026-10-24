@@ -2475,6 +2475,7 @@ void BodySlideApp::PostProcessPreview(std::vector<ShapePreviewData>& shapeData, 
 	}
 
 	// Phase 3: Zap and update meshes
+	std::vector<Matrix3> poseRotations;
 	for (auto& sd : shapeData) {
 		if (sd.zapIdx.size() > 0) {
 			for (int z = sd.zapIdx.size() - 1; z >= 0; z--) {
@@ -2496,10 +2497,12 @@ void BodySlideApp::PostProcessPreview(std::vector<ShapePreviewData>& shapeData, 
 				if (physics.projectIdx == static_cast<size_t>(sd.projectIdx))
 					physics.controller->SetShapeVertices(sd.name, sd.verts);
 
-			ApplyPreviewSkinning(sd.projectIdx, sd.name, sd.verts);
+			ApplyPreviewSkinning(sd.projectIdx, sd.name, sd.verts, &poseRotations);
 		}
+		else
+			poseRotations.clear();
 
-		preview->UpdateMeshes(sd.name, &sd.verts, &sd.uvs);
+		preview->UpdateMeshes(sd.name, &sd.verts, &sd.uvs, &poseRotations);
 	}
 
 	preview->Render();
@@ -2670,16 +2673,18 @@ void BodySlideApp::UpdatePreviewLooseMeshes() {
 	const bool posed = IsPreviewPosed() && previewLooseAnimsBuilt;
 
 	std::vector<Vector3> verts;
+	std::vector<Matrix3> poseRotations;
 	for (size_t i = 0; i < previewLooseNifs.size(); i++) {
 		auto& nif = previewLooseNifs[i];
 		for (auto shape : nif->GetShapes()) {
 			if (!shape->IsSkinned() || !nif->GetVertsForShape(shape, verts))
 				continue;
 
+			auto rotations = PoseRotationsFor(shape->name.get(), &poseRotations);
 			if (posed && i < previewLooseAnims.size())
-				ApplySkinningToVerts(*previewLooseAnims[i], shape, nif->GetHeader().GetVersion().IsSF(), nullptr, verts);
+				ApplySkinningToVerts(*previewLooseAnims[i], shape, nif->GetHeader().GetVersion().IsSF(), nullptr, verts, rotations);
 
-			preview->UpdateMeshes(shape->name.get(), &verts);
+			preview->UpdateMeshes(shape->name.get(), &verts, nullptr, &poseRotations);
 		}
 	}
 }
@@ -2752,7 +2757,20 @@ void BodySlideApp::ApplyPreviewSkeletonPose() {
 	PoseData().ApplyToSkeleton();
 }
 
-void BodySlideApp::ApplyPreviewSkinning(size_t projectIdx, const std::string& shapeName, std::vector<Vector3>& verts) {
+std::vector<Matrix3>* BodySlideApp::PoseRotationsFor(const std::string& shapeName, std::vector<Matrix3>* outPoseRotations) {
+	if (!outPoseRotations)
+		return nullptr;
+
+	outPoseRotations->clear();
+	if (!preview || !preview->WantsPoseRotations(shapeName))
+		return nullptr;
+
+	return outPoseRotations;
+}
+
+void BodySlideApp::ApplyPreviewSkinning(size_t projectIdx, const std::string& shapeName, std::vector<Vector3>& verts, std::vector<Matrix3>* outPoseRotations) {
+	outPoseRotations = PoseRotationsFor(shapeName, outPoseRotations);
+
 	if (projectIdx >= projects.size() || projectIdx >= previewAnims.size())
 		return;
 
@@ -2778,10 +2796,12 @@ void BodySlideApp::ApplyPreviewSkinning(size_t projectIdx, const std::string& sh
 	if (!poseOverrides && !IsPreviewPosed())
 		return;
 
-	ApplySkinningToVerts(*previewAnims[projectIdx], shape, modNif.GetHeader().GetVersion().IsSF(), poseOverrides, verts);
+	ApplySkinningToVerts(*previewAnims[projectIdx], shape, modNif.GetHeader().GetVersion().IsSF(), poseOverrides, verts, outPoseRotations);
 }
 
-void BodySlideApp::ApplyPreviewReferenceSkinning(std::vector<Vector3>& verts) {
+void BodySlideApp::ApplyPreviewReferenceSkinning(std::vector<Vector3>& verts, std::vector<Matrix3>* outPoseRotations) {
+	outPoseRotations = PoseRotationsFor(referenceShapeName, outPoseRotations);
+
 	if (!referenceNif || !previewReferenceAnim || !IsPreviewPosed())
 		return;
 
@@ -2789,7 +2809,7 @@ void BodySlideApp::ApplyPreviewReferenceSkinning(std::vector<Vector3>& verts) {
 	if (!shape || !shape->IsSkinned() || verts.size() != shape->GetNumVertices())
 		return;
 
-	ApplySkinningToVerts(*previewReferenceAnim, shape, referenceNif->GetHeader().GetVersion().IsSF(), nullptr, verts);
+	ApplySkinningToVerts(*previewReferenceAnim, shape, referenceNif->GetHeader().GetVersion().IsSF(), nullptr, verts, outPoseRotations);
 }
 
 void BodySlideApp::ReskinPreview(bool allShapes) {
@@ -2797,6 +2817,7 @@ void BodySlideApp::ReskinPreview(bool allShapes) {
 		return;
 
 	std::vector<Vector3> verts;
+	std::vector<Matrix3> poseRotations;
 	if (allShapes) {
 		for (size_t pi = 0; pi < projects.size(); pi++) {
 			auto& pp = projects[pi];
@@ -2806,15 +2827,15 @@ void BodySlideApp::ReskinPreview(bool allShapes) {
 					continue;
 
 				verts = morphedVerts->second;
-				ApplyPreviewSkinning(pi, it->first, verts);
-				preview->UpdateMeshes(it->first, &verts);
+				ApplyPreviewSkinning(pi, it->first, verts, &poseRotations);
+				preview->UpdateMeshes(it->first, &verts, nullptr, &poseRotations);
 			}
 		}
 
 		if (!previewReferenceMorphedVerts.empty()) {
 			verts = previewReferenceMorphedVerts;
-			ApplyPreviewReferenceSkinning(verts);
-			preview->UpdateMeshes(referenceShapeName, &verts);
+			ApplyPreviewReferenceSkinning(verts, &poseRotations);
+			preview->UpdateMeshes(referenceShapeName, &verts, nullptr, &poseRotations);
 		}
 
 		UpdatePreviewLooseMeshes();
@@ -2828,8 +2849,8 @@ void BodySlideApp::ReskinPreview(bool allShapes) {
 					continue;
 
 				verts = morphedVerts->second;
-				ApplyPreviewSkinning(physics.projectIdx, shapeName, verts);
-				preview->UpdateMeshes(shapeName, &verts);
+				ApplyPreviewSkinning(physics.projectIdx, shapeName, verts, &poseRotations);
+				preview->UpdateMeshes(shapeName, &verts, nullptr, &poseRotations);
 			}
 		}
 	}
@@ -3360,8 +3381,9 @@ void BodySlideApp::UpdateExternalReferenceMesh(int weight, std::vector<Vector3>*
 		previewReferenceMorphedVerts = extRefVerts;
 
 		std::vector<Vector3> skinnedVerts = extRefVerts;
-		ApplyPreviewReferenceSkinning(skinnedVerts);
-		preview->UpdateMeshes(referenceShapeName, &skinnedVerts, &extRefUvs);
+		std::vector<Matrix3> poseRotations;
+		ApplyPreviewReferenceSkinning(skinnedVerts, &poseRotations);
+		preview->UpdateMeshes(referenceShapeName, &skinnedVerts, &extRefUvs, &poseRotations);
 	}
 	else {
 		previewReferenceMorphedVerts.clear();

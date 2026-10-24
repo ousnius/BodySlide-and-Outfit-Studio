@@ -32,6 +32,7 @@ layout(location = 5) in float vertexAlpha;
 layout(location = 6) in vec2 vertexUV;
 layout(location = 7) in float vertexMask;
 layout(location = 8) in float vertexWeight;
+layout(location = 10) in vec4 vertexPoseRotation;
 
 struct DirectionalLight
 {
@@ -97,6 +98,25 @@ vec3 colorRamp(in float value)
 	return vec3(r, g, b);
 }
 
+mat3 rotationFromQuaternion(in vec4 q)
+{
+	q = normalize(q);
+
+	float xx = q.x * q.x;
+	float yy = q.y * q.y;
+	float zz = q.z * q.z;
+	float xy = q.x * q.y;
+	float xz = q.x * q.z;
+	float yz = q.y * q.z;
+	float wx = q.w * q.x;
+	float wy = q.w * q.y;
+	float wz = q.w * q.z;
+
+	return mat3(1.0 - 2.0 * (yy + zz), 2.0 * (xy + wz), 2.0 * (xz - wy),
+				2.0 * (xy - wz), 1.0 - 2.0 * (xx + zz), 2.0 * (yz + wx),
+				2.0 * (xz + wy), 2.0 * (yz - wx), 1.0 - 2.0 * (xx + yy));
+}
+
 void main(void)
 {
 	// Initialization
@@ -130,6 +150,12 @@ void main(void)
 		mv_tbn = mat3(mv_bitangent.x, mv_bitangent.y, mv_bitangent.z,
                            mv_tangent.x, mv_tangent.y, mv_tangent.z,
                            mv_normal.x, mv_normal.y, mv_normal.z);
+	}
+	else
+	{
+		// Model space normal maps hold the normals of the unposed shape, so they are
+		// turned along with the bones the pose moved this vertex with
+		mv_tbn = mv_normalMatrix * rotationFromQuaternion(vertexPoseRotation);
 	}
 	viewDir = normalize(-vPos);
 	lightFrontal = normalize(frontal.direction);

@@ -11,6 +11,7 @@ See the included LICENSE file
 #include "../utils/AABBTree.h"
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/euler_angles.hpp>
 
 #include <algorithm>
@@ -33,7 +34,7 @@ class NifFile;
 
 class Mesh {
 private:
-	std::array<bool, 10> queueUpdate = {false};
+	std::array<bool, 11> queueUpdate = {false};
 
 public:
 	enum class RenderMode {
@@ -69,7 +70,7 @@ public:
 		LitWire
 	};
 	enum class TintType { None, Skin, Hair };
-	enum UpdateType { Position, Normals, Tangents, Bitangents, VertexColors, VertexAlpha, TextureCoordinates, Mask, Weight, Indices };
+	enum UpdateType { Position, Normals, Tangents, Bitangents, VertexColors, VertexAlpha, TextureCoordinates, Mask, Weight, Indices, PoseRotations };
 
 	struct ShaderProperties {
 		nifly::Vector2 uvOffset;
@@ -109,6 +110,10 @@ public:
 	std::unique_ptr<nifly::Vector2[]> texcoord2;
 	std::unique_ptr<float[]> mask;
 	std::unique_ptr<float[]> weight;
+	// How far the pose turned each vertex, as a quaternion (x, y, z, w) in mesh coordinates. Model space
+	// normal maps hold the normals of the unposed shape, which the shader turns by this the way the
+	// game's skinning does. Without it the vertex attribute keeps its default, the identity rotation.
+	std::unique_ptr<glm::vec4[]> poseRotations;
 
 	std::unique_ptr<nifly::Triangle[]> tris;
 	// renderTris is tris re-ordered for rendering with submeshes.  It's
@@ -124,7 +129,7 @@ public:
 	bool genBuffers = false;
 	void (*releaseBuffers)(Mesh&) = nullptr;
 	GLuint vao = 0;
-	std::vector<GLuint> vbo = std::vector<GLuint>(10, 0);
+	std::vector<GLuint> vbo = std::vector<GLuint>(11, 0);
 	GLuint ibo = 0;
 
 	std::vector<std::pair<uint32_t, uint32_t>> subMeshes; // Start index and size of each sub mesh
@@ -379,6 +384,11 @@ public:
 	void WeightFill(float weightValue);
 
 	void ColorChannelFill(int channel, float value);
+
+	// Sets poseRotations from the per-vertex skinning rotations of ApplySkinningToVerts, which are in
+	// NIF shape coordinates. Only model space meshes use them, any other mesh drops them instead.
+	void SetPoseRotations(const std::vector<nifly::Matrix3>& rotations);
+	void ClearPoseRotations();
 
 	static constexpr nifly::MatTransform xformNifToMesh{nifly::Vector3(),nifly::Matrix3(-1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f),0.1f};
 	static constexpr nifly::MatTransform xformMeshToNif{nifly::Vector3(),nifly::Matrix3(-1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f),10.0f};

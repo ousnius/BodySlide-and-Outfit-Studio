@@ -247,7 +247,12 @@ public:
 	void RefreshMeshFromNif(const std::vector<nifly::NifFile*>& nifs);
 	void AddNifShapeTextures(nifly::NifFile* fromNif, const std::string& shapeName);
 
-	void UpdateMeshes(const std::string& shapeName, std::vector<nifly::Vector3>* verts, std::vector<nifly::Vector2>* uvs = nullptr) {
+	// poseRotations are the skinning rotations of posed verts, which model space normals turn by.
+	// Unposed verts come without them.
+	void UpdateMeshes(const std::string& shapeName,
+					  std::vector<nifly::Vector3>* verts,
+					  std::vector<nifly::Vector2>* uvs = nullptr,
+					  const std::vector<nifly::Matrix3>* poseRotations = nullptr) {
 		std::unordered_set<int> changed;
 		Mesh* m = gls.GetMesh(shapeName);
 		if (!m)
@@ -255,6 +260,17 @@ public:
 
 		gls.Update(m, verts, uvs, &changed);
 		m->SmoothNormals(changed);
+
+		if (poseRotations && !poseRotations->empty())
+			m->SetPoseRotations(*poseRotations);
+		else
+			m->ClearPoseRotations();
+	}
+
+	// Whether the shape's mesh has model space normals, the only ones that need pose rotations
+	bool WantsPoseRotations(const std::string& shapeName) {
+		Mesh* m = gls.GetMesh(shapeName);
+		return m && m->modelSpace;
 	}
 
 	void SetShapeTextures(const std::string& shapeName,
