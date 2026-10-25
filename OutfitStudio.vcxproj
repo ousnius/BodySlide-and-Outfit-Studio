@@ -1048,6 +1048,7 @@
     <ClCompile Include="src\mcp\McpToolsBones.cpp" />
     <ClCompile Include="src\mcp\McpToolsEdit.cpp" />
     <ClCompile Include="src\mcp\McpToolsProject.cpp" />
+    <ClCompile Include="src\mcp\McpToolsMeasure.cpp" />
     <ClCompile Include="src\mcp\McpToolsQuality.cpp" />
     <ClCompile Include="src\mcp\McpToolsShapes.cpp" />
     <ClCompile Include="src\mcp\McpToolsSliderFiles.cpp" />

@@ -140,6 +140,13 @@ std::string GLMaterial::GetTexName(uint32_t index) {
 	return "";
 }
 
+void GLMaterial::SetTextureNames(const std::vector<std::string>& inTexNames) {
+	texNames = inTexNames;
+	texCache.assign(texNames.size(), 0);
+	// The resource loader's stamp is never 0, so the IDs are looked up on the next bind
+	cacheTime = 0;
+}
+
 void GLMaterial::BindTextures(GLfloat largestAF,
 							  const bool hasEnvMapping,
 							  const bool hasGlowmap,

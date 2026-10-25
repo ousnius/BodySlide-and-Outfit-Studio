@@ -190,6 +190,12 @@ struct RigidifyOptions {
 	// it would sink in (a rigid buckle can't follow a valley the slider makes). A part that's closer or inside with
 	// all sliders at 0 only has to stay as it is there. Negative leaves the parts where the fit puts them.
 	float clearance = -1.0f;
+	// With perPart, parts with more vertices than this, or longer than maxPartLength along their longest side, keep
+	// bending with the morph, e.g. long wires next to small rigid clasps. 0 for no limit.
+	int maxPartVertices = 0;
+	float maxPartLength = 0.0f;
+	// Receives how many parts were left bending for the limits
+	size_t* outBendingParts = nullptr;
 };
 
 // How PrepareAdaptiveRefine picks the edges to split

@@ -37,6 +37,8 @@ public:
 
 	GLuint GetTexID(uint32_t index);
 	std::string GetTexName(uint32_t index);
+	// Links other textures, e.g. one that was found after all instead of the placeholder
+	void SetTextureNames(const std::vector<std::string>& inTexNames);
 	// Whether the slot exists in this material and resolves to a loaded texture.
 	bool HasTexture(uint32_t index);
 

@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cfloat>
+#include <cmath>
 #include <set>
 
 using nifly::Triangle;
@@ -70,6 +71,26 @@ TEST_CASE("Penetration depth is measured from the body surface", "[MeshAnalysis]
 	CHECK(stats.penetrating == 1);
 	CHECK(stats.nearSurface == 1);
 	CHECK(stats.maxDepth == Catch::Approx(0.25f).margin(0.01));
+}
+
+TEST_CASE("Points past an open edge of the body are outside", "[MeshAnalysis]") {
+	std::vector<Vector3> bodyVerts;
+	std::vector<Triangle> bodyTris;
+	MakeBox(1.0f, bodyVerts, bodyTris);
+	// Without its top, like a body without a head
+	bodyTris.erase(bodyTris.begin() + 2, bodyTris.begin() + 4);
+
+	std::vector<Vector3> outfit = {
+		{0.9f, 0.0f, 1.2f}, // over the opening, closest to its rim
+		{0.9f, 0.0f, 0.0f}, // inside, closest to a side
+		{1.0f, 1.0f, 1.3f}, // over a corner of the rim
+	};
+
+	auto stats = MeshAnalysis::AnalyzePenetration(outfit, bodyVerts, bodyTris, 0.1f, 5.0f);
+	CHECK(stats.signedDistances[0] == Catch::Approx(std::sqrt(0.05f)).margin(0.01));
+	CHECK(stats.signedDistances[1] < 0.0f);
+	CHECK(stats.signedDistances[2] == Catch::Approx(0.3f).margin(0.01));
+	CHECK(stats.penetrating == 1);
 }
 
 TEST_CASE("Morph roughness reports both absolute and normalized values", "[MeshAnalysis]") {

@@ -15,6 +15,7 @@ See the included LICENSE file
 #include <array>
 #include <cstdint>
 #include <cmath>
+#include <unordered_map>
 
 using namespace nifly;
 
@@ -254,6 +255,29 @@ std::vector<float> ClippingFixer::SignedDistancesToBody(const std::vector<Vector
 	for (auto& n : bodyNormals)
 		n = n * normalSign;
 
+	// Open edges: edges of only one triangle, and their vertices
+	std::unordered_map<uint32_t, int> edgeUse;
+	auto edgeKey = [](uint16_t a, uint16_t b) { return a < b ? (static_cast<uint32_t>(a) << 16) | b : (static_cast<uint32_t>(b) << 16) | a; };
+	for (auto& tri : bodyTris) {
+		edgeUse[edgeKey(tri.p1, tri.p2)]++;
+		edgeUse[edgeKey(tri.p2, tri.p3)]++;
+		edgeUse[edgeKey(tri.p3, tri.p1)]++;
+	}
+	std::vector<bool> openVertex(bodyVerts.size(), false);
+	for (auto& edge : edgeUse)
+		if (edge.second == 1) {
+			uint16_t a = static_cast<uint16_t>(edge.first >> 16);
+			uint16_t b = static_cast<uint16_t>(edge.first & 0xFFFF);
+			if (a < openVertex.size())
+				openVertex[a] = true;
+			if (b < openVertex.size())
+				openVertex[b] = true;
+		}
+	auto isOpenEdge = [&](uint16_t a, uint16_t b) {
+		auto it = edgeUse.find(edgeKey(a, b));
+		return it != edgeUse.end() && it->second == 1;
+	};
+
 	AABBTree bodyBVH(const_cast<Vector3*>(bodyVerts.data()), const_cast<Triangle*>(bodyTris.data()), static_cast<uint32_t>(bodyTris.size()), 100, 2);
 	std::vector<AABBTriangleDistanceData> bodyTriangleDistanceData;
 	AABBTree::BuildTriangleDistanceData(bodyVerts.data(), bodyTris.data(), static_cast<uint32_t>(bodyTris.size()), bodyTriangleDistanceData);
@@ -288,6 +312,18 @@ std::vector<float> ClippingFixer::SignedDistancesToBody(const std::vector<Vector
 			outward.Normalize();
 
 			distances[i] = (point - closestPoint).dot(outward);
+
+			// Closest to an open edge, the point is past the opening: the normals there point sideways, so
+			// a point over the hole would read as inside, or as on the surface
+			constexpr float onEdge = 1e-3f;
+			if (bu < onEdge || bv < onEdge || bw < onEdge) {
+				bool open = (bu < onEdge && isOpenEdge(tri.p2, tri.p3)) || (bv < onEdge && isOpenEdge(tri.p3, tri.p1)) || (bw < onEdge && isOpenEdge(tri.p1, tri.p2));
+				// At a corner of the triangle, the edge the point is past may belong to a neighbor
+				open = open || (bv < onEdge && bw < onEdge && openVertex[tri.p1]) || (bu < onEdge && bw < onEdge && openVertex[tri.p2]) ||
+					   (bu < onEdge && bv < onEdge && openVertex[tri.p3]);
+				if (open)
+					distances[i] = (point - closestPoint).length();
+			}
 		}
 	});
 

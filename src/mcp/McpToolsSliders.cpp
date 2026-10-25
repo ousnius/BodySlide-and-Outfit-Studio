@@ -743,22 +743,47 @@ void AddSliderTools(OutfitStudioMcp& mcp) {
 
 	McpTool smooth;
 	smooth.name = "smooth_slider_deltas";
-	smooth.description = "Smooths the morph of a slider on shapes, which evens out bumps a conform left. Masked vertices keep their deltas.";
-	smooth.inputSchema = McpSchema(
-		{
-			{"shapes", ShapesProp},
-			{"slider", McpProp("string", "Slider name")},
-			{"iterations", McpProp("integer", "Smoothing passes. Default 2.")},
-			{"strength", McpProp("number", "Strength of each pass, 0 to 1. Default 0.5.")},
-		},
-		{"slider"});
+	smooth.description =
+		"Smooths the morph of sliders on shapes, which evens out bumps a conform left, or keeps a strap straight between "
+		"parts that move apart (mask its ends first). Without slider or sliders, every morph slider with data on the "
+		"shapes is smoothed. Masked vertices keep their deltas.";
+	smooth.inputSchema = McpSchema({
+		{"shapes", ShapesProp},
+		{"slider", McpProp("string", "Slider name")},
+		{"sliders", McpStringList("Several sliders. Leave out both for all morph sliders with data on the shapes.")},
+		{"iterations", McpProp("integer", "Smoothing passes, at most 100. Default 2.")},
+		{"strength", McpProp("number", "Strength of each pass, 0 to 1. Default 0.5.")},
+	});
 	smooth.handler = [&mcp](const json& args) {
-		std::string slider = McpArgs::String(args, "slider");
+		OutfitProject& project = mcp.Project();
 		const int iterations = std::clamp(McpArgs::Int(args, "iterations", 2), 1, 100);
 		const float strength = std::clamp(McpArgs::Float(args, "strength", 0.5f), 0.0f, 1.0f);
-		for (auto* shape : mcp.Shapes(args, "shapes"))
-			mcp.Apply(mcp.Ops().SmoothSliderDeltas(shape, slider, iterations, strength));
-		return McpToolResult();
+		auto shapes = mcp.Shapes(args, "shapes");
+
+		std::vector<std::string> sliders = McpArgs::Strings(args, "sliders");
+		if (McpArgs::Has(args, "slider"))
+			sliders.push_back(McpArgs::String(args, "slider"));
+		const bool all = sliders.empty();
+		if (all)
+			for (size_t i = 0; i < project.SliderCount(); i++)
+				if (!project.SliderZap(i) && !project.SliderUV(i))
+					sliders.push_back(project.GetSliderName(i));
+
+		McpToolResult result;
+		json smoothed = json::object();
+		for (auto& slider : sliders) {
+			CheckSlider(project, slider);
+			for (auto* shape : shapes) {
+				// All sliders: only where the slider has data, the others have no morph to smooth
+				TargetDataDiffs* diff = project.GetDiffSet(project.activeSet[slider], shape);
+				if (all && (!diff || diff->empty()))
+					continue;
+				mcp.Apply(mcp.Ops().SmoothSliderDeltas(shape, slider, iterations, strength));
+				smoothed[shape->name.get()].push_back(slider);
+			}
+		}
+		result.data["smoothed"] = smoothed;
+		return result;
 	};
 	mcp.AddTool(std::move(smooth));
 

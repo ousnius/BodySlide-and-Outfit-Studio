@@ -700,13 +700,16 @@ std::vector<NiShape*> AutomationRunner::ResolveTargetShapes(const AutomationStep
 	};
 
 	if (step.targetRegex) {
+		// Patterns leave the reference out, so ".*" for every outfit shape doesn't clear or mask the body's slider
+		// data too. A step that is meant for the reference names it without TargetRegex.
 		auto allShapes = project->GetWorkNif()->GetShapes();
+		auto* baseShape = project->GetBaseShape();
 		for (const auto& pattern : step.targetMeshes) {
 			try {
 				std::regex re(pattern, std::regex::icase);
 				bool matched = false;
 				for (auto* shape : allShapes) {
-					if (std::regex_search(shape->name.get(), re)) {
+					if (shape != baseShape && std::regex_search(shape->name.get(), re)) {
 						addUniqueShape(shape);
 						matched = true;
 					}
@@ -740,6 +743,10 @@ int AutomationRunner::ImportOBJFile(const std::string& fileName) {
 void AutomationRunner::ResetAndClearProject() {
 	SyncProject();
 	project->SetBaseShape(nullptr, false);
+	// One by one, so what the project keeps by shape name (the reference's source, textures, materials) goes with
+	// them instead of passing to a shape of the same name in the next project
+	for (auto* shape : project->GetWorkNif()->GetShapes())
+		project->DeleteShape(shape);
 	project->GetWorkAnim()->Clear();
 	project->GetWorkNif()->Clear();
 	outfitStudio->ResetProject();

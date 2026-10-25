@@ -3282,8 +3282,10 @@ int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::stri
 	mRefProjectName.clear();
 	mRefShapeName.clear();
 
-	if (baseShape)
+	if (baseShape) {
 		mRefShapeName = baseShape->name.get();
+		SetShapeReferenceSource(mRefShapeName, "", "");
+	}
 
 	if (!deletedShapes.empty()) {
 		std::string shapesJoin = JoinStrings(deletedShapes, "; ");
@@ -3440,6 +3442,7 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 
 		mRefProjectName = setName;
 		mRefShapeName = shape;
+		SetShapeReferenceSource(shape, mRefProjectFile, mRefProjectName);
 	}
 
 	if (!deletedShapes.empty()) {

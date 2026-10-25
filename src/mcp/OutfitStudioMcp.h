@@ -123,6 +123,7 @@ void AddShapeTools(OutfitStudioMcp& mcp);
 void AddBoneTools(OutfitStudioMcp& mcp);
 void AddSliderFileTools(OutfitStudioMcp& mcp);
 void AddQualityTools(OutfitStudioMcp& mcp);
+void AddMeasureTools(OutfitStudioMcp& mcp);
 void AddFittingTools(OutfitStudioMcp& mcp);
 void AddTextureTools(OutfitStudioMcp& mcp);
 void AddGameTools(OutfitStudioMcp& mcp);

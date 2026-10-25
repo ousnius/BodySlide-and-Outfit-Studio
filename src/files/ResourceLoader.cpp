@@ -504,10 +504,21 @@ GLMaterial* ResourceLoader::AddMaterial(const std::vector<std::string>& textureF
 	MaterialKey key(texFiles, vShaderFile, fShaderFile, useDefaultTexture);
 	if (!reloadTextures) {
 		auto it = materials.find(key);
-		if (it != materials.end())
-			return it->second.get();
+		if (it != materials.end()) {
+			// Textures that weren't found are looked for again: a data folder or archive may have them by now
+			if (incompleteMaterials.find(key) == incompleteMaterials.end())
+				return it->second.get();
+
+			bool found = false;
+			for (size_t i = 0; i < texFiles.size(); i++)
+				if (!texFiles[i].empty() && textures.find(texFiles[i]) == textures.end() && LoadTexture(texFiles[i], i == 4, false))
+					found = true;
+			if (!found)
+				return it->second.get();
+		}
 	}
 
+	bool missing = false;
 	std::vector<GLuint> texRefs(texFiles.size(), 0);
 	for (size_t i = 0; i < texFiles.size(); i++) {
 		if (texFiles[i].empty())
@@ -515,8 +526,10 @@ GLMaterial* ResourceLoader::AddMaterial(const std::vector<std::string>& textureF
 
 		bool isCubeMap = (i == 4);
 		GLuint textureID = LoadTexture(texFiles[i], isCubeMap, reloadTextures);
-		if (!textureID)
+		if (!textureID) {
+			missing = true;
 			continue;
+		}
 
 		texRefs[i] = textureID;
 
@@ -559,9 +572,17 @@ GLMaterial* ResourceLoader::AddMaterial(const std::vector<std::string>& textureF
 			texFiles.resize(1, defaultTex);
 	}
 
+	if (missing)
+		incompleteMaterials.insert(key);
+	else
+		incompleteMaterials.erase(key);
+
+	// Shapes keep pointers to the material, so one that is there already takes the textures in place
 	auto& entry = materials[key];
-	if (!entry || !reloadTextures)
+	if (!entry)
 		entry.reset(new GLMaterial(this, texFiles, vShaderFile, fShaderFile));
+	else
+		entry->SetTextureNames(texFiles);
 
 	return entry.get();
 }
@@ -603,6 +624,7 @@ void ResourceLoader::Cleanup() {
 
 	textures.clear();
 	materials.clear();
+	incompleteMaterials.clear();
 }
 
 size_t ResourceLoader::MatKeyHash::operator()(const MaterialKey& key) const {

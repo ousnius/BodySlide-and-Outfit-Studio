@@ -162,7 +162,7 @@ void AddAutomationTools(OutfitStudioMcp& mcp) {
 		"Each step is an object with \"type\" and the step's parameters by name, as get_step_schema describes "
 		"them, e.g. {\"type\": \"ConformSliders\", \"TargetMeshes\": [\"Top\"]}. Every step also takes "
 		"\"TargetMeshes\" (shape names, empty for the selected shapes or all, depending on the step), "
-		"\"TargetRegex\" (names are regular expressions) and \"active\". Text values can use {{name}} placeholders "
+		"\"TargetRegex\" (names are regular expressions, which leave the reference out) and \"active\". Text values can use {{name}} placeholders "
 		"(double braces), filled in from variables.";
 	runSteps.inputSchema = McpSchema(
 		{

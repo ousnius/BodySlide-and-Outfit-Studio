@@ -39,6 +39,12 @@ Masked vertices are left alone by conform, weight copies, clipping fixes, smooth
 - `set_mask` sets vertices directly; `mask_file` saves and loads named masks.
 - Check a mask with `render_view` `display.mask` and `focus` `{shape, unmasked: true}`.
 
+## Measuring fit
+
+- **`measure_gap`**: how far shapes sit from the body (or `against` another shape), per box region of the shape at rest: median, percentiles, the share inside and the share loose. It takes many cases at once (`cases`, `presets`, `presetFilter`) and ranks them, e.g. to find the body preset an outfit was made on. `profile` gives the gap step by step along an axis.
+- **`compare_shapes`**: a shape against a copy with the same vertices (the source file imported next to it, a duplicate from before an edit, the other game's bake): how far it moved and how its gap to the body changed per region, and per mesh part how much it bent, worst first. With `anchorTo`, the move that gives a part back its offset to another shape (a piercing to the body, a strap's ends to the cups). Each side can be at its own slider values or preset.
+- **`analyze_strap`**: a strap's length, bow and the gap of its ends to the shapes it joins, per case.
+
 ## Looking at the result
 
 Numbers find problems, images confirm them. Render what the numbers point at, not everything.
@@ -128,7 +134,7 @@ Converting a whole mod (dozens of pieces) one tool call at a time costs a lot. D
 - `ImportFromGame` is a step too (see `cross-game`), so conversions from another game batch the same way.
 - `ExportFile` and `SaveProject` create missing folders.
 - `ChangePartitions` takes slot numbers (`"32"` → `"52"`), e.g. after `CopySegPart` gave everything the body's slot 32.
-- Steps that work on shapes take `"TargetRegex": true, "TargetMeshes": [".*"]` for every shape without knowing their names (an empty list means the selected ones for some steps). `.*` includes the reference: `ClearSliderData` and mask steps change its data too. That doesn't matter after the conforms that need it, but renders of the body are wrong afterwards; render with `show` set to only the outfit.
+- Steps that work on shapes take `"TargetRegex": true, "TargetMeshes": [".*"]` for every outfit shape without knowing their names (an empty list means the selected ones for some steps). Patterns leave the reference out, so `ClearSliderData` and mask steps with `.*` keep the body's slider data and the bake can be measured in the same project; a step meant for the reference names it without `TargetRegex`.
 - **Two references on one outfit** in steps: `ConformSliders` with `SliderNames` conforms only those sliders, so others keep their data. `CloneSlider` (`SourceSlider`, `SliderName`) keeps a conform's result under a new name before the next reference is loaded (`LoadReference` with `MergeSliders: true, AppendNewSliders: false` keeps the outfit's sliders). Those are also the step's defaults, unlike `load_reference`'s: after `ClearProject`, a `LoadReference` step without them loads the body with no sliders, so give it `MergeSliders: false, AppendNewSliders: true` for a fresh project. `ClearSliderData` with `UseMask` scales each vertex's data by its mask value, and `InvertMask` swaps the mask. Together they blend two conversions per vertex (see `conform-sliders`, "Blending two conversions").
 - **Masks from a measurement** (`mask_ops` `from_analysis`) have no step: split the batch into `run_steps` before and after the `mask_ops` call. Shapes imported by steps aren't selected, so give `mask_ops` the shape names; they're the NIF's shape names, which a script can read from the file beforehand. Steps leave the outfit's masks as they are; `ClearMask` clears them.
 - Try the script on one piece and look at it (`validate_project`, `analyze_clipping`, a render) before running the batch, then check every piece of it, not a sample (see `body-conversion`, "Many outfits at once").

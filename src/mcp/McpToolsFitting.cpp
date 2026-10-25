@@ -110,6 +110,65 @@ void MergeSurface(const std::vector<std::vector<Vector3>>& vertsOf, const std::v
 	}
 }
 
+// The gap the masked vertices next to the unmasked ones have to the surface, their median: fitting the unmasked
+// area at it brings it level with its surroundings. Rings is how far into the mask they are looked for.
+std::optional<float> BorderGap(const std::vector<Vector3>& verts,
+							   const std::vector<Triangle>& tris,
+							   const std::vector<float>& lock,
+							   const std::vector<Vector3>& surfaceVerts,
+							   const std::vector<Triangle>& surfaceTris,
+							   int rings,
+							   float searchRadius,
+							   size_t* outCount) {
+	if (lock.size() != verts.size())
+		return std::nullopt;
+
+	std::vector<std::vector<int>> neighbors(verts.size());
+	for (auto& t : tris)
+		for (auto [a, b] : {std::pair<int, int>{t.p1, t.p2}, {t.p2, t.p3}, {t.p3, t.p1}})
+			if (a < static_cast<int>(verts.size()) && b < static_cast<int>(verts.size())) {
+				neighbors[a].push_back(b);
+				neighbors[b].push_back(a);
+			}
+
+	// Rings out from the unmasked vertices into the masked ones
+	std::vector<int> ring(verts.size(), -1);
+	std::vector<int> front;
+	for (size_t v = 0; v < verts.size(); v++)
+		if (lock[v] < 0.5f) {
+			ring[v] = 0;
+			front.push_back(static_cast<int>(v));
+		}
+	if (front.empty() || front.size() == verts.size())
+		return std::nullopt;
+
+	std::vector<Vector3> border;
+	for (int r = 1; r <= rings && !front.empty(); r++) {
+		std::vector<int> next;
+		for (int v : front)
+			for (int n : neighbors[v])
+				if (ring[n] < 0) {
+					ring[n] = r;
+					next.push_back(n);
+					border.push_back(verts[n]);
+				}
+		front = std::move(next);
+	}
+
+	auto stats = MeshAnalysis::AnalyzePenetration(border, surfaceVerts, surfaceTris, 0.1f, searchRadius);
+	std::vector<float> gaps;
+	for (float d : stats.signedDistances)
+		if (d != FLT_MAX)
+			gaps.push_back(d);
+	if (outCount)
+		*outCount = gaps.size();
+	if (gaps.empty())
+		return std::nullopt;
+
+	std::nth_element(gaps.begin(), gaps.begin() + gaps.size() / 2, gaps.end());
+	return gaps[gaps.size() / 2];
+}
+
 std::vector<AnimBone*> SkeletonBoneList() {
 	AnimSkeleton& skeleton = AnimSkeleton::getInstance();
 	std::vector<std::string> names;
@@ -588,6 +647,12 @@ McpToolResult FitToBody(OutfitStudioMcp& mcp, const json& args) {
 	const bool rigidParts = McpArgs::Bool(args, "rigidParts", false);
 	const int maxPartVertices = std::max(1, McpArgs::Int(args, "maxPartVertices", 300));
 	options.rigidScale = McpArgs::Bool(args, "rigidScale", false);
+	const bool autoGap = McpArgs::Bool(args, "autoGap", false);
+	const int autoGapRings = std::clamp(McpArgs::Int(args, "autoGapRings", 3), 1, 50);
+	if (autoGap && gapMode != "constant")
+		throw McpToolError("autoGap measures the constant gap; use it with gapMode constant.");
+	if (autoGap && !useMask)
+		throw McpToolError("autoGap measures the gap at the border of the mask; it needs useMask.");
 
 	UndoHistory* history = frame->glView->GetUndoHistory();
 	UndoStateProject* usp = history->PushState();
@@ -609,6 +674,17 @@ McpToolResult FitToBody(OutfitStudioMcp& mcp, const json& args) {
 		Mesh* m = project.GetHost().GetShapeMesh(shape->name.get());
 		if (useMask && m && m->mask && m->nVerts == static_cast<int>(verts.size()))
 			shapeOptions.lock.assign(m->mask.get(), m->mask.get() + m->nVerts);
+
+		size_t borderVertices = 0;
+		if (autoGap) {
+			auto gap = BorderGap(verts, tris, shapeOptions.lock, surfaceVerts, surfaceTris, autoGapRings, options.maxDistance, &borderVertices);
+			if (!gap) {
+				history->PopState();
+				throw McpToolError("autoGap found no masked vertices near the body next to the unmasked ones of '" + shape->name.get() +
+								   "'. Mask the shape outside the area to fit first.");
+			}
+			shapeOptions.gap = std::max(*gap, minGap);
+		}
 
 		// keep: the fit measures the gaps itself, the way it pulls
 		shapeOptions.keepGaps = gapMode == "keep";
@@ -678,6 +754,8 @@ McpToolResult FitToBody(OutfitStudioMcp& mcp, const json& args) {
 			{"strainedEdges", fit.strainedEdges},
 			{"keptForm", fit.relaxed},
 		};
+		if (autoGap)
+			shapesResult[shape->name.get()]["autoGap"] = {{"gap", Round(shapeOptions.gap)}, {"borderVertices", borderVertices}};
 	}
 
 	if (usp->usss.empty()) {
@@ -798,6 +876,12 @@ void AddFittingTools(OutfitStudioMcp& mcp) {
 		{"shapes", shapesProp},
 		{"against", McpStringList("Shapes of the body. Default: the reference. Measured with the current slider values.")},
 		{"gap", McpProp("number", "Distance outside the body to fit to (constant), and the default elsewhere. Default 0.3.")},
+		{"autoGap",
+		 McpProp("boolean",
+				 "gapMode constant: fit at the gap the masked vertices right next to the unmasked ones have (their median), so an area "
+				 "fitted on its own, like the cloth between the breasts onto a filled cleavage, comes in level with its surroundings. "
+				 "Each shape's gap is in the result. Default false.")},
+		{"autoGapRings", McpProp("integer", "autoGap: how many rings of masked vertices next to the unmasked ones are measured. Default 3.")},
 		{"gapMode",
 		 {{"type", "string"},
 		  {"enum", {"constant", "keep", "fromShape"}},

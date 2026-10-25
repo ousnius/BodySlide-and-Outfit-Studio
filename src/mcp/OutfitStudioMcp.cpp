@@ -96,6 +96,7 @@ OutfitStudioMcp::OutfitStudioMcp(OutfitStudioFrame* inFrame)
 	AddBoneTools(*this);
 	AddSliderFileTools(*this);
 	AddQualityTools(*this);
+	AddMeasureTools(*this);
 	AddFittingTools(*this);
 	AddTextureTools(*this);
 	AddGameTools(*this);

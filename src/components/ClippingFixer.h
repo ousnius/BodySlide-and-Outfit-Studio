@@ -43,6 +43,8 @@ public:
 
 	// Signed distance of each point from the body surface along the body's outward normal.
 	// Negative values are inside the body. Points with no body surface within searchRadius get FLT_MAX.
+	// Points whose closest surface point is on an open edge of the body (the neck without a head, the
+	// wrists) are past the opening, not inside, and count as outside.
 	static std::vector<float> SignedDistancesToBody(const std::vector<nifly::Vector3>& bodyVerts,
 											   const std::vector<nifly::Triangle>& bodyTris,
 											   const std::vector<nifly::Vector3>& points,

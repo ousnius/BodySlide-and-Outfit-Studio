@@ -12,6 +12,7 @@ See the included LICENSE file
 #include <string>
 #include <tuple>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "../utils/StringStuff.h"
@@ -153,6 +154,8 @@ private:
 
 	TextureCache textures;
 	MaterialCache materials;
+	// Materials with a texture that couldn't be loaded, which AddMaterial looks for again
+	std::unordered_set<MaterialKey, MatKeyHash> incompleteMaterials;
 	// Keyed by texture name like the texture cache, so a verdict outlives the material that
 	// triggered it and survives the material cache handing back an existing entry.
 	std::map<std::string, bool, case_insensitive_compare> complexMaterialTextures;

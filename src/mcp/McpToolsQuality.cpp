@@ -404,6 +404,10 @@ McpToolResult RigidifySlider(OutfitStudioMcp& mcp, const json& args) {
 	options.perPart = McpArgs::Bool(args, "perPart", true);
 	options.weldDistance = McpArgs::Float(args, "weldDistance", options.weldDistance);
 	options.clearance = McpArgs::Float(args, "clearance", 0.02f);
+	options.maxPartVertices = std::max(0, McpArgs::Int(args, "maxPartVertices", 0));
+	options.maxPartLength = std::max(0.0f, McpArgs::Float(args, "maxPartLength", 0.0f));
+	size_t bending = 0;
+	options.outBendingParts = &bending;
 
 	UndoHistory& history = frame->editor.undoHistory;
 	json changed = json::object();
@@ -411,6 +415,7 @@ McpToolResult RigidifySlider(OutfitStudioMcp& mcp, const json& args) {
 	for (auto& slider : sliders) {
 		UndoStateProject* usp = history.PushState();
 		size_t sliderParts = 0;
+		bending = 0;
 		OpResult result = mcp.Ops().RigidifySlider(shapes, slider, options, *usp, &sliderParts);
 		size_t vertices = 0;
 		for (auto& uss : usp->usss)
@@ -427,6 +432,8 @@ McpToolResult RigidifySlider(OutfitStudioMcp& mcp, const json& args) {
 
 	McpToolResult result;
 	result.data["parts"] = parts;
+	if (options.maxPartVertices > 0 || options.maxPartLength > 0.0f)
+		result.data["bendingParts"] = bending;
 	result.data["slidersChecked"] = sliders.size();
 	// Only the sliders that moved the parts, the others had no morph there
 	result.data["changedVertices"] = changed;
@@ -2478,6 +2485,8 @@ void AddQualityTools(OutfitStudioMcp& mcp) {
 			{"perPart", McpProp("boolean", "Fit each connected part on its own. With false all unmasked vertices of a shape move as one. Default true.")},
 			{"weldDistance", McpProp("number", "Vertices closer than this count as joined. Default 0.001.")},
 			{"clearance", McpProp("number", "Keep each part at least this far outside the reference with the slider at 1, or as far as it is with all sliders at 0 when that's less. Negative to leave the parts where the fit puts them. Default 0.02.")},
+			{"maxPartVertices", McpProp("integer", "Parts with more vertices keep bending with the morph, e.g. the cloth or long wires next to small clasps and zip teeth. Default 0, no limit.")},
+			{"maxPartLength", McpProp("number", "Parts longer than this along their longest side keep bending, e.g. 5 for wires and chains while rings and studs stay rigid. bendingParts in the result counts them. Default 0, no limit.")},
 		});
 	rigidify.handler = [&mcp](const json& args) { return RigidifySlider(mcp, args); };
 	mcp.AddTool(std::move(rigidify));

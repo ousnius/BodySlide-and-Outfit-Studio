@@ -433,6 +433,32 @@ OpResult ProjectOperations::RigidifySlider(const std::vector<NiShape*>& shapes, 
 		if (options.perPart) {
 			int count = 0;
 			parts = MeshAnalysis::ConnectedParts(verts, tris, options.weldDistance, &include, &count);
+
+			if (options.maxPartVertices > 0 || options.maxPartLength > 0.0f) {
+				std::vector<int> sizes(count, 0);
+				std::vector<Vector3> lows(count, Vector3(FLT_MAX, FLT_MAX, FLT_MAX)), highs(count, Vector3(-FLT_MAX, -FLT_MAX, -FLT_MAX));
+				for (size_t v = 0; v < verts.size(); v++) {
+					int p = parts[v];
+					if (p < 0)
+						continue;
+					sizes[p]++;
+					lows[p] = Vector3(std::min(lows[p].x, verts[v].x), std::min(lows[p].y, verts[v].y), std::min(lows[p].z, verts[v].z));
+					highs[p] = Vector3(std::max(highs[p].x, verts[v].x), std::max(highs[p].y, verts[v].y), std::max(highs[p].z, verts[v].z));
+				}
+
+				std::vector<bool> bending(count, false);
+				for (int p = 0; p < count; p++) {
+					Vector3 extent = highs[p] - lows[p];
+					float length = std::max({extent.x, extent.y, extent.z});
+					bending[p] = (options.maxPartVertices > 0 && sizes[p] > options.maxPartVertices) || (options.maxPartLength > 0.0f && length > options.maxPartLength);
+					if (bending[p] && options.outBendingParts)
+						(*options.outBendingParts)++;
+				}
+				for (auto& p : parts)
+					if (p >= 0 && bending[p])
+						p = -1;
+				count -= static_cast<int>(std::count(bending.begin(), bending.end(), true));
+			}
 			partCount += count;
 		}
 		else {
