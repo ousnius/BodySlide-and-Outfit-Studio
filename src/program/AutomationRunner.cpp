@@ -13,6 +13,7 @@ See the included LICENSE file
 #include "../components/ClippingFixer.h"
 #include "../components/DiffData.h"
 #include "../components/MaskOps.h"
+#include "../components/MeshAnalysis.h"
 #include "../components/UndoState.h"
 #include "../files/MaskFile.h"
 #include "../files/TriFile.h"
@@ -650,6 +651,7 @@ int AutomationRunner::ExecuteStep(const AutomationStep& step) {
 		{AutomationStepType::InvertMask, &AutomationRunner::ExecuteStepInvertMask},
 		{AutomationStepType::MaskAsymmetric, &AutomationRunner::ExecuteStepMaskAsymmetric},
 		{AutomationStepType::MaskBox, &AutomationRunner::ExecuteStepMaskBox},
+		{AutomationStepType::MaskCovered, &AutomationRunner::ExecuteStepMaskCovered},
 		{AutomationStepType::MaskBoneWeighted, &AutomationRunner::ExecuteStepMaskBoneWeighted},
 		{AutomationStepType::MaskSliderAffected, &AutomationRunner::ExecuteStepMaskSliderAffected},
 		{AutomationStepType::MaskWeighted, &AutomationRunner::ExecuteStepMaskWeighted},
@@ -915,6 +917,7 @@ int AutomationRunner::ExecuteStepCopyBoneWeights(const AutomationStep& step) {
 	options.proximityRadius = step.weightProximityRadius;
 	options.maxResults = step.weightMaxResults;
 	options.selectedBones = step.weightBoneList;
+	options.normalize = step.weightNormalize;
 
 	UndoStateProject usp;
 	OpResult result = ProjectOperations(*project, outfitStudio->editor).CopyBoneWeights(shapes, options, usp);
@@ -1717,6 +1720,7 @@ int AutomationRunner::ExecuteStepSaveProject(const AutomationStep& step) {
 		return 1;
 	}
 
+	outfitStudio->SetPendingChanges(false);
 	return 0;
 }
 
@@ -3505,6 +3509,84 @@ int AutomationRunner::ExecuteStepMaskBox(const AutomationStep& step) {
 		}
 
 		wxLogMessage("Automation: Masking the vertices of '%s' inside the box...", shapeName);
+		MaskOps::ApplyChanges(*m, changes);
+	}
+
+	outfitStudio->glView->Render();
+	return 0;
+}
+
+int AutomationRunner::ExecuteStepMaskCovered(const AutomationStep& step) {
+	// Without target meshes, the body under the outfit
+	std::vector<NiShape*> shapes;
+	if (step.targetMeshes.empty()) {
+		if (NiShape* baseShape = project->GetBaseShape())
+			shapes.push_back(baseShape);
+	}
+	else
+		shapes = ResolveTargetShapes(step, true);
+	if (shapes.empty()) {
+		wxLogWarning("Automation: MaskCovered - no target shapes found.");
+		return 0;
+	}
+
+	std::vector<NiShape*> covers;
+	if (step.maskCoverShapes.empty()) {
+		for (auto* shape : project->GetWorkNif()->GetShapes())
+			if (!project->IsBaseShape(shape) && std::find(shapes.begin(), shapes.end(), shape) == shapes.end())
+				covers.push_back(shape);
+	}
+	else {
+		for (auto& name : step.maskCoverShapes) {
+			NiShape* shape = FindShapeByName(name);
+			if (!shape) {
+				wxLogError("Automation: MaskCovered - cover shape '%s' not found.", name);
+				return 1;
+			}
+			covers.push_back(shape);
+		}
+	}
+	if (covers.empty()) {
+		wxLogWarning("Automation: MaskCovered - no cover shapes found.");
+		return 0;
+	}
+
+	// The cover shapes as they are shown now
+	std::vector<std::vector<Vector3>> coverVerts(covers.size());
+	std::vector<std::vector<Triangle>> coverTris(covers.size());
+	for (size_t c = 0; c < covers.size(); c++) {
+		project->GetLiveVerts(covers[c], coverVerts[c]);
+		covers[c]->GetTriangles(coverTris[c]);
+	}
+
+	for (auto* shape : shapes) {
+		std::string shapeName = shape->name.get();
+		Mesh* m = outfitStudio->glView->GetMesh(shapeName);
+		if (!m || !m->mask)
+			continue;
+
+		std::vector<Vector3> verts;
+		project->GetLiveVerts(shape, verts);
+		std::vector<Triangle> tris;
+		shape->GetTriangles(tris);
+		// Covered by any of them
+		std::vector<bool> covered(verts.size(), false);
+		for (size_t c = 0; c < covers.size(); c++) {
+			std::vector<bool> byCover = MeshAnalysis::CoveredVertices(verts, tris, coverVerts[c], coverTris[c], step.maskCoverOutside, step.maskCoverInside);
+			for (size_t v = 0; v < covered.size() && v < byCover.size(); v++)
+				if (byCover[v])
+					covered[v] = true;
+		}
+
+		std::unordered_map<int, float> changes;
+		size_t count = 0;
+		for (int v = 0; v < m->nVerts && v < static_cast<int>(covered.size()); v++) {
+			changes[v] = covered[v] ? 1.0f : 0.0f;
+			if (covered[v])
+				count++;
+		}
+
+		wxLogMessage("Automation: Masked %zu covered vertices of '%s'.", count, shapeName);
 		MaskOps::ApplyChanges(*m, changes);
 	}
 

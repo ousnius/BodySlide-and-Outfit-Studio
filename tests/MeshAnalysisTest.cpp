@@ -226,6 +226,46 @@ TEST_CASE("Coincident points and connected parts", "[MeshAnalysis]") {
 	CHECK(parts[island] != parts[island + 2]);
 }
 
+TEST_CASE("Covered vertices are found along the normal on either side", "[MeshAnalysis]") {
+	// The body faces +Z
+	std::vector<Vector3> body;
+	std::vector<Triangle> bodyTris;
+	MakeGrid(10, 1.0f, body, bodyTris);
+
+	// A patch over the corner from x, y = -0.5 to 4.5, at the given height, wound so it faces the body
+	auto cover = [](float z, std::vector<Vector3>& verts, std::vector<Triangle>& tris) {
+		MakeGrid(5, 1.0f, verts, tris);
+		for (auto& v : verts)
+			v += Vector3(-0.5f, -0.5f, z);
+		for (auto& t : tris)
+			std::swap(t.p2, t.p3);
+	};
+	auto count = [](const std::vector<bool>& covered) { return std::count(covered.begin(), covered.end(), true); };
+	auto index = [](int x, int y) { return y * 11 + x; };
+
+	std::vector<Vector3> coverVerts;
+	std::vector<Triangle> coverTris;
+	cover(1.5f, coverVerts, coverTris);
+
+	// In front of the body: within outside it covers the 5 x 5 vertices under it
+	auto covered = MeshAnalysis::CoveredVertices(body, bodyTris, coverVerts, coverTris, 2.0f, 1.0f);
+	CHECK(count(covered) == 25);
+	CHECK(covered[index(0, 0)]);
+	CHECK(covered[index(4, 4)]);
+	CHECK_FALSE(covered[index(5, 4)]);
+	CHECK(count(MeshAnalysis::CoveredVertices(body, bodyTris, coverVerts, coverTris, 1.0f, 1.0f)) == 0);
+
+	// Sunk into the body: within inside
+	cover(-0.5f, coverVerts, coverTris);
+	CHECK(count(MeshAnalysis::CoveredVertices(body, bodyTris, coverVerts, coverTris, 2.0f, 1.0f)) == 25);
+	CHECK(count(MeshAnalysis::CoveredVertices(body, bodyTris, coverVerts, coverTris, 2.0f, 0.25f)) == 0);
+
+	// Facing away from the body counts the same
+	for (auto& t : coverTris)
+		std::swap(t.p2, t.p3);
+	CHECK(count(MeshAnalysis::CoveredVertices(body, bodyTris, coverVerts, coverTris, 2.0f, 1.0f)) == 25);
+}
+
 TEST_CASE("The best fitting transform is found again", "[MeshAnalysis]") {
 	std::vector<Vector3> from = {{0, 0, 0}, {1, 0, 0}, {0, 2, 0}, {0, 0, 3}, {1, 1, 1}};
 

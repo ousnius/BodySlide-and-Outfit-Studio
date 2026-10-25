@@ -9,6 +9,7 @@ See the included LICENSE file
 #include "../../lib/FSEngine/FSManager.h"
 
 #include <wx/dir.h>
+#include <wx/filename.h>
 #include <wx/tokenzr.h>
 
 #ifdef _WINDOWS
@@ -97,4 +98,42 @@ void GameUtil::GetArchiveFiles(std::vector<std::string>& outList) {
 		if (fsearch.find(f.Lower()) == fsearch.end())
 			outList.push_back((dataDir + f).ToUTF8().data());
 	}
+
+	// Extra data folders have no plugin load order, so all of their archives load
+	for (auto& folder : GetExtraDataFolders(targ)) {
+		if (!wxDirExists(wxString::FromUTF8(folder)))
+			continue;
+
+		wxArrayString extraFiles;
+		wxDir::GetAllFiles(wxString::FromUTF8(folder), &extraFiles, "*.ba2", wxDIR_FILES);
+		wxDir::GetAllFiles(wxString::FromUTF8(folder), &extraFiles, "*.bsa", wxDIR_FILES);
+		for (auto& f : extraFiles)
+			outList.push_back(f.ToUTF8().data());
+	}
+}
+
+std::vector<std::string> GameUtil::GetExtraDataFolders(int targ) {
+	std::vector<std::string> folders;
+	wxStringTokenizer tokenizer(Config["ExtraDataFolders/" + TargetGames[targ]], ";");
+	while (tokenizer.HasMoreTokens()) {
+		wxString folder = tokenizer.GetNextToken().Trim(false).Trim();
+		if (folder.empty())
+			continue;
+		if (!folder.EndsWith("/") && !folder.EndsWith("\\"))
+			folder += wxFileName::GetPathSeparator();
+		folders.push_back(folder.ToUTF8().data());
+	}
+	return folders;
+}
+
+void GameUtil::SetExtraDataFolders(int targ, const std::vector<std::string>& folders) {
+	std::string value;
+	for (auto& folder : folders) {
+		if (folder.empty())
+			continue;
+		if (!value.empty())
+			value += ";";
+		value += folder;
+	}
+	Config.SetValue("ExtraDataFolders/" + TargetGames[targ].ToStdString(), value);
 }

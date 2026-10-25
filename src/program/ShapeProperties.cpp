@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "ShapeProperties.h"
+#include "../files/GameDataStream.h"
 
 #include <wx/grid.h>
 #include <wx/valnum.h>
@@ -1116,14 +1117,13 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 		}
 
 		if (dlg.ShowModal() == wxID_OK) {
-			auto dataPath = Config["GameDataPath"];
 			std::vector<std::string> texFiles(10);
 			std::vector<std::string> texPaths(10);
 			bool anyTextureSet = false;
 			for (int i = 0; i < 10; i++) {
 				texPaths[i] = stTexGrid->GetCellValue(i, 0).ToStdString();
 				if (!texPaths[i].empty()) {
-					texFiles[i] = dataPath + texPaths[i];
+					texFiles[i] = GameDataStream::FindAssetPath(texPaths[i]);
 					anyTextureSet = true;
 				}
 			}
@@ -1160,7 +1160,6 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 
 std::string ShapeProperties::DisplayTexturePath(const std::string& texturePath) {
 	std::string displayPath = ToOSSlashes(texturePath);
-	std::string dataPath = ToOSSlashes(Config["GameDataPath"]);
 
 	auto toLower = [](std::string value) {
 		std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
@@ -1169,7 +1168,12 @@ std::string ShapeProperties::DisplayTexturePath(const std::string& texturePath) 
 		return value;
 	};
 
-	if (!dataPath.empty()) {
+	// Relative to the data folder the texture was found in
+	for (auto& folder : GameDataStream::DataFolders()) {
+		std::string dataPath = ToOSSlashes(folder);
+		if (dataPath.empty())
+			continue;
+
 		std::string displayPathLower = toLower(displayPath);
 		std::string dataPathLower = toLower(dataPath);
 		bool hasDataPathPrefix = displayPathLower.compare(0, dataPathLower.size(), dataPathLower) == 0;
@@ -1178,8 +1182,10 @@ std::string ShapeProperties::DisplayTexturePath(const std::string& texturePath) 
 								  || displayPath.size() == dataPath.size()
 								  || (displayPath.size() > dataPath.size()
 									  && (displayPath[dataPath.size()] == '\\' || displayPath[dataPath.size()] == '/'));
-		if (hasDataPathPrefix && prefixEndsAtSeparator)
+		if (hasDataPathPrefix && prefixEndsAtSeparator) {
 			displayPath.erase(0, dataPath.size());
+			break;
+		}
 	}
 
 	while (!displayPath.empty() && (displayPath[0] == '\\' || displayPath[0] == '/'))

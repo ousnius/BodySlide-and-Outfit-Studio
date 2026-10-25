@@ -142,6 +142,7 @@ private:
 	int ExecuteStepInvertMask(const AutomationStep& step);
 	int ExecuteStepMaskAsymmetric(const AutomationStep& step);
 	int ExecuteStepMaskBox(const AutomationStep& step);
+	int ExecuteStepMaskCovered(const AutomationStep& step);
 	int ExecuteStepMaskBoneWeighted(const AutomationStep& step);
 	int ExecuteStepMaskSliderAffected(const AutomationStep& step);
 	int ExecuteStepMaskWeighted(const AutomationStep& step);

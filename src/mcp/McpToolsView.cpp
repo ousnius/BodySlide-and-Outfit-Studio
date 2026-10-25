@@ -13,6 +13,7 @@ See the included LICENSE file
 #include <algorithm>
 #include <cfloat>
 #include <cmath>
+#include <map>
 #include <optional>
 #include <set>
 
@@ -407,6 +408,15 @@ public:
 	}
 
 	~RenderRestore() {
+		// Triangles hidden by zaps come back
+		for (auto& hidden : zapHidden) {
+			Mesh* m = frame->glView->GetMesh(hidden.first);
+			if (m && m->renderTris && m->nTris == static_cast<int>(hidden.second.size())) {
+				std::copy(hidden.second.begin(), hidden.second.end(), m->renderTris.get());
+				m->QueueUpdate(Mesh::UpdateType::Indices);
+			}
+		}
+
 		// The pose first, the meshes are rebuilt with the slider values below
 		if (pose) {
 			pose.reset();
@@ -438,12 +448,74 @@ public:
 	bool vertexColorsChanged = false;
 	// Set while a render poses the skeleton, puts the pose back when it goes
 	std::optional<McpPoseScope> pose;
+	// Triangles to draw of the meshes whose zapped triangles a render hides, by shape name, as they were
+	std::map<std::string, std::vector<Triangle>> zapHidden;
 
 private:
 	OutfitStudioFrame* frame = nullptr;
 	ViewState view;
 	std::vector<float> sliderValues;
 };
+
+// The zap sliders of a render's zaps argument: true for the ones BodySlide turns on by default, or a list
+std::vector<std::string> RenderZaps(OutfitProject& project, const json& args) {
+	std::vector<std::string> zaps;
+	const json* arg = McpArgs::Find(args, "zaps");
+	if (!arg || arg->is_null() || (arg->is_boolean() && !arg->get<bool>()))
+		return zaps;
+
+	if (arg->is_boolean()) {
+		for (size_t i = 0; i < project.SliderCount(); i++)
+			if (project.SliderZap(i) && (project.activeSet[i].defSmallValue > 0.0f || project.activeSet[i].defBigValue > 0.0f))
+				zaps.push_back(project.GetSliderName(i));
+		return zaps;
+	}
+
+	if (!arg->is_array())
+		McpArgs::Wrong("zaps", "true or a list of zap slider names");
+	for (auto& name : *arg) {
+		if (!name.is_string())
+			McpArgs::Wrong("zaps", "true or a list of zap slider names");
+		const std::string zap = name.get<std::string>();
+		size_t index = 0;
+		if (!project.SliderIndexFromName(zap, index) || !project.SliderZap(index))
+			throw McpToolError("There is no zap slider '" + zap + "'.");
+		zaps.push_back(zap);
+	}
+	return zaps;
+}
+
+// Leaves the triangles that the zaps remove out of the meshes' index buffers, the way BodySlide builds the outfit
+void HideZappedTriangles(OutfitStudioFrame* frame, OutfitProject& project, const std::vector<std::string>& zaps, std::map<std::string, std::vector<Triangle>>& saved) {
+	for (auto* shape : project.GetWorkNif()->GetShapes()) {
+		const std::string name = shape->name.get();
+		Mesh* m = frame->glView->GetMesh(name);
+		if (!m || !m->renderTris)
+			continue;
+
+		std::vector<bool> zapped(m->nVerts, false);
+		bool any = false;
+		for (auto& zap : zaps) {
+			std::vector<bool> vertices = project.GetZappedVertices(shape, zap);
+			for (size_t v = 0; v < vertices.size() && v < zapped.size(); v++)
+				if (vertices[v])
+					zapped[v] = any = true;
+		}
+		if (!any)
+			continue;
+
+		auto& original = saved[name];
+		if (original.empty())
+			original.assign(m->renderTris.get(), m->renderTris.get() + m->nTris);
+
+		auto isZapped = [&](uint16_t v) { return v < zapped.size() && zapped[v]; };
+		for (int t = 0; t < m->nTris; t++) {
+			const Triangle& tri = original[t];
+			m->renderTris[t] = isZapped(tri.p1) || isZapped(tri.p2) || isZapped(tri.p3) ? Triangle(0, 0, 0) : tri;
+		}
+		m->QueueUpdate(Mesh::UpdateType::Indices);
+	}
+}
 
 McpToolResult RenderView(OutfitStudioMcp& mcp, const json& args) {
 	OutfitStudioFrame* frame = mcp.GetFrame();
@@ -465,6 +537,8 @@ McpToolResult RenderView(OutfitStudioMcp& mcp, const json& args) {
 	std::vector<std::string> frameShapes = McpArgs::Strings(args, "frame");
 	for (auto& shape : frameShapes)
 		mcp.Shape(shape);
+
+	const std::vector<std::string> zaps = RenderZaps(project, args);
 
 	RenderRestore restore(frame);
 	ViewState state = restore.View();
@@ -681,6 +755,9 @@ McpToolResult RenderView(OutfitStudioMcp& mcp, const json& args) {
 				frame->FrameShapes(frameShapes);
 			if (!focusShape.empty())
 				frame->FrameVertices(focusShape, focusVertices);
+
+			if (!zaps.empty())
+				HideZappedTriangles(frame, project, zaps, restore.zapHidden);
 
 			wxImage image;
 			if (!frame->glView->RenderViewImage(width, height, image))
@@ -999,7 +1076,8 @@ void AddViewTools(OutfitStudioMcp& mcp) {
 		"Renders the view to PNG images to look at the outfit, e.g. from several sides, with slider values, "
 		"wireframe, the mask or the weights of a bone. focus zooms in on vertices (a problem area), variants renders the "
 		"views for several slider values or poses, and grid puts everything into one labeled image to compare. "
-		"orbit places the camera around a bone or shape by yaw and pitch, skeleton draws the posed bones over the images. "
+		"orbit places the camera around a bone or shape by yaw and pitch, skeleton draws the posed bones over the images, "
+		"zaps hides what zap sliders remove (a body zapped under a bodysuit). "
 		"Everything given only applies to the images, the view the user sees, the pose and the slider values stay as they were.";
 	render.inputSchema = McpSchema({
 		{"width", McpProp("integer", "Image width in pixels, 64 to 2048. Default 768.")},
@@ -1036,6 +1114,10 @@ void AddViewTools(OutfitStudioMcp& mcp) {
 			  {"pose", McpProp("string", "A pose of list_poses, or \"none\" for unposed")}}}}},
 		  {"description", "Render each view once per variant, e.g. [{\"sliderValues\": {\"Breasts\": 0}}, {\"sliderValues\": {\"Breasts\": 1}}] or [{}, {\"preset\": \"UBE Necoco V1\"}] to compare"}}},
 		{"grid", McpProp("boolean", "Put all images into one, a row per variant and a column per view, each labeled. Easier to compare. Default false.")},
+		{"zaps",
+		 {{"anyOf", {{{"type", "boolean"}}, {{"type", "array"}, {"items", {{"type", "string"}}}}}},
+		  {"description", "Hide what zap sliders remove, the way BodySlide builds the outfit: true for the zaps BodySlide turns on by default, "
+						  "or a list of zap sliders. The window only shows zaps this way in the images. Default false."}}},
 		{"orbit", OrbitSchema},
 		{"skeleton",
 		 {{"anyOf",

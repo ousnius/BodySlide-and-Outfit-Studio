@@ -773,17 +773,23 @@ void AddEditTools(OutfitStudioMcp& mcp) {
 		"pieces it touches, parts masks the pieces of list_mesh_parts by number. from_analysis masks by a measurement "
 		"(metric): with target \"fix\" (the default) only the bad vertices, grown by 'grow' rings, stay unmasked, so a "
 		"clipping fix, smoothing, brush or rigidify changes nothing else; with \"protect\" they are masked instead. When "
-		"nothing is found, the mask stays as it is.";
+		"nothing is found, the mask stays as it is. covered masks the vertices of the shapes (the reference by default) that "
+		"the 'by' shapes cover along the vertex normal and unmasks the rest; for a zap of the body under an outfit, invert it, "
+		"grow it a step or two (a zap removes every triangle touching a zapped vertex, so the hidden area must stay inside "
+		"the outfit) and add new_slider kind zap on the reference.";
 	json maskProperties = {
 		{"shapes", McpStringList("Shapes, the selected ones by default. The reference can be included, except for from_analysis.")},
 		{"op",
 		 {{"type", "string"},
-		  {"enum", {"clear", "invert", "grow", "shrink", "smooth", "weighted", "bone_weighted", "slider_affected", "asymmetric", "connected", "parts", "box", "from_analysis"}}}},
+		  {"enum", {"clear", "invert", "grow", "shrink", "smooth", "weighted", "bone_weighted", "slider_affected", "asymmetric", "connected", "parts", "box", "covered", "from_analysis"}}}},
 		{"box",
 		 {{"type", "object"},
 		  {"properties", {{"min", {{"type", "array"}, {"items", {{"type", "number"}}}}}, {"max", {{"type", "array"}, {"items", {{"type", "number"}}}}}}},
 		  {"description", "box: masks the vertices inside, as the shapes are shown now (list_shapes bounds, NIF units). Leave out min or max for no limit that way."}}},
 		{"keepOthers", McpProp("boolean", "box: leave the mask of the vertices outside as it is instead of unmasking them. Default false.")},
+		{"by", McpStringList("covered: the shapes that cover, by default every outfit shape that isn't one of the shapes")},
+		{"outside", McpProp("number", "covered: how far in front of a vertex the covering surface may be, in NIF units. Default 2.")},
+		{"inside", McpProp("number", "covered: how far behind a vertex it may be, where it sinks in. Default 1.")},
 		{"steps", McpProp("integer", "Grow or shrink: how many rings of vertices. Smooth: how many passes, each widening the gradient by about a ring. Default 1.")},
 		{"strength", McpProp("number", "Smooth: how far each pass moves values towards their neighbors, 0 to 1. Default 0.5.")},
 		{"bones", McpStringList("bone_weighted: the bones")},
@@ -812,6 +818,30 @@ void AddEditTools(OutfitStudioMcp& mcp) {
 		std::string op = McpArgs::String(args, "op");
 		if (op == "from_analysis")
 			return McpMaskFromMetric(mcp, args);
+
+		if (op == "covered") {
+			// The body under the outfit by default, not the selected shapes
+			json names = json::array();
+			if (McpArgs::Has(args, "shapes"))
+				for (auto* shape : mcp.Shapes(args, "shapes", true))
+					names.push_back(shape->name.get());
+			else if (NiShape* reference = mcp.Project().GetBaseShape())
+				names.push_back(reference->name.get());
+			else
+				throw McpToolError("No reference shape is loaded. Name the shapes to mask in 'shapes'.");
+
+			std::vector<std::string> by = McpArgs::Strings(args, "by");
+			for (auto& name : by)
+				mcp.Shape(name);
+			McpRunStep(mcp,
+					   {{"type", "MaskCovered"},
+						{"TargetMeshes", names},
+						{"CoverShapes", by},
+						{"Outside", McpArgs::Float(args, "outside", 2.0f)},
+						{"Inside", McpArgs::Float(args, "inside", 1.0f)}});
+			frame->glView->Render();
+			return MaskSummaries(mcp, names);
+		}
 
 		std::vector<Mesh*> meshes;
 		json names = json::array();

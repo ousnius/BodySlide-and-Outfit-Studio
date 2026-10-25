@@ -41,10 +41,18 @@ Skirts, dress panels, loincloths and capes don't follow the legs. Conformed to t
 
 A zap slider removes vertices in BodySlide instead of moving them: the body under a bodysuit (`BodyZap`), a hood, a belt the user can turn off.
 
-- `new_slider` `kind: "zap"` creates one that removes the unmasked vertices of the shapes. Mask everything but what it should remove first.
+- `new_slider` `kind: "zap"` creates one that removes the unmasked vertices of the shapes, the reference included. Mask everything but what it should remove first.
 - `set_slider_properties`: `zapped` (on by default in BodySlide), `zapToggles` (other zaps it turns off), `hidden`, `invert`, `defaultSmall`, `defaultBig`, `newName`.
 - Zaps that hide the body change what clipping counts: see `fix-clipping`.
-- Check one with `mask_ops` `op: "slider_affected"` and `render_view` `display.mask`.
+- Check one with `mask_ops` `op: "slider_affected"` and `render_view` `display.mask`, or `render_view` `zaps: true` to see the outfit the way BodySlide builds it.
+
+**A zap for the body under the outfit** (`BodyZap`, `FeetZap`, `HandsZap`), made from what the outfit covers:
+1. `mask_ops` `op: "covered"` masks the body vertices the outfit covers along their normal: the outfit no further than `outside` in front of them (default 2) or `inside` behind (default 1, where the body pokes through). `by` picks the covering shapes, by default all outfit shapes.
+2. `mask_ops` `invert`, then `grow` 1–2 steps: a zap removes every triangle with a zapped vertex, so the zapped area has to stay a ring inside the outfit's edge or a gap shows there.
+3. `new_slider` `kind: "zap"` on the reference, `set_slider_properties` `defaultSmall`/`defaultBig` 100 and `hidden: true`, like the usual body zaps; `mask_ops` `clear`.
+4. Check with `render_view` `zaps: [the zap]` and `show` the body: what's left is the body the outfit leaves visible.
+
+Loose cloth stands further off the body: a Fallout 4 bodysuit left 1253 of 13554 CBBE vertices uncovered at the default 2 (its cups stand off the breasts), 122 at `outside: 6`. Seams the cloth bridges, like the cleft of the buttocks, stay uncovered unless `outside` reaches across. The `MaskCovered` automation step does step 1 in scripts (`CoverShapes`, `Outside`, `Inside`; target meshes default to the reference).
 
 ## Checking sliders
 

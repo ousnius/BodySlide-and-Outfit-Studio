@@ -315,13 +315,14 @@ void AddSliderFileTools(OutfitStudioMcp& mcp) {
 	newSlider.name = "new_slider";
 	newSlider.description =
 		"Adds a slider. empty: a slider without data, to fill with set_slider_edit and editing tools or "
-		"set_slider_deltas. zap: a zap slider that removes the unmasked vertices of the shapes when it's on. "
+		"set_slider_deltas. zap: a zap slider that removes the unmasked vertices of the shapes when it's on, e.g. of the "
+		"reference to hide the body under the outfit (mask_ops covered). "
 		"combined: a slider that moves the shapes the way the current slider values do together.";
 	newSlider.inputSchema = McpSchema(
 		{
 			{"name", McpProp("string", "New slider name")},
 			{"kind", {{"type", "string"}, {"enum", {"empty", "zap", "combined"}}, {"description", "Default empty"}}},
-			{"shapes", McpStringList("zap: shapes, the selected outfit shapes by default")},
+			{"shapes", McpStringList("zap: shapes, the reference included, the selected shapes by default")},
 		},
 		{"name"});
 	newSlider.handler = [&mcp, frame](const json& args) {
@@ -333,7 +334,7 @@ void AddSliderFileTools(OutfitStudioMcp& mcp) {
 		if (kind == "empty")
 			frame->NewSlider(name, true);
 		else if (kind == "zap")
-			McpRunStep(mcp, {{"type", "NewZapSlider"}, {"TargetMeshes", Names(mcp.Shapes(args, "shapes"))}, {"SliderName", name}});
+			McpRunStep(mcp, {{"type", "NewZapSlider"}, {"TargetMeshes", Names(mcp.Shapes(args, "shapes", true))}, {"SliderName", name}});
 		else if (kind == "combined")
 			McpRunStep(mcp, {{"type", "NewCombinedSlider"}, {"SliderName", name}});
 		else

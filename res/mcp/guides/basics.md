@@ -48,7 +48,8 @@ Numbers find problems, images confirm them. Render what the numbers point at, no
   - `variants` renders several slider values or poses, and `grid: true` puts them into one labelled image, e.g. before and after: `[{"sliderValues": {"Breasts": 0}}, {"sliderValues": {"Breasts": 1}}, {"pose": "Arms Up"}]`.
   - `sliderValues` apply on top of the current values; `zeroOthers: true` shows only them. `otherSlidersSet` in the result warns about sliders you didn't pass that are on.
     An evenly grey image means the red is on the other side. Single vertices show as small dots, so pass whole areas, e.g. the `flippedVertices` of `analyze_slider`.
-  - `display.textures: false` when textures are missing (the log warns "Texture file … not found"): missing ones render as a "No image" pattern that hides heatmaps and masks.
+  - `display.textures: false` when textures are missing (the log warns "Texture file … not found"): missing ones render as a "No image" pattern that hides heatmaps and masks. Textures of a mod that isn't installed show after `asset_folders` `op: "add"` with its folder (laid out like Data, with `textures`, `materials` and archives).
+  - `zaps: true` hides what the zap sliders BodySlide turns on remove, e.g. the body under a bodysuit.
   - `weightBone` colors a bone's weights, e.g. the breast bones after a weight copy.
   - Renders cost tokens: 384–512 px is enough for checks.
 - **`show_heatmap`**: `kind` `clipping` (red inside the body, blue outside), `slider` (how far each vertex moves), `weights` (one bone), or a metric of `from_analysis`. `kind: "off"` turns it off. The mask display hides vertex colors, so heatmaps turn it off (`maskDisplayTurnedOff`).

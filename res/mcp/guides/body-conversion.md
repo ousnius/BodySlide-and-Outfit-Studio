@@ -68,7 +68,7 @@ To make a conversion slider of your own, set the sliders of a loaded body to the
 
 - Save with the body when the source had it (`copyReference`), or BodySlide builds the outfit without a body. Each of four outfit sets converted to UBE had it.
 - Zap data lives on the body. `load_reference` moves it onto the new body by the closest surface point (`transferZaps`, on by default). For a conversion where it was lost, `transfer_zaps` takes it from the original project (`file`, `set`, and its body as `shape`). Missing zap sliders are created with the source's defaults and flags.
-- Check a zap with `mask_ops` `op: "slider_affected"` on the body and `render_view` `display.mask`; the view doesn't hide zapped vertices. On a bodysuit, BodyZap removes 13550 of 13554 CBBE vertices and 29291 of 29298 UBE ones, BodyZapKeepArms 83% and 81%.
+- Check a zap with `mask_ops` `op: "slider_affected"` on the body and `render_view` `display.mask`. The window doesn't hide zapped vertices; `render_view` `zaps: true` does in the images (or a list of zaps for a variant). On a bodysuit, BodyZap removes 13550 of 13554 CBBE vertices and 29291 of 29298 UBE ones, BodyZapKeepArms 83% and 81%.
 - `validate_project` warns about zap sliders without data on any shape (`emptyZaps`).
 - Loading a set with the body and saving it again keeps its link to the reference template.
 

@@ -572,6 +572,7 @@ if(BSOS_BUILD_TESTS)
 		src/components/SliderPresets.cpp
 		src/components/UndoHistory.cpp
 		src/utils/ProjectUtil.cpp
+		src/utils/GameUtil.cpp
 		src/files/HkxFile.cpp
 		src/files/GameDataStream.cpp
 		src/files/SFMaterialDatabase.cpp

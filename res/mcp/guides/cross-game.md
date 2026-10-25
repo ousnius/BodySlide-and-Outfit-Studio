@@ -12,6 +12,7 @@ The games differ in NIF format, skeleton, shaders and texture layout. The shape 
 - Bone weights don't, since the skeletons differ; the shapes come in skinned without weights.
 - `skipShapes` leaves out shapes, e.g. the source game's body when you don't need it.
 - `dataFolders` (the mod's or game's Data folder that holds `Materials/`) lets it read the Fallout 4 material (BGSM) and set up the Skyrim shader from it. The result lists each shape with its material file and texture paths, `materialNotes` on what doesn't map (each note once, with its shapes) and `texturesNotInGameData`. `verbose: true` adds every material value; `read_material` reads a BGSM or BGEM on its own.
+- The textures stay where the mod has them. `asset_folders` `op: "add"` with the mod's folder makes the window find them (and its material files and archives) without copying them into the game's Data folder; the setting is kept per game.
 - The `ImportFromGame` automation step does the same in `run_steps` and scripts (`FilePath`, `Set`, `DataFolders`, `Shapes`, `SkipShapes`, `Sliders`), for converting many files in one call (see `basics`, "Many outfits at once").
 
 **Import the source body too** and make it the reference with `set_reference_shape`. Then the source's clipping can be measured, and the next `load_reference` carries its zaps (e.g. `BodyZap`) onto the target body.
@@ -67,7 +68,9 @@ Head items (masks, glasses, face piercings) aren't affected by a body preset and
 
 - **List the pieces first:** compare the NIFs (vertex and triangle counts, positions, UVs) to find exact duplicates and texture-only variants. Texture swaps don't need their own set; the plugin points to other textures.
 - Use the source game's instance for the preset step and the target game's for the rest, and batch both with scripts (see `basics`, "Many outfits at once"). One script per kind of piece covers most of a mod: worn with the body, without the body, feet, hands.
-- **Pieces with feet or hands:** Fallout 4 shoes and gloves often include part of the body's feet or hands; leave those out with `skipShapes` and load "CBBE Feet" or "CBBE Hands" as the target, saved with them. High heels need the `HH_OFFSET` NiFloatExtraData (`set_extra_data`) on the shoe shapes, as other Skyrim heels have it.
+- **Pieces with feet or hands:** Fallout 4 shoes and gloves often include part of the body's feet or hands; leave those out with `skipShapes` and load "CBBE Feet" or "CBBE Hands" as the target, saved with them. Make `FeetZap` or `HandsZap` from what they cover (`conform-sliders`, "Zap sliders").
+- **High heels** are modelled around a foot on tiptoe, which "CBBE Feet" isn't: conformed and weighted to the flat foot, the shoe follows the wrong surface. Load feet posed for heels instead when `list_reference_templates` has them (e.g. "CBBE Feet High Heels", posed for heels about 8 units high), or make them once from a converted pair of heels: its feet without the shoes and outfit-only sliders, saved as a set and added to a `RefTemplates` file. Heels need the `HH_OFFSET` NiFloatExtraData (`set_extra_data`) on the shoe shapes, as other Skyrim heels have it. A closed boot that covers the whole foot can be saved without the feet (`copyReference: false`); slot 37 still hides the game's feet.
+- In `run_steps`, the `CopyBoneWeights` step leaves vertices whose copied weights add up to less than 1 (a bodysuit had 230, up to 0.11 short); give it `Normalize: true`. The `copy_bone_weights` tool cleans and normalizes on its own.
 - Pieces without a body (belts, pants, jewellery) still conform to and copy weights from the body; save them with `copyReference: false`.
 
 ## Partitions and segments

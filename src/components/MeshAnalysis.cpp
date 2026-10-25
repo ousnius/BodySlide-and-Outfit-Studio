@@ -363,6 +363,75 @@ std::vector<int> ConnectedParts(const std::vector<Vector3>& verts, const std::ve
 	return parts;
 }
 
+std::vector<bool> CoveredVertices(const std::vector<Vector3>& verts, const std::vector<Triangle>& tris, const std::vector<Vector3>& surfaceVerts, const std::vector<Triangle>& surfaceTris, float outside, float inside) {
+	if (verts.empty() || surfaceVerts.empty() || surfaceTris.empty())
+		return std::vector<bool>(verts.size(), false);
+
+	// Area weighted vertex normals
+	std::vector<Vector3> normals(verts.size());
+	for (auto& t : tris) {
+		if (t.p1 >= verts.size() || t.p2 >= verts.size() || t.p3 >= verts.size())
+			continue;
+		Vector3 n = (verts[t.p2] - verts[t.p1]).cross(verts[t.p3] - verts[t.p1]);
+		normals[t.p1] += n;
+		normals[t.p2] += n;
+		normals[t.p3] += n;
+	}
+
+	AABBTree tree(const_cast<Vector3*>(surfaceVerts.data()), const_cast<Triangle*>(surfaceTris.data()), static_cast<uint32_t>(surfaceTris.size()), 100, 2);
+	const float radius = std::max(outside, inside);
+	// Bytes, so the threads don't share the bits of a vector<bool>
+	std::vector<uint8_t> hits(verts.size(), 0);
+
+	ParallelFor(verts.size(), 256, [&](size_t startIndex, size_t endIndex) {
+		std::vector<IntersectResult> near;
+		for (size_t i = startIndex; i < endIndex; i++) {
+			Vector3 dir = normals[i];
+			if (dir.IsZero(true))
+				continue;
+			dir.Normalize();
+
+			Vector3 origin = verts[i];
+			near.clear();
+			if (!tree.IntersectSphere(origin, radius, &near))
+				continue;
+
+			// The triangles near the vertex that the line along its normal goes through, from either side
+			for (auto& hit : near) {
+				const Triangle& t = surfaceTris[hit.HitFacet];
+				if (t.p1 >= surfaceVerts.size() || t.p2 >= surfaceVerts.size() || t.p3 >= surfaceVerts.size())
+					continue;
+
+				const Vector3& c0 = surfaceVerts[t.p1];
+				const Vector3 e1 = surfaceVerts[t.p2] - c0;
+				const Vector3 e2 = surfaceVerts[t.p3] - c0;
+				const Vector3 p = dir.cross(e2);
+				const float det = e1.dot(p);
+				if (std::fabs(det) < 1e-12f)
+					continue;
+
+				const float invDet = 1.0f / det;
+				const Vector3 s = origin - c0;
+				const float u = s.dot(p) * invDet;
+				if (u < 0.0f || u > 1.0f)
+					continue;
+				const Vector3 q = s.cross(e1);
+				const float v = dir.dot(q) * invDet;
+				if (v < 0.0f || u + v > 1.0f)
+					continue;
+
+				const float along = e2.dot(q) * invDet;
+				if (along <= outside && along >= -inside) {
+					hits[i] = 1;
+					break;
+				}
+			}
+		}
+	});
+
+	return std::vector<bool>(hits.begin(), hits.end());
+}
+
 Vector3 SimilarityTransform::Apply(const Vector3& p) const {
 	double out[3];
 	for (int r = 0; r < 3; r++)

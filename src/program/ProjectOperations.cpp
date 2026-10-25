@@ -6,6 +6,7 @@ See the included LICENSE file
 #include "ProjectOperations.h"
 #include "../components/ClippingFixer.h"
 #include "../components/MaskOps.h"
+#include "../components/WeightNorm.h"
 
 #include <algorithm>
 #include <cmath>
@@ -594,6 +595,31 @@ OpResult ProjectOperations::PrepareAdaptiveRefine(const std::vector<NiShape*>& s
 	return result;
 }
 
+// Makes the weights of each vertex a weight copy changed add up to 1, in the copy's undo state. The copy's own
+// normalizer only lowers weights that add up to more, so vertices it left short are scaled up here by the same
+// normalizer with every copied bone open to it. Bones outside the copy stay locked, like masked vertices.
+static void NormalizeCopiedWeights(AnimInfo& workAnim, const std::string& shapeName, const std::vector<std::string>& boneList, const std::unordered_map<uint16_t, float>& mask, UndoStateShape& uss) {
+	std::vector<std::string> lockedBones;
+	for (auto& bone : workAnim.shapeBones[shapeName])
+		if (std::find(boneList.begin(), boneList.end(), bone) == boneList.end())
+			lockedBones.push_back(bone);
+
+	std::set<uint16_t> changed;
+	for (auto& bw : uss.boneWeights)
+		for (auto& w : bw.weights)
+			changed.insert(w.first);
+
+	BoneWeightAutoNormalizer nzer;
+	nzer.SetUp(&uss, &workAnim, shapeName, boneList, lockedBones, 0, false);
+	for (uint16_t v : changed) {
+		auto masked = mask.find(v);
+		if (masked != mask.end() && masked->second > 0.0f)
+			continue;
+		nzer.GrabOneVertexStartingWeights(v);
+		nzer.AdjustWeights(v);
+	}
+}
+
 OpResult ProjectOperations::CopyBoneWeights(const std::vector<NiShape*>& shapes,
 											const BoneWeightCopyOptions& options,
 											UndoStateProject& usp,
@@ -740,6 +766,8 @@ OpResult ProjectOperations::CopyBoneWeights(const std::vector<NiShape*>& shapes,
 								shapeLockedBones,
 								usp.usss.back(),
 								shapeSpreadWeight);
+		if (options.normalize)
+			NormalizeCopiedWeights(workAnim, shapeName, mergedBones, mask, usp.usss.back());
 		if (outReport)
 			(*outReport)[shapeName] = std::move(report);
 		for (auto& bw : usp.usss.back().boneWeights)

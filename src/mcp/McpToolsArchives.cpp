@@ -7,14 +7,20 @@ See the included LICENSE file
 #include "../components/ArchiveIndex.h"
 #include "../files/GameDataStream.h"
 #include "../program/OutfitStudio.h"
+#include "../ui/ArchiveBrowser.h"
+#include "../utils/ConfigurationManager.h"
+#include "../utils/GameUtil.h"
 
 #include "FSEngine/FSEngine.h"
 #include "FSEngine/FSManager.h"
 
+#include <wx/filename.h>
 #include <wx/string.h>
 
 #include <algorithm>
 #include <cctype>
+
+extern ConfigurationManager Config;
 
 using nlohmann::json;
 using nifly::NiShape;
@@ -353,4 +359,83 @@ void AddArchiveTools(OutfitStudioMcp& mcp) {
 		return result;
 	};
 	mcp.AddTool(std::move(load));
+
+	McpTool folders;
+	folders.name = "asset_folders";
+	folders.description =
+		"Lists or changes the extra data folders: folders laid out like the game's Data folder (textures, materials, meshes, "
+		"geometries, .bsa/.ba2 archives at the top) that textures, material files, .mesh geometry and physics XMLs are looked "
+		"up in after the Data folder, e.g. the mod that is being converted, so its textures show without copying them into "
+		"the game. The archives in them load as well, all of them. op \"list\" (the default) returns them; \"set\" replaces "
+		"them, \"add\" and \"remove\" change single ones. They are saved in the settings for the target game, the archives "
+		"are reloaded and the shapes take their textures again.";
+	folders.inputSchema = McpSchema({
+		{"op", {{"type", "string"}, {"enum", {"list", "set", "add", "remove"}}, {"description", "Default list"}}},
+		{"folders", McpStringList("set, add, remove: absolute folder paths")},
+	});
+	folders.handler = [&mcp, frame](const json& args) {
+		const std::string op = McpArgs::String(args, "op", "list");
+		const int game = Config.GetIntValue("TargetGame");
+		std::vector<std::string> current = GameUtil::GetExtraDataFolders(game);
+
+		auto normalized = [](const std::string& folder) {
+			wxFileName name = wxFileName::DirName(wxString::FromUTF8(folder));
+			name.Normalize(wxPATH_NORM_DOTS | wxPATH_NORM_ABSOLUTE);
+			return std::string(name.GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR).ToUTF8().data());
+		};
+		auto same = [&](const std::string& a, const std::string& b) { return wxString::FromUTF8(normalized(a)).IsSameAs(wxString::FromUTF8(normalized(b)), false); };
+
+		if (op != "list") {
+			std::vector<std::string> given = McpArgs::Strings(args, "folders");
+			if (op != "set" && given.empty())
+				McpArgs::Wrong("folders", "a list of folder paths");
+			for (auto& folder : given)
+				if (op != "remove" && !wxDirExists(wxString::FromUTF8(folder)))
+					throw McpToolError("The folder '" + folder + "' doesn't exist.");
+
+			std::vector<std::string> changed;
+			if (op == "set") {
+				for (auto& folder : given)
+					changed.push_back(normalized(folder));
+			}
+			else if (op == "add") {
+				changed = current;
+				for (auto& folder : given)
+					if (std::none_of(changed.begin(), changed.end(), [&](const std::string& f) { return same(f, folder); }))
+						changed.push_back(normalized(folder));
+			}
+			else if (op == "remove") {
+				for (auto& folder : current)
+					if (std::none_of(given.begin(), given.end(), [&](const std::string& f) { return same(f, folder); }))
+						changed.push_back(folder);
+			}
+			else
+				McpArgs::Wrong("op", "list, set, add or remove");
+
+			GameUtil::SetExtraDataFolders(game, changed);
+			Config.SaveConfig(Config["AppDir"] + "/Config.xml");
+			GameUtil::InitArchives();
+			if (frame->archiveBrowser)
+				frame->archiveBrowser->Rebuild();
+
+			// Textures and materials are looked up again
+			mcp.Project().SetTextures();
+			frame->MeshesFromProj(true);
+			frame->glView->Render();
+			current = GameUtil::GetExtraDataFolders(game);
+		}
+
+		McpToolResult result;
+		result.data["gameDataFolder"] = Config["GameDataPath"];
+		result.data["extraDataFolders"] = current;
+		json archives = json::array();
+		for (FSArchiveFile* archive : FSManager::archiveList())
+			if (archive)
+				for (auto& folder : current)
+					if (wxString::FromUTF8(archive->path()).Lower().StartsWith(wxString::FromUTF8(folder).Lower()))
+						archives.push_back(archive->path());
+		result.data["extraArchives"] = archives;
+		return result;
+	};
+	mcp.AddTool(std::move(folders));
 }

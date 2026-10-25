@@ -6,6 +6,7 @@ See the included LICENSE file
 #include "OutfitStudioMcp.h"
 #include "McpSnapshots.h"
 #include "../files/MaterialFile.h"
+#include "../files/GameDataStream.h"
 #include "../program/GameImport.h"
 #include "../program/OutfitStudio.h"
 #include "../utils/ConfigurationManager.h"
@@ -695,7 +696,7 @@ McpToolResult WriteMaterial(OutfitStudioMcp& mcp, const json& args) {
 
 			MaterialFile loaded;
 			if (!project.GetShapeMaterialFile(shape, loaded))
-				notes.push_back("The window shows '" + shape->name.get() + "' with its material once the file is in the game's Data folder (" + Config["GameDataPath"] + ").");
+				notes.push_back("The window shows '" + shape->name.get() + "' with its material once the file is in the game's Data folder (" + Config["GameDataPath"] + ") or an extra data folder (asset_folders).");
 		}
 		frame->SetPendingChanges();
 		frame->glView->Render();
@@ -767,7 +768,7 @@ McpToolResult ImportFromGame(OutfitStudioMcp& mcp, const json& args) {
 			}
 		}
 		for (auto& texture : textures)
-			if (!dataPath.empty() && !wxFileName::FileExists(dataPath + "/" + wxString::FromUTF8(texture.get<std::string>())))
+			if (!dataPath.empty() && !wxFileName::FileExists(wxString::FromUTF8(GameDataStream::FindAssetPath(texture.get<std::string>()))))
 				missingTextures.insert(texture.get<std::string>());
 
 		if (verbose) {

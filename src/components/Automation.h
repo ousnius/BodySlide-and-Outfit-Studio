@@ -84,6 +84,7 @@ enum class AutomationStepType {
 	LoadMask,
 	MaskAsymmetric,
 	MaskBox,
+	MaskCovered,
 	MaskBoneWeighted,
 	MaskSliderAffected,
 	MaskWeighted,
@@ -94,7 +95,7 @@ enum class AutomationStepType {
 	LogMessage
 };
 
-constexpr int AutomationStepTypeCount = 69;
+constexpr int AutomationStepTypeCount = 70;
 static_assert(static_cast<int>(AutomationStepType::LogMessage) + 1 == AutomationStepTypeCount,
 	"AutomationStepTypeCount must match the number of enum values");
 
@@ -199,6 +200,7 @@ struct AutomationStep {
 	float weightProximityRadius = 10.0f;
 	int weightMaxResults = 10;
 	std::vector<std::string> weightBoneList;
+	bool weightNormalize = false; // Make the weights of each vertex add up to 1 afterwards
 
 	// ImportSliderData params
 	std::string sliderDataFile;
@@ -415,6 +417,11 @@ struct AutomationStep {
 	float maskBoxMaxY = 100000.0f;
 	float maskBoxMaxZ = 100000.0f;
 	bool maskBoxKeepOthers = false;
+
+	// MaskCovered params
+	std::vector<std::string> maskCoverShapes; // Empty = every outfit shape that isn't a target
+	float maskCoverOutside = 2.0f;			  // How far in front of a vertex the covering surface may be
+	float maskCoverInside = 1.0f;			  // How far behind it, where the surface sinks in
 
 	// SmoothMask params
 	int maskSmoothCount = 1;

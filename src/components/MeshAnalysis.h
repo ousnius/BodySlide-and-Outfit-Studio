@@ -101,6 +101,16 @@ std::vector<int> ConnectedParts(const std::vector<nifly::Vector3>& verts,
 								const std::vector<bool>* include = nullptr,
 								int* outPartCount = nullptr);
 
+// Which vertices of a mesh a surface covers, e.g. the body under an outfit: a line along the vertex normal
+// meets the surface no further than outside in front of the vertex or inside behind it (where the surface
+// sinks into the mesh). Both sides of the surface's triangles count.
+std::vector<bool> CoveredVertices(const std::vector<nifly::Vector3>& verts,
+								  const std::vector<nifly::Triangle>& tris,
+								  const std::vector<nifly::Vector3>& surfaceVerts,
+								  const std::vector<nifly::Triangle>& surfaceTris,
+								  float outside,
+								  float inside);
+
 // Rotation, uniform scale and translation, applied in that order
 struct SimilarityTransform {
 	double rotation[3][3] = {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}};

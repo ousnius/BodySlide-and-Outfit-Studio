@@ -79,6 +79,9 @@ struct BoneWeightCopyOptions {
 	// Connected parts weighted at least 0.99 to one of the copied bones on every vertex keep their weights, so
 	// rigid props like buckles and plates don't bend with the body under them
 	bool keepRigidParts = false;
+	// Make the weights of each vertex the copy changed add up to 1. The copy only lowers weights that add up to
+	// more, so without it vertices can be left short. Bones outside the copy keep their weights.
+	bool normalize = false;
 	// Whether a copied bone that a shape doesn't have yet may be added to it. Without it, every one may.
 	std::function<bool(const std::string& shapeName, const std::string& bone)> mayAddBone;
 };

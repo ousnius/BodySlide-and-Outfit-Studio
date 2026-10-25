@@ -2464,7 +2464,7 @@ void OutfitProject::SetTextures(NiShape* shape, const std::vector<std::string>& 
 				if (sfMaterialResolver.Resolve(matFile, texturesDir, sfMat)) {
 					texFiles = sfMat.GetPrimaryTextureFiles(MAX_TEXTURE_PATHS);
 
-					sfMat.ResolveTexturePaths([&texturesDir](const std::string& texFile) { return texturesDir + texFile; });
+					sfMat.ResolveTexturePaths([](const std::string& texFile) { return GameDataStream::FindAssetPath(texFile); });
 					shapeSFMaterials[shapeName] = std::make_shared<const SFLayeredMaterial>(std::move(sfMat));
 				}
 				else if (shader) {
@@ -2476,7 +2476,7 @@ void OutfitProject::SetTextures(NiShape* shape, const std::vector<std::string>& 
 				matFile = SFMaterialResolver::NormalizeMaterialPath(matFile, "");
 
 				// Attempt to read loose material file
-				mat = MaterialFile(texturesDir + matFile);
+				mat = MaterialFile(GameDataStream::FindAssetPath(matFile));
 
 				if (mat.Failed()) {
 					// Search for material file in archives
@@ -2521,7 +2521,7 @@ void OutfitProject::SetTextures(NiShape* shape, const std::vector<std::string>& 
 
 		for (int i = 0; i < MAX_TEXTURE_PATHS; i++) {
 			if (!texFiles[i].empty()) {
-				texFiles[i] = texturesDir + SFMaterialResolver::NormalizeTexturePath(texFiles[i]);
+				texFiles[i] = GameDataStream::FindAssetPath(SFMaterialResolver::NormalizeTexturePath(texFiles[i]));
 			}
 		}
 

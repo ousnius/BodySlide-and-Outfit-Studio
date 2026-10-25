@@ -218,6 +218,7 @@ std::vector<AutomationStepInfo> BuildStepTypes() {
 			FieldFloat("ProximityRadius", &Step::weightProximityRadius, 10.0f, "txtWeightRadius", AutomationFieldUI::Text, "%.1f"),
 			FieldInt("MaxResults", &Step::weightMaxResults, 10, "txtWeightMaxResults"),
 			FieldStringList("BoneList", &Step::weightBoneList, "txtWeightBoneList"),
+			FieldBool("Normalize", &Step::weightNormalize, false, "chkWeightNormalize"),
 		});
 
 	add(AutomationStepType::TransferWeights, "TransferWeights", wxTRANSLATE("Bones"), wxTRANSLATE("Bones: Transfer Selected Weights"), "pageTransferWeights",
@@ -587,6 +588,13 @@ std::vector<AutomationStepInfo> BuildStepTypes() {
 			FieldFloat("MaxY", &Step::maskBoxMaxY, 100000.0f, "txtMaskBoxMaxY"),
 			FieldFloat("MaxZ", &Step::maskBoxMaxZ, 100000.0f, "txtMaskBoxMaxZ"),
 			FieldBool("KeepOthers", &Step::maskBoxKeepOthers, false, "chkMaskBoxKeepOthers"),
+		});
+
+	add(AutomationStepType::MaskCovered, "MaskCovered", wxTRANSLATE("Masks"), wxTRANSLATE("Masks: Mask Covered Vertices"), "pageMaskCovered",
+		{
+			FieldStringList("CoverShapes", &Step::maskCoverShapes, "txtMaskCoverShapes"),
+			FieldFloat("Outside", &Step::maskCoverOutside, 2.0f, "txtMaskCoverOutside", AutomationFieldUI::Text, "%.2f"),
+			FieldFloat("Inside", &Step::maskCoverInside, 1.0f, "txtMaskCoverInside", AutomationFieldUI::Text, "%.2f"),
 		});
 
 	add(AutomationStepType::MaskBoneWeighted, "MaskBoneWeighted", wxTRANSLATE("Masks"), wxTRANSLATE("Masks: Mask Bone-Weighted Vertices"), "pageMaskBoneWeighted",
