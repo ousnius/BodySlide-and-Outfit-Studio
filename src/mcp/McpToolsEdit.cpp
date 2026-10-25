@@ -10,6 +10,7 @@ See the included LICENSE file
 
 #include <algorithm>
 #include <cfloat>
+#include <cmath>
 #include <set>
 
 using nlohmann::json;
@@ -164,12 +165,78 @@ McpToolResult BrushStroke(OutfitStudioMcp& mcp, const json& args) {
 	if (pathMesh == meshes.end())
 		throw McpToolError("The path shape '" + pathShape + "' has to be one of the shapes the stroke works on.");
 
+	// Where the brush goes: vertices of the path shape, or points at the nearest vertex of the shapes
+	std::vector<TweakPickInfo> picks;
 	std::vector<int> path = McpArgs::Ints(args, "path");
-	if (path.empty())
-		throw McpToolError("The path needs at least one vertex.");
-	for (int v : path)
+	for (int v : path) {
 		if (v < 0 || v >= (*pathMesh)->nVerts)
 			throw McpToolError("Vertex " + std::to_string(v) + " doesn't exist on '" + pathShape + "'.");
+		picks.push_back(BrushStrokeController::PickAtVertex(*pathMesh, v));
+	}
+
+	if (const json* points = McpArgs::Find(args, "points")) {
+		if (!path.empty())
+			throw McpToolError("Give either path or points, not both.");
+		if (!points->is_array())
+			McpArgs::Wrong("points", "an array of [x, y, z] positions");
+
+		std::vector<std::vector<Vector3>> liveVerts(shapes.size());
+		for (size_t s = 0; s < shapes.size(); s++)
+			project.GetLiveVerts(shapes[s], liveVerts[s]);
+
+		for (auto& point : *points) {
+			if (!point.is_array() || point.size() != 3 || !point[0].is_number() || !point[1].is_number() || !point[2].is_number())
+				McpArgs::Wrong("points", "an array of [x, y, z] positions");
+			Vector3 p(point[0].get<float>(), point[1].get<float>(), point[2].get<float>());
+
+			size_t bestShape = 0;
+			int bestVertex = -1;
+			float bestDist = FLT_MAX;
+			for (size_t s = 0; s < shapes.size(); s++) {
+				for (int v = 0; v < meshes[s]->nVerts && v < static_cast<int>(liveVerts[s].size()); v++) {
+					float d = p.DistanceSquaredTo(liveVerts[s][v]);
+					if (d < bestDist) {
+						bestDist = d;
+						bestShape = s;
+						bestVertex = v;
+					}
+				}
+			}
+			if (bestVertex < 0)
+				throw McpToolError("The shapes have no vertices to paint.");
+			picks.push_back(BrushStrokeController::PickAtVertex(meshes[bestShape], bestVertex));
+		}
+	}
+
+	if (picks.empty())
+		throw McpToolError("Give the path as vertices (path) or positions (points), at least one.");
+
+	// Dabs in between, like dragging the brush from one point to the next
+	if (McpArgs::Has(args, "step")) {
+		const float step = Mesh::TransformDistNifToMesh(McpArgs::Float(args, "step", 0.5f));
+		if (step <= 0.0f)
+			McpArgs::Wrong("step", "a distance above 0");
+
+		std::vector<TweakPickInfo> dense{picks.front()};
+		for (size_t i = 1; i < picks.size(); i++) {
+			const TweakPickInfo& a = picks[i - 1];
+			const TweakPickInfo& b = picks[i];
+			const int count = static_cast<int>(std::ceil(a.origin.DistanceTo(b.origin) / step));
+			for (int n = 1; n < count; n++) {
+				const float t = static_cast<float>(n) / count;
+				TweakPickInfo pick = a;
+				pick.origin = a.origin + (b.origin - a.origin) * t;
+				pick.normal = a.normal + (b.normal - a.normal) * t;
+				pick.normal.Normalize();
+				pick.view = pick.normal;
+				dense.push_back(pick);
+			}
+			dense.push_back(b);
+		}
+		picks = std::move(dense);
+	}
+
+	const int passes = std::max(1, McpArgs::Int(args, "passes", 1));
 
 	brush->setRadius(Mesh::TransformDistNifToMesh(McpArgs::Float(args, "radius", 4.5f)));
 	if (McpArgs::Has(args, "strength")) {
@@ -218,9 +285,10 @@ McpToolResult BrushStroke(OutfitStudioMcp& mcp, const json& args) {
 		SetupWeightBrush<TB_SmoothWeight>(brush.get(), bones, animInfo, normalize);
 	}
 
-	controller.Begin(meshes, brush.get(), BrushStrokeController::PickAtVertex(*pathMesh, path.front()));
-	for (size_t i = 1; i < path.size(); i++)
-		frame->ApplyRefresh(controller.Update(BrushStrokeController::PickAtVertex(*pathMesh, path[i])));
+	controller.Begin(meshes, brush.get(), picks.front());
+	for (int pass = 0; pass < passes; pass++)
+		for (size_t i = pass == 0 ? 1 : 0; i < picks.size(); i++)
+			frame->ApplyRefresh(controller.Update(picks[i]));
 	frame->ApplyRefresh(controller.End());
 
 	frame->UpdateUndoTools();
@@ -229,7 +297,75 @@ McpToolResult BrushStroke(OutfitStudioMcp& mcp, const json& args) {
 	frame->glView->Render();
 
 	McpToolResult result;
-	result.data["dabs"] = path.size();
+	result.data["dabs"] = picks.size() * passes;
+	return result;
+}
+
+McpToolResult SmoothShapes(OutfitStudioMcp& mcp, const json& args) {
+	OutfitStudioFrame* frame = mcp.GetFrame();
+	OutfitProject& project = mcp.Project();
+	mcp.CheckPositionEdit();
+
+	json names = json::array();
+	std::vector<NiShape*> shapes = mcp.Shapes(args, "shapes");
+	for (auto* shape : shapes) {
+		ShapeMesh(mcp, shape);
+		names.push_back(shape->name.get());
+	}
+
+	json followNames = json::array();
+	std::vector<NiShape*> followers;
+	for (auto& name : McpArgs::Strings(args, "followShapes")) {
+		NiShape* shape = mcp.Shape(name);
+		ShapeMesh(mcp, shape);
+		followers.push_back(shape);
+		followNames.push_back(name);
+	}
+
+	auto liveVerts = [&](const std::vector<NiShape*>& list) {
+		std::vector<std::vector<Vector3>> verts(list.size());
+		for (size_t i = 0; i < list.size(); i++)
+			project.GetLiveVerts(list[i], verts[i]);
+		return verts;
+	};
+	auto before = liveVerts(shapes);
+	auto followBefore = liveVerts(followers);
+
+	McpRunStep(mcp,
+			   {{"type", "SmoothVertices"},
+				{"TargetMeshes", names},
+				{"Iterations", McpArgs::Int(args, "iterations", 10)},
+				{"Strength", McpArgs::Float(args, "strength", 0.1f)},
+				{"FollowShapes", followNames},
+				{"FollowRadius", McpArgs::Float(args, "followRadius", 1.5f)},
+				{"KeepBorders", McpArgs::Bool(args, "keepBorders", true)}});
+	frame->UpdateUndoTools();
+
+	// How far the vertices moved, per shape
+	auto summary = [&](const std::vector<NiShape*>& list, const std::vector<std::vector<Vector3>>& old) {
+		json out = json::object();
+		auto now = liveVerts(list);
+		for (size_t i = 0; i < list.size(); i++) {
+			size_t moved = 0;
+			float largest = 0.0f;
+			double sum = 0.0;
+			for (size_t v = 0; v < now[i].size() && v < old[i].size(); v++) {
+				float d = now[i][v].DistanceTo(old[i][v]);
+				if (d < 1.0e-4f)
+					continue;
+				moved++;
+				sum += d;
+				largest = std::max(largest, d);
+			}
+			out[list[i]->name.get()] = {{"moved", moved}, {"maxMove", largest}, {"meanMove", moved ? sum / moved : 0.0}};
+		}
+		return out;
+	};
+
+	McpToolResult result;
+	result.data["shapes"] = summary(shapes, before);
+	if (!followers.empty())
+		result.data["followShapes"] = summary(followers, followBefore);
 	return result;
 }
 
@@ -858,6 +994,14 @@ void AddEditTools(OutfitStudioMcp& mcp) {
 			{"shapes", McpStringList("Shapes the brush works on, the selected outfit shapes by default")},
 			{"shape", McpProp("string", "Shape of the path vertices, the first of shapes by default")},
 			{"path", McpIntList("Vertices the brush passes over, in order. One vertex is a single dab.")},
+			{"points",
+			 {{"type", "array"},
+			  {"items", {{"type", "array"}, {"items", {{"type", "number"}}}}},
+			  {"description",
+			   "Instead of path: positions [x, y, z] (NIF units, as the shapes are shown now) the brush passes over, each at the nearest "
+			   "vertex of the shapes. The same points then work on every outfit fitted to one body."}}},
+			{"step", McpProp("number", "Adds dabs between the path points this far apart (NIF units), like dragging the brush. Default: one dab per point.")},
+			{"passes", McpProp("integer", "Goes over the path this many times in the one stroke. Default 1.")},
 			{"radius", McpProp("number", "Brush radius in NIF units. Default 4.5.")},
 			{"strength", McpProp("number", "Brush strength as the brush settings in the window show it")},
 			{"focus", McpProp("number", "How much stronger the center is than the edge, as in the window")},
@@ -869,9 +1013,28 @@ void AddEditTools(OutfitStudioMcp& mcp) {
 			{"normalize", McpProp("boolean", "Weight brushes: keep the weights of each vertex summing to 1. Default true.")},
 			{"color", {{"type", "array"}, {"items", {{"type", "number"}}}, {"description", "Color brush: [r, g, b] from 0 to 1"}}},
 		},
-		{"brush", "path"});
+		{"brush"});
 	stroke.handler = [&mcp](const json& args) { return BrushStroke(mcp, args); };
 	mcp.AddTool(std::move(stroke));
+
+	McpTool smooth;
+	smooth.name = "smooth_shapes";
+	smooth.description =
+		"Smooths all unmasked vertices of shapes like the smooth brush, without a path: the base shape, or the morph of "
+		"the slider being edited (set_slider_edit). The mask scales the change, so mask what to keep, then mask_ops "
+		"smooth for a soft border. followShapes (trim, zippers, straps lying on the shapes) move as far as the surface "
+		"under them moved across it, so they stay on it. keepBorders holds open edges in place. One undo step, and one "
+		"more for the follow shapes. Returns how far the vertices moved. The SmoothVertices step does the same in automation.";
+	smooth.inputSchema = McpSchema({
+		{"shapes", McpStringList("Shapes to smooth, the selected outfit shapes by default")},
+		{"iterations", McpProp("integer", "How many times it smooths. Default 10.")},
+		{"strength", McpProp("number", "Strength of each time, like the smooth brush strength. Default 0.1.")},
+		{"followShapes", McpStringList("Shapes that move with the smoothed ones")},
+		{"followRadius", McpProp("number", "How far (NIF units) a follow shape vertex may be from the smoothed shapes to move with them. Default 1.5.")},
+		{"keepBorders", McpProp("boolean", "Keep open mesh edges in place: smoothing pulls them in, opening gaps to zippers and trim attached there. Default true.")},
+	});
+	smooth.handler = [&mcp](const json& args) { return SmoothShapes(mcp, args); };
+	mcp.AddTool(std::move(smooth));
 
 	McpTool listBones;
 	listBones.name = "list_bones";

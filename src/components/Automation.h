@@ -62,6 +62,7 @@ enum class AutomationStepType {
 	ResetTransforms,
 	SeparateVertices,
 	SymmetrizeVertices,
+	SmoothVertices,
 	TransformShape,
 	SetGeometryProperties,
 	SetExtraData,
@@ -82,16 +83,18 @@ enum class AutomationStepType {
 	InvertMask,
 	LoadMask,
 	MaskAsymmetric,
+	MaskBox,
 	MaskBoneWeighted,
 	MaskSliderAffected,
 	MaskWeighted,
 	SaveMask,
+	SmoothMask,
 	RemoveUnusedNodes,
 	SetVariable,
 	LogMessage
 };
 
-constexpr int AutomationStepTypeCount = 66;
+constexpr int AutomationStepTypeCount = 69;
 static_assert(static_cast<int>(AutomationStepType::LogMessage) + 1 == AutomationStepTypeCount,
 	"AutomationStepTypeCount must match the number of enum values");
 
@@ -396,6 +399,25 @@ struct AutomationStep {
 	// ClearSliderData params
 	std::vector<std::string> clearSliderNames; // Empty = every slider of the project
 	bool clearSliderUseMask = true;
+
+	// SmoothVertices params
+	int smoothIterations = 10;
+	float smoothStrength = 0.1f;
+	std::vector<std::string> smoothFollowShapes; // Shapes that move with the smoothed ones (trim lying on them)
+	float smoothFollowRadius = 1.5f;
+	bool smoothKeepBorders = true; // Open mesh edges stay in place
+
+	// MaskBox params
+	float maskBoxMinX = -100000.0f;
+	float maskBoxMinY = -100000.0f;
+	float maskBoxMinZ = -100000.0f;
+	float maskBoxMaxX = 100000.0f;
+	float maskBoxMaxY = 100000.0f;
+	float maskBoxMaxZ = 100000.0f;
+	bool maskBoxKeepOthers = false;
+
+	// SmoothMask params
+	int maskSmoothCount = 1;
 
 	// GrowShrinkMask params
 	int maskGrowShrinkMode = 0;  // 0 = grow, 1 = shrink

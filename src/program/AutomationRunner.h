@@ -132,6 +132,7 @@ private:
 	int ExecuteStepSeparateVertices(const AutomationStep& step);
 	int ExecuteStepMergeGeometry(const AutomationStep& step);
 	int ExecuteStepSymmetrizeVertices(const AutomationStep& step);
+	int ExecuteStepSmoothVertices(const AutomationStep& step);
 	int ExecuteStepClearSliderData(const AutomationStep& step);
 	int ExecuteStepCloneSlider(const AutomationStep& step);
 	int ExecuteStepNegateSlider(const AutomationStep& step);
@@ -140,10 +141,12 @@ private:
 	int ExecuteStepGrowShrinkMask(const AutomationStep& step);
 	int ExecuteStepInvertMask(const AutomationStep& step);
 	int ExecuteStepMaskAsymmetric(const AutomationStep& step);
+	int ExecuteStepMaskBox(const AutomationStep& step);
 	int ExecuteStepMaskBoneWeighted(const AutomationStep& step);
 	int ExecuteStepMaskSliderAffected(const AutomationStep& step);
 	int ExecuteStepMaskWeighted(const AutomationStep& step);
 	int ExecuteStepSaveMask(const AutomationStep& step);
+	int ExecuteStepSmoothMask(const AutomationStep& step);
 	int ExecuteStepSetVariable(const AutomationStep& step);
 	int ExecuteStepLogMessage(const AutomationStep& step);
 };

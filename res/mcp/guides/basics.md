@@ -79,6 +79,17 @@ Posing has its own guide, `posing`: the posing tools, checking a pose, matching 
 - In slider edit mode (`set_slider_edit`) the change goes into that slider's morph instead of the base shape.
 - Keep inflate small (0.1–0.5) for clipping: it pushes the whole unmasked surface out, not only the clipping part.
 
+## Smoothing shapes
+
+`smooth_shapes` runs the window's smooth brush over every unmasked vertex of shapes, with no path to pick: the same result for every outfit fitted to one body.
+
+- Mask everything but the area (`mask_ops` `box`, then `invert`), then `mask_ops` `smooth` 3 steps: partly masked vertices change less, so the smoothing fades out instead of leaving a step at the border.
+- `iterations` and `strength` set how much. 30 at 0.2 evened out the folds under the breasts of a converted top like a hand-brushed version did (mean roughness 0.026 to 0.021, at most 0.09 across the surface); 60 or more at 0.3+ also flattened the breasts' curve.
+- Smoothing slides vertices along the surface too (up to 0.5 here), which looks like nothing changed but pulls open edges in. `keepBorders` (default on) keeps open edges in place, so a gap doesn't open at a zipper or a seam to another shape.
+- `followShapes`: trim, zippers, laces, straps and nets lying on the smoothed cloth move as far as the cloth under them moved across its surface, so they stay on it. Smooth the cloth only, never the trim: it would lose its shape.
+- In automation: the `MaskBox`, `InvertMask`, `SmoothMask` and `SmoothVertices` steps, so a whole batch gets the same edit.
+- `brush_stroke` takes `points` (positions instead of vertex indices, at the nearest vertex), `step` (dabs in between, like dragging) and `passes`, for an edit along a line that should be the same on every mesh.
+
 ## Mesh detail
 
 Outfits made for a smaller or lower-poly body often look faceted once they're converted or a slider makes them bigger: flat panels over the breasts and butt, corners along curves. `refine_mesh_adaptive` adds vertices only where they're needed, on the curve of the surface, so the shape gets rounder and smoother. The new vertices take over weights, slider data and UVs from their neighbors.
@@ -97,7 +108,7 @@ For clipping because the outfit is coarser than the body, see `fix-clipping`.
 Most window commands have their own tool. `run_steps` runs automation steps (`get_step_schema` describes them), for script features like variables.
 
 - **Shapes:** `rename_shape`, `duplicate_shape`, `delete_shapes`, `set_reference_shape`, `delete_vertices` and `separate_vertices` (on the mask), `merge_shapes`, `refine_mesh` (every unmasked triangle), `refine_mesh_adaptive` (only where the mesh lacks detail, see `fix-clipping`), `mirror_shapes`, `symmetrize_vertices`, `invert_uvs`, `recalc_normals`, `shape_transforms`, `set_base_shape`, `remove_unused_nodes`.
-- **Vertices:** `get_shape_geometry`, `set_vertex_data`, `edit_topology`, `brush_stroke`.
+- **Vertices:** `get_shape_geometry`, `set_vertex_data`, `edit_topology`, `brush_stroke`, `smooth_shapes`.
 - **Properties:** `get_shape_properties`, `set_shader_properties`, `set_texture_paths`, `set_geometry_properties`, `set_extra_data` (e.g. BODYTRI on the root). Fallout 4 and 76 materials: `read_material`, `write_material` (see `cross-game`).
 - **Partitions and segments:** `get_partitions`, `set_partitions` (Skyrim and older), `set_segments` (Fallout 4), `copy_partitions` from the reference.
 - **Bones and weights:** see `bone-weights`.

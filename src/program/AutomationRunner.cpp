@@ -5,6 +5,7 @@ See the included LICENSE file
 
 #include "AutomationRunner.h"
 
+#include "BrushStrokeController.h"
 #include "GameImport.h"
 #include "OutfitProject.h"
 #include "OutfitStudio.h"
@@ -639,6 +640,7 @@ int AutomationRunner::ExecuteStep(const AutomationStep& step) {
 		{AutomationStepType::SeparateVertices, &AutomationRunner::ExecuteStepSeparateVertices},
 		{AutomationStepType::MergeGeometry, &AutomationRunner::ExecuteStepMergeGeometry},
 		{AutomationStepType::SymmetrizeVertices, &AutomationRunner::ExecuteStepSymmetrizeVertices},
+		{AutomationStepType::SmoothVertices, &AutomationRunner::ExecuteStepSmoothVertices},
 		{AutomationStepType::ClearSliderData, &AutomationRunner::ExecuteStepClearSliderData},
 		{AutomationStepType::CloneSlider, &AutomationRunner::ExecuteStepCloneSlider},
 		{AutomationStepType::NegateSlider, &AutomationRunner::ExecuteStepNegateSlider},
@@ -647,10 +649,12 @@ int AutomationRunner::ExecuteStep(const AutomationStep& step) {
 		{AutomationStepType::GrowShrinkMask, &AutomationRunner::ExecuteStepGrowShrinkMask},
 		{AutomationStepType::InvertMask, &AutomationRunner::ExecuteStepInvertMask},
 		{AutomationStepType::MaskAsymmetric, &AutomationRunner::ExecuteStepMaskAsymmetric},
+		{AutomationStepType::MaskBox, &AutomationRunner::ExecuteStepMaskBox},
 		{AutomationStepType::MaskBoneWeighted, &AutomationRunner::ExecuteStepMaskBoneWeighted},
 		{AutomationStepType::MaskSliderAffected, &AutomationRunner::ExecuteStepMaskSliderAffected},
 		{AutomationStepType::MaskWeighted, &AutomationRunner::ExecuteStepMaskWeighted},
 		{AutomationStepType::SaveMask, &AutomationRunner::ExecuteStepSaveMask},
+		{AutomationStepType::SmoothMask, &AutomationRunner::ExecuteStepSmoothMask},
 		{AutomationStepType::SetVariable, &AutomationRunner::ExecuteStepSetVariable},
 		{AutomationStepType::LogMessage, &AutomationRunner::ExecuteStepLogMessage},
 	};
@@ -3232,6 +3236,73 @@ int AutomationRunner::ExecuteStepSymmetrizeVertices(const AutomationStep& step) 
 	return 0;
 }
 
+int AutomationRunner::ExecuteStepSmoothVertices(const AutomationStep& step) {
+	auto shapes = ResolveTargetShapes(step);
+	if (shapes.empty()) {
+		wxLogWarning("Automation: SmoothVertices - no target shapes found.");
+		return 0;
+	}
+
+	std::vector<Mesh*> meshes;
+	for (auto* shape : shapes)
+		if (Mesh* m = outfitStudio->glView->GetMesh(shape->name.get()))
+			meshes.push_back(m);
+	if (meshes.empty()) {
+		wxLogWarning("Automation: SmoothVertices - none of the target shapes have a mesh to work on.");
+		return 0;
+	}
+
+	// Shapes lying on the smoothed ones, by name or by pattern like the target shapes
+	std::vector<Mesh*> followers;
+	auto addFollower = [&](NiShape* shape) {
+		Mesh* m = shape ? outfitStudio->glView->GetMesh(shape->name.get()) : nullptr;
+		if (m && std::find(meshes.begin(), meshes.end(), m) == meshes.end() && std::find(followers.begin(), followers.end(), m) == followers.end())
+			followers.push_back(m);
+	};
+	for (const auto& name : step.smoothFollowShapes) {
+		if (step.targetRegex) {
+			try {
+				std::regex re(name, std::regex::icase);
+				for (auto* shape : project->GetWorkNif()->GetShapes())
+					if (std::regex_search(shape->name.get(), re))
+						addFollower(shape);
+			}
+			catch (const std::regex_error& e) {
+				wxLogWarning("Automation: SmoothVertices - invalid follow shape regex '%s' (%s).", name, e.what());
+			}
+		}
+		else
+			addFollower(FindShapeByName(name));
+	}
+
+	wxLogMessage("Automation: Smoothing %zu shape(s) %d time(s) at strength %.3f, %zu shape(s) following...", meshes.size(), step.smoothIterations,
+				 step.smoothStrength, followers.size());
+
+	BrushStrokeController controller(*project, outfitStudio->editor);
+	RefreshFlags refresh = controller.SmoothMeshes(meshes, step.smoothIterations, step.smoothStrength, step.smoothKeepBorders);
+	outfitStudio->ApplyRefresh(refresh);
+
+	if (!followers.empty()) {
+		UndoHistory* history = outfitStudio->glView->GetUndoHistory();
+		auto moves = BrushStrokeController::FollowEdit(*history->GetCurState(), meshes, followers, Mesh::TransformDistNifToMesh(step.smoothFollowRadius));
+		if (!moves.empty()) {
+			UndoStateProject* usp = history->PushState();
+			usp->undoType = UndoType::VertexPosition;
+			usp->usss = std::move(moves);
+			if (outfitStudio->editor.bEditSlider) {
+				usp->sliderName = outfitStudio->editor.activeSlider;
+				float sliderscale = project->SliderValue(usp->sliderName);
+				usp->sliderscale = sliderscale == 0.0f ? 1.0f : sliderscale;
+			}
+			outfitStudio->glView->ApplyUndoState(usp, false);
+		}
+	}
+
+	outfitStudio->SetPendingChanges();
+	outfitStudio->glView->Render();
+	return 0;
+}
+
 int AutomationRunner::ExecuteStepClearSliderData(const AutomationStep& step) {
 	auto shapes = ResolveTargetShapes(step);
 	if (shapes.empty()) {
@@ -3397,6 +3468,67 @@ int AutomationRunner::ExecuteStepGrowShrinkMask(const AutomationStep& step) {
 
 		for (int i = 0; i < iterations; i++)
 			MaskOps::ApplyChanges(*m, MaskOps::GrowShrinkChanges(*m, grow));
+	}
+
+	outfitStudio->glView->Render();
+	return 0;
+}
+
+int AutomationRunner::ExecuteStepMaskBox(const AutomationStep& step) {
+	auto shapes = ResolveTargetShapes(step);
+	if (shapes.empty()) {
+		wxLogWarning("Automation: MaskBox - no target shapes found.");
+		return 0;
+	}
+
+	const Vector3 lo(step.maskBoxMinX, step.maskBoxMinY, step.maskBoxMinZ);
+	const Vector3 hi(step.maskBoxMaxX, step.maskBoxMaxY, step.maskBoxMaxZ);
+
+	for (auto* shape : shapes) {
+		std::string shapeName = shape->name.get();
+		Mesh* m = outfitStudio->glView->GetMesh(shapeName);
+		if (!m || !m->mask)
+			continue;
+
+		// Positions as the shape is shown now, in NIF units
+		std::vector<Vector3> verts;
+		project->GetLiveVerts(shape, verts);
+
+		std::unordered_map<int, float> changes;
+		for (int v = 0; v < m->nVerts && v < static_cast<int>(verts.size()); v++) {
+			const Vector3& p = verts[v];
+			const bool inside = p.x >= lo.x && p.x <= hi.x && p.y >= lo.y && p.y <= hi.y && p.z >= lo.z && p.z <= hi.z;
+			if (inside)
+				changes[v] = 1.0f;
+			else if (!step.maskBoxKeepOthers)
+				changes[v] = 0.0f;
+		}
+
+		wxLogMessage("Automation: Masking the vertices of '%s' inside the box...", shapeName);
+		MaskOps::ApplyChanges(*m, changes);
+	}
+
+	outfitStudio->glView->Render();
+	return 0;
+}
+
+int AutomationRunner::ExecuteStepSmoothMask(const AutomationStep& step) {
+	auto shapes = ResolveTargetShapes(step);
+	if (shapes.empty()) {
+		wxLogWarning("Automation: SmoothMask - no target shapes found.");
+		return 0;
+	}
+
+	const int iterations = std::max(1, step.maskSmoothCount);
+	for (auto* shape : shapes) {
+		std::string shapeName = shape->name.get();
+		Mesh* m = outfitStudio->glView->GetMesh(shapeName);
+		if (!m || !m->mask)
+			continue;
+
+		wxLogMessage("Automation: Smoothing the mask of '%s' %d time(s)...", shapeName, iterations);
+		for (int i = 0; i < iterations; i++)
+			MaskOps::ApplyChanges(*m, MaskOps::SmoothChanges(*m));
 	}
 
 	outfitStudio->glView->Render();

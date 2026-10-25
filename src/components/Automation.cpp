@@ -430,6 +430,15 @@ std::vector<AutomationStepInfo> BuildStepTypes() {
 			FieldBool("Bones", &Step::asymDoBones, false, "chkSymVertBones"),
 		});
 
+	add(AutomationStepType::SmoothVertices, "SmoothVertices", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Smooth Vertices"), "pageSmoothVertices",
+		{
+			FieldInt("Iterations", &Step::smoothIterations, 10, "txtSmoothIterations"),
+			FieldFloat("Strength", &Step::smoothStrength, 0.1f, "txtSmoothStrength", AutomationFieldUI::Text, "%.3f"),
+			FieldStringList("FollowShapes", &Step::smoothFollowShapes, "txtSmoothFollowShapes"),
+			FieldFloat("FollowRadius", &Step::smoothFollowRadius, 1.5f, "txtSmoothFollowRadius", AutomationFieldUI::Text, "%.2f"),
+			FieldBool("KeepBorders", &Step::smoothKeepBorders, true, "chkSmoothKeepBorders"),
+		});
+
 	add(AutomationStepType::TransformShape, "TransformShape", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Transform Shape"), "pageTransformShape",
 		{
 			FieldFloat("MoveX", &Step::moveX, 0.0f, "txtMoveX"),
@@ -569,6 +578,17 @@ std::vector<AutomationStepInfo> BuildStepTypes() {
 			FieldBool("Bones", &Step::asymDoBones, false, "chkMaskAsymBones"),
 		});
 
+	add(AutomationStepType::MaskBox, "MaskBox", wxTRANSLATE("Masks"), wxTRANSLATE("Masks: Mask Box"), "pageMaskBox",
+		{
+			FieldFloat("MinX", &Step::maskBoxMinX, -100000.0f, "txtMaskBoxMinX"),
+			FieldFloat("MinY", &Step::maskBoxMinY, -100000.0f, "txtMaskBoxMinY"),
+			FieldFloat("MinZ", &Step::maskBoxMinZ, -100000.0f, "txtMaskBoxMinZ"),
+			FieldFloat("MaxX", &Step::maskBoxMaxX, 100000.0f, "txtMaskBoxMaxX"),
+			FieldFloat("MaxY", &Step::maskBoxMaxY, 100000.0f, "txtMaskBoxMaxY"),
+			FieldFloat("MaxZ", &Step::maskBoxMaxZ, 100000.0f, "txtMaskBoxMaxZ"),
+			FieldBool("KeepOthers", &Step::maskBoxKeepOthers, false, "chkMaskBoxKeepOthers"),
+		});
+
 	add(AutomationStepType::MaskBoneWeighted, "MaskBoneWeighted", wxTRANSLATE("Masks"), wxTRANSLATE("Masks: Mask Bone-Weighted Vertices"), "pageMaskBoneWeighted",
 		{
 			FieldStringList("BoneNames", &Step::maskBoneNames, "txtMaskBoneNames"),
@@ -586,6 +606,11 @@ std::vector<AutomationStepInfo> BuildStepTypes() {
 			FieldString("MaskFile", &Step::saveMaskFile, "txtSaveMaskFile"),
 			FieldString("MaskName", &Step::saveMaskName, "txtSaveMaskName"),
 			FieldBool("Merge", &Step::saveMaskMerge, true, "chkSaveMaskMerge"),
+		});
+
+	add(AutomationStepType::SmoothMask, "SmoothMask", wxTRANSLATE("Masks"), wxTRANSLATE("Masks: Smooth Mask"), "pageSmoothMask",
+		{
+			FieldInt("Iterations", &Step::maskSmoothCount, 1, "txtMaskSmoothCount"),
 		});
 
 	// Nodes
