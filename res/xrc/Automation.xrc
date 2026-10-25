@@ -1180,6 +1180,114 @@ The shape is taken from the Target Meshes field above. If it is empty, the proje
 											</object>
 										</object>
 
+										<!-- ImportFromGame -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageImportFromGame">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Import From Other Game</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>File:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtGameImportFile">
+																	<tooltip>NIF file of another game, or a slider set file (.osp) of another game's BodySlide folder. Supports {{PLACEHOLDER}} variables.</tooltip>
+																	<hint>e.g. D:\Fallout 4\Data\meshes\outfit.nif</hint>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Set:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtGameImportSet">
+																	<tooltip>Set of the slider set file, needed when it has more than one.</tooltip>
+																	<hint>Set name</hint>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Data Folders:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtGameImportDataFolders">
+																	<tooltip>Comma-separated Data folders of the source game or mod. Their material files (BGSM) set up the shaders.</tooltip>
+																	<hint>e.g. D:\Mods\MyOutfit</hint>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Shapes:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtGameImportShapes">
+																	<tooltip>Comma-separated shapes to import. Leave empty to import all.</tooltip>
+																	<hint>All shapes</hint>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Skip Shapes:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtGameImportSkipShapes">
+																	<tooltip>Comma-separated shapes to leave out, e.g. the source game's body.</tooltip>
+																	<hint>e.g. CBBE</hint>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Slider Data:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtGameImportSliders">
+																	<tooltip>Slider data to take over from a set: local (the outfit's own morphs and all zaps), all (also the body's shared data), zaps or none.</tooltip>
+																	<hint>local</hint>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Imports the shapes of another game's NIF or BodySlide set in global space, e.g. Fallout 4 outfits into a Skyrim project. Bone weights aren't kept, since the skeletons differ: conform, copy bone weights from a body of this game and set partitions afterwards.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
 										<!-- AddProject -->
 										<object class="simplebookpage">
 											<object class="wxPanel" name="pageAddProject">

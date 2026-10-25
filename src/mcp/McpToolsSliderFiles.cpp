@@ -378,12 +378,13 @@ void AddSliderFileTools(OutfitStudioMcp& mcp) {
 	McpTool clear;
 	clear.name = "clear_slider_data";
 	clear.description =
-		"Removes the data of sliders from shapes, like Clear Slider Data in the window: with useMask only from the "
-		"unmasked vertices. The sliders stay. Not in the undo history: take a snapshot_save first to go back.";
+		"Removes the data of sliders from shapes, like Clear Slider Data in the window: with useMask each vertex's data is "
+		"multiplied by its mask value, so unmasked vertices lose it, masked ones keep it and a soft mask border keeps a share "
+		"(to blend two conversions). The sliders stay. Not in the undo history: take a snapshot_save first to go back.";
 	clear.inputSchema = McpSchema({
 		{"sliders", McpStringList("Slider names. Default: every slider.")},
 		{"shapes", McpStringList("Shapes, the selected outfit shapes by default")},
-		{"useMask", McpProp("boolean", "Keep the data of masked vertices. Default true.")},
+		{"useMask", McpProp("boolean", "Scale the data by the mask: masked vertices keep it, unmasked lose it. Default true.")},
 	});
 	clear.handler = [&mcp](const json& args) {
 		std::vector<std::string> sliders = McpArgs::Strings(args, "sliders");

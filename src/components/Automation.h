@@ -36,6 +36,7 @@ enum class AutomationStepType {
 	SaveProject,
 	ImportFile,
 	ImportSliderData,
+	ImportFromGame,
 	AddProject,
 	ClearProject,
 	ClearReference,
@@ -90,7 +91,7 @@ enum class AutomationStepType {
 	LogMessage
 };
 
-constexpr int AutomationStepTypeCount = 65;
+constexpr int AutomationStepTypeCount = 66;
 static_assert(static_cast<int>(AutomationStepType::LogMessage) + 1 == AutomationStepTypeCount,
 	"AutomationStepTypeCount must match the number of enum values");
 
@@ -207,6 +208,14 @@ struct AutomationStep {
 	bool importFromFolder = false;
 	bool importBeforeBatch = false;
 	bool importTriSliders = true;
+
+	// ImportFromGame params
+	std::string gameImportFile; // NIF, or slider set file of another BodySlide folder
+	std::string gameImportSet;
+	std::vector<std::string> gameImportDataFolders;
+	std::vector<std::string> gameImportShapes;
+	std::vector<std::string> gameImportSkipShapes;
+	std::string gameImportSliders = "local";
 
 	// TransformShape params
 	float moveX = 0.0f, moveY = 0.0f, moveZ = 0.0f;

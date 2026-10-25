@@ -106,6 +106,21 @@ Most window commands have their own tool. `run_steps` runs automation steps (`ge
 - The base shape only changes with all sliders at 0 (`zero_sliders`), and a slider's morph only in `set_slider_edit` mode with the slider on, like in the window. This goes for `transform_shapes`, `set_vertex_data` positions and the shaping brushes.
 - The vertex, topology, transform, mask and weight tools are in the undo history. Like automation, the shape, bone and slider structure tools aren't: they take an automatic snapshot, or take a `snapshot_save` yourself.
 
+## Many outfits at once
+
+Converting a whole mod (dozens of pieces) one tool call at a time costs a lot. Do the first piece by hand to settle the steps, then batch the rest:
+
+- **Write the steps as a script** in the BodySlide folder's `Automations` folder (`<AutomationScript version="1">` with one `<Step type="…" active="true">` per step, parameters as child elements named like `get_step_schema` lists them), e.g. `Automations/MyMod/Body.xml`. `run_automation_script` runs it by name (`MyMod/Body`); `list_automation_scripts` lists them.
+- **Placeholders** are `{{name}}` with double braces, in any text parameter, filled in from `variables`: one script with `{{file}}`, `{{folder}}` and `{{name}}` serves every piece (`run_automation_script` with `variables`, or `run_steps` with `variables`).
+- **One script can do many pieces:** `ClearProject`, then load, import, conform, weight, save, and the next piece's `ClearProject`. A script of twelve pieces runs in one call.
+- `ImportFromGame` is a step too (see `cross-game`), so conversions from another game batch the same way.
+- `ExportFile` and `SaveProject` create missing folders.
+- `ChangePartitions` takes slot numbers (`"32"` → `"52"`), e.g. after `CopySegPart` gave everything the body's slot 32.
+- Steps that work on shapes take `"TargetRegex": true, "TargetMeshes": [".*"]` for every shape without knowing their names (an empty list means the selected ones for some steps). `.*` includes the reference: `ClearSliderData` and mask steps change its data too. That doesn't matter after the conforms that need it, but renders of the body are wrong afterwards; render with `show` set to only the outfit.
+- **Two references on one outfit** in steps: `ConformSliders` with `SliderNames` conforms only those sliders, so others keep their data. `CloneSlider` (`SourceSlider`, `SliderName`) keeps a conform's result under a new name before the next reference is loaded (`LoadReference` with `MergeSliders: true, AppendNewSliders: false` keeps the outfit's sliders). `ClearSliderData` with `UseMask` scales each vertex's data by its mask value, and `InvertMask` swaps the mask. Together they blend two conversions per vertex (see `conform-sliders`, "Blending two conversions").
+- **Masks from a measurement** (`mask_ops` `from_analysis`) have no step: split the batch into `run_steps` before and after the `mask_ops` call. Shapes imported by steps aren't selected, so give `mask_ops` the shape names; they're the NIF's shape names, which a script can read from the file beforehand. Steps leave the outfit's masks as they are; `ClearMask` clears them.
+- Try the script on one piece and look at it (`validate_project`, `analyze_clipping`, a render) before running the batch, then check every piece of it, not a sample (see `body-conversion`, "Many outfits at once").
+
 ## Saving
 
 1. `validate_project` lists what breaks in game rather than in the view: unweighted vertices, too many bones per vertex, triangles without a partition, sliders that move the body under a shape but not the shape, zap sliders that zap nothing, and whether the body is saved with the outfit. Fix the errors and read the warnings.

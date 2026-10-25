@@ -162,11 +162,12 @@ void AddAutomationTools(OutfitStudioMcp& mcp) {
 		"Each step is an object with \"type\" and the step's parameters by name, as get_step_schema describes "
 		"them, e.g. {\"type\": \"ConformSliders\", \"TargetMeshes\": [\"Top\"]}. Every step also takes "
 		"\"TargetMeshes\" (shape names, empty for the selected shapes or all, depending on the step), "
-		"\"TargetRegex\" (names are regular expressions) and \"active\". Values can use {variables}.";
+		"\"TargetRegex\" (names are regular expressions) and \"active\". Text values can use {{name}} placeholders "
+		"(double braces), filled in from variables.";
 	runSteps.inputSchema = McpSchema(
 		{
 			{"steps", {{"type", "array"}, {"items", {{"type", "object"}}}, {"description", "Steps to run in order"}}},
-			{"variables", {{"type", "object"}, {"additionalProperties", {{"type", "string"}}}, {"description", "Values for {name} placeholders in the steps"}}},
+			{"variables", {{"type", "object"}, {"additionalProperties", {{"type", "string"}}}, {"description", "Values for {{name}} placeholders in the steps, e.g. {\"piece\": \"Top1\"} for \"{{piece}}.nif\""}}},
 			{"stopOnError", McpProp("boolean", "Skip the remaining steps after a failed one. Default true.")},
 		},
 		{"steps"});
@@ -263,7 +264,7 @@ void AddAutomationTools(OutfitStudioMcp& mcp) {
 	runScript.inputSchema = McpSchema(
 		{
 			{"name", McpProp("string", "Script name as list_automation_scripts gives it")},
-			{"variables", {{"type", "object"}, {"additionalProperties", {{"type", "string"}}}, {"description", "Values that replace the script's own variables"}}},
+			{"variables", {{"type", "object"}, {"additionalProperties", {{"type", "string"}}}, {"description", "Values for the script's {{name}} placeholders, replacing its own variables"}}},
 		},
 		{"name"});
 	runScript.handler = [&mcp](const json& args) {

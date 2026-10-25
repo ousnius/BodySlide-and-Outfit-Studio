@@ -67,7 +67,22 @@ A zap slider removes vertices in BodySlide instead of moving them: the body unde
 - `smooth_slider_deltas` evens out bumps a conform left (masked vertices keep theirs). Smoothing trades folds for clipping, so check both after.
 - `scale_slider_deltas` makes a morph weaker or stronger, e.g. 0.8.
 - `get_slider_deltas` and `set_slider_deltas` read and write morphs directly.
-- `new_slider` (`empty`, `zap`, or `combined` from the current slider values), `clone_slider`, `negate_sliders`, `clear_slider_data` (`useMask` for the unmasked part only), `delete_sliders`.
+- `new_slider` (`empty`, `zap`, or `combined` from the current slider values), `clone_slider`, `negate_sliders`, `clear_slider_data`, `delete_sliders`.
+- `clear_slider_data` with `useMask` (the default) multiplies each vertex's data by its mask value: unmasked vertices lose it, masked ones keep it, and partly masked ones (a smoothed or feathered border) keep that share. Without a mask it clears all of it.
+
+### Blending two conversions
+
+When one part of an outfit should follow one reference and another part a different one, conform both and blend them per vertex with a mask, instead of cutting the outfit at a hard border:
+
+1. `load_reference` A, `conform_sliders`, `clone_slider` the conversion slider to e.g. `ConvA`.
+2. `load_reference` B with `mergeSliders: true, appendNewSliders: false`, `conform_sliders` with only the conversion slider (`sliders`), so `ConvA` keeps A's data.
+3. Mask the vertices that should take A (1) and those that should take B (0), with a soft border: `mask_ops` `from_analysis` with `feather` 3, or `smooth` steps. A shape where `from_analysis` finds nothing keeps its mask (`unchanged: true` in the result), so set every shape's mask to what such a shape should get first: e.g. `clear`, then `invert` for all masked. Otherwise a separate shape far from the body, such as a bridge between bikini cups, silently takes the wrong reference.
+4. `clear_slider_data` `ConvA` with `useMask`, `mask_ops` `invert`, `clear_slider_data` the conversion slider with `useMask`. Each vertex now has m·A + (1−m)·B across the two sliders.
+5. `mask_ops` `clear`, set both sliders to 1, `set_base_shape`.
+
+Where both references agree (away from where they differ), the mask doesn't matter. To check that the blend itself is clean, set both sliders to 1, `new_slider` `combined`, and `analyze_slider` it: its roughness should match a single conversion's. The partial sliders on their own look rough and have flipped triangles, which is expected.
+
+A conversion with large deltas can leave spikes where cloth spans a crease of the body (under the breasts, between the buttocks): the nearest body points of neighbouring cloth vertices move differently. `ConformSliders` with `SmoothResults: true` (12 iterations, 0.5 strength) or `smooth_slider_deltas` on the conversion slider before baking removes them, with little change to clipping. Render both sliders against only the second before baking to see what the blend changed.
 - `import_slider_data` reads OSD and TRI files, or a NIF, OBJ, FBX or BSD file with the same vertex order as one slider (e.g. a morph sculpted elsewhere). `export_slider_data` writes them.
   - A BSD file holds only the moved vertices: a uint32 count, then per vertex a uint32 index and three floats, the delta in NIF units as `get_slider_deltas` shows it. With `fromFolder`, files named `Shape#Slider.bsd` fill that slider of that shape. That makes it the simplest way to bring in a morph computed by a script.
 - Sliders that go both ways ("n|p" or "p|n" in the name) share one morph for both directions: fixing it at -1 can break +1, so sweep both after.

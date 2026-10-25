@@ -1435,6 +1435,10 @@ OpResult ProjectOperations::ExportFile(const std::string& fileName, const Export
 	if (shapes.size() < options.shapes.size())
 		return OpResult::Fail("Some of the shapes to export don't exist.");
 
+	const wxString folder = wxFileName(wxString::FromUTF8(fileName)).GetPath();
+	if (!folder.empty() && !wxFileName::DirExists(folder) && !wxFileName::Mkdir(folder, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL))
+		return OpResult::Fail("The folder '" + std::string(folder.ToUTF8().data()) + "' couldn't be created.");
+
 	int err = 0;
 	if (ext == "nif" && !options.shapes.empty()) {
 		// Like Export Selected Shapes in the window

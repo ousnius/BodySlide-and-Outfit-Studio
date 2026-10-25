@@ -97,6 +97,7 @@ private:
 	int ExecuteStepApplyPose(const AutomationStep& step);
 	int ExecuteStepImportSliderData(const AutomationStep& step);
 	int ExecuteStepImportFile(const AutomationStep& step);
+	int ExecuteStepImportFromGame(const AutomationStep& step);
 	int ExecuteStepDeleteShape(const AutomationStep& step);
 	int ExecuteStepRenameShape(const AutomationStep& step);
 	int ExecuteStepSaveProject(const AutomationStep& step);

@@ -5,6 +5,7 @@ See the included LICENSE file
 
 #include "AutomationRunner.h"
 
+#include "GameImport.h"
 #include "OutfitProject.h"
 #include "OutfitStudio.h"
 
@@ -521,7 +522,8 @@ bool ParseAutomationPartitionID(const std::string& value, int& partitionID) {
 		return false;
 
 	std::smatch match;
-	static const std::regex partitionChoicePattern("^([0-9]+)\\s+.+$");
+	// A slot number, alone or as the partition choices show it ("32 Body")
+	static const std::regex partitionChoicePattern("^([0-9]+)(\\s+.+)?$");
 	if (!std::regex_match(trimmedValue, match, partitionChoicePattern))
 		return false;
 
@@ -594,6 +596,7 @@ int AutomationRunner::ExecuteStep(const AutomationStep& step) {
 		{AutomationStepType::ExportSFMorphs, &AutomationRunner::ExecuteStepExportSFMorphs},
 		{AutomationStepType::SaveProject, &AutomationRunner::ExecuteStepSaveProject},
 		{AutomationStepType::ImportFile, &AutomationRunner::ExecuteStepImportFile},
+		{AutomationStepType::ImportFromGame, &AutomationRunner::ExecuteStepImportFromGame},
 		{AutomationStepType::ImportSliderData, &AutomationRunner::ExecuteStepImportSliderData},
 		{AutomationStepType::AddProject, &AutomationRunner::ExecuteStepAddProject},
 		{AutomationStepType::ClearProject, &AutomationRunner::ExecuteStepClearProject},
@@ -766,6 +769,7 @@ bool AutomationRunner::StepChangesSliderSet(AutomationStepType type) {
 		case AutomationStepType::SetBaseShape:
 		case AutomationStepType::ImportSliderData:
 		case AutomationStepType::ImportFile:
+		case AutomationStepType::ImportFromGame:
 		case AutomationStepType::CloneSlider:
 		case AutomationStepType::MakeConversionRef:
 		case AutomationStepType::NewCombinedSlider:
@@ -1606,6 +1610,56 @@ int AutomationRunner::ExecuteStepImportFile(const AutomationStep& step) {
 	return 0;
 }
 
+int AutomationRunner::ExecuteStepImportFromGame(const AutomationStep& step) {
+	if (step.gameImportFile.empty()) {
+		wxLogError("Automation: ImportFromGame - no file specified.");
+		return 1;
+	}
+
+	GameImport::Options options;
+	options.file = MakeAbsoluteToProject(wxString::FromUTF8(step.gameImportFile)).ToUTF8().data();
+	options.set = step.gameImportSet;
+	options.shapes = step.gameImportShapes;
+	options.skipShapes = step.gameImportSkipShapes;
+	if (!step.gameImportSliders.empty())
+		options.sliders = step.gameImportSliders;
+	for (auto& folder : step.gameImportDataFolders)
+		options.dataFolders.push_back(MakeAbsoluteToProject(wxString::FromUTF8(folder)).ToUTF8().data());
+
+	wxLogMessage("Automation: Importing '%s' from another game...", options.file);
+
+	GameImport::Report report;
+	OpResult result = GameImport::Import(*project, options, report);
+	if (!result.ok) {
+		wxLogError("Automation: ImportFromGame - %s", result.error);
+		return 1;
+	}
+
+	// Each material note once, they repeat for every shape with the same material
+	std::vector<std::string> notes;
+	for (auto& shape : report.shapes) {
+		const std::string name = shape["name"].get<std::string>();
+		wxLogMessage("Automation: ImportFromGame - imported '%s' from %s.", name, report.sourceGame);
+		if (shape.contains("warning"))
+			wxLogWarning("Automation: ImportFromGame - '%s': %s", name, shape["warning"].get<std::string>());
+
+		if (!shape.contains("material"))
+			continue;
+
+		const auto& material = shape["material"];
+		if (material.contains("error"))
+			wxLogWarning("Automation: ImportFromGame - '%s': %s", name, material["error"].get<std::string>());
+		if (material.contains("target") && material["target"].contains("notes"))
+			for (auto& note : material["target"]["notes"])
+				if (std::find(notes.begin(), notes.end(), note.get<std::string>()) == notes.end())
+					notes.push_back(note.get<std::string>());
+	}
+	for (auto& note : notes)
+		wxLogMessage("Automation: ImportFromGame - %s", note);
+
+	return 0;
+}
+
 int AutomationRunner::ExecuteStepDeleteShape(const AutomationStep& step) {
 	auto shapes = ResolveTargetShapes(step);
 	if (shapes.empty()) {
@@ -1948,12 +2002,12 @@ int AutomationRunner::ExecuteStepChangePartitions(const AutomationStep& step) {
 	int sourcePartitionID = 0;
 	int destinationPartitionID = 0;
 	if (!ParseAutomationPartitionID(step.partitionSource, sourcePartitionID)) {
-		wxLogError("Automation: ChangePartitions - invalid source partition '%s'.", step.partitionSource);
+		wxLogError("Automation: ChangePartitions - invalid source partition '%s', expected a slot number like '32' or '32 Body'.", step.partitionSource);
 		return 1;
 	}
 
 	if (!ParseAutomationPartitionID(step.partitionDestination, destinationPartitionID)) {
-		wxLogError("Automation: ChangePartitions - invalid destination partition '%s'.", step.partitionDestination);
+		wxLogError("Automation: ChangePartitions - invalid destination partition '%s', expected a slot number like '52' or '52 Pelvis'.", step.partitionDestination);
 		return 1;
 	}
 

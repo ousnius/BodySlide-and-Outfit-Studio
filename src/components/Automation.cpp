@@ -305,6 +305,16 @@ std::vector<AutomationStepInfo> BuildStepTypes() {
 			FieldStringList("SliderNames", &Step::sliderNames, "txtSliderNames"),
 		});
 
+	add(AutomationStepType::ImportFromGame, "ImportFromGame", wxTRANSLATE("Import"), wxTRANSLATE("Import: From Other Game"), "pageImportFromGame",
+		{
+			FieldString("FilePath", &Step::gameImportFile, "txtGameImportFile"),
+			FieldString("Set", &Step::gameImportSet, "txtGameImportSet"),
+			FieldStringList("DataFolders", &Step::gameImportDataFolders, "txtGameImportDataFolders"),
+			FieldStringList("Shapes", &Step::gameImportShapes, "txtGameImportShapes"),
+			FieldStringList("SkipShapes", &Step::gameImportSkipShapes, "txtGameImportSkipShapes"),
+			FieldString("Sliders", &Step::gameImportSliders, "txtGameImportSliders"),
+		});
+
 	// Project
 	add(AutomationStepType::AddProject, "AddProject", wxTRANSLATE("Project"), wxTRANSLATE("Project: Add Project"), "pageAddProject",
 		ProjectSourceFields(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, "chkAddProjAppendSliders"));
