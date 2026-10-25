@@ -880,6 +880,13 @@ std::string OutfitProject::GetSliderName(const size_t index) {
 	return activeSet[index].name;
 }
 
+void OutfitProject::NewBaseDiffSet(const std::string& dataName, const std::string& target) {
+	// The reference's data sets outlive the projects that made them, so one of the same name from an earlier
+	// project can still be there. A new slider starts without it, or its data would be summed onto the old.
+	baseDiffData.AddEmptySet(dataName, target);
+	baseDiffData.EmptySet(dataName, target);
+}
+
 void OutfitProject::AddEmptySlider(const std::string& newName) {
 	size_t sliderID = activeSet.CreateSlider(newName);
 
@@ -889,7 +896,7 @@ void OutfitProject::AddEmptySlider(const std::string& newName) {
 		std::string shapeSlider = target + newName;
 		activeSet[sliderID].AddDataFile(target, shapeSlider, shapeSlider);
 		activeSet.AddShapeTarget(baseShapeName, target);
-		baseDiffData.AddEmptySet(shapeSlider, target);
+		NewBaseDiffSet(shapeSlider, target);
 	}
 }
 
@@ -916,7 +923,7 @@ void OutfitProject::AddZapSlider(const std::string& newName, std::unordered_map<
 	if (IsBaseShape(shape)) {
 		activeSet[sliderID].AddDataFile(target, shapeSlider, shapeSlider);
 		activeSet.AddShapeTarget(shape->name.get(), target);
-		baseDiffData.AddEmptySet(shapeSlider, target);
+		NewBaseDiffSet(shapeSlider, target);
 		for (auto& i : diffData)
 			baseDiffData.SumDiff(shapeSlider, target, i.first, i.second);
 	}
@@ -995,7 +1002,7 @@ void OutfitProject::AddCombinedSlider(const std::string& newName) {
 		std::string target = SliderDataTargetForShape(baseShape);
 		std::string shapeSlider = target + newName;
 		activeSet[sliderID].AddDataFile(target, shapeSlider, shapeSlider);
-		baseDiffData.AddEmptySet(shapeSlider, target);
+		NewBaseDiffSet(shapeSlider, target);
 
 		GetLiveVerts(baseShape, verts);
 		workNif.CalcShapeDiff(baseShape, &verts, diffData);
@@ -1669,7 +1676,7 @@ void OutfitProject::CloneSlider(const std::string& sliderName, const std::string
 		if (IsBaseShape(shape)) {
 			activeSet[cloneIndex].AddDataFile(target, newDT, newDT);
 			activeSet.AddShapeTarget(shape->name.get(), target);
-			baseDiffData.AddEmptySet(newDT, target);
+			NewBaseDiffSet(newDT, target);
 
 			auto diffData = baseDiffData.GetDiffSet(oldDT);
 			if (diffData) {

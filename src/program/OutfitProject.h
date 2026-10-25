@@ -412,6 +412,8 @@ public:
 	size_t SliderCount();
 	std::string GetSliderName(const size_t index);
 	void GetSliderList(std::vector<std::string>& sliderNames);
+	// Starts the reference data set of a new slider empty
+	void NewBaseDiffSet(const std::string& dataName, const std::string& target);
 	void AddEmptySlider(const std::string& newName);
 	void AddZapSlider(const std::string& newName, std::unordered_map<uint16_t, float>& verts, nifly::NiShape* shape);
 	// Vertices of a shape that a zap slider removes. Falls back to the loaded morph results for a reference
