@@ -2352,6 +2352,7 @@ void OutfitStudioFrame::OnChooseTargetGame(wxCommandEvent& event) {
 	dpGameDataPath->SetPath(dataDir);
 
 	SettingsFillDataFiles(dataFileList, dataDir, targ);
+	SettingsDialogShared::ShowExtraDataFolders(*wxGetTopLevelParent(choiceTargetGame), targ);
 }
 
 void OutfitStudioFrame::SettingsFillDataFiles(wxCheckListBox* dataFileList, wxString& dataDir, int targetGame) {
@@ -2471,6 +2472,7 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 
 		commonControls.choiceTargetGame->Bind(wxEVT_CHOICE, &OutfitStudioFrame::OnChooseTargetGame, this);
 
+		const std::vector<std::string> extraFoldersBefore = GameUtil::GetExtraDataFolders(Config.GetIntValue("TargetGame"));
 		if (settings->ShowModal() == wxID_OK) {
 			int targetGameSelection = 0;
 			bool needsRestart = false;
@@ -2524,6 +2526,13 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 
 			Config.SaveConfig(Config["AppDir"] + "/Config.xml");
 		GameUtil::InitArchives();
+
+			// Textures and materials may be found in other folders now
+			if (GameUtil::GetExtraDataFolders(Config.GetIntValue("TargetGame")) != extraFoldersBefore) {
+				project->SetTextures();
+				MeshesFromProj(true);
+				glView->Render();
+			}
 
 			// A running server moves to the new port, and turning it on starts it right away
 			const bool mcpRunning = mcp && mcp->IsRunning();

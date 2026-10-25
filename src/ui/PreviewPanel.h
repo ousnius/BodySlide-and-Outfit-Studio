@@ -234,6 +234,8 @@ public:
 	bool IsPBREnabled() const { return gls.IsPBREnabled(); }
 
 	void SetBaseDataPath(const std::string& path) { baseDataPath = path; }
+	// Full path of a data folder relative asset: under the base data path, or an extra data folder that has it
+	std::string AssetPath(const std::string& relPath) const;
 
 	void SetExtraNifPaths(const std::vector<std::string>& paths) { extraNifPaths = paths; }
 	const std::vector<std::string>& GetExtraNifPaths() const { return extraNifPaths; }

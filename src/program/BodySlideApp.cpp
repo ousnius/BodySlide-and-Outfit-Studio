@@ -7482,6 +7482,7 @@ void BodySlideFrame::OnChooseTargetGame(wxCommandEvent& event) {
 	dpGameDataPath->SetPath(dataDir);
 
 	SettingsFillDataFiles(dataFileList, dataDir, targ);
+	SettingsDialogShared::ShowExtraDataFolders(*wxGetTopLevelParent(choiceTargetGame), targ);
 }
 
 void BodySlideFrame::SettingsFillDataFiles(wxCheckListBox* dataFileList, wxString& dataDir, int targetGame) {
