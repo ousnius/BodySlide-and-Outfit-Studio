@@ -114,7 +114,7 @@ For clipping because the outfit is coarser than the body, see `fix-clipping`.
 
 Most window commands have their own tool. `run_steps` runs automation steps (`get_step_schema` describes them), for script features like variables.
 
-- **Shapes:** `rename_shape`, `duplicate_shape`, `delete_shapes`, `set_reference_shape`, `delete_vertices` and `separate_vertices` (on the mask), `merge_shapes`, `refine_mesh` (every unmasked triangle), `refine_mesh_adaptive` (only where the mesh lacks detail, see `fix-clipping`), `mirror_shapes`, `symmetrize_vertices`, `invert_uvs`, `recalc_normals`, `shape_transforms`, `set_base_shape`, `remove_unused_nodes`.
+- **Shapes:** `rename_shape`, `duplicate_shape`, `delete_shapes`, `set_reference_shape`, `delete_vertices` and `separate_vertices` (on the mask), `merge_shapes`, `refine_mesh` (every unmasked triangle), `refine_mesh_adaptive` (only where the mesh lacks detail, see `fix-clipping`), `mirror_shapes`, `symmetrize_vertices` (after `analyze_symmetry`, which lists what differs from the mirror image: positions, sliders, bones), `invert_uvs`, `recalc_normals`, `shape_transforms`, `set_base_shape`, `remove_unused_nodes`.
 - **Vertices:** `get_shape_geometry`, `set_vertex_data`, `edit_topology`, `brush_stroke`, `smooth_shapes`.
 - **Properties:** `get_shape_properties`, `set_shader_properties`, `set_texture_paths`, `set_geometry_properties`, `set_extra_data` (e.g. BODYTRI on the root). Fallout 4 and 76 materials: `read_material`, `write_material` (see `cross-game`).
 - **Partitions and segments:** `get_partitions`, `set_partitions` (Skyrim and older), `set_segments` (Fallout 4), `copy_partitions` from the reference.

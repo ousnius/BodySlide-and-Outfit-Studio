@@ -9,6 +9,7 @@ See the included LICENSE file
 
 #include <algorithm>
 #include <cfloat>
+#include <cmath>
 #include <limits>
 #include <set>
 
@@ -53,6 +54,84 @@ McpToolResult ShapeList(OutfitStudioMcp& mcp) {
 	McpToolResult result;
 	result.data["shapes"] = shapes;
 	return result;
+}
+
+// How a shape differs from its mirror image across X, like the window's vertex asymmetry dialog finds it
+struct ShapeSymmetry {
+	Mesh* m = nullptr;
+	// The vertices that take part: the unmasked ones, or all
+	std::vector<bool> selVerts;
+	SymmetricVertices symVerts;
+	VertexAsymmetries asyms;
+	VertexAsymmetryStats stats;
+};
+
+ShapeSymmetry FindSymmetry(OutfitStudioMcp& mcp, NiShape* shape, bool useMask) {
+	ShapeSymmetry s;
+	s.m = ShapeMesh(mcp, shape);
+	s.selVerts.assign(s.m->nVerts, true);
+	if (useMask && s.m->mask)
+		for (int i = 0; i < s.m->nVerts; i++)
+			s.selVerts[i] = s.m->mask[i] == 0.0f;
+
+	OutfitProject& project = mcp.Project();
+	project.MatchSymmetricVertices(shape, s.m->weldVerts, s.symVerts);
+	project.FindVertexAsymmetries(shape, s.symVerts, s.m->weldVerts, s.asyms);
+	CalcVertexAsymmetryStats(s.symVerts, s.asyms, s.selVerts, s.stats);
+	return s;
+}
+
+// args[name] as true (all), false (none) or a list of names, as one flag per entry of names. Names that aren't
+// among them go to outUnknown.
+std::vector<bool> SymmetryChoice(const json& args, const char* name, const std::vector<std::string>& names, std::vector<std::string>& outUnknown) {
+	std::vector<bool> chosen(names.size(), false);
+	const json* value = McpArgs::Find(args, name);
+	if (!value)
+		return chosen;
+	if (value->is_boolean()) {
+		chosen.assign(names.size(), value->get<bool>());
+		return chosen;
+	}
+	if (!value->is_array())
+		McpArgs::Wrong(name, "true, false or a list of names");
+
+	for (auto& item : *value) {
+		if (!item.is_string())
+			McpArgs::Wrong(name, "true, false or a list of names");
+		auto it = std::find(names.begin(), names.end(), item.get<std::string>());
+		if (it == names.end())
+			outUnknown.push_back(item.get<std::string>());
+		else
+			chosen[it - names.begin()] = true;
+	}
+	return chosen;
+}
+
+// The asymmetries of a shape: counts, mean differences, and the sliders and bones with the most, most first
+json SymmetryReport(const ShapeSymmetry& s, size_t limit) {
+	auto round = [](float v) { return std::round(v * 10000.0f) / 10000.0f; };
+	auto worst = [&](size_t count, const std::vector<int>& counts, const std::vector<float>& avgs, const char* key, auto nameOf) {
+		std::vector<size_t> order(count);
+		for (size_t i = 0; i < count; i++)
+			order[i] = i;
+		std::sort(order.begin(), order.end(), [&](size_t a, size_t b) { return counts[a] > counts[b]; });
+		json list = json::array();
+		for (size_t i : order)
+			if (counts[i] > 0 && list.size() < limit)
+				list.push_back({{key, nameOf(i)}, {"vertices", counts[i]}, {"meanError", round(avgs[i])}});
+		return list;
+	};
+
+	json sliders = worst(s.asyms.sliders.size(), s.stats.sliderCounts, s.stats.sliderAvgs, "slider", [&](size_t i) { return s.asyms.sliders[i].sliderName; });
+	json bones = worst(s.asyms.bones.size(), s.stats.boneCounts, s.stats.boneAvgs, "bone", [&](size_t i) { return s.asyms.bones[i].boneName; });
+	return {
+		{"vertices", s.m->nVerts},
+		{"considered", s.stats.unmaskedCount},
+		{"unmatched", s.symVerts.unmatched.size()},
+		{"positions", {{"vertices", s.stats.posCount}, {"meanError", round(s.stats.posAvg)}}},
+		{"sliders", {{"vertices", s.stats.anySliderCount}, {"worst", sliders}}},
+		{"bones", {{"vertices", s.stats.anyBoneCount}, {"worst", bones}}},
+	};
 }
 
 std::string NewShapeName(OutfitStudioMcp& mcp, const json& args, const char* name) {
@@ -1221,26 +1300,100 @@ void AddShapeTools(OutfitStudioMcp& mcp) {
 	McpTool symmetrize;
 	symmetrize.name = "symmetrize_vertices";
 	symmetrize.description =
-		std::string("Makes shapes symmetric across X: each vertex on the left takes the mirrored data of its partner on the right.")
-		+ SnapshotNote;
+		"Makes shapes symmetric across X, like Symmetrize Vertices in the window: the mirror vertices of each pair get "
+		"consistent positions, slider data and bone weights (the mirror bone's on the other side), for the unmasked "
+		"vertices. analyze_symmetry shows what is asymmetric first. Slider data and weights can be limited to some "
+		"sliders and bones; for a bone pair like the breasts, name both sides. Weights are normalized afterwards with the "
+		"bones that aren't locked in the Bones tab. One undo step. The result has what was asymmetric before.";
+	json namesOrAll = {{"type", {"boolean", "array"}}, {"items", {{"type", "string"}}}};
+	json sliderChoice = namesOrAll, boneChoice = namesOrAll;
+	sliderChoice["description"] = "Mirror the slider data: true for every slider, or the names of some. Default false.";
+	boneChoice["description"] = "Mirror the bone weights: true for every bone, or the names of some. Default false.";
 	symmetrize.inputSchema = McpSchema({
 		{"shapes", ShapesProp},
 		{"positions", McpProp("boolean", "Mirror the positions. Default true.")},
 		{"unmatched", McpProp("boolean", "Also move vertices without an exact partner to the nearest one. Default false.")},
-		{"sliders", McpProp("boolean", "Mirror the slider data. Default false.")},
-		{"bones", McpProp("boolean", "Mirror the bone weights. Default false.")},
+		{"sliders", sliderChoice},
+		{"bones", boneChoice},
+		{"useMask", McpProp("boolean", "Leave masked vertices alone. Default true.")},
 	});
 	symmetrize.handler = [&mcp](const json& args) {
-		McpRunStep(mcp,
-				   {{"type", "SymmetrizeVertices"},
-					{"TargetMeshes", Names(mcp.Shapes(args, "shapes"))},
-					{"Positions", McpArgs::Bool(args, "positions", true)},
-					{"Unmatched", McpArgs::Bool(args, "unmatched", false)},
-					{"Sliders", McpArgs::Bool(args, "sliders", false)},
-					{"Bones", McpArgs::Bool(args, "bones", false)}});
-		return ShapeList(mcp);
+		OutfitStudioFrame* frame = mcp.GetFrame();
+		OutfitProject& project = mcp.Project();
+		auto shapes = mcp.Shapes(args, "shapes");
+		const bool useMask = McpArgs::Bool(args, "useMask", true);
+
+		std::vector<std::string> normBones, notNormBones;
+		frame->GetNormalizeBones(&normBones, &notNormBones);
+
+		UndoStateProject* usp = frame->glView->GetUndoHistory()->PushState();
+		usp->undoType = UndoType::Mesh;
+
+		json before = json::object();
+		std::set<std::string> unknownSliders, unknownBones;
+		for (auto* shape : shapes) {
+			ShapeSymmetry s = FindSymmetry(mcp, shape, useMask);
+
+			std::vector<std::string> sliderNames, boneNames, unknown;
+			for (auto& slider : s.asyms.sliders)
+				sliderNames.push_back(slider.sliderName);
+			for (auto& bone : s.asyms.bones)
+				boneNames.push_back(bone.boneName);
+
+			VertexAsymmetryTasks tasks;
+			tasks.doPos = McpArgs::Bool(args, "positions", true);
+			tasks.doUnmatched = McpArgs::Bool(args, "unmatched", false);
+			tasks.doSliders = SymmetryChoice(args, "sliders", sliderNames, unknown);
+			unknownSliders.insert(unknown.begin(), unknown.end());
+			unknown.clear();
+			tasks.doBones = SymmetryChoice(args, "bones", boneNames, unknown);
+			unknownBones.insert(unknown.begin(), unknown.end());
+
+			usp->usss.emplace_back();
+			UndoStateShape& uss = usp->usss.back();
+			uss.shapeName = shape->name.get();
+			project.PrepareSymmetrizeVertices(shape, uss, s.symVerts, s.asyms, tasks, s.m->weldVerts, s.selVerts, normBones, notNormBones);
+
+			before[shape->name.get()] = SymmetryReport(s, 10);
+		}
+
+		frame->glView->ApplyUndoState(usp, false);
+		frame->UpdateUndoTools();
+		frame->SetPendingChanges();
+
+		McpToolResult result;
+		result.data["before"] = before;
+		// Slider and bone names that had nothing asymmetric on any shape, or don't exist
+		if (!unknownSliders.empty())
+			result.data["slidersWithoutAsymmetry"] = unknownSliders;
+		if (!unknownBones.empty())
+			result.data["bonesWithoutAsymmetry"] = unknownBones;
+		return result;
 	};
 	mcp.AddTool(std::move(symmetrize));
+
+	McpTool symmetry;
+	symmetry.name = "analyze_symmetry";
+	symmetry.description =
+		"How shapes differ from their mirror image across X, like the window's vertex asymmetry dialog shows it: vertices "
+		"without a mirror partner, mirror pairs whose positions differ, and the sliders and bones whose data or weights "
+		"differ between the sides, with how many vertices and the mean difference, most first. Only unmasked vertices "
+		"count unless useMask is false. symmetrize_vertices fixes them; mask_ops asymmetric masks everything else.";
+	symmetry.inputSchema = McpSchema({
+		{"shapes", ShapesProp},
+		{"useMask", McpProp("boolean", "Only the unmasked vertices. Default true.")},
+		{"limit", McpProp("integer", "How many sliders and bones to list. Default 25.")},
+	});
+	symmetry.readOnly = true;
+	symmetry.handler = [&mcp](const json& args) {
+		const bool useMask = McpArgs::Bool(args, "useMask", true);
+		const size_t limit = static_cast<size_t>(std::clamp(McpArgs::Int(args, "limit", 25), 0, 1000));
+		McpToolResult result;
+		for (auto* shape : mcp.Shapes(args, "shapes"))
+			result.data["shapes"][shape->name.get()] = SymmetryReport(FindSymmetry(mcp, shape, useMask), limit);
+		return result;
+	};
+	mcp.AddTool(std::move(symmetry));
 
 	McpTool transforms;
 	transforms.name = "shape_transforms";
