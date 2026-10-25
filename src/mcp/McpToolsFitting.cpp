@@ -630,6 +630,15 @@ McpToolResult FitToBody(OutfitStudioMcp& mcp, const json& args) {
 	if (gapMode == "fromShape" && gapFrom.empty())
 		throw McpToolError("gapMode fromShape measures the gap to the shapes in 'gapFrom'. Name them.");
 
+	// The gaps can come from another copy of the mesh, e.g. the source on its old body, while the fit starts from
+	// where a conform put the shape
+	NiShape* gapSource = McpArgs::Has(args, "gapSource") ? mcp.Shape(McpArgs::String(args, "gapSource")) : nullptr;
+	if (gapSource && gapMode != "fromShape")
+		throw McpToolError("gapSource goes with gapMode fromShape.");
+	std::vector<Vector3> gapSourceVerts;
+	if (gapSource)
+		project.GetMorphedVerts(gapSource, gapSourceVerts);
+
 	SurfaceFit::Options options;
 	options.gap = McpArgs::Float(args, "gap", 0.3f);
 	options.maxDistance = McpArgs::Float(args, "maxDistance", 10.0f);
@@ -689,8 +698,13 @@ McpToolResult FitToBody(OutfitStudioMcp& mcp, const json& args) {
 		// keep: the fit measures the gaps itself, the way it pulls
 		shapeOptions.keepGaps = gapMode == "keep";
 		if (gapMode == "fromShape") {
-			// The gap each vertex has now to the shapes named in gapFrom
-			auto stats = MeshAnalysis::AnalyzePenetration(verts, gapVerts, gapTris, 0.1f, options.maxDistance);
+			// The gap each vertex has now to the shapes named in gapFrom, or its copy in gapSource has
+			if (gapSource && gapSourceVerts.size() != verts.size()) {
+				history->PopState();
+				throw McpToolError("gapSource '" + gapSource->name.get() + "' has " + std::to_string(gapSourceVerts.size()) + " vertices and '" + shape->name.get() + "' " +
+								   std::to_string(verts.size()) + ". It has to be a copy of the same mesh.");
+			}
+			auto stats = MeshAnalysis::AnalyzePenetration(gapSource ? gapSourceVerts : verts, gapVerts, gapTris, 0.1f, options.maxDistance);
 			shapeOptions.targetGaps.resize(verts.size());
 			for (size_t i = 0; i < verts.size(); i++) {
 				float d = stats.signedDistances[i];
@@ -887,6 +901,11 @@ void AddFittingTools(OutfitStudioMcp& mcp) {
 		  {"enum", {"constant", "keep", "fromShape"}},
 		  {"description", "constant: gap everywhere. keep: the gap each vertex has to the body now, at least minGap (only pulls clipping vertices out and smooths). fromShape: the gap each vertex has to the shapes in gapFrom, e.g. the outfit's own old body. Default constant."}}},
 		{"gapFrom", McpStringList("gapMode fromShape: the shapes to measure the gap to")},
+		{"gapSource",
+		 McpProp("string",
+				 "gapMode fromShape: measure the gaps on this copy of the mesh instead (same vertices), e.g. the source outfit on its old "
+				 "body, while the fit starts from where a conform put the shape. The conform does the big change of shape, the fit "
+				 "then brings every vertex back to the gap it had in the source.")},
 		{"minGap", McpProp("number", "Smallest gap any vertex is fitted to. Default 0.05.")},
 		{"relief",
 		 McpProp("integer",
