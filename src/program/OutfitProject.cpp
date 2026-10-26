@@ -765,6 +765,14 @@ void OutfitProject::SetBaseShape(NiShape* shape, const bool moveData) {
 
 					activeSet[i].RenameTarget(srcTarget, shapeName, sd.name);
 					baseDiffData.ClearSet(srcTargetData);
+
+					// The data is now the shape's under its new name, which a link into the reference's file can't find
+					std::string targetData = sd.TargetDataName(shapeName);
+					if (!targetData.empty()) {
+						sd.SetLocalData(targetData);
+						if (DiffInfo* dataFile = sd.GetDataFile(targetData))
+							UnlinkSliderData(*dataFile);
+					}
 				}
 
 				activeSet.AddShapeTarget(shapeName, shapeName);
