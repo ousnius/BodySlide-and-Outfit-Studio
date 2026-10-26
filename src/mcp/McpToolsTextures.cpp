@@ -240,7 +240,7 @@ McpToolResult ConvertTextures(const json& args) {
 		Image diffuse = Diffuse(baseColor, opacity, occlusion);
 		files["diffuse"] = SaveMap(folder, name + "_d.dds", diffuse, false, !opacity.Empty(), format, texconv);
 		if (!opacity.Empty())
-			notes.push_back("The diffuse alpha is the opacity: give the shapes alpha testing or blending (set_geometry_properties).");
+			notes.push_back("The diffuse alpha is the opacity: give the shapes alpha testing or blending (set_alpha_property).");
 	}
 
 	if (preset == "skyrim") {

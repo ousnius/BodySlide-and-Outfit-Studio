@@ -918,43 +918,10 @@ void ShapeProperties::OnAddShader(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void ShapeProperties::AddShader(NiShape* shape) {
-	NiShader* shader = nif->GetShader(shape);
-	if (shader)
+	if (nif->GetShader(shape))
 		return;
 
-	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
-	std::unique_ptr<NiShader> newShader = nullptr;
-	std::unique_ptr<NiMaterialProperty> newMaterial = nullptr;
-
-	switch (targetGame) {
-		case OB:
-			newMaterial = std::make_unique<NiMaterialProperty>();
-			shape->propertyRefs.AddBlockRef(nif->GetHeader().AddBlock(std::move(newMaterial)));
-			break;
-
-		case FO3:
-		case FONV:
-			newShader = std::make_unique<BSShaderPPLightingProperty>();
-			shape->propertyRefs.AddBlockRef(nif->GetHeader().AddBlock(std::move(newShader)));
-
-			newMaterial = std::make_unique<NiMaterialProperty>();
-			shape->propertyRefs.AddBlockRef(nif->GetHeader().AddBlock(std::move(newMaterial)));
-			break;
-
-		default:
-			newShader = std::make_unique<BSLightingShaderProperty>(nif->GetHeader().GetVersion());
-			auto shaderPropertyRef = shape->ShaderPropertyRef();
-			if (shaderPropertyRef)
-				shaderPropertyRef->index = nif->GetHeader().AddBlock(std::move(newShader));
-	}
-
-	shader = nif->GetShader(shape);
-	if (shader) {
-		auto nifTexSet = std::make_unique<BSShaderTextureSet>(nif->GetHeader().GetVersion());
-		auto textureSetRef = shader->TextureSetRef();
-		if (textureSetRef)
-			textureSetRef->index = nif->GetHeader().AddBlock(std::move(nifTexSet));
-	}
+	os->project->AddShader(shape);
 
 	AssignDefaultTexture(shape);
 	GetShader();

@@ -661,6 +661,10 @@ public:
 	void WriteAnimToNif(nifly::NifFile& nif, const std::string& shapeException = "");
 	void ResetTransforms();
 
+	// Gives a shape without one the default shader of the target game, with an empty texture set. False if it had one
+	// or the shape can't have one.
+	bool AddShader(nifly::NiShape* s);
+
 	void CreateSkinning(nifly::NiShape* s);
 	void RemoveSkinning(nifly::NiShape* s);
 	void RemoveSkinning();

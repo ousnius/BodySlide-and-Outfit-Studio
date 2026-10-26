@@ -7674,6 +7674,41 @@ void OutfitProject::ResetTransforms() {
 	}
 }
 
+bool OutfitProject::AddShader(NiShape* s) {
+	if (workNif.GetShader(s))
+		return false;
+
+	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
+	auto& hdr = workNif.GetHeader();
+
+	switch (targetGame) {
+		case OB: s->propertyRefs.AddBlockRef(hdr.AddBlock(std::make_unique<NiMaterialProperty>())); break;
+
+		case FO3:
+		case FONV:
+			s->propertyRefs.AddBlockRef(hdr.AddBlock(std::make_unique<BSShaderPPLightingProperty>()));
+			s->propertyRefs.AddBlockRef(hdr.AddBlock(std::make_unique<NiMaterialProperty>()));
+			break;
+
+		default:
+			auto shaderPropertyRef = s->ShaderPropertyRef();
+			if (shaderPropertyRef)
+				shaderPropertyRef->index = hdr.AddBlock(std::make_unique<BSLightingShaderProperty>(hdr.GetVersion()));
+	}
+
+	NiShader* shader = workNif.GetShader(s);
+	if (!shader)
+		return false;
+
+	auto textureSetRef = shader->TextureSetRef();
+	if (textureSetRef)
+		textureSetRef->index = hdr.AddBlock(std::make_unique<BSShaderTextureSet>(hdr.GetVersion()));
+
+	// Skinned shapes need the skinned shader flag, like CreateSkinning sets it
+	shader->SetSkinned(s->IsSkinned());
+	return true;
+}
+
 void OutfitProject::CreateSkinning(NiShape* s) {
 	if (s->IsSkinned())
 		return;

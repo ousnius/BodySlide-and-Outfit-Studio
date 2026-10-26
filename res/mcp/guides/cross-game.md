@@ -122,7 +122,7 @@ The shader (`BSLightingShaderProperty`) is in the NIF. `get_shape_properties` sh
 
 - **Texture slots:** 0 diffuse (`_d`; alpha is transparency when the shape has an alpha property), 1 normal map (`_n`; **alpha is the specular mask**), 2 glow (`_g`, glow map shader) or subsurface (`_sk`, skin tint shader), 3 height for parallax (`_p`), 4 environment cube map (`_e`), 5 environment mask (`_m`), 6 subsurface or inner layer, 7 back light (`_b`) or specular. Paths are relative to Data, e.g. `textures\armor\outfit\outfit_d.dds`.
 - **Specular:** the normal map's alpha masks it, `SpecularPower` (glossiness) sets how sharp the highlight is for the whole shape, `SpecularStrength` and `SpecularColor` its brightness and color.
-- **Other features:** two-sided, rim, back and soft lighting, glow (`EmissiveColor`, `EmissiveMultiple`), alpha blending and testing (an alpha property).
+- **Other features:** two-sided, rim, back and soft lighting, glow (`EmissiveColor`, `EmissiveMultiple`), alpha blending and testing (an alpha property, `set_alpha_property`).
 - **Environment mapping** needs a cube map in slot 4 and a mask in slot 5. Complex Material mods read an extended mask from slot 5, with a dynamic cube map in slot 4.
 - **Bodies** use model-space normal maps (`_msn`); outfits use tangent-space ones.
 - **True PBR** (Community Shaders) sets a shader flag and an RMAOS map in slot 5. PBR mods usually patch the built meshes after BodySlide, so a BodySlide source mesh of a PBR mod isn't PBR; don't "fix" that.

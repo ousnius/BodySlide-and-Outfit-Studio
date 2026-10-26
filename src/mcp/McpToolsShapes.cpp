@@ -668,6 +668,79 @@ json ExtraDataList(NifFile* nif, NiAVObject* object) {
 	return list;
 }
 
+// The NiAVObject flags of shapes as the Creation Engine names them. Only hidden means the same in Oblivion and older,
+// whose flags have 16 bits.
+const std::pair<const char*, uint32_t> ShapeFlagBits[] = {
+	{"hidden", 1u << 0},
+	{"selectiveUpdate", 1u << 1},
+	{"selectiveUpdateTransforms", 1u << 2},
+	{"selectiveUpdateController", 1u << 3},
+	{"selectiveUpdateRigid", 1u << 4},
+	{"displayObject", 1u << 5},
+	{"disableSorting", 1u << 6},
+	{"selectiveUpdateTransformsOverride", 1u << 7},
+	{"saveExternalGeometryData", 1u << 9},
+	{"noDecals", 1u << 10},
+	{"alwaysDraw", 1u << 11},
+	{"meshLOD", 1u << 12},
+	{"fixedBound", 1u << 13},
+	{"topFadeNode", 1u << 14},
+	{"ignoreFade", 1u << 15},
+	{"noAnimSyncX", 1u << 16},
+	{"noAnimSyncY", 1u << 17},
+	{"noAnimSyncZ", 1u << 18},
+	{"noAnimSyncS", 1u << 19},
+	{"noDismember", 1u << 20},
+	{"noDismemberValidity", 1u << 21},
+	{"renderUse", 1u << 22},
+	{"materialsApplied", 1u << 23},
+	{"highDetail", 1u << 24},
+	{"forceUpdate", 1u << 25},
+	{"preProcessedNode", 1u << 26},
+};
+
+bool OldShapeFlags(NifFile* nif) {
+	return nif->GetHeader().GetVersion().Stream() <= 26;
+}
+
+json ShapeFlags(NifFile* nif, NiShape* shape) {
+	const bool old = OldShapeFlags(nif);
+	json set = json::array();
+	for (auto& bit : ShapeFlagBits)
+		if ((shape->flags & bit.second) && (!old || bit.second == 1))
+			set.push_back(bit.first);
+	return {{"value", shape->flags}, {"hidden", (shape->flags & 1) != 0}, {"set", set}};
+}
+
+// Choices of the Transparency pane of the Shape Properties dialog, by their value in the alpha flags
+const char* const AlphaBlendModes[] = {"ONE", "ZERO", "SRC_COLOR", "INV_SRC_COLOR", "DST_COLOR", "INV_DST_COLOR",
+									   "SRC_ALPHA", "INV_SRC_ALPHA", "DST_ALPHA", "INV_DST_ALPHA", "SRC_ALPHA_SAT"};
+const char* const AlphaTestFuncs[] = {"ALWAYS", "LESS", "EQUAL", "LEQUAL", "GREATER", "NOTEQUAL", "GEQUAL", "NEVER"};
+
+template<size_t N>
+json NameOf(const char* const (&names)[N], int value) {
+	return value < static_cast<int>(N) ? json(names[value]) : json(value);
+}
+
+json AlphaProperty(NifFile* nif, NiShape* shape) {
+	NiAlphaProperty* alpha = nif->GetAlphaProperty(shape);
+	if (!alpha)
+		return nullptr;
+
+	NiShader* shader = nif->GetShader(shape);
+	return {
+		{"alphaBlend", (alpha->flags & 1) != 0},
+		{"srcBlend", NameOf(AlphaBlendModes, (alpha->flags >> 1) & 0xF)},
+		{"destBlend", NameOf(AlphaBlendModes, (alpha->flags >> 5) & 0xF)},
+		{"alphaTest", (alpha->flags & (1 << 9)) != 0},
+		{"testFunc", NameOf(AlphaTestFuncs, (alpha->flags >> 10) & 0x7)},
+		{"threshold", alpha->threshold},
+		{"noSorter", (alpha->flags & (1 << 13)) != 0},
+		{"vertexAlpha", shader ? json(shader->HasVertexAlpha()) : json(nullptr)},
+		{"flags", alpha->flags},
+	};
+}
+
 std::string PartitionName(int slot) {
 	std::string prefix = std::to_string(slot) + " ";
 	for (const char* label : PartitionTypeChoices::Labels)
@@ -699,6 +772,7 @@ McpToolResult GetShapeProperties(OutfitStudioMcp& mcp, const json& args) {
 		{"uvs", shape->HasUVs()},
 		{"normals", shape->HasNormals()},
 	};
+	data["flags"] = ShapeFlags(nif, shape);
 
 	NiShader* shader = nif->GetShader(shape);
 	if (shader) {
@@ -747,6 +821,7 @@ McpToolResult GetShapeProperties(OutfitStudioMcp& mcp, const json& args) {
 	}
 	else
 		data["shader"] = nullptr;
+	data["alpha"] = AlphaProperty(nif, shape);
 
 	json textures = json::array();
 	auto paths = nif->GetTexturePathRefs(shape);
@@ -1066,6 +1141,188 @@ json ShaderPropertyEntry(const std::string& name, const json& value) {
 	else
 		throw McpToolError("The shader property '" + name + "' has to be a number, a list of numbers or text.");
 	return entry;
+}
+
+McpToolResult SetShapeFlags(OutfitStudioMcp& mcp, const json& args) {
+	NifFile* nif = mcp.Project().GetWorkNif();
+	const bool old = OldShapeFlags(nif);
+	const int bitCount = old ? 16 : 32;
+
+	const json* value = McpArgs::Find(args, "value");
+	if (value && (!value->is_number_unsigned() || value->get<uint64_t>() > (old ? 0xFFFFull : 0xFFFFFFFFull)))
+		McpArgs::Wrong("value", old ? "a whole number from 0 to 65535" : "a whole number from 0 to 4294967295");
+
+	uint32_t on = 0, off = 0;
+	if (McpArgs::Has(args, "hidden"))
+		(McpArgs::Bool(args, "hidden", false) ? on : off) |= 1u;
+
+	if (const json* flags = McpArgs::Find(args, "flags")) {
+		if (!flags->is_object())
+			McpArgs::Wrong("flags", "an object of flag names to true or false");
+		for (auto& item : flags->items()) {
+			auto it = std::find_if(std::begin(ShapeFlagBits), std::end(ShapeFlagBits), [&](auto& bit) { return item.key() == bit.first; });
+			if (it == std::end(ShapeFlagBits) || !item.value().is_boolean())
+				throw McpToolError("'" + item.key() + "' isn't a shape flag this takes, or its value isn't true or false.");
+			if (old && it->second != 1)
+				throw McpToolError("Only hidden is named for Oblivion and older games. Use setBits and clearBits.");
+			(item.value().get<bool>() ? on : off) |= it->second;
+		}
+	}
+
+	for (auto [name, mask] : {std::make_pair("setBits", &on), std::make_pair("clearBits", &off)}) {
+		for (int bit : McpArgs::Ints(args, name)) {
+			if (bit < 0 || bit >= bitCount)
+				throw McpToolError(std::string(name) + " takes bits from 0 to " + std::to_string(bitCount - 1) + ".");
+			*mask |= 1u << bit;
+		}
+	}
+
+	if (!value && on == 0 && off == 0)
+		throw McpToolError("Give hidden, flags, setBits, clearBits or value.");
+	if (on & off)
+		throw McpToolError("A flag can't be turned on and off at once.");
+
+	McpToolResult result;
+	for (NiShape* shape : mcp.Shapes(args, "shapes", true)) {
+		uint32_t flags = value ? value->get<uint32_t>() : shape->flags;
+		shape->flags = (flags | on) & ~off;
+		result.data["shapes"][shape->name.get()] = ShapeFlags(nif, shape);
+	}
+	mcp.GetFrame()->SetPendingChanges();
+	return result;
+}
+
+// The alpha property of shapes like the Transparency pane of the Shape Properties dialog: added when missing, its
+// flags and threshold set, or removed
+McpToolResult SetAlphaProperty(OutfitStudioMcp& mcp, const json& args) {
+	OutfitStudioFrame* frame = mcp.GetFrame();
+	OutfitProject& project = mcp.Project();
+	NifFile* nif = project.GetWorkNif();
+	const bool remove = McpArgs::Bool(args, "remove", false);
+
+	auto choice = [&args](const char* name, const auto& names) {
+		std::string value = McpArgs::String(args, name);
+		for (size_t i = 0; i < std::size(names); i++)
+			if (value == names[i])
+				return static_cast<uint16_t>(i);
+		throw McpToolError(std::string(name) + " has to be one of " + json(std::vector<std::string>(std::begin(names), std::end(names))).dump() + ".");
+	};
+
+	// Bits of the flags to replace, and their new values
+	uint16_t mask = 0, bits = 0;
+	auto setField = [&](uint16_t fieldMask, uint16_t value) {
+		mask |= fieldMask;
+		bits = (bits & ~fieldMask) | (value & fieldMask);
+	};
+	if (McpArgs::Has(args, "alphaBlend"))
+		setField(1, McpArgs::Bool(args, "alphaBlend", false) ? 1 : 0);
+	if (McpArgs::Has(args, "srcBlend"))
+		setField(0xF << 1, choice("srcBlend", AlphaBlendModes) << 1);
+	if (McpArgs::Has(args, "destBlend"))
+		setField(0xF << 5, choice("destBlend", AlphaBlendModes) << 5);
+	if (McpArgs::Has(args, "alphaTest"))
+		setField(1 << 9, McpArgs::Bool(args, "alphaTest", false) ? 1 << 9 : 0);
+	if (McpArgs::Has(args, "testFunc"))
+		setField(0x7 << 10, choice("testFunc", AlphaTestFuncs) << 10);
+	if (McpArgs::Has(args, "noSorter"))
+		setField(1 << 13, McpArgs::Bool(args, "noSorter", false) ? 1 << 13 : 0);
+
+	const int threshold = McpArgs::Int(args, "threshold", -1);
+	if (McpArgs::Has(args, "threshold") && (threshold < 0 || threshold > 255))
+		McpArgs::Wrong("threshold", "a whole number from 0 to 255");
+	const bool hasVertexAlpha = McpArgs::Has(args, "vertexAlpha");
+	const bool vertexAlpha = McpArgs::Bool(args, "vertexAlpha", false);
+	if (remove && (mask || threshold >= 0 || hasVertexAlpha))
+		throw McpToolError("remove can't be combined with values to set.");
+
+	std::vector<NiShape*> shapes = mcp.Shapes(args, "shapes", true);
+	if (!remove)
+		for (NiShape* shape : shapes)
+			if (!nif->GetAlphaProperty(shape) && !nif->GetShader(shape))
+				throw McpToolError("'" + shape->name.get() + "' has no shader, which an alpha property needs. Add one with shape_shader first.");
+
+	McpToolResult result;
+	json notes = json::array();
+	for (NiShape* shape : shapes) {
+		if (remove)
+			nif->RemoveAlphaProperty(shape);
+		else {
+			NiAlphaProperty* alpha = nif->GetAlphaProperty(shape);
+			if (!alpha) {
+				nif->AssignAlphaProperty(shape, std::make_unique<NiAlphaProperty>());
+				alpha = nif->GetAlphaProperty(shape);
+			}
+			if (!alpha)
+				throw McpToolError("'" + shape->name.get() + "' can't have an alpha property.");
+
+			alpha->flags = (alpha->flags & ~mask) | bits;
+			if (threshold >= 0)
+				alpha->threshold = static_cast<uint8_t>(threshold);
+
+			NiShader* shader = nif->GetShader(shape);
+			if (hasVertexAlpha) {
+				// Fallout 3 and New Vegas: vertex alpha only works with BSShaderNoLightingProperty
+				if (!shader)
+					notes.push_back("'" + shape->name.get() + "' has no shader for vertex alpha.");
+				else if (shader->HasType<BSShaderLightingProperty>() && !shader->HasType<BSShaderNoLightingProperty>())
+					notes.push_back("'" + shape->name.get() + "': vertex alpha only works with BSShaderNoLightingProperty, it was left alone.");
+				else {
+					bool hadVertexAlpha = shader->HasVertexAlpha();
+					shader->SetVertexAlpha(vertexAlpha);
+					if (vertexAlpha && !hadVertexAlpha) {
+						shader->SetVertexColors(true);
+						shape->SetVertexColors(true);
+					}
+				}
+			}
+		}
+
+		project.SetTextures(shape);
+		result.data["shapes"][shape->name.get()] = AlphaProperty(nif, shape);
+	}
+
+	frame->SetPendingChanges();
+	frame->glView->Render();
+	if (!notes.empty())
+		result.data["notes"] = notes;
+	return result;
+}
+
+// Adds the target game's default shader to shapes without one, or removes the shader with its texture set and alpha
+// property, like the buttons of the Shape Properties dialog
+McpToolResult ShapeShader(OutfitStudioMcp& mcp, const json& args) {
+	OutfitStudioFrame* frame = mcp.GetFrame();
+	OutfitProject& project = mcp.Project();
+	NifFile* nif = project.GetWorkNif();
+	const std::string op = McpArgs::String(args, "op");
+	if (op != "add" && op != "remove")
+		throw McpToolError("op has to be \"add\" or \"remove\".");
+
+	json changed = json::array(), unchanged = json::array();
+	for (NiShape* shape : mcp.Shapes(args, "shapes", true)) {
+		bool done = false;
+		if (op == "add")
+			done = project.AddShader(shape);
+		else if (nif->GetShader(shape)) {
+			nif->DeleteShader(shape);
+			done = true;
+		}
+
+		if (done)
+			project.SetTextures(shape);
+		(done ? changed : unchanged).push_back(shape->name.get());
+	}
+
+	if (!changed.empty()) {
+		frame->SetPendingChanges();
+		frame->glView->Render();
+	}
+
+	McpToolResult result;
+	result.data["changed"] = changed;
+	// Shapes that already had a shader, had none to remove, or can't have one
+	result.data["unchanged"] = unchanged;
+	return result;
 }
 
 } // namespace
@@ -1632,8 +1889,9 @@ void AddShapeTools(OutfitStudioMcp& mcp) {
 	McpTool geometryProps;
 	geometryProps.name = "set_geometry_properties";
 	geometryProps.description =
-		"Changes the geometry type of shapes: skinned (false removes the skinning), full precision vertices, sub "
-		"index shape (Fallout 4 segments) and dynamic shape (Skyrim LE head parts).";
+		"Changes the geometry type of shapes like the Geometry tab of the Shape Properties dialog: skinned (false "
+		"removes the skinning), full precision vertices (Fallout 4 and 76), sub index shape (Fallout 4 and 76 "
+		"segments) and dynamic shape (Skyrim SE head parts). Properties a shape can't have are skipped with a log entry.";
 	geometryProps.inputSchema = McpSchema({
 		{"shapes", ShapesProp},
 		{"skinned", McpProp("boolean", "Skinned to bones")},
@@ -1655,6 +1913,70 @@ void AddShapeTools(OutfitStudioMcp& mcp) {
 		return GetShapeProperties(mcp, {{"shape", names.front()}});
 	};
 	mcp.AddTool(std::move(geometryProps));
+
+	McpTool shapeFlags;
+	shapeFlags.name = "set_shape_flags";
+	shapeFlags.description =
+		"Turns flags of shapes (NiTriShape, BSTriShape and others, in every game) on or off, e.g. hidden: true for a "
+		"shape the game shouldn't draw. flags takes the names the Creation Engine uses for Fallout 3 and newer; "
+		"setBits and clearBits take bit numbers, and value replaces all flags before them. Oblivion and older have 16 "
+		"bits and only hidden is named. The window still draws hidden shapes. get_shape_properties shows the flags.";
+	json flagNames = json::array();
+	for (auto& bit : ShapeFlagBits)
+		flagNames.push_back(bit.first);
+	shapeFlags.inputSchema = McpSchema({
+		{"shapes", McpStringList("Shapes to change, the selected ones by default")},
+		{"hidden", McpProp("boolean", "The hidden flag (bit 0)")},
+		{"flags",
+		 {{"type", "object"},
+		  {"additionalProperties", {{"type", "boolean"}}},
+		  {"description", "Flag name to on or off, e.g. {\"noDecals\": true}. Names: " + flagNames.dump()}}},
+		{"setBits", McpIntList("Bit numbers to turn on")},
+		{"clearBits", McpIntList("Bit numbers to turn off")},
+		{"value", McpProp("integer", "Replaces all flags with this number first, e.g. 524302 (the default of skinned shapes)")},
+	});
+	shapeFlags.handler = [&mcp](const json& args) { return SetShapeFlags(mcp, args); };
+	mcp.AddTool(std::move(shapeFlags));
+
+	McpTool shader;
+	shader.name = "shape_shader";
+	shader.description =
+		"Adds or removes the shader of shapes, like the Add and Remove buttons of the Shape Properties dialog. add gives "
+		"shapes without one the target game's default shader with an empty texture set (BSLightingShaderProperty for "
+		"Skyrim and Fallout 4, BSShaderPPLightingProperty with a material for Fallout 3 and New Vegas, a material for "
+		"Oblivion). remove deletes the shader with its texture set and the alpha property. Change it after with "
+		"set_shader_properties and set_texture_paths.";
+	shader.inputSchema = McpSchema({
+		{"op", {{"type", "string"}, {"enum", {"add", "remove"}}}},
+		{"shapes", McpStringList("Shapes to change, the selected ones by default")},
+	}, {"op"});
+	shader.handler = [&mcp](const json& args) { return ShapeShader(mcp, args); };
+	mcp.AddTool(std::move(shader));
+
+	json blendModes = {{"type", "string"}, {"enum", std::vector<std::string>(std::begin(AlphaBlendModes), std::end(AlphaBlendModes))}};
+	json testFuncs = {{"type", "string"}, {"enum", std::vector<std::string>(std::begin(AlphaTestFuncs), std::end(AlphaTestFuncs))}};
+	McpTool alpha;
+	alpha.name = "set_alpha_property";
+	alpha.description =
+		"Sets the transparency of shapes like the Transparency pane of the Shape Properties dialog: adds an alpha "
+		"property (NiAlphaProperty) when a shape has none and sets the given values, or with remove: true deletes it. "
+		"A new one tests alpha (GREATER than threshold 128) without blending. alphaTest cuts pixels off by the "
+		"diffuse alpha, e.g. for hair, lace or fringes; alphaBlend blends them, e.g. SRC_ALPHA with INV_SRC_ALPHA for "
+		"glass or sheer cloth. Values not given stay.";
+	alpha.inputSchema = McpSchema({
+		{"shapes", McpStringList("Shapes to change, the selected ones by default")},
+		{"remove", McpProp("boolean", "Remove the alpha property. Default false.")},
+		{"alphaTest", McpProp("boolean", "Alpha testing")},
+		{"testFunc", testFuncs},
+		{"threshold", McpProp("integer", "Alpha test threshold, 0 to 255")},
+		{"alphaBlend", McpProp("boolean", "Alpha blending")},
+		{"srcBlend", blendModes},
+		{"destBlend", blendModes},
+		{"noSorter", McpProp("boolean", "Don't sort the blended triangles")},
+		{"vertexAlpha", McpProp("boolean", "The shader's vertex alpha flag (turns vertex colors on with it). Fallout 3 and New Vegas: only with BSShaderNoLightingProperty.")},
+	});
+	alpha.handler = [&mcp](const json& args) { return SetAlphaProperty(mcp, args); };
+	mcp.AddTool(std::move(alpha));
 
 	McpTool extraData;
 	extraData.name = "set_extra_data";
