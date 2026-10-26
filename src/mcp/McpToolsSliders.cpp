@@ -1897,11 +1897,11 @@ void AddHistoryTools(OutfitStudioMcp& mcp) {
 		};
 
 		std::string from = McpArgs::String(args, "name");
-		const McpProjectDigest& before = find(from)->digest;
+		const McpProjectDigest& before = find(from)->Digest();
 		McpProjectDigest now;
 		const McpProjectDigest* after = &now;
 		if (McpArgs::Has(args, "to"))
-			after = &find(McpArgs::String(args, "to"))->digest;
+			after = &find(McpArgs::String(args, "to"))->Digest();
 		else
 			now = McpDigest(mcp);
 

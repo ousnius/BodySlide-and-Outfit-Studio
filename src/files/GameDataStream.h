@@ -21,11 +21,15 @@ namespace GameDataStream {
 // The folders loose assets are looked up in, in order: the game data folder, then
 // the extra data folders of the target game (GameUtil::GetExtraDataFolders).
 std::vector<std::string> DataFolders();
+// The same with another folder in place of the game data folder
+std::vector<std::string> DataFolders(const std::string& baseDataPath);
 
 // The full path of a data folder relative asset ("textures/..."): in the first data
 // folder that has it as a loose file, or else under the game data folder, where
 // the texture loader turns it back into the archive path.
 std::string FindAssetPath(const std::string& relPath);
+// The same with another folder in place of the game data folder
+std::string FindAssetPath(const std::string& relPath, const std::string& baseDataPath);
 
 // Opens a file at an absolute or working-directory relative path.
 std::unique_ptr<std::istream> OpenLoose(const std::string& fullPath);

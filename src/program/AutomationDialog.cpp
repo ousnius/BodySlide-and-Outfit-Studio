@@ -513,6 +513,7 @@ AutomationDialog::AutomationDialog(OutfitStudioFrame* outfitStudio, OutfitProjec
 	chkActive = XRCCTRL(*this, "chkActive", wxCheckBox);
 	txtTargetMeshes = XRCCTRL(*this, "txtTargetMeshes", wxTextCtrl);
 	chkTargetRegex = XRCCTRL(*this, "chkTargetRegex", wxCheckBox);
+	chkTargetReference = XRCCTRL(*this, "chkTargetReference", wxCheckBox);
 	txtNote = XRCCTRL(*this, "txtNote", wxTextCtrl);
 	radioBatchMode = XRCCTRL(*this, "radioBatchMode", wxRadioBox);
 	panelStepSettings = XRCCTRL(*this, "panelStepSettings", wxPanel);
@@ -1905,6 +1906,8 @@ void AutomationDialog::UpdateUIFromStep(const AutomationStep& step) {
 
 	if (chkTargetRegex)
 		chkTargetRegex->SetValue(step.targetRegex);
+	if (chkTargetReference)
+		chkTargetReference->SetValue(step.targetReference);
 
 	SetStepTypeSelection(step.type);
 	ShowStepTypePage(step.type);
@@ -1925,6 +1928,7 @@ void AutomationDialog::UpdateStepFromUI() {
 	step.note = txtNote->GetValue().ToUTF8().data();
 	step.targetMeshes = SplitCommaSeparated(txtTargetMeshes->GetValue().ToUTF8().data());
 	step.targetRegex = chkTargetRegex ? chkTargetRegex->GetValue() : false;
+	step.targetReference = chkTargetReference ? chkTargetReference->GetValue() : false;
 
 	ReadFieldsFromUI(step);
 
@@ -2596,6 +2600,7 @@ void AutomationDialog::OnStepTypeChanged(AutomationStepType type) {
 	step.note = txtNote->GetValue().ToUTF8().data();
 	step.targetMeshes = SplitCommaSeparated(std::string(txtTargetMeshes->GetValue().ToUTF8().data()));
 	step.targetRegex = chkTargetRegex ? chkTargetRegex->GetValue() : false;
+	step.targetReference = chkTargetReference ? chkTargetReference->GetValue() : false;
 	step.type = type;
 	ApplyBatchModeDefaults(step);
 

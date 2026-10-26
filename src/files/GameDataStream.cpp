@@ -24,20 +24,27 @@ extern ConfigurationManager Config;
 
 namespace GameDataStream {
 std::vector<std::string> DataFolders() {
+	return DataFolders(Config["GameDataPath"]);
+}
+
+std::vector<std::string> DataFolders(const std::string& baseDataPath) {
 	std::vector<std::string> folders;
-	std::string gameDataPath = Config["GameDataPath"];
-	if (!gameDataPath.empty())
-		folders.push_back(gameDataPath);
+	if (!baseDataPath.empty())
+		folders.push_back(baseDataPath);
 	for (auto& folder : GameUtil::GetExtraDataFolders(Config.GetIntValue("TargetGame")))
 		folders.push_back(folder);
 	return folders;
 }
 
 std::string FindAssetPath(const std::string& relPath) {
-	for (auto& folder : DataFolders())
+	return FindAssetPath(relPath, Config["GameDataPath"]);
+}
+
+std::string FindAssetPath(const std::string& relPath, const std::string& baseDataPath) {
+	for (auto& folder : DataFolders(baseDataPath))
 		if (PlatformUtil::FileExists(folder + relPath))
 			return folder + relPath;
-	return Config["GameDataPath"] + relPath;
+	return baseDataPath + relPath;
 }
 
 std::unique_ptr<std::istream> OpenLoose(const std::string& fullPath) {

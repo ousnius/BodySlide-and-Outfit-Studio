@@ -3563,6 +3563,11 @@ void BodySlideApp::ApplyComplexMaterialSetting() {
 		preview->SetComplexMaterialEnabled(BodySlideConfig.GetBoolValue("Rendering/ComplexMaterial", true));
 }
 
+void BodySlideApp::RetryMissingTextures() {
+	if (preview)
+		preview->RetryMissingTextures();
+}
+
 void BodySlideApp::ApplyPBRSetting() {
 	if (!preview)
 		return;
@@ -7586,6 +7591,7 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 				app->ResetPreviewPoses();
 			app->LoadFavorites();
 			GameUtil::InitArchives();
+			app->RetryMissingTextures();
 			app->LoadAllCategories();
 			app->LoadAllGroups();
 			app->LoadSliderSets();

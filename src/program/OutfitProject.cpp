@@ -972,8 +972,7 @@ void OutfitProject::SetZappedVertices(NiShape* shape, const std::string& sliderN
 
 	if (IsBaseShape(shape)) {
 		activeSet.AddShapeTarget(shape->name.get(), target);
-		baseDiffData.AddEmptySet(dataName, target);
-		baseDiffData.EmptySet(dataName, target);
+		NewBaseDiffSet(dataName, target);
 		for (auto& d : diffData)
 			baseDiffData.SumDiff(dataName, target, d.first, d.second);
 	}

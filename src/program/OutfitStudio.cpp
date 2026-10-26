@@ -2465,7 +2465,8 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		wxCheckBox* cbMcpServer = XRCCTRL(*settings, "cbMcpServer", wxCheckBox);
 		wxSpinCtrl* spinMcpPort = XRCCTRL(*settings, "spinMcpPort", wxSpinCtrl);
 		const int mcpPort = OutfitStudioConfig.GetIntValue("MCP/Port", McpDefaultPort);
-		cbMcpServer->SetValue(OutfitStudioConfig.GetBoolValue("MCP/Enabled"));
+		const bool mcpEnabled = OutfitStudioConfig.GetBoolValue("MCP/Enabled");
+		cbMcpServer->SetValue(mcpEnabled);
 		spinMcpPort->SetValue(mcpPort);
 
 		SettingsFillDataFiles(commonControls.dataFileList, gameDataPath, Config.GetIntValue("TargetGame"));
@@ -2525,18 +2526,22 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			}
 
 			Config.SaveConfig(Config["AppDir"] + "/Config.xml");
-		GameUtil::InitArchives();
+			GameUtil::InitArchives();
 
 			// Textures and materials may be found in other folders now
+			glView->gls.GetResourceLoader()->RetryMissingTextures();
 			if (GameUtil::GetExtraDataFolders(Config.GetIntValue("TargetGame")) != extraFoldersBefore) {
 				project->SetTextures();
 				MeshesFromProj(true);
 				glView->Render();
 			}
 
-			// A running server moves to the new port, and turning it on starts it right away
+			// Turning the server off stops it, a running server moves to the new port and turning it on starts it right away.
+			// A server started from the command line while the setting is off keeps running.
 			const bool mcpRunning = mcp && mcp->IsRunning();
-			if (mcpRunning && spinMcpPort->GetValue() != mcpPort) {
+			if (mcpRunning && mcpEnabled && !cbMcpServer->IsChecked())
+				StopMcpServer();
+			else if (mcpRunning && spinMcpPort->GetValue() != mcpPort) {
 				StopMcpServer();
 				StartMcpServer();
 			}

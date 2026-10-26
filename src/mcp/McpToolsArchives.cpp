@@ -419,6 +419,7 @@ void AddArchiveTools(OutfitStudioMcp& mcp) {
 				frame->archiveBrowser->Rebuild();
 
 			// Textures and materials are looked up again
+			frame->glView->gls.GetResourceLoader()->RetryMissingTextures();
 			mcp.Project().SetTextures();
 			frame->MeshesFromProj(true);
 			frame->glView->Render();

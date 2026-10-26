@@ -144,6 +144,16 @@ TEST_CASE("MCP rejects bad requests", "[MCP]") {
 
 	json response = protocol.HandleMessage(Request(5, "resources/list"));
 	CHECK(response["error"]["code"] == -32601);
+
+	// Fields of the wrong type are invalid requests, not exceptions
+	request.method = "POST";
+	request.body = json({{"jsonrpc", "2.0"}, {"id", 6}, {"method", 5}}).dump();
+	reply = protocol.Handle(request);
+	CHECK(reply.status == 400);
+	CHECK(json::parse(reply.body)["error"]["code"] == -32600);
+
+	response = protocol.HandleMessage({{"jsonrpc", 2.0}, {"id", 7}, {"method", "ping"}});
+	CHECK(response["error"]["code"] == -32600);
 }
 
 TEST_CASE("MCP lists and calls tools", "[MCP]") {

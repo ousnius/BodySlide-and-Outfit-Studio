@@ -127,12 +127,17 @@ float RayTriangleDistance(const Vector3& origin, const Vector3& direction, const
 	return e2.dot(qvec) * inv;
 }
 
-// Vertex normals of a body pointing away from its inside: most faces have to point away from the centroid
-std::vector<Vector3> OutwardBodyNormals(const std::vector<Vector3>& bodyVerts, const std::vector<Triangle>& bodyTris, const std::vector<Vector3>& normals) {
-	Vector3 bodyCentroid;
-	for (auto& bv : bodyVerts)
-		bodyCentroid += bv;
-	bodyCentroid /= static_cast<float>(bodyVerts.size());
+// 1 when the triangles of a body face away from its inside, -1 when they face into it: most faces have to point away
+// from the centroid. trinormal() direction depends on winding order which varies across NIF files.
+Vector3 Centroid(const std::vector<Vector3>& verts) {
+	Vector3 centroid;
+	for (auto& v : verts)
+		centroid += v;
+	return centroid / static_cast<float>(verts.size());
+}
+
+float OutwardSign(const std::vector<Vector3>& bodyVerts, const std::vector<Triangle>& bodyTris) {
+	const Vector3 bodyCentroid = Centroid(bodyVerts);
 
 	int outwardCount = 0;
 	int inwardCount = 0;
@@ -146,11 +151,14 @@ std::vector<Vector3> OutwardBodyNormals(const std::vector<Vector3>& bodyVerts, c
 			inwardCount++;
 	}
 
-	std::vector<Vector3> outward = normals;
-	if (outwardCount < inwardCount)
-		for (auto& n : outward)
-			n = n * -1.0f;
-	return outward;
+	return (outwardCount >= inwardCount) ? 1.0f : -1.0f;
+}
+
+// Turns vertex normals of a body to point away from its inside
+std::vector<Vector3> Oriented(std::vector<Vector3> normals, float normalSign) {
+	for (auto& n : normals)
+		n = n * normalSign;
+	return normals;
 }
 }
 
@@ -232,28 +240,9 @@ std::vector<float> ClippingFixer::SignedDistancesToBody(const std::vector<Vector
 	if (bodyVerts.empty() || bodyTris.empty() || points.empty())
 		return distances;
 
-	// Same outward direction as FixClipping: most faces have to point away from the centroid
-	Vector3 bodyCentroid;
-	for (auto& bv : bodyVerts)
-		bodyCentroid += bv;
-	bodyCentroid /= static_cast<float>(bodyVerts.size());
-
-	int outwardCount = 0;
-	int inwardCount = 0;
-	for (auto& tri : bodyTris) {
-		if (tri.p1 >= bodyVerts.size() || tri.p2 >= bodyVerts.size() || tri.p3 >= bodyVerts.size())
-			continue;
-		Vector3 triCenter = (bodyVerts[tri.p1] + bodyVerts[tri.p2] + bodyVerts[tri.p3]) / 3.0f;
-		if ((triCenter - bodyCentroid).dot(tri.trinormal(bodyVerts.data())) > 0.0f)
-			outwardCount++;
-		else
-			inwardCount++;
-	}
-	float normalSign = (outwardCount >= inwardCount) ? 1.0f : -1.0f;
-
-	std::vector<Vector3> bodyNormals = ComputeVertexNormals(bodyVerts, bodyTris);
-	for (auto& n : bodyNormals)
-		n = n * normalSign;
+	// Same outward direction as FixClipping
+	const float normalSign = OutwardSign(bodyVerts, bodyTris);
+	std::vector<Vector3> bodyNormals = Oriented(ComputeVertexNormals(bodyVerts, bodyTris), normalSign);
 
 	// Open edges: edges of only one triangle, and their vertices
 	std::unordered_map<uint32_t, int> edgeUse;
@@ -334,12 +323,18 @@ std::vector<PokeThrough> ClippingFixer::BodyPokeThrough(const std::vector<Vector
 														const std::vector<Triangle>& bodyTris,
 														const std::vector<Vector3>& outfitVerts,
 														const std::vector<Triangle>& outfitTris,
-														float maxDepth) {
+														float maxDepth,
+														const std::vector<Vector3>* outwardNormals) {
 	std::vector<PokeThrough> pokes(bodyVerts.size());
 	if (bodyVerts.empty() || bodyTris.empty() || outfitVerts.empty() || outfitTris.empty() || maxDepth <= 0.0f)
 		return pokes;
 
-	std::vector<Vector3> bodyNormals = OutwardBodyNormals(bodyVerts, bodyTris, ComputeVertexNormals(bodyVerts, bodyTris));
+	std::vector<Vector3> ownNormals;
+	if (!outwardNormals || outwardNormals->size() != bodyVerts.size()) {
+		ownNormals = Oriented(ComputeVertexNormals(bodyVerts, bodyTris), OutwardSign(bodyVerts, bodyTris));
+		outwardNormals = &ownNormals;
+	}
+	const std::vector<Vector3>& bodyNormals = *outwardNormals;
 
 	auto validTri = [](const Triangle& tri, size_t count) { return tri.p1 < count && tri.p2 < count && tri.p3 < count; };
 
@@ -439,32 +434,9 @@ void ClippingFixer::FixClipping(const std::vector<Vector3>& bodyVerts,
 	float influenceMargin = inflationDist * 0.5f;
 	float totalInfluence = inflationDist + influenceMargin;
 
-	// Determine body normal direction (outward vs inward).
-	// trinormal() direction depends on winding order which varies across NIF files.
-	Vector3 bodyCentroid;
-	for (auto& bv : bodyVerts)
-		bodyCentroid += bv;
-	bodyCentroid /= static_cast<float>(bodyVerts.size());
-
-	int outwardCount = 0;
-	int inwardCount = 0;
-	for (auto& tri : bodyTris) {
-		if (tri.p1 >= bodyVerts.size() || tri.p2 >= bodyVerts.size() || tri.p3 >= bodyVerts.size())
-			continue;
-		Vector3 triCenter = (bodyVerts[tri.p1] + bodyVerts[tri.p2] + bodyVerts[tri.p3]) / 3.0f;
-		Vector3 toOutward = triCenter - bodyCentroid;
-		Vector3 normal = tri.trinormal(bodyVerts.data());
-		if (toOutward.dot(normal) > 0.0f)
-			outwardCount++;
-		else
-			inwardCount++;
-	}
-	float normalSign = (outwardCount >= inwardCount) ? 1.0f : -1.0f;
-
-	// Compute body vertex normals (the "inflation direction" at each vertex)
-	std::vector<Vector3> bodyNormals = ComputeVertexNormals(bodyVerts, bodyTris);
-	for (auto& n : bodyNormals)
-		n = n * normalSign;
+	// The body vertex normals pointing outward are the "inflation direction" at each vertex
+	const float normalSign = OutwardSign(bodyVerts, bodyTris);
+	std::vector<Vector3> bodyNormals = Oriented(ComputeVertexNormals(bodyVerts, bodyTris), normalSign);
 
 	// Build AABBTree for the body mesh
 	AABBTree bodyBVH(const_cast<Vector3*>(bodyVerts.data()),
@@ -485,7 +457,7 @@ void ClippingFixer::FixClipping(const std::vector<Vector3>& bodyVerts,
 	const std::vector<uint8_t>& boundaryVerts = topology.boundaryVerts;
 	const std::vector<std::vector<int>>& adjacency = topology.adjacency;
 	std::vector<Vector3> outfitNormals = ComputeVertexNormals(outfitVerts, outfitTris);
-	float outfitNormalSign = ComputeNormalSignFromPoint(outfitVerts, outfitTris, bodyCentroid);
+	float outfitNormalSign = ComputeNormalSignFromPoint(outfitVerts, outfitTris, Centroid(bodyVerts));
 	for (auto& n : outfitNormals)
 		n = n * outfitNormalSign;
 
@@ -662,7 +634,7 @@ void ClippingFixer::FixClipping(const std::vector<Vector3>& bodyVerts,
 	// folds around it; the strength sets how far.
 	if (options.fixPokeThrough) {
 		const float maxPush = 0.1f + strength * 0.5f;
-		std::vector<PokeThrough> pokes = BodyPokeThrough(bodyVerts, bodyTris, outfitVerts, outfitTris, totalInfluence + 1.0f);
+		std::vector<PokeThrough> pokes = BodyPokeThrough(bodyVerts, bodyTris, outfitVerts, outfitTris, totalInfluence + 1.0f, &bodyNormals);
 		for (size_t b = 0; b < pokes.size(); b++) {
 			if (pokes[b].triangle < 0)
 				continue;

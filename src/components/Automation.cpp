@@ -850,6 +850,7 @@ int AutomationScript::Load(const std::string& fileName) {
 			step.targetMeshes = SplitCommaSeparated(meshesText);
 
 		step.targetRegex = GetChildBool(stepElem, "TargetRegex", false);
+		step.targetReference = GetChildBool(stepElem, "TargetReference", false);
 
 		// Type specific parameters come from the step type's field table
 		const AutomationStepInfo& info = GetAutomationStepInfo(step.type);
@@ -941,6 +942,7 @@ int AutomationScript::Save(const std::string& fileName) {
 			SetChildText(doc, stepElem, "TargetMeshes", JoinStrings(step.targetMeshes, ", "));
 
 		SetChildBool(doc, stepElem, "TargetRegex", step.targetRegex, false);
+		SetChildBool(doc, stepElem, "TargetReference", step.targetReference, false);
 
 		// Type specific parameters come from the step type's field table
 		const AutomationStepInfo& info = GetAutomationStepInfo(step.type);

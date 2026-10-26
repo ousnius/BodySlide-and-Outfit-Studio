@@ -52,12 +52,14 @@ public:
 
 	// Body vertices that are outside the outfit where it covers them, so the body shows through it, one per body
 	// vertex. Found by looking inwards from each body vertex along its normal for an outfit triangle within
-	// maxDepth that lies before the body's other side.
+	// maxDepth that lies before the body's other side. outwardNormals are the body's vertex normals pointing out
+	// when the caller has them already.
 	static std::vector<PokeThrough> BodyPokeThrough(const std::vector<nifly::Vector3>& bodyVerts,
 													const std::vector<nifly::Triangle>& bodyTris,
 													const std::vector<nifly::Vector3>& outfitVerts,
 													const std::vector<nifly::Triangle>& outfitTris,
-													float maxDepth);
+													float maxDepth,
+													const std::vector<nifly::Vector3>* outwardNormals = nullptr);
 
 	// The deepest poke through each outfit vertex's triangles, as a positive distance, 0 where there is none
 	static std::vector<float> PokeDepthPerVertex(const std::vector<PokeThrough>& pokes, const std::vector<nifly::Triangle>& outfitTris, size_t outfitVertexCount);

@@ -21,6 +21,7 @@ constexpr int ParseError = -32700;
 constexpr int InvalidRequest = -32600;
 constexpr int MethodNotFound = -32601;
 constexpr int InvalidParams = -32602;
+constexpr int InternalError = -32603;
 
 json ErrorResponse(const json& id, int code, const std::string& message) {
 	return {{"jsonrpc", "2.0"}, {"id", id}, {"error", {{"code", code}, {"message", message}}}};
@@ -227,7 +228,12 @@ McpHttpReply McpProtocol::Handle(const McpHttpRequest& request) {
 	if (!message.is_object())
 		return JsonReply(400, ErrorResponse(nullptr, InvalidRequest, "Invalid request"));
 
-	const bool isInitialize = message.value("method", "") == "initialize";
+	// Responses to requests of the server have no method, everything else needs one that is a string
+	if (message.contains("method") && !message["method"].is_string())
+		return JsonReply(400, ErrorResponse(message.value("id", json()), InvalidRequest, "Invalid request"));
+
+	const std::string method = message.contains("method") ? message["method"].get<std::string>() : std::string();
+	const bool isInitialize = method == "initialize";
 	if (!isInitialize) {
 		if (request.sessionId.empty())
 			return JsonReply(400, ErrorResponse(message.value("id", json()), InvalidRequest, "Missing Mcp-Session-Id header."));
@@ -242,7 +248,7 @@ McpHttpReply McpProtocol::Handle(const McpHttpRequest& request) {
 	}
 
 	// A tool call with a progress token gets its progress as events before the result, when the client takes events
-	const bool wantsProgress = message.value("method", "") == "tools/call" && message.contains("params") && message["params"].is_object()
+	const bool wantsProgress = method == "tools/call" && message.contains("params") && message["params"].is_object()
 							   && message["params"].contains("_meta") && message["params"]["_meta"].is_object()
 							   && message["params"]["_meta"].contains("progressToken") && message.contains("id");
 	if (wantsProgress && ToLower(request.accept).find("text/event-stream") != std::string::npos) {
@@ -296,7 +302,14 @@ void McpProtocol::StreamCall(const json& message, const std::function<bool(const
 	};
 
 	std::thread worker([this, state, message, progress]() {
-		json response = HandleMessage(message, nullptr, progress);
+		// Exceptions must not leave this thread, they would end the program
+		json response;
+		try {
+			response = HandleMessage(message, nullptr, progress);
+		}
+		catch (const std::exception& error) {
+			response = ErrorResponse(message.value("id", json()), InternalError, error.what());
+		}
 		std::lock_guard<std::mutex> lock(state->mutex);
 		state->response = std::move(response);
 		state->done = true;
@@ -337,7 +350,8 @@ json McpProtocol::HandleMessage(const json& message, std::string* newSessionId, 
 	const bool hasId = message.contains("id");
 	const json id = hasId ? message["id"] : json();
 
-	if (message.value("jsonrpc", "") != "2.0" || !message["method"].is_string())
+	const auto jsonrpc = message.find("jsonrpc");
+	if (jsonrpc == message.end() || *jsonrpc != "2.0" || !message["method"].is_string())
 		return hasId ? ErrorResponse(id, InvalidRequest, "Invalid request") : json();
 
 	const std::string method = message["method"];

@@ -75,6 +75,7 @@ private:
 	wxCheckBox* chkActive = nullptr;
 	wxTextCtrl* txtTargetMeshes = nullptr;
 	wxCheckBox* chkTargetRegex = nullptr;
+	wxCheckBox* chkTargetReference = nullptr;
 	wxTextCtrl* txtNote = nullptr;
 	wxRadioBox* radioBatchMode = nullptr;
 	wxPanel* panelStepSettings = nullptr;

@@ -167,6 +167,7 @@ struct AutomationStep {
 	AutomationStepType type = AutomationStepType::LoadReference;
 	std::vector<std::string> targetMeshes;
 	bool targetRegex = false;
+	bool targetReference = false; // Regex patterns can match the reference shape too
 
 	// LoadReference / AddProject params
 	std::string refSourceFile;

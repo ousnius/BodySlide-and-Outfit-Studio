@@ -10,6 +10,7 @@ See the included LICENSE file
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
 #include <set>
 
 using nlohmann::json;
@@ -45,11 +46,8 @@ json Pair(size_t before, size_t after) {
 	return json::array({before, after});
 }
 
-} // namespace
-
-McpProjectDigest McpDigest(OutfitStudioMcp& mcp) {
-	OutfitProject& project = mcp.Project();
-	ProjectOperations ops = mcp.Ops();
+// Masked is the number of masked vertices of a shape
+McpProjectDigest Digest(OutfitProject& project, const std::function<size_t(const std::string&)>& masked) {
 	NifFile* nif = project.GetWorkNif();
 	AnimInfo* anim = project.GetWorkAnim();
 
@@ -84,8 +82,7 @@ McpProjectDigest McpDigest(OutfitStudioMcp& mcp) {
 			uvHash.Add(uvs.data(), uvs.size() * sizeof(Vector2));
 		d.uvHash = uvHash.value;
 
-		if (Mesh* m = project.GetHost().GetShapeMesh(name))
-			d.masked = MaskOps::GetMasked(*m).size();
+		d.masked = masked(name);
 
 		auto bones = anim->shapeBones.find(name);
 		if (bones != anim->shapeBones.end()) {
@@ -109,9 +106,8 @@ McpProjectDigest McpDigest(OutfitStudioMcp& mcp) {
 			if (project.SliderZap(i) || project.SliderUV(i))
 				continue;
 
-			std::vector<Vector3> deltas;
-			if (!ops.GetSliderDeltas(shape, project.GetSliderName(i), deltas).ok)
-				continue;
+			std::vector<Vector3> deltas(shape->GetNumVertices());
+			project.GetSliderDiff(shape, project.GetSliderName(i), deltas);
 
 			McpProjectDigest::Slider s;
 			Hash hash;
@@ -135,6 +131,31 @@ McpProjectDigest McpDigest(OutfitStudioMcp& mcp) {
 	}
 
 	return digest;
+}
+
+} // namespace
+
+McpProjectDigest McpDigest(OutfitStudioMcp& mcp) {
+	OutfitProject& project = mcp.Project();
+	return Digest(project, [&project](const std::string& name) -> size_t {
+		Mesh* m = project.GetHost().GetShapeMesh(name);
+		return m ? MaskOps::GetMasked(*m).size() : 0;
+	});
+}
+
+McpProjectDigest McpDigest(const EditSnapshot& snapshot) {
+	if (!snapshot.project)
+		return McpProjectDigest();
+
+	// A project of its own, so the open one and its window stay as they are
+	OutfitProject project(nullptr, false);
+	project.RestoreSnapshot(*snapshot.project);
+	return Digest(project, [&snapshot](const std::string& name) -> size_t {
+		auto mask = snapshot.masks.find(name);
+		if (mask == snapshot.masks.end())
+			return 0;
+		return static_cast<size_t>(std::count_if(mask->second.begin(), mask->second.end(), [](float v) { return v != 0.0f; }));
+	});
 }
 
 json McpDigestDiff(const McpProjectDigest& before, const McpProjectDigest& after, size_t limit) {
@@ -274,6 +295,12 @@ void McpSnapshotStore::Track(const OutfitProject* project) {
 	}
 }
 
+const McpProjectDigest& McpSnapshotStore::Entry::Digest() {
+	if (!digest)
+		digest = std::make_unique<McpProjectDigest>(McpDigest(*snapshot));
+	return *digest;
+}
+
 McpSnapshotStore::Entry* McpSnapshotStore::Find(const std::string& name) {
 	for (auto& entry : entries)
 		if (entry.name == name)
@@ -294,7 +321,6 @@ void McpSnapshotStore::Save(OutfitStudioMcp& mcp, const std::string& name) {
 	Entry entry;
 	entry.name = name;
 	entry.snapshot = mcp.Ops().CaptureSnapshot();
-	entry.digest = McpDigest(mcp);
 	entries.push_back(std::move(entry));
 }
 
@@ -311,7 +337,6 @@ std::string McpSnapshotStore::SaveAutomatic(OutfitStudioMcp& mcp, const std::str
 	Entry entry;
 	entry.name = "auto-" + std::to_string(++automaticCount);
 	entry.snapshot = mcp.Ops().CaptureSnapshot();
-	entry.digest = McpDigest(mcp);
 	entry.automatic = true;
 	entry.tool = tool;
 	entries.push_back(std::move(entry));

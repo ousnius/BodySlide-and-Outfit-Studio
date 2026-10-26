@@ -504,18 +504,9 @@ GLMaterial* ResourceLoader::AddMaterial(const std::vector<std::string>& textureF
 	MaterialKey key(texFiles, vShaderFile, fShaderFile, useDefaultTexture);
 	if (!reloadTextures) {
 		auto it = materials.find(key);
-		if (it != materials.end()) {
-			// Textures that weren't found are looked for again: a data folder or archive may have them by now
-			if (incompleteMaterials.find(key) == incompleteMaterials.end())
-				return it->second.get();
-
-			bool found = false;
-			for (size_t i = 0; i < texFiles.size(); i++)
-				if (!texFiles[i].empty() && textures.find(texFiles[i]) == textures.end() && LoadTexture(texFiles[i], i == 4, false))
-					found = true;
-			if (!found)
-				return it->second.get();
-		}
+		// Textures that weren't found are looked for once more after RetryMissingTextures
+		if (it != materials.end() && retryMaterials.erase(key) == 0)
+			return it->second.get();
 	}
 
 	bool missing = false;
@@ -625,6 +616,11 @@ void ResourceLoader::Cleanup() {
 	textures.clear();
 	materials.clear();
 	incompleteMaterials.clear();
+	retryMaterials.clear();
+}
+
+void ResourceLoader::RetryMissingTextures() {
+	retryMaterials = incompleteMaterials;
 }
 
 size_t ResourceLoader::MatKeyHash::operator()(const MaterialKey& key) const {

@@ -8,7 +8,6 @@ See the included LICENSE file
 #include "../physics/Controller.h"
 #include "../physics/PumpClock.h"
 #include "../program/BodySlideApp.h"
-#include "../utils/GameUtil.h"
 #include "../utils/PlatformUtil.h"
 
 #include <regex>
@@ -621,12 +620,7 @@ void PreviewPanel::RefreshMeshFromNif(const std::vector<NifFile*>& nifs) {
 
 std::string PreviewPanel::AssetPath(const std::string& relPath) const {
 	// The base data path first, then the extra data folders, like Outfit Studio looks them up
-	if (PlatformUtil::FileExists(baseDataPath + relPath))
-		return baseDataPath + relPath;
-	for (auto& folder : GameUtil::GetExtraDataFolders(Config.GetIntValue("TargetGame")))
-		if (PlatformUtil::FileExists(folder + relPath))
-			return folder + relPath;
-	return baseDataPath + relPath;
+	return GameDataStream::FindAssetPath(relPath, baseDataPath);
 }
 
 void PreviewPanel::AddNifShapeTextures(NifFile* fromNif, const std::string& shapeName) {

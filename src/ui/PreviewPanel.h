@@ -233,6 +233,9 @@ public:
 	void SetPBREnabled(bool enabled) { gls.SetPBREnabled(enabled); }
 	bool IsPBREnabled() const { return gls.IsPBREnabled(); }
 
+	// Textures that weren't found are looked for again the next time the meshes get their materials
+	void RetryMissingTextures() { gls.GetResourceLoader()->RetryMissingTextures(); }
+
 	void SetBaseDataPath(const std::string& path) { baseDataPath = path; }
 	// Full path of a data folder relative asset: under the base data path, or an extra data folder that has it
 	std::string AssetPath(const std::string& relPath) const;

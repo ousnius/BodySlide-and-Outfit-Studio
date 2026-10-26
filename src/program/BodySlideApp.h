@@ -288,6 +288,8 @@ public:
 	// Pushes the True PBR render setting to the preview, if one is open, rebuilding its meshes when
 	// the setting actually changed - unlike Complex Material this one selects the shader files.
 	void ApplyPBRSetting();
+	// Textures the preview didn't find are looked for again after the data folders or archives changed
+	void RetryMissingTextures();
 
 	std::string GetOutputDataPath() const;
 	SliderSet& GetActiveSet() { return projects[0]->sliderSet; }

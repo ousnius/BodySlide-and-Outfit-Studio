@@ -44,6 +44,8 @@ struct McpProjectDigest {
 };
 
 McpProjectDigest McpDigest(OutfitStudioMcp& mcp);
+// The digest of a snapshot, from a project of its own
+McpProjectDigest McpDigest(const EditSnapshot& snapshot);
 
 // What changed from one digest to the other, at most limit sliders per shape
 nlohmann::json McpDigestDiff(const McpProjectDigest& before, const McpProjectDigest& after, size_t limit);
@@ -55,9 +57,14 @@ public:
 	struct Entry {
 		std::string name;
 		std::unique_ptr<EditSnapshot> snapshot;
-		McpProjectDigest digest;
 		bool automatic = false;
 		std::string tool; // The tool an automatic snapshot was taken before
+
+		// Made the first time it's needed, so the snapshot taken before every tool stays cheap
+		const McpProjectDigest& Digest();
+
+	private:
+		std::unique_ptr<McpProjectDigest> digest;
 	};
 
 	static constexpr size_t MaxNamed = 10;
