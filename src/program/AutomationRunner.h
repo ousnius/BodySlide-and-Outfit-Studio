@@ -6,6 +6,7 @@ See the included LICENSE file
 #pragma once
 
 #include "../components/Automation.h"
+#include "../files/ObjFile.h"
 
 #include <map>
 #include <string>
@@ -29,6 +30,8 @@ public:
 
 	// Unattended runs import with default options instead of asking for them
 	void SetHeadless(bool headless) { headlessMode = headless; }
+	// Options of unattended OBJ imports
+	void SetObjImportOptions(const ObjImportOptions& options) { objImportOptions = options; }
 
 	// Starts a run with the script's variables. Set Variable steps add to them during the run.
 	void BeginRun(const std::map<std::string, std::string>& baseVariables);
@@ -61,6 +64,7 @@ private:
 	OutfitStudioFrame* outfitStudio = nullptr;
 	OutfitProject* project = nullptr;
 	bool headlessMode = false;
+	ObjImportOptions objImportOptions;
 
 	// Variables defined by Set Variable steps while a script runs. Substituted into
 	// every following step, on top of the up front pass over the placeholder table.
@@ -93,6 +97,7 @@ private:
 	int ExecuteStepApplyPose(const AutomationStep& step);
 	int ExecuteStepImportSliderData(const AutomationStep& step);
 	int ExecuteStepImportFile(const AutomationStep& step);
+	int ExecuteStepImportFromGame(const AutomationStep& step);
 	int ExecuteStepDeleteShape(const AutomationStep& step);
 	int ExecuteStepRenameShape(const AutomationStep& step);
 	int ExecuteStepSaveProject(const AutomationStep& step);
@@ -127,6 +132,7 @@ private:
 	int ExecuteStepSeparateVertices(const AutomationStep& step);
 	int ExecuteStepMergeGeometry(const AutomationStep& step);
 	int ExecuteStepSymmetrizeVertices(const AutomationStep& step);
+	int ExecuteStepSmoothVertices(const AutomationStep& step);
 	int ExecuteStepClearSliderData(const AutomationStep& step);
 	int ExecuteStepCloneSlider(const AutomationStep& step);
 	int ExecuteStepNegateSlider(const AutomationStep& step);
@@ -135,10 +141,13 @@ private:
 	int ExecuteStepGrowShrinkMask(const AutomationStep& step);
 	int ExecuteStepInvertMask(const AutomationStep& step);
 	int ExecuteStepMaskAsymmetric(const AutomationStep& step);
+	int ExecuteStepMaskBox(const AutomationStep& step);
+	int ExecuteStepMaskCovered(const AutomationStep& step);
 	int ExecuteStepMaskBoneWeighted(const AutomationStep& step);
 	int ExecuteStepMaskSliderAffected(const AutomationStep& step);
 	int ExecuteStepMaskWeighted(const AutomationStep& step);
 	int ExecuteStepSaveMask(const AutomationStep& step);
+	int ExecuteStepSmoothMask(const AutomationStep& step);
 	int ExecuteStepSetVariable(const AutomationStep& step);
 	int ExecuteStepLogMessage(const AutomationStep& step);
 };

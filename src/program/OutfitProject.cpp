@@ -22,6 +22,7 @@ See the included LICENSE file
 #include "FSEngine/FSManager.h"
 
 #include <algorithm>
+#include <atomic>
 #include <cfloat>
 #include <limits>
 #include <regex>
@@ -285,6 +286,9 @@ void RemapExtraDataStrings(NifFile& nif, NiExtraData* extraData) {
 }
 
 OutfitProject::OutfitProject(IProjectHost* inHost, bool loadSkeleton) {
+	static std::atomic<uint64_t> lastInstanceId{0};
+	instanceId = ++lastInstanceId;
+
 	host = inHost;
 	if (!host) {
 		ownHost = std::make_unique<NonInteractiveHost>();
@@ -876,6 +880,13 @@ std::string OutfitProject::GetSliderName(const size_t index) {
 	return activeSet[index].name;
 }
 
+void OutfitProject::NewBaseDiffSet(const std::string& dataName, const std::string& target) {
+	// The reference's data sets outlive the projects that made them, so one of the same name from an earlier
+	// project can still be there. A new slider starts without it, or its data would be summed onto the old.
+	baseDiffData.AddEmptySet(dataName, target);
+	baseDiffData.EmptySet(dataName, target);
+}
+
 void OutfitProject::AddEmptySlider(const std::string& newName) {
 	size_t sliderID = activeSet.CreateSlider(newName);
 
@@ -885,7 +896,7 @@ void OutfitProject::AddEmptySlider(const std::string& newName) {
 		std::string shapeSlider = target + newName;
 		activeSet[sliderID].AddDataFile(target, shapeSlider, shapeSlider);
 		activeSet.AddShapeTarget(baseShapeName, target);
-		baseDiffData.AddEmptySet(shapeSlider, target);
+		NewBaseDiffSet(shapeSlider, target);
 	}
 }
 
@@ -912,12 +923,61 @@ void OutfitProject::AddZapSlider(const std::string& newName, std::unordered_map<
 	if (IsBaseShape(shape)) {
 		activeSet[sliderID].AddDataFile(target, shapeSlider, shapeSlider);
 		activeSet.AddShapeTarget(shape->name.get(), target);
-		baseDiffData.AddEmptySet(shapeSlider, target);
+		NewBaseDiffSet(shapeSlider, target);
 		for (auto& i : diffData)
 			baseDiffData.SumDiff(shapeSlider, target, i.first, i.second);
 	}
 	else
 		morpher.SetResultDiff(target, newName, diffData);
+}
+
+std::vector<bool> OutfitProject::GetZappedVertices(NiShape* shape, const std::string& sliderName) {
+	std::vector<bool> zapped;
+	if (!shape)
+		return zapped;
+
+	const size_t count = shape->GetNumVertices();
+	std::vector<Vector3> diffs(count);
+	GetSliderDiff(shape, sliderName, diffs);
+
+	bool any = false;
+	for (auto& d : diffs)
+		any = any || !d.IsZero(true);
+
+	if (!any && IsBaseShape(shape)) {
+		diffs.assign(count, Vector3());
+		morpher.ApplyResultToVerts(sliderName, ShapeToTarget(shape->name.get()), &diffs);
+	}
+
+	zapped.resize(count);
+	for (size_t v = 0; v < count; v++)
+		zapped[v] = !diffs[v].IsZero(true);
+	return zapped;
+}
+
+void OutfitProject::SetZappedVertices(NiShape* shape, const std::string& sliderName, const std::vector<bool>& zapped) {
+	if (!shape || !ValidSlider(sliderName))
+		return;
+
+	std::string target = SliderDataTargetForShape(shape);
+	std::string dataName = EnsureSliderDataLocal(sliderName, shape);
+	if (dataName.empty())
+		return;
+
+	// Zap data only marks vertices, the direction of the delta doesn't matter
+	std::unordered_map<uint16_t, Vector3> diffData;
+	for (size_t v = 0; v < zapped.size(); v++)
+		if (zapped[v])
+			diffData[static_cast<uint16_t>(v)] = Vector3(0.0f, 1.0f, 0.0f);
+
+	if (IsBaseShape(shape)) {
+		activeSet.AddShapeTarget(shape->name.get(), target);
+		NewBaseDiffSet(dataName, target);
+		for (auto& d : diffData)
+			baseDiffData.SumDiff(dataName, target, d.first, d.second);
+	}
+	else
+		morpher.SetResultDiff(target, sliderName, diffData);
 }
 
 void OutfitProject::AddCombinedSlider(const std::string& newName) {
@@ -941,7 +1001,7 @@ void OutfitProject::AddCombinedSlider(const std::string& newName) {
 		std::string target = SliderDataTargetForShape(baseShape);
 		std::string shapeSlider = target + newName;
 		activeSet[sliderID].AddDataFile(target, shapeSlider, shapeSlider);
-		baseDiffData.AddEmptySet(shapeSlider, target);
+		NewBaseDiffSet(shapeSlider, target);
 
 		GetLiveVerts(baseShape, verts);
 		workNif.CalcShapeDiff(baseShape, &verts, diffData);
@@ -1615,7 +1675,7 @@ void OutfitProject::CloneSlider(const std::string& sliderName, const std::string
 		if (IsBaseShape(shape)) {
 			activeSet[cloneIndex].AddDataFile(target, newDT, newDT);
 			activeSet.AddShapeTarget(shape->name.get(), target);
-			baseDiffData.AddEmptySet(newDT, target);
+			NewBaseDiffSet(newDT, target);
 
 			auto diffData = baseDiffData.GetDiffSet(oldDT);
 			if (diffData) {
@@ -2410,7 +2470,7 @@ void OutfitProject::SetTextures(NiShape* shape, const std::vector<std::string>& 
 				if (sfMaterialResolver.Resolve(matFile, texturesDir, sfMat)) {
 					texFiles = sfMat.GetPrimaryTextureFiles(MAX_TEXTURE_PATHS);
 
-					sfMat.ResolveTexturePaths([&texturesDir](const std::string& texFile) { return texturesDir + texFile; });
+					sfMat.ResolveTexturePaths([](const std::string& texFile) { return GameDataStream::FindAssetPath(texFile); });
 					shapeSFMaterials[shapeName] = std::make_shared<const SFLayeredMaterial>(std::move(sfMat));
 				}
 				else if (shader) {
@@ -2422,7 +2482,7 @@ void OutfitProject::SetTextures(NiShape* shape, const std::vector<std::string>& 
 				matFile = SFMaterialResolver::NormalizeMaterialPath(matFile, "");
 
 				// Attempt to read loose material file
-				mat = MaterialFile(texturesDir + matFile);
+				mat = MaterialFile(GameDataStream::FindAssetPath(matFile));
 
 				if (mat.Failed()) {
 					// Search for material file in archives
@@ -2467,7 +2527,7 @@ void OutfitProject::SetTextures(NiShape* shape, const std::vector<std::string>& 
 
 		for (int i = 0; i < MAX_TEXTURE_PATHS; i++) {
 			if (!texFiles[i].empty()) {
-				texFiles[i] = texturesDir + SFMaterialResolver::NormalizeTexturePath(texFiles[i]);
+				texFiles[i] = GameDataStream::FindAssetPath(SFMaterialResolver::NormalizeTexturePath(texFiles[i]));
 			}
 		}
 
@@ -3221,8 +3281,10 @@ int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::stri
 	mRefProjectName.clear();
 	mRefShapeName.clear();
 
-	if (baseShape)
+	if (baseShape) {
 		mRefShapeName = baseShape->name.get();
+		SetShapeReferenceSource(mRefShapeName, "", "");
+	}
 
 	if (!deletedShapes.empty()) {
 		std::string shapesJoin = JoinStrings(deletedShapes, "; ");
@@ -3379,6 +3441,7 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 
 		mRefProjectName = setName;
 		mRefShapeName = shape;
+		SetShapeReferenceSource(shape, mRefProjectFile, mRefProjectName);
 	}
 
 	if (!deletedShapes.empty()) {
@@ -3705,6 +3768,7 @@ bool OutfitProject::BuildClippingCorrectionCache(NiShape* shape, float strength,
 
 	ClippingFixOptions fixOptions;
 	fixOptions.strength = std::max(0.0f, std::min(1.0f, strength));
+	fixOptions.fixPokeThrough = true;
 
 	cache.fixedNeutralVerts = cache.neutralOutfitVerts;
 	ClippingFixer::FixClipping(cache.neutralBodyVerts, cache.bodyTris, cache.fixedNeutralVerts, cache.outfitTris, fixOptions);
@@ -3797,6 +3861,7 @@ void OutfitProject::CalcSliderClippingCorrection(NiShape* shape,
 
 	ClippingFixOptions fixOptions;
 	fixOptions.strength = std::max(0.0f, std::min(1.0f, strength));
+	fixOptions.fixPokeThrough = true;
 
 	std::vector<Vector3> fixedNeutralVerts;
 	const std::vector<Vector3>* fixedNeutralVertsPtr = nullptr;
@@ -4573,11 +4638,17 @@ bool OutfitProject::PrepareFlipEdge(NiShape* shape, UndoStateShape& uss, const E
 }
 
 /*
-Ideally, PrepareRefineMesh would take a list of edges, not a list of
-vertices.  But OutfitStudio doesn't yet have an edge-mask tool.
+PrepareRefineMesh takes a list of vertices, and optionally a filter that
+picks which of the edges between them to split (see MeshRefine).
 Parameter "noCurveOffset" disables the smoothing/curving of the new vertex position within split edges.
 */
-bool OutfitProject::PrepareRefineMesh(NiShape* shape, UndoStateShape& uss, std::vector<bool>& pincs, const Mesh::WeldVertsType& weldVerts, const bool noCurveOffset, std::vector<Edge>* badEdges) {
+bool OutfitProject::PrepareRefineMesh(NiShape* shape,
+									  UndoStateShape& uss,
+									  std::vector<bool>& pincs,
+									  const Mesh::WeldVertsType& weldVerts,
+									  const bool noCurveOffset,
+									  std::vector<Edge>* badEdges,
+									  const std::function<bool(const Edge&)>& splitEdge) {
 	// Get vertex coordinates and triangle data
 	size_t nverts = pincs.size();
 	const std::vector<Vector3>* verts = workNif.GetVertsForShape(shape);
@@ -4646,6 +4717,8 @@ bool OutfitProject::PrepareRefineMesh(NiShape* shape, UndoStateShape& uss, std::
 		for (int tei = 0; tei < 3; ++tei) {
 			Edge e = tris[ti].GetEdge(tei);
 			if (!pincs[e.p1] || !pincs[e.p2])
+				continue;
+			if (splitEdge && !splitEdge(e))
 				continue;
 			if (singleEdges.find(e) != singleEdges.end()) {
 				// Multiple triangles for this edge
@@ -7479,6 +7552,23 @@ std::unique_ptr<std::istream> OutfitProject::GetPhysicsXmlStream(const std::stri
 	return GameDataStream::OpenPhysicsXml(xmlPath, activeSet.GetInputFileName());
 }
 
+std::vector<std::pair<std::string, PhysicsXmlFile>> OutfitProject::ReadPhysicsXmls(const std::string& shapeName, std::vector<std::string>* outMissing) {
+	std::vector<std::pair<std::string, PhysicsXmlFile>> files;
+	auto links = shapePhysicsFiles.find(shapeName);
+	if (links == shapePhysicsFiles.end())
+		return files;
+
+	for (auto& xmlPath : links->second) {
+		PhysicsXmlFile file;
+		auto stream = GetPhysicsXmlStream(xmlPath);
+		if (stream && file.Load(*stream))
+			files.emplace_back(xmlPath, std::move(file));
+		else if (outMissing)
+			outMissing->push_back(xmlPath);
+	}
+	return files;
+}
+
 void OutfitProject::ValidateNIF(NifFile& nif, const std::string& nifFilePath) {
 	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 	bool match = false;
@@ -7581,6 +7671,41 @@ void OutfitProject::ResetTransforms() {
 		if (rootNode)
 			rootNode->SetTransformToParent(MatTransform());
 	}
+}
+
+bool OutfitProject::AddShader(NiShape* s) {
+	if (workNif.GetShader(s))
+		return false;
+
+	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
+	auto& hdr = workNif.GetHeader();
+
+	switch (targetGame) {
+		case OB: s->propertyRefs.AddBlockRef(hdr.AddBlock(std::make_unique<NiMaterialProperty>())); break;
+
+		case FO3:
+		case FONV:
+			s->propertyRefs.AddBlockRef(hdr.AddBlock(std::make_unique<BSShaderPPLightingProperty>()));
+			s->propertyRefs.AddBlockRef(hdr.AddBlock(std::make_unique<NiMaterialProperty>()));
+			break;
+
+		default:
+			auto shaderPropertyRef = s->ShaderPropertyRef();
+			if (shaderPropertyRef)
+				shaderPropertyRef->index = hdr.AddBlock(std::make_unique<BSLightingShaderProperty>(hdr.GetVersion()));
+	}
+
+	NiShader* shader = workNif.GetShader(s);
+	if (!shader)
+		return false;
+
+	auto textureSetRef = shader->TextureSetRef();
+	if (textureSetRef)
+		textureSetRef->index = hdr.AddBlock(std::make_unique<BSShaderTextureSet>(hdr.GetVersion()));
+
+	// Skinned shapes need the skinned shader flag, like CreateSkinning sets it
+	shader->SetSkinned(s->IsSkinned());
+	return true;
 }
 
 void OutfitProject::CreateSkinning(NiShape* s) {

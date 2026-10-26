@@ -57,6 +57,9 @@
     <ClInclude Include="src\files\GameDataStream.h">
       <Filter>Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\files\PhysicsXmlFile.h">
+      <Filter>Files</Filter>
+    </ClInclude>
     <ClInclude Include="src\files\SFMaterialResolver.h">
       <Filter>Files</Filter>
     </ClInclude>
@@ -152,6 +155,9 @@
     <ClCompile Include="tests\MaterialFileTest.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
+    <ClCompile Include="tests\PhysicsXmlFileTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
     <ClCompile Include="tests\MaskTransferTest.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
@@ -204,6 +210,9 @@
       <Filter>Tests</Filter>
     </ClCompile>
     <ClCompile Include="src\files\GameDataStream.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\files\PhysicsXmlFile.cpp">
       <Filter>Files</Filter>
     </ClCompile>
     <ClCompile Include="src\files\SFMaterialResolver.cpp">

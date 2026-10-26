@@ -158,6 +158,58 @@
 										<object class="wxBoxSizer">
 											<orient>wxHORIZONTAL</orient>
 											<object class="sizeritem">
+												<option>0</option>
+												<flag>wxALIGN_TOP|wxALL</flag>
+												<border>5</border>
+												<object class="wxStaticText" name="lbExtraDataFoldersLabel">
+													<size>100,-1</size>
+													<label>Extra Data Folders</label>
+													<wrap>100</wrap>
+												</object>
+											</object>
+											<object class="sizeritem">
+												<option>3</option>
+												<flag>wxEXPAND|wxALL</flag>
+												<border>5</border>
+												<object class="wxListBox" name="lbExtraDataFolders">
+													<size>-1,64</size>
+													<style>wxLB_SINGLE|wxLB_HSCROLL</style>
+													<tooltip>Folders laid out like the game's Data folder (textures, materials, meshes, archives), e.g. a mod that isn't installed. Textures, materials and meshes are looked up in them after the game data path, and their archives load too. Kept per target game.</tooltip>
+												</object>
+											</object>
+											<object class="sizeritem">
+												<option>0</option>
+												<flag>wxTOP|wxBOTTOM|wxRIGHT</flag>
+												<border>5</border>
+												<object class="wxBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxEXPAND|wxBOTTOM</flag>
+														<border>5</border>
+														<object class="wxButton" name="btnAddExtraDataFolder">
+															<label>Add...</label>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxEXPAND</flag>
+														<border>0</border>
+														<object class="wxButton" name="btnRemoveExtraDataFolder">
+															<label>Remove</label>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxEXPAND</flag>
+										<border>0</border>
+										<object class="wxBoxSizer">
+											<orient>wxHORIZONTAL</orient>
+											<object class="sizeritem">
 												<option>1</option>
 												<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 												<border>5</border>
@@ -320,6 +372,35 @@
 										<item translate="1">Open in Existing</item>
 										<item translate="1">Open in New</item>
 									</content>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND|wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
+								<object class="wxCheckBox" name="cbMcpServer">
+									<tooltip>Starts the MCP server with Outfit Studio, which lets AI agents control it through the Model Context Protocol at http://127.0.0.1:port/mcp. Only programs on this computer can connect.</tooltip>
+									<label>MCP Server</label>
+									<checked>0</checked>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>2</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
+								<object class="wxSpinCtrl" name="spinMcpPort">
+									<tooltip>Port of the MCP server.</tooltip>
+									<value>47823</value>
+									<min>1024</min>
+									<max>65535</max>
 								</object>
 							</object>
 						</object>

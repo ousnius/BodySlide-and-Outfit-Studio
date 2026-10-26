@@ -5,6 +5,8 @@ See the included LICENSE file
 
 #include "MaskOps.h"
 
+#include <algorithm>
+#include <cmath>
 #include <unordered_set>
 
 namespace MaskOps {
@@ -52,6 +54,43 @@ std::unordered_map<int, float> InvertChanges(const Mesh& m) {
 	return changes;
 }
 
+std::unordered_map<int, float> SmoothChanges(Mesh& m, float strength) {
+	std::unordered_map<int, float> changes;
+	if (!m.mask)
+		return changes;
+
+	std::vector<float> smoothed(m.mask.get(), m.mask.get() + m.nVerts);
+	for (int i = 0; i < m.nVerts; i++) {
+		std::unordered_set<int> adjacent;
+		m.GetAdjacentPoints(i, adjacent);
+		adjacent.erase(i);
+		if (adjacent.empty())
+			continue;
+
+		float sum = 0.0f;
+		for (int a : adjacent)
+			sum += m.mask[a];
+
+		smoothed[i] = m.mask[i] + strength * (sum / static_cast<float>(adjacent.size()) - m.mask[i]);
+	}
+
+	for (int i = 0; i < m.nVerts; i++) {
+		// Welded vertices are one point of the surface, split only for UVs
+		float sum = 0.0f;
+		int count = 0;
+		m.DoForEachWeldedVertex(i, [&](int wvi) {
+			sum += smoothed[wvi];
+			count++;
+		});
+		float value = count ? sum / static_cast<float>(count) : smoothed[i];
+
+		if (std::abs(value - m.mask[i]) > 1e-6f)
+			changes[i] = value;
+	}
+
+	return changes;
+}
+
 std::unordered_map<int, float> ClearChanges(const Mesh& m) {
 	std::unordered_map<int, float> changes;
 	if (!m.mask)
@@ -72,6 +111,23 @@ void ApplyChanges(Mesh& m, const std::unordered_map<int, float>& changes) {
 			m.mask[change.first] = change.second;
 
 	m.QueueUpdate(Mesh::UpdateType::Mask);
+}
+
+std::vector<float> FixWeights(const Mesh* m) {
+	std::vector<float> weights;
+	if (!m || !m->mask)
+		return weights;
+
+	bool masked = false;
+	weights.resize(m->nVerts);
+	for (int i = 0; i < m->nVerts; i++) {
+		weights[i] = 1.0f - std::clamp(m->mask[i], 0.0f, 1.0f);
+		masked = masked || weights[i] < 1.0f;
+	}
+
+	if (!masked)
+		weights.clear();
+	return weights;
 }
 
 std::unordered_map<uint16_t, float> GetMasked(const Mesh& m) {

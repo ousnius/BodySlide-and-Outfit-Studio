@@ -166,6 +166,7 @@ class OutfitStudioFrame;
 class ArchiveBrowser;
 class BrushStrokeController;
 class EditUV;
+class OutfitStudioMcp;
 struct SymmetricVertices;
 struct VertexAsymmetries;
 struct VertexAsymmetryTasks;
@@ -221,6 +222,7 @@ public:
 	bool IsStrokeActive() const;
 	// Renders the view offscreen at the given size and saves it as a PNG
 	bool SaveViewImage(const wxString& fileName, int width, int height);
+	bool RenderViewImage(int width, int height, wxImage& outImage);
 
 	void SetActiveTool(ToolID brushID);
 	ToolID GetActiveTool() { return activeTool; }
@@ -582,6 +584,7 @@ public:
 
 	// Applies the mask changes of each active mesh as one undo step
 	void ApplyMaskChanges(const std::function<std::unordered_map<int, float>(Mesh&)>& changesForMesh);
+	void ApplyMaskChanges(const std::vector<Mesh*>& meshes, const std::function<std::unordered_map<int, float>(Mesh&)>& changesForMesh);
 	void MaskLess();
 	void MaskMore();
 	void InvertMask();
@@ -930,6 +933,8 @@ private:
 static const wxCmdLineEntryDesc g_cmdLineDesc[] = {{wxCMD_LINE_OPTION, "proj", "project", "Project Name", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL},
 												   {wxCMD_LINE_OPTION, "single", "single-instance", "Force single instance behavior (yes/no)", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL},
 												   {wxCMD_LINE_OPTION, "a", "automation", "Run an automation script by name (no .xml extension); positional args are batch inputs", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL},
+												   {wxCMD_LINE_SWITCH, nullptr, "mcp", "Start the MCP server that lets AI agents control Outfit Studio", wxCMD_LINE_VAL_NONE, 0},
+												   {wxCMD_LINE_OPTION, nullptr, "mcp-port", "Port of the MCP server", wxCMD_LINE_VAL_NUMBER, wxCMD_LINE_PARAM_OPTIONAL},
 												   {wxCMD_LINE_PARAM, nullptr, nullptr, "Files", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL | wxCMD_LINE_PARAM_MULTIPLE},
 												   wxCMD_LINE_DESC_END};
 
@@ -967,6 +972,8 @@ private:
 	wxString cmdProject;
 	wxString cmdAutomation;
 	int cmdForceSingleInstanceBehavior = -1;  // -1 = not set, 0 = no (force new), 1 = yes (force existing)
+	bool cmdMcp = false;
+	long cmdMcpPort = -1;
 	int automationExitCode = 0;
 
 	int RunAutomationFromCmdLine();
@@ -1076,7 +1083,7 @@ private:
 class OutfitStudioFrame : public wxFrame {
 public:
 	OutfitStudioFrame(const wxPoint& pos, const wxSize& size);
-	~OutfitStudioFrame() {}
+	~OutfitStudioFrame();
 
 	// Runs work on this window's thread for callers on other threads, like an external API
 	MainThreadDispatcher& GetDispatcher() { return *dispatcher; }
@@ -1084,6 +1091,21 @@ public:
 	// Why the editor can't take an operation from outside right now, or empty if it can.
 	// Main thread only.
 	std::string GetBusyReason();
+
+	// Starts the MCP server that lets AI agents control this window, on the configured port
+	// for -1. Shows what went wrong if it can't start, in a message box when showError is set
+	// and otherwise only in the status bar and log. Main thread only.
+	bool StartMcpServer(int port = -1, bool showError = true);
+	void StopMcpServer();
+
+	bool HasPendingChanges() const { return pendingChanges; }
+
+	// Saves the current skeleton pose to the pose list and the PoseData folder, replacing a pose of the
+	// same name unless it's read-only. Returns the error, or an empty string.
+	std::string SaveCurrentPose(const std::string& poseName);
+	// Saves the current skeleton pose to a .hkx, .json, .yaml or .yml file. HKX needs the Havok skeleton
+	// next to the reference skeleton. Returns the error, or an empty string.
+	std::string SaveCurrentPoseFile(const std::string& fileName);
 
 	void LoadFiles(const wxArrayString& files, const wxString& projectName = "");
 
@@ -1095,7 +1117,8 @@ public:
 
 	// Loads a mesh out of a BSA/BA2 archive as the outfit, or imports it into
 	// the project when "import" is set.
-	void LoadMeshFromArchive(const std::string& relPath, const std::string& archivePath, bool import);
+	// Returns whether the mesh was loaded
+	bool LoadMeshFromArchive(const std::string& relPath, const std::string& archivePath, bool import);
 
 	const std::vector<RefTemplate>& GetRefTemplates() const { return refTemplates; }
 
@@ -1145,6 +1168,7 @@ public:
 	ArchiveBrowser* archiveBrowser = nullptr;
 	OutfitStudioProjectHost projectHost{this};
 	std::unique_ptr<MainThreadDispatcher> dispatcher;
+	std::unique_ptr<OutfitStudioMcp> mcp;
 	OutfitProject* project = nullptr;
 	EditorState editor;
 	ShapeItemData* activeItem = nullptr;
@@ -1337,6 +1361,7 @@ public:
 
 	void ShowPartition(const wxTreeItemId& item = nullptr);
 	void RefreshActivePartitionTree();
+	void RefreshActiveSegmentTree();
 	void UpdatePartitionNames();
 	void ApplyPartitionVisibility(Mesh* m);
 	void ResetPartitionVisibility();
@@ -1416,6 +1441,8 @@ public:
 	wxGauge* progressBar = nullptr;
 	std::vector<std::pair<int, int>> progressStack;
 	int progressVal = 0;
+	// Told the progress (0 to 10000) and message while a progress bar shows, e.g. to report it over MCP
+	std::function<void(int value, const wxString& msg)> progressListener;
 
 	void StartProgress(const wxString& msg = "") {
 		if (progressStack.empty()) {
@@ -1432,6 +1459,9 @@ public:
 				statusBar->SetStatusText(_("Starting..."));
 			else
 				statusBar->SetStatusText(msg);
+
+			if (progressListener)
+				progressListener(0, msg);
 		}
 	}
 
@@ -1466,6 +1496,9 @@ public:
 			else
 				statusBar->SetStatusText(msg);
 
+			if (progressListener)
+				progressListener(10000, msg);
+
 			delete progressBar;
 			progressBar = nullptr;
 			wxEndBusyCursor();
@@ -1486,6 +1519,9 @@ public:
 
 		statusBar->SetStatusText(msg);
 		progressBar->SetValue(progressVal);
+
+		if (progressListener)
+			progressListener(progressVal, msg);
 	}
 
 private:
@@ -1535,6 +1571,8 @@ private:
 	void OnChooseTargetGame(wxCommandEvent& event);
 	void SettingsFillDataFiles(wxCheckListBox* dataFileList, wxString& dataDir, int targetGame);
 	void OnSettings(wxCommandEvent& event);
+	void OnMcpServer(wxCommandEvent& event);
+	void UpdateMcpMenu();
 	void OnAbout(wxCommandEvent& event);
 	void OnLinkClicked(wxHtmlLinkEvent& link);
 
@@ -1721,6 +1759,7 @@ private:
 	void OnNewCombinedSlider(wxCommandEvent& event);
 	void OnSliderClone(wxCommandEvent& event);
 	void OnSliderNegate(wxCommandEvent& event);
+	void OnSliderRigidify(wxCommandEvent& event);
 	void OnMaskAffected(wxCommandEvent& event);
 	void OnClearSlider(wxCommandEvent& event);
 	void OnDeleteSlider(wxCommandEvent& event);
@@ -1737,7 +1776,7 @@ private:
 							const std::vector<nifly::Vector3>& outfitVerts,
 							const ClippingFixOptions& options,
 							UndoStateProject* usp,
-							const std::unordered_set<uint16_t>* allowedVerts = nullptr);
+							const std::vector<float>& fixWeights = {});
 
 	void OnInvertUV(wxCommandEvent& event);
 	void OnMirrorShape(wxCommandEvent& event);

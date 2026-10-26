@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "SettingsDialogShared.h"
+#include "GameUtil.h"
 
 #include <wx/choice.h>
 #include <wx/clrpicker.h>
@@ -15,10 +16,54 @@ See the included LICENSE file
 #include <wx/textctrl.h>
 #include <wx/xrc/xmlres.h>
 #include <wx/msgdlg.h>
+#include <wx/button.h>
+#include <wx/dirdlg.h>
+
+#include <map>
+#include <string>
+#include <vector>
 
 namespace SettingsDialogShared {
 
 const char* const kAppearanceModeConfigKey = "AppearanceMode";
+
+namespace {
+// The extra data folders of each game as edited in the dialog, kept with the list, which shows one game at a time
+class ExtraDataFoldersEdit : public wxClientData {
+public:
+	std::map<int, std::vector<std::string>> folders;
+	int shownGame = -1;
+
+	void KeepShown(wxListBox* list) {
+		if (shownGame < 0)
+			return;
+		std::vector<std::string>& shown = folders[shownGame];
+		shown.clear();
+		for (unsigned int i = 0; i < list->GetCount(); i++)
+			shown.push_back(list->GetString(i).ToUTF8().data());
+	}
+};
+
+ExtraDataFoldersEdit* ExtraDataFoldersOf(wxListBox* list) {
+	return list ? static_cast<ExtraDataFoldersEdit*>(list->wxEvtHandler::GetClientObject()) : nullptr;
+}
+}
+
+void ShowExtraDataFolders(wxWindow& settings, int targetGame) {
+	wxListBox* list = XRCCTRL(settings, "lbExtraDataFolders", wxListBox);
+	ExtraDataFoldersEdit* edit = ExtraDataFoldersOf(list);
+	if (!edit || targetGame < 0)
+		return;
+
+	edit->KeepShown(list);
+	if (!edit->folders.count(targetGame))
+		edit->folders[targetGame] = GameUtil::GetExtraDataFolders(targetGame);
+
+	list->Clear();
+	for (auto& folder : edit->folders[targetGame])
+		list->Append(wxString::FromUTF8(folder));
+	edit->shownGame = targetGame;
+}
 
 #ifdef __WXMSW__
 wxAppBase::Appearance GetConfiguredAppearance(ConfigurationManager& config) {
@@ -158,6 +203,32 @@ void InitCommonSettingsDialog(
 	controls.choiceSkeletonRoot->SetStringSelection(config["Anim/SkeletonRootName"]);
 
 	controls.dataFileList = XRCCTRL(settings, "DataFileList", wxCheckListBox);
+
+	controls.lbExtraDataFolders = XRCCTRL(settings, "lbExtraDataFolders", wxListBox);
+	if (controls.lbExtraDataFolders) {
+		wxListBox* list = controls.lbExtraDataFolders;
+		list->wxEvtHandler::SetClientObject(new ExtraDataFoldersEdit());
+		ShowExtraDataFolders(settings, config.GetIntValue("TargetGame"));
+
+		if (wxButton* add = XRCCTRL(settings, "btnAddExtraDataFolder", wxButton)) {
+			add->Bind(wxEVT_BUTTON, [list, &settings](wxCommandEvent&) {
+				wxString folder = wxDirSelector(_("Select a folder laid out like the game's Data folder"), wxEmptyString, wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST, wxDefaultPosition, &settings);
+				if (folder.empty())
+					return;
+				if (!folder.EndsWith(wxFileName::GetPathSeparator()))
+					folder += wxFileName::GetPathSeparator();
+				if (list->FindString(folder, false) == wxNOT_FOUND)
+					list->Append(folder);
+			});
+		}
+		if (wxButton* remove = XRCCTRL(settings, "btnRemoveExtraDataFolder", wxButton)) {
+			remove->Bind(wxEVT_BUTTON, [list](wxCommandEvent&) {
+				int selection = list->GetSelection();
+				if (selection != wxNOT_FOUND)
+					list->Delete(selection);
+			});
+		}
+	}
 }
 
 void SaveCommonSettingsDialog(
@@ -190,6 +261,13 @@ void SaveCommonSettingsDialog(
 
 	wxFileName projectDir = controls.dpProjectPath->GetDirName();
 	config.SetValue("ProjectPath", projectDir.GetFullPath().ToUTF8().data());
+
+	if (ExtraDataFoldersEdit* edit = ExtraDataFoldersOf(controls.lbExtraDataFolders)) {
+		edit->KeepShown(controls.lbExtraDataFolders);
+		for (auto& game : edit->folders)
+			if ((size_t)game.first < targetGameCount)
+				GameUtil::SetExtraDataFolders(game.first, game.second);
+	}
 
 	wxString selectedfiles;
 	for (uint32_t i = 0; i < controls.dataFileList->GetCount(); i++) {

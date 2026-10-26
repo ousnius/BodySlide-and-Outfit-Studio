@@ -5,12 +5,15 @@ See the included LICENSE file
 
 #include "AutomationRunner.h"
 
+#include "BrushStrokeController.h"
+#include "GameImport.h"
 #include "OutfitProject.h"
 #include "OutfitStudio.h"
 
 #include "../components/ClippingFixer.h"
 #include "../components/DiffData.h"
 #include "../components/MaskOps.h"
+#include "../components/MeshAnalysis.h"
 #include "../components/UndoState.h"
 #include "../files/MaskFile.h"
 #include "../files/TriFile.h"
@@ -521,7 +524,8 @@ bool ParseAutomationPartitionID(const std::string& value, int& partitionID) {
 		return false;
 
 	std::smatch match;
-	static const std::regex partitionChoicePattern("^([0-9]+)\\s+.+$");
+	// A slot number, alone or as the partition choices show it ("32 Body")
+	static const std::regex partitionChoicePattern("^([0-9]+)(\\s+.+)?$");
 	if (!std::regex_match(trimmedValue, match, partitionChoicePattern))
 		return false;
 
@@ -594,6 +598,7 @@ int AutomationRunner::ExecuteStep(const AutomationStep& step) {
 		{AutomationStepType::ExportSFMorphs, &AutomationRunner::ExecuteStepExportSFMorphs},
 		{AutomationStepType::SaveProject, &AutomationRunner::ExecuteStepSaveProject},
 		{AutomationStepType::ImportFile, &AutomationRunner::ExecuteStepImportFile},
+		{AutomationStepType::ImportFromGame, &AutomationRunner::ExecuteStepImportFromGame},
 		{AutomationStepType::ImportSliderData, &AutomationRunner::ExecuteStepImportSliderData},
 		{AutomationStepType::AddProject, &AutomationRunner::ExecuteStepAddProject},
 		{AutomationStepType::ClearProject, &AutomationRunner::ExecuteStepClearProject},
@@ -636,6 +641,7 @@ int AutomationRunner::ExecuteStep(const AutomationStep& step) {
 		{AutomationStepType::SeparateVertices, &AutomationRunner::ExecuteStepSeparateVertices},
 		{AutomationStepType::MergeGeometry, &AutomationRunner::ExecuteStepMergeGeometry},
 		{AutomationStepType::SymmetrizeVertices, &AutomationRunner::ExecuteStepSymmetrizeVertices},
+		{AutomationStepType::SmoothVertices, &AutomationRunner::ExecuteStepSmoothVertices},
 		{AutomationStepType::ClearSliderData, &AutomationRunner::ExecuteStepClearSliderData},
 		{AutomationStepType::CloneSlider, &AutomationRunner::ExecuteStepCloneSlider},
 		{AutomationStepType::NegateSlider, &AutomationRunner::ExecuteStepNegateSlider},
@@ -644,10 +650,13 @@ int AutomationRunner::ExecuteStep(const AutomationStep& step) {
 		{AutomationStepType::GrowShrinkMask, &AutomationRunner::ExecuteStepGrowShrinkMask},
 		{AutomationStepType::InvertMask, &AutomationRunner::ExecuteStepInvertMask},
 		{AutomationStepType::MaskAsymmetric, &AutomationRunner::ExecuteStepMaskAsymmetric},
+		{AutomationStepType::MaskBox, &AutomationRunner::ExecuteStepMaskBox},
+		{AutomationStepType::MaskCovered, &AutomationRunner::ExecuteStepMaskCovered},
 		{AutomationStepType::MaskBoneWeighted, &AutomationRunner::ExecuteStepMaskBoneWeighted},
 		{AutomationStepType::MaskSliderAffected, &AutomationRunner::ExecuteStepMaskSliderAffected},
 		{AutomationStepType::MaskWeighted, &AutomationRunner::ExecuteStepMaskWeighted},
 		{AutomationStepType::SaveMask, &AutomationRunner::ExecuteStepSaveMask},
+		{AutomationStepType::SmoothMask, &AutomationRunner::ExecuteStepSmoothMask},
 		{AutomationStepType::SetVariable, &AutomationRunner::ExecuteStepSetVariable},
 		{AutomationStepType::LogMessage, &AutomationRunner::ExecuteStepLogMessage},
 	};
@@ -691,13 +700,17 @@ std::vector<NiShape*> AutomationRunner::ResolveTargetShapes(const AutomationStep
 	};
 
 	if (step.targetRegex) {
+		// Patterns leave the reference out, so ".*" for every outfit shape doesn't clear or mask the body's slider
+		// data too. A step that is meant for the reference names it without TargetRegex or sets TargetReference,
+		// and steps that work on the reference when empty (MaskCovered) let patterns match it as well.
 		auto allShapes = project->GetWorkNif()->GetShapes();
+		auto* baseShape = (step.targetReference || includeBaseShapeOnEmpty) ? nullptr : project->GetBaseShape();
 		for (const auto& pattern : step.targetMeshes) {
 			try {
 				std::regex re(pattern, std::regex::icase);
 				bool matched = false;
 				for (auto* shape : allShapes) {
-					if (std::regex_search(shape->name.get(), re)) {
+					if (shape != baseShape && std::regex_search(shape->name.get(), re)) {
 						addUniqueShape(shape);
 						matched = true;
 					}
@@ -724,13 +737,17 @@ std::vector<NiShape*> AutomationRunner::ResolveTargetShapes(const AutomationStep
 }
 int AutomationRunner::ImportOBJFile(const std::string& fileName) {
 	if (headlessMode)
-		return project->ImportOBJ(fileName, ObjImportOptions());
+		return project->ImportOBJ(fileName, objImportOptions);
 
 	return outfitStudio->ImportOBJWithDialog(fileName);
 }
 void AutomationRunner::ResetAndClearProject() {
 	SyncProject();
 	project->SetBaseShape(nullptr, false);
+	// One by one, so what the project keeps by shape name (the reference's source, textures, materials) goes with
+	// them instead of passing to a shape of the same name in the next project
+	for (auto* shape : project->GetWorkNif()->GetShapes())
+		project->DeleteShape(shape);
 	project->GetWorkAnim()->Clear();
 	project->GetWorkNif()->Clear();
 	outfitStudio->ResetProject();
@@ -766,6 +783,7 @@ bool AutomationRunner::StepChangesSliderSet(AutomationStepType type) {
 		case AutomationStepType::SetBaseShape:
 		case AutomationStepType::ImportSliderData:
 		case AutomationStepType::ImportFile:
+		case AutomationStepType::ImportFromGame:
 		case AutomationStepType::CloneSlider:
 		case AutomationStepType::MakeConversionRef:
 		case AutomationStepType::NewCombinedSlider:
@@ -907,6 +925,7 @@ int AutomationRunner::ExecuteStepCopyBoneWeights(const AutomationStep& step) {
 	options.proximityRadius = step.weightProximityRadius;
 	options.maxResults = step.weightMaxResults;
 	options.selectedBones = step.weightBoneList;
+	options.normalize = step.weightNormalize;
 
 	UndoStateProject usp;
 	OpResult result = ProjectOperations(*project, outfitStudio->editor).CopyBoneWeights(shapes, options, usp);
@@ -1606,6 +1625,56 @@ int AutomationRunner::ExecuteStepImportFile(const AutomationStep& step) {
 	return 0;
 }
 
+int AutomationRunner::ExecuteStepImportFromGame(const AutomationStep& step) {
+	if (step.gameImportFile.empty()) {
+		wxLogError("Automation: ImportFromGame - no file specified.");
+		return 1;
+	}
+
+	GameImport::Options options;
+	options.file = MakeAbsoluteToProject(wxString::FromUTF8(step.gameImportFile)).ToUTF8().data();
+	options.set = step.gameImportSet;
+	options.shapes = step.gameImportShapes;
+	options.skipShapes = step.gameImportSkipShapes;
+	if (!step.gameImportSliders.empty())
+		options.sliders = step.gameImportSliders;
+	for (auto& folder : step.gameImportDataFolders)
+		options.dataFolders.push_back(MakeAbsoluteToProject(wxString::FromUTF8(folder)).ToUTF8().data());
+
+	wxLogMessage("Automation: Importing '%s' from another game...", options.file);
+
+	GameImport::Report report;
+	OpResult result = GameImport::Import(*project, options, report);
+	if (!result.ok) {
+		wxLogError("Automation: ImportFromGame - %s", result.error);
+		return 1;
+	}
+
+	// Each material note once, they repeat for every shape with the same material
+	std::vector<std::string> notes;
+	for (auto& shape : report.shapes) {
+		const std::string name = shape["name"].get<std::string>();
+		wxLogMessage("Automation: ImportFromGame - imported '%s' from %s.", name, report.sourceGame);
+		if (shape.contains("warning"))
+			wxLogWarning("Automation: ImportFromGame - '%s': %s", name, shape["warning"].get<std::string>());
+
+		if (!shape.contains("material"))
+			continue;
+
+		const auto& material = shape["material"];
+		if (material.contains("error"))
+			wxLogWarning("Automation: ImportFromGame - '%s': %s", name, material["error"].get<std::string>());
+		if (material.contains("target") && material["target"].contains("notes"))
+			for (auto& note : material["target"]["notes"])
+				if (std::find(notes.begin(), notes.end(), note.get<std::string>()) == notes.end())
+					notes.push_back(note.get<std::string>());
+	}
+	for (auto& note : notes)
+		wxLogMessage("Automation: ImportFromGame - %s", note);
+
+	return 0;
+}
+
 int AutomationRunner::ExecuteStepDeleteShape(const AutomationStep& step) {
 	auto shapes = ResolveTargetShapes(step);
 	if (shapes.empty()) {
@@ -1659,6 +1728,7 @@ int AutomationRunner::ExecuteStepSaveProject(const AutomationStep& step) {
 		return 1;
 	}
 
+	outfitStudio->SetPendingChanges(false);
 	return 0;
 }
 
@@ -1948,12 +2018,12 @@ int AutomationRunner::ExecuteStepChangePartitions(const AutomationStep& step) {
 	int sourcePartitionID = 0;
 	int destinationPartitionID = 0;
 	if (!ParseAutomationPartitionID(step.partitionSource, sourcePartitionID)) {
-		wxLogError("Automation: ChangePartitions - invalid source partition '%s'.", step.partitionSource);
+		wxLogError("Automation: ChangePartitions - invalid source partition '%s', expected a slot number like '32' or '32 Body'.", step.partitionSource);
 		return 1;
 	}
 
 	if (!ParseAutomationPartitionID(step.partitionDestination, destinationPartitionID)) {
-		wxLogError("Automation: ChangePartitions - invalid destination partition '%s'.", step.partitionDestination);
+		wxLogError("Automation: ChangePartitions - invalid destination partition '%s', expected a slot number like '52' or '52 Pelvis'.", step.partitionDestination);
 		return 1;
 	}
 
@@ -3178,6 +3248,73 @@ int AutomationRunner::ExecuteStepSymmetrizeVertices(const AutomationStep& step) 
 	return 0;
 }
 
+int AutomationRunner::ExecuteStepSmoothVertices(const AutomationStep& step) {
+	auto shapes = ResolveTargetShapes(step);
+	if (shapes.empty()) {
+		wxLogWarning("Automation: SmoothVertices - no target shapes found.");
+		return 0;
+	}
+
+	std::vector<Mesh*> meshes;
+	for (auto* shape : shapes)
+		if (Mesh* m = outfitStudio->glView->GetMesh(shape->name.get()))
+			meshes.push_back(m);
+	if (meshes.empty()) {
+		wxLogWarning("Automation: SmoothVertices - none of the target shapes have a mesh to work on.");
+		return 0;
+	}
+
+	// Shapes lying on the smoothed ones, by name or by pattern like the target shapes
+	std::vector<Mesh*> followers;
+	auto addFollower = [&](NiShape* shape) {
+		Mesh* m = shape ? outfitStudio->glView->GetMesh(shape->name.get()) : nullptr;
+		if (m && std::find(meshes.begin(), meshes.end(), m) == meshes.end() && std::find(followers.begin(), followers.end(), m) == followers.end())
+			followers.push_back(m);
+	};
+	for (const auto& name : step.smoothFollowShapes) {
+		if (step.targetRegex) {
+			try {
+				std::regex re(name, std::regex::icase);
+				for (auto* shape : project->GetWorkNif()->GetShapes())
+					if (std::regex_search(shape->name.get(), re))
+						addFollower(shape);
+			}
+			catch (const std::regex_error& e) {
+				wxLogWarning("Automation: SmoothVertices - invalid follow shape regex '%s' (%s).", name, e.what());
+			}
+		}
+		else
+			addFollower(FindShapeByName(name));
+	}
+
+	wxLogMessage("Automation: Smoothing %zu shape(s) %d time(s) at strength %.3f, %zu shape(s) following...", meshes.size(), step.smoothIterations,
+				 step.smoothStrength, followers.size());
+
+	BrushStrokeController controller(*project, outfitStudio->editor);
+	RefreshFlags refresh = controller.SmoothMeshes(meshes, step.smoothIterations, step.smoothStrength, step.smoothKeepBorders);
+	outfitStudio->ApplyRefresh(refresh);
+
+	if (!followers.empty()) {
+		UndoHistory* history = outfitStudio->glView->GetUndoHistory();
+		auto moves = BrushStrokeController::FollowEdit(*history->GetCurState(), meshes, followers, Mesh::TransformDistNifToMesh(step.smoothFollowRadius));
+		if (!moves.empty()) {
+			UndoStateProject* usp = history->PushState();
+			usp->undoType = UndoType::VertexPosition;
+			usp->usss = std::move(moves);
+			if (outfitStudio->editor.bEditSlider) {
+				usp->sliderName = outfitStudio->editor.activeSlider;
+				float sliderscale = project->SliderValue(usp->sliderName);
+				usp->sliderscale = sliderscale == 0.0f ? 1.0f : sliderscale;
+			}
+			outfitStudio->glView->ApplyUndoState(usp, false);
+		}
+	}
+
+	outfitStudio->SetPendingChanges();
+	outfitStudio->glView->Render();
+	return 0;
+}
+
 int AutomationRunner::ExecuteStepClearSliderData(const AutomationStep& step) {
 	auto shapes = ResolveTargetShapes(step);
 	if (shapes.empty()) {
@@ -3343,6 +3480,145 @@ int AutomationRunner::ExecuteStepGrowShrinkMask(const AutomationStep& step) {
 
 		for (int i = 0; i < iterations; i++)
 			MaskOps::ApplyChanges(*m, MaskOps::GrowShrinkChanges(*m, grow));
+	}
+
+	outfitStudio->glView->Render();
+	return 0;
+}
+
+int AutomationRunner::ExecuteStepMaskBox(const AutomationStep& step) {
+	auto shapes = ResolveTargetShapes(step);
+	if (shapes.empty()) {
+		wxLogWarning("Automation: MaskBox - no target shapes found.");
+		return 0;
+	}
+
+	const Vector3 lo(step.maskBoxMinX, step.maskBoxMinY, step.maskBoxMinZ);
+	const Vector3 hi(step.maskBoxMaxX, step.maskBoxMaxY, step.maskBoxMaxZ);
+
+	for (auto* shape : shapes) {
+		std::string shapeName = shape->name.get();
+		Mesh* m = outfitStudio->glView->GetMesh(shapeName);
+		if (!m || !m->mask)
+			continue;
+
+		// Positions as the shape is shown now, in NIF units
+		std::vector<Vector3> verts;
+		project->GetLiveVerts(shape, verts);
+
+		std::unordered_map<int, float> changes;
+		for (int v = 0; v < m->nVerts && v < static_cast<int>(verts.size()); v++) {
+			const Vector3& p = verts[v];
+			const bool inside = p.x >= lo.x && p.x <= hi.x && p.y >= lo.y && p.y <= hi.y && p.z >= lo.z && p.z <= hi.z;
+			if (inside)
+				changes[v] = 1.0f;
+			else if (!step.maskBoxKeepOthers)
+				changes[v] = 0.0f;
+		}
+
+		wxLogMessage("Automation: Masking the vertices of '%s' inside the box...", shapeName);
+		MaskOps::ApplyChanges(*m, changes);
+	}
+
+	outfitStudio->glView->Render();
+	return 0;
+}
+
+int AutomationRunner::ExecuteStepMaskCovered(const AutomationStep& step) {
+	// Without target meshes, the body under the outfit
+	std::vector<NiShape*> shapes;
+	if (step.targetMeshes.empty()) {
+		if (NiShape* baseShape = project->GetBaseShape())
+			shapes.push_back(baseShape);
+	}
+	else
+		shapes = ResolveTargetShapes(step, true);
+	if (shapes.empty()) {
+		wxLogWarning("Automation: MaskCovered - no target shapes found.");
+		return 0;
+	}
+
+	std::vector<NiShape*> covers;
+	if (step.maskCoverShapes.empty()) {
+		for (auto* shape : project->GetWorkNif()->GetShapes())
+			if (!project->IsBaseShape(shape) && std::find(shapes.begin(), shapes.end(), shape) == shapes.end())
+				covers.push_back(shape);
+	}
+	else {
+		for (auto& name : step.maskCoverShapes) {
+			NiShape* shape = FindShapeByName(name);
+			if (!shape) {
+				wxLogError("Automation: MaskCovered - cover shape '%s' not found.", name);
+				return 1;
+			}
+			covers.push_back(shape);
+		}
+	}
+	if (covers.empty()) {
+		wxLogWarning("Automation: MaskCovered - no cover shapes found.");
+		return 0;
+	}
+
+	// The cover shapes as they are shown now
+	std::vector<std::vector<Vector3>> coverVerts(covers.size());
+	std::vector<std::vector<Triangle>> coverTris(covers.size());
+	for (size_t c = 0; c < covers.size(); c++) {
+		project->GetLiveVerts(covers[c], coverVerts[c]);
+		covers[c]->GetTriangles(coverTris[c]);
+	}
+
+	for (auto* shape : shapes) {
+		std::string shapeName = shape->name.get();
+		Mesh* m = outfitStudio->glView->GetMesh(shapeName);
+		if (!m || !m->mask)
+			continue;
+
+		std::vector<Vector3> verts;
+		project->GetLiveVerts(shape, verts);
+		std::vector<Triangle> tris;
+		shape->GetTriangles(tris);
+		// Covered by any of them
+		std::vector<bool> covered(verts.size(), false);
+		for (size_t c = 0; c < covers.size(); c++) {
+			std::vector<bool> byCover = MeshAnalysis::CoveredVertices(verts, tris, coverVerts[c], coverTris[c], step.maskCoverOutside, step.maskCoverInside);
+			for (size_t v = 0; v < covered.size() && v < byCover.size(); v++)
+				if (byCover[v])
+					covered[v] = true;
+		}
+
+		std::unordered_map<int, float> changes;
+		size_t count = 0;
+		for (int v = 0; v < m->nVerts && v < static_cast<int>(covered.size()); v++) {
+			changes[v] = covered[v] ? 1.0f : 0.0f;
+			if (covered[v])
+				count++;
+		}
+
+		wxLogMessage("Automation: Masked %zu covered vertices of '%s'.", count, shapeName);
+		MaskOps::ApplyChanges(*m, changes);
+	}
+
+	outfitStudio->glView->Render();
+	return 0;
+}
+
+int AutomationRunner::ExecuteStepSmoothMask(const AutomationStep& step) {
+	auto shapes = ResolveTargetShapes(step);
+	if (shapes.empty()) {
+		wxLogWarning("Automation: SmoothMask - no target shapes found.");
+		return 0;
+	}
+
+	const int iterations = std::max(1, step.maskSmoothCount);
+	for (auto* shape : shapes) {
+		std::string shapeName = shape->name.get();
+		Mesh* m = outfitStudio->glView->GetMesh(shapeName);
+		if (!m || !m->mask)
+			continue;
+
+		wxLogMessage("Automation: Smoothing the mask of '%s' %d time(s)...", shapeName, iterations);
+		for (int i = 0; i < iterations; i++)
+			MaskOps::ApplyChanges(*m, MaskOps::SmoothChanges(*m));
 	}
 
 	outfitStudio->glView->Render();

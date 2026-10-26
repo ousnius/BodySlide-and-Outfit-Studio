@@ -5,6 +5,7 @@ See the included LICENSE file
 
 #include "EditUV.h"
 #include "../render/GLOffscreenBuffer.h"
+#include "../files/GameDataStream.h"
 
 #include <regex>
 
@@ -1151,8 +1152,7 @@ void EditUVCanvas::InitMeshes() {
 		// If the path doesn't start with "textures/", add it to the front
 		texFile = std::regex_replace(texFile, std::regex("^(?!^textures/)", std::regex_constants::icase), "textures/");
 
-		std::string texturesDir = Config["GameDataPath"];
-		texFile = texturesDir + texFile;
+		texFile = GameDataStream::FindAssetPath(texFile);
 
 		std::vector<std::string> textures(1, texFile);
 		std::string vShader = Config["AppDir"] + "/res/shaders/default.vert";

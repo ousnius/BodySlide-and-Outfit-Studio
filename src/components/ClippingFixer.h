@@ -11,6 +11,16 @@ See the included LICENSE file
 
 struct ClippingFixOptions {
 	float strength = 0.5f; // 0.0 to 1.0, controls inflation distance
+	// Also push outfit triangles the body pokes out through between their vertices, which happens where large
+	// outfit triangles span a curve of the body while every outfit vertex stays outside it
+	bool fixPokeThrough = false;
+};
+
+// A body vertex that pokes out through the outfit: the outfit triangle it went through and how far back
+// inwards along the body normal that triangle is
+struct PokeThrough {
+	int triangle = -1; // -1 where the vertex doesn't poke out
+	float depth = 0.0f;
 };
 
 class ClippingFixer {
@@ -33,10 +43,26 @@ public:
 
 	// Signed distance of each point from the body surface along the body's outward normal.
 	// Negative values are inside the body. Points with no body surface within searchRadius get FLT_MAX.
+	// Points whose closest surface point is on an open edge of the body (the neck without a head, the
+	// wrists) are past the opening, not inside, and count as outside.
 	static std::vector<float> SignedDistancesToBody(const std::vector<nifly::Vector3>& bodyVerts,
 											   const std::vector<nifly::Triangle>& bodyTris,
 											   const std::vector<nifly::Vector3>& points,
 											   float searchRadius);
+
+	// Body vertices that are outside the outfit where it covers them, so the body shows through it, one per body
+	// vertex. Found by looking inwards from each body vertex along its normal for an outfit triangle within
+	// maxDepth that lies before the body's other side. outwardNormals are the body's vertex normals pointing out
+	// when the caller has them already.
+	static std::vector<PokeThrough> BodyPokeThrough(const std::vector<nifly::Vector3>& bodyVerts,
+													const std::vector<nifly::Triangle>& bodyTris,
+													const std::vector<nifly::Vector3>& outfitVerts,
+													const std::vector<nifly::Triangle>& outfitTris,
+													float maxDepth,
+													const std::vector<nifly::Vector3>* outwardNormals = nullptr);
+
+	// The deepest poke through each outfit vertex's triangles, as a positive distance, 0 where there is none
+	static std::vector<float> PokeDepthPerVertex(const std::vector<PokeThrough>& pokes, const std::vector<nifly::Triangle>& outfitTris, size_t outfitVertexCount);
 
 private:
 	// Compute per-vertex normals for a mesh by averaging face normals.

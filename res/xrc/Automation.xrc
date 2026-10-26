@@ -171,6 +171,14 @@
 																<tooltip>Use regex matching for target shape names</tooltip>
 															</object>
 														</object>
+														<object class="sizeritem">
+															<flag>wxALIGN_CENTER_VERTICAL|wxLEFT</flag>
+															<border>5</border>
+															<object class="wxCheckBox" name="chkTargetReference">
+																<label>Reference</label>
+																<tooltip>Let regex patterns match the reference shape too</tooltip>
+															</object>
+														</object>
 													</object>
 												</object>
 
@@ -387,6 +395,20 @@
 																<object class="wxTextCtrl" name="txtWeightBoneList">
 																	<tooltip>Comma-separated list of bone names. Leave empty to copy all bones.</tooltip>
 																	<hint>Comma-separated bone list</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Normalize:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxCheckBox" name="chkWeightNormalize">
+																	<label>Make the weights of each vertex add up to 1</label>
+																	<tooltip>Normalizes the weights of the target shapes after copying them.</tooltip>
 																</object>
 															</object>
 														</object>
@@ -1174,6 +1196,114 @@ The shape is taken from the Target Meshes field above. If it is empty, the proje
 																	<hint>Comma-separated slider list</hint>
 																</object>
 															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- ImportFromGame -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageImportFromGame">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Import From Other Game</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>File:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtGameImportFile">
+																	<tooltip>NIF file of another game, or a slider set file (.osp) of another game's BodySlide folder. Supports {{PLACEHOLDER}} variables.</tooltip>
+																	<hint>e.g. D:\Fallout 4\Data\meshes\outfit.nif</hint>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Set:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtGameImportSet">
+																	<tooltip>Set of the slider set file, needed when it has more than one.</tooltip>
+																	<hint>Set name</hint>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Data Folders:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtGameImportDataFolders">
+																	<tooltip>Comma-separated Data folders of the source game or mod. Their material files (BGSM) set up the shaders.</tooltip>
+																	<hint>e.g. D:\Mods\MyOutfit</hint>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Shapes:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtGameImportShapes">
+																	<tooltip>Comma-separated shapes to import. Leave empty to import all.</tooltip>
+																	<hint>All shapes</hint>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Skip Shapes:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtGameImportSkipShapes">
+																	<tooltip>Comma-separated shapes to leave out, e.g. the source game's body.</tooltip>
+																	<hint>e.g. CBBE</hint>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Slider Data:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtGameImportSliders">
+																	<tooltip>Slider data to take over from a set: local (the outfit's own morphs and all zaps), all (also the body's shared data), zaps or none.</tooltip>
+																	<hint>local</hint>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Imports the shapes of another game's NIF or BodySlide set in global space, e.g. Fallout 4 outfits into a Skyrim project. Bone weights aren't kept, since the skeletons differ: conform, copy bone weights from a body of this game and set partitions afterwards.</label>
+															<wrap>400</wrap>
 														</object>
 													</object>
 												</object>
@@ -1982,6 +2112,107 @@ If Target Meshes is empty, all shapes are deleted. Use Regex mode for pattern ma
 														<border>5</border>
 														<object class="wxStaticText">
 															<label>Resets global-to-skin transforms for all skinned meshes. No additional parameters needed.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- SmoothVertices -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageSmoothVertices">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Smooth Vertices</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Iterations:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtSmoothIterations">
+																	<value>10</value>
+																	<tooltip>How many times the smoothing is applied.</tooltip>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Strength:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtSmoothStrength">
+																	<value>0.100</value>
+																	<tooltip>Strength of each iteration, like the smooth brush strength.</tooltip>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Follow Shapes:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtSmoothFollowShapes">
+																	<value></value>
+																	<tooltip>Comma separated shapes that move with the smoothed ones, such as trim or zippers lying on them. Patterns when the targets use patterns.</tooltip>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Follow Radius:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtSmoothFollowRadius">
+																	<value>1.50</value>
+																	<tooltip>How far (NIF units) a follow shape vertex can be from the smoothed shapes to move with them.</tooltip>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Borders:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxCheckBox" name="chkSmoothKeepBorders">
+																	<label>Keep open mesh edges in place</label>
+																	<checked>1</checked>
+																	<tooltip>Smoothing pulls open edges in, opening gaps to zippers and trim attached there.</tooltip>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Smooths the unmasked vertices of the target shapes like the smooth brush, the base shape or the slider being edited. Partly masked vertices change less, so a smoothed mask border fades the smoothing out. Follow shapes take the moves of the nearest smoothed vertices.</label>
 															<wrap>400</wrap>
 														</object>
 													</object>
@@ -3885,6 +4116,206 @@ If Target Meshes is empty, all shapes are deleted. Use Regex mode for pattern ma
 											</object>
 										</object>
 
+										<!-- MaskBox -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageMaskBox">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Mask Box</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Min X:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtMaskBoxMinX">
+																	<value>-100000.00</value>
+																	<tooltip>Lower X bound of the box (NIF units).</tooltip>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Min Y:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtMaskBoxMinY">
+																	<value>-100000.00</value>
+																	<tooltip>Lower Y bound of the box (NIF units).</tooltip>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Min Z:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtMaskBoxMinZ">
+																	<value>-100000.00</value>
+																	<tooltip>Lower Z bound of the box (NIF units).</tooltip>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Max X:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtMaskBoxMaxX">
+																	<value>100000.00</value>
+																	<tooltip>Upper X bound of the box (NIF units).</tooltip>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Max Y:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtMaskBoxMaxY">
+																	<value>100000.00</value>
+																	<tooltip>Upper Y bound of the box (NIF units).</tooltip>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Max Z:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtMaskBoxMaxZ">
+																	<value>100000.00</value>
+																	<tooltip>Upper Z bound of the box (NIF units).</tooltip>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Outside:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxCheckBox" name="chkMaskBoxKeepOthers">
+																	<label>Keep the mask outside the box</label>
+																	<tooltip>Leave the mask of the vertices outside the box as it is instead of unmasking them.</tooltip>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Masks the vertices of the target shapes inside the box, as the shapes are shown now (NIF units, +X right, +Y front, +Z up).</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- MaskCovered -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageMaskCovered">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Mask Covered Vertices</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Cover Shapes:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtMaskCoverShapes">
+																	<value></value>
+																	<tooltip>Comma-separated shapes that cover the target shapes. Leave empty for every outfit shape that isn't a target.</tooltip>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Outside:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtMaskCoverOutside">
+																	<value>2.00</value>
+																	<tooltip>How far in front of a vertex (NIF units) the covering surface may be.</tooltip>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Inside:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtMaskCoverInside">
+																	<value>1.00</value>
+																	<tooltip>How far behind a vertex (NIF units) the covering surface may be, where it sinks in.</tooltip>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Masks the vertices of the target shapes (the reference when there are none) that the cover shapes cover along the vertex normal, and unmasks the others. Invert the mask and add a zap slider to hide what's covered.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
 										<!-- MaskBoneWeighted -->
 										<object class="simplebookpage">
 											<object class="wxPanel" name="pageMaskBoneWeighted">
@@ -3966,6 +4397,50 @@ If Target Meshes is empty, all shapes are deleted. Use Regex mode for pattern ma
 														<border>5</border>
 														<object class="wxStaticText">
 															<label>Replaces the mask of the target shapes with the vertices that the given slider has morph data for.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- SmoothMask -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageSmoothMask">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Smooth Mask</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Iterations:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtMaskSmoothCount">
+																	<value>1</value>
+																	<tooltip>How many times the mask is smoothed.</tooltip>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Smooths the mask of the target shapes, so a hard mask border becomes a gradient.</label>
 															<wrap>400</wrap>
 														</object>
 													</object>

@@ -40,6 +40,18 @@ public:
 	// Pick info at a vertex of a mesh, viewed along its normal
 	static TweakPickInfo PickAtVertex(Mesh* mesh, int vertex);
 
+	// Smooths all unmasked vertices of the meshes like the smooth brush, as one stroke and undo step.
+	// The mask scales the change, so a soft mask border fades it out. keepBorders keeps open mesh edges
+	// in place.
+	RefreshFlags SmoothMeshes(const std::vector<Mesh*>& meshes, int iterations, float strength, bool keepBorders = true);
+
+	// Vertex moves for the follower meshes after a position edit of the edited meshes: each follower
+	// vertex within radius (model units) of their surface moves as far as the surface under it moved
+	// across, so parts lying on them (trim, zippers) stay on the surface without sliding along with
+	// its vertices. The followers' masks scale their moves.
+	static std::vector<UndoStateShape> FollowEdit(const UndoStateProject& edit, const std::vector<Mesh*>& editedMeshes,
+												  const std::vector<Mesh*>& followers, float radius);
+
 private:
 	OutfitProject& project;
 	EditorState& editor;

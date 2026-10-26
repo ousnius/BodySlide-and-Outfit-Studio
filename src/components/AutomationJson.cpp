@@ -16,6 +16,7 @@ const char* const KeyActive = "active";
 const char* const KeyNote = "Note";
 const char* const KeyTargetMeshes = "TargetMeshes";
 const char* const KeyTargetRegex = "TargetRegex";
+const char* const KeyTargetReference = "TargetReference";
 const char* const KeyShaderProperties = "ShaderProperties";
 const char* const KeyGeometryProperties = "GeometryProperties";
 const char* const KeyTexturePaths = "TexturePaths";
@@ -147,6 +148,8 @@ json AutomationStepToJson(const AutomationStep& step, bool includeDefaults) {
 		out[KeyTargetMeshes] = step.targetMeshes;
 	if (includeDefaults || step.targetRegex)
 		out[KeyTargetRegex] = step.targetRegex;
+	if (includeDefaults || step.targetReference)
+		out[KeyTargetReference] = step.targetReference;
 
 	for (const AutomationField& field : info.fields) {
 		switch (field.kind) {
@@ -272,6 +275,15 @@ bool AutomationStepFromJson(const json& in, AutomationStep& outStep, std::string
 				return false;
 			}
 			step.targetRegex = value.get<bool>();
+			continue;
+		}
+
+		if (key == KeyTargetReference) {
+			if (!value.is_boolean()) {
+				error = TypeError(key, "true or false");
+				return false;
+			}
+			step.targetReference = value.get<bool>();
 			continue;
 		}
 

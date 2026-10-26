@@ -218,6 +218,7 @@ std::vector<AutomationStepInfo> BuildStepTypes() {
 			FieldFloat("ProximityRadius", &Step::weightProximityRadius, 10.0f, "txtWeightRadius", AutomationFieldUI::Text, "%.1f"),
 			FieldInt("MaxResults", &Step::weightMaxResults, 10, "txtWeightMaxResults"),
 			FieldStringList("BoneList", &Step::weightBoneList, "txtWeightBoneList"),
+			FieldBool("Normalize", &Step::weightNormalize, false, "chkWeightNormalize"),
 		});
 
 	add(AutomationStepType::TransferWeights, "TransferWeights", wxTRANSLATE("Bones"), wxTRANSLATE("Bones: Transfer Selected Weights"), "pageTransferWeights",
@@ -303,6 +304,16 @@ std::vector<AutomationStepInfo> BuildStepTypes() {
 			FieldBool("FromFolder", &Step::sliderDataFromFolder, false),
 			FieldBool("MergeSliders", &Step::sliderMerge, false, "chkSliderMerge"),
 			FieldStringList("SliderNames", &Step::sliderNames, "txtSliderNames"),
+		});
+
+	add(AutomationStepType::ImportFromGame, "ImportFromGame", wxTRANSLATE("Import"), wxTRANSLATE("Import: From Other Game"), "pageImportFromGame",
+		{
+			FieldString("FilePath", &Step::gameImportFile, "txtGameImportFile"),
+			FieldString("Set", &Step::gameImportSet, "txtGameImportSet"),
+			FieldStringList("DataFolders", &Step::gameImportDataFolders, "txtGameImportDataFolders"),
+			FieldStringList("Shapes", &Step::gameImportShapes, "txtGameImportShapes"),
+			FieldStringList("SkipShapes", &Step::gameImportSkipShapes, "txtGameImportSkipShapes"),
+			FieldString("Sliders", &Step::gameImportSliders, "txtGameImportSliders"),
 		});
 
 	// Project
@@ -418,6 +429,15 @@ std::vector<AutomationStepInfo> BuildStepTypes() {
 			FieldBool("Unmatched", &Step::asymDoUnmatched, false, "chkSymVertUnmatched"),
 			FieldBool("Sliders", &Step::asymDoSliders, false, "chkSymVertSliders"),
 			FieldBool("Bones", &Step::asymDoBones, false, "chkSymVertBones"),
+		});
+
+	add(AutomationStepType::SmoothVertices, "SmoothVertices", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Smooth Vertices"), "pageSmoothVertices",
+		{
+			FieldInt("Iterations", &Step::smoothIterations, 10, "txtSmoothIterations"),
+			FieldFloat("Strength", &Step::smoothStrength, 0.1f, "txtSmoothStrength", AutomationFieldUI::Text, "%.3f"),
+			FieldStringList("FollowShapes", &Step::smoothFollowShapes, "txtSmoothFollowShapes"),
+			FieldFloat("FollowRadius", &Step::smoothFollowRadius, 1.5f, "txtSmoothFollowRadius", AutomationFieldUI::Text, "%.2f"),
+			FieldBool("KeepBorders", &Step::smoothKeepBorders, true, "chkSmoothKeepBorders"),
 		});
 
 	add(AutomationStepType::TransformShape, "TransformShape", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Transform Shape"), "pageTransformShape",
@@ -559,6 +579,24 @@ std::vector<AutomationStepInfo> BuildStepTypes() {
 			FieldBool("Bones", &Step::asymDoBones, false, "chkMaskAsymBones"),
 		});
 
+	add(AutomationStepType::MaskBox, "MaskBox", wxTRANSLATE("Masks"), wxTRANSLATE("Masks: Mask Box"), "pageMaskBox",
+		{
+			FieldFloat("MinX", &Step::maskBoxMinX, -100000.0f, "txtMaskBoxMinX"),
+			FieldFloat("MinY", &Step::maskBoxMinY, -100000.0f, "txtMaskBoxMinY"),
+			FieldFloat("MinZ", &Step::maskBoxMinZ, -100000.0f, "txtMaskBoxMinZ"),
+			FieldFloat("MaxX", &Step::maskBoxMaxX, 100000.0f, "txtMaskBoxMaxX"),
+			FieldFloat("MaxY", &Step::maskBoxMaxY, 100000.0f, "txtMaskBoxMaxY"),
+			FieldFloat("MaxZ", &Step::maskBoxMaxZ, 100000.0f, "txtMaskBoxMaxZ"),
+			FieldBool("KeepOthers", &Step::maskBoxKeepOthers, false, "chkMaskBoxKeepOthers"),
+		});
+
+	add(AutomationStepType::MaskCovered, "MaskCovered", wxTRANSLATE("Masks"), wxTRANSLATE("Masks: Mask Covered Vertices"), "pageMaskCovered",
+		{
+			FieldStringList("CoverShapes", &Step::maskCoverShapes, "txtMaskCoverShapes"),
+			FieldFloat("Outside", &Step::maskCoverOutside, 2.0f, "txtMaskCoverOutside", AutomationFieldUI::Text, "%.2f"),
+			FieldFloat("Inside", &Step::maskCoverInside, 1.0f, "txtMaskCoverInside", AutomationFieldUI::Text, "%.2f"),
+		});
+
 	add(AutomationStepType::MaskBoneWeighted, "MaskBoneWeighted", wxTRANSLATE("Masks"), wxTRANSLATE("Masks: Mask Bone-Weighted Vertices"), "pageMaskBoneWeighted",
 		{
 			FieldStringList("BoneNames", &Step::maskBoneNames, "txtMaskBoneNames"),
@@ -576,6 +614,11 @@ std::vector<AutomationStepInfo> BuildStepTypes() {
 			FieldString("MaskFile", &Step::saveMaskFile, "txtSaveMaskFile"),
 			FieldString("MaskName", &Step::saveMaskName, "txtSaveMaskName"),
 			FieldBool("Merge", &Step::saveMaskMerge, true, "chkSaveMaskMerge"),
+		});
+
+	add(AutomationStepType::SmoothMask, "SmoothMask", wxTRANSLATE("Masks"), wxTRANSLATE("Masks: Smooth Mask"), "pageSmoothMask",
+		{
+			FieldInt("Iterations", &Step::maskSmoothCount, 1, "txtMaskSmoothCount"),
 		});
 
 	// Nodes
@@ -807,6 +850,7 @@ int AutomationScript::Load(const std::string& fileName) {
 			step.targetMeshes = SplitCommaSeparated(meshesText);
 
 		step.targetRegex = GetChildBool(stepElem, "TargetRegex", false);
+		step.targetReference = GetChildBool(stepElem, "TargetReference", false);
 
 		// Type specific parameters come from the step type's field table
 		const AutomationStepInfo& info = GetAutomationStepInfo(step.type);
@@ -898,6 +942,7 @@ int AutomationScript::Save(const std::string& fileName) {
 			SetChildText(doc, stepElem, "TargetMeshes", JoinStrings(step.targetMeshes, ", "));
 
 		SetChildBool(doc, stepElem, "TargetRegex", step.targetRegex, false);
+		SetChildBool(doc, stepElem, "TargetReference", step.targetReference, false);
 
 		// Type specific parameters come from the step type's field table
 		const AutomationStepInfo& info = GetAutomationStepInfo(step.type);

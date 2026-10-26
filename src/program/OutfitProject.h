@@ -11,6 +11,7 @@ See the included LICENSE file
 #include "../components/Mesh.h"
 #include "../components/UndoState.h"
 #include "../files/ObjFile.h"
+#include "../files/PhysicsXmlFile.h"
 #include "../files/SFMaterialResolver.h"
 #include "ProjectHost.h"
 #include "../utils/TargetGame.h"
@@ -21,6 +22,7 @@ See the included LICENSE file
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <iosfwd>
 #include <map>
 #include <memory>
@@ -187,6 +189,7 @@ void AddWeldedToVertexList(const Mesh::WeldVertsType& welcVerts, std::vector<boo
 class OutfitProject {
 	IProjectHost* host = nullptr;
 	std::unique_ptr<NonInteractiveHost> ownHost;
+	uint64_t instanceId = 0;
 
 	void UpdateProgress(int val, const wxString& msg = "");
 
@@ -327,6 +330,9 @@ public:
 
 	IProjectHost& GetHost() { return *host; }
 
+	// Unique for each project created while the program runs, unlike its address, which a new project can reuse
+	uint64_t GetInstanceId() const { return instanceId; }
+
 	wxString mFileName;
 	wxString mOutfitName;
 	wxString mDataDir;
@@ -381,6 +387,9 @@ public:
 	// Object" extra data to a readable stream (loose game data folder file,
 	// relative to the project's input NIF, or from loaded archives).
 	std::unique_ptr<std::istream> GetPhysicsXmlStream(const std::string& xmlPath);
+	// Reads the physics XML files linked to a shape (shapePhysicsFiles), by path. Paths that can't be found or
+	// parsed go to outMissing.
+	std::vector<std::pair<std::string, PhysicsXmlFile>> ReadPhysicsXmls(const std::string& shapeName, std::vector<std::string>* outMissing = nullptr);
 	const ClothData::Blocks& GetClothData() const { return clothData.GetBlocks(); }
 	void AddClothData(const std::string& source, std::unique_ptr<nifly::BSClothExtraData> block) { clothData.AddManual(source, std::move(block)); }
 
@@ -403,8 +412,15 @@ public:
 	size_t SliderCount();
 	std::string GetSliderName(const size_t index);
 	void GetSliderList(std::vector<std::string>& sliderNames);
+	// Starts the reference data set of a new slider empty
+	void NewBaseDiffSet(const std::string& dataName, const std::string& target);
 	void AddEmptySlider(const std::string& newName);
 	void AddZapSlider(const std::string& newName, std::unordered_map<uint16_t, float>& verts, nifly::NiShape* shape);
+	// Vertices of a shape that a zap slider removes. Falls back to the loaded morph results for a reference
+	// shape whose data isn't in the base diff data, like the body of a project loaded for comparison.
+	std::vector<bool> GetZappedVertices(nifly::NiShape* shape, const std::string& sliderName);
+	// Replaces the data of an existing zap slider on a shape, keeping the slider's settings
+	void SetZappedVertices(nifly::NiShape* shape, const std::string& sliderName, const std::vector<bool>& zapped);
 	void AddCombinedSlider(const std::string& newName);
 
 	nifly::NiShape* CreateNifShapeFromData(const std::string& shapeName,
@@ -597,7 +613,15 @@ public:
 
 	bool PrepareCollapseVertex(nifly::NiShape* shape, UndoStateShape& uss, const std::vector<uint16_t>& indices);
 	bool PrepareFlipEdge(nifly::NiShape* shape, UndoStateShape& uss, const nifly::Edge& edge);
-	bool PrepareRefineMesh(nifly::NiShape* shape, UndoStateShape& uss, std::vector<bool>& pincs, const Mesh::WeldVertsType& weldVerts, const bool noCurveOffset, std::vector<nifly::Edge>* badEdges = nullptr);
+	// Splits the edges whose vertices are both in pincs, and that splitEdge accepts when it's given. splitEdge has to give
+	// both directions of an edge and its welded copies the same answer.
+	bool PrepareRefineMesh(nifly::NiShape* shape,
+						   UndoStateShape& uss,
+						   std::vector<bool>& pincs,
+						   const Mesh::WeldVertsType& weldVerts,
+						   const bool noCurveOffset,
+						   std::vector<nifly::Edge>* badEdges = nullptr,
+						   const std::function<bool(const nifly::Edge&)>& splitEdge = {});
 
 	bool IsVertexOnBoundary(nifly::NiShape* shape, int vi);
 	bool PointsHaveDifferingWeightsOrDiffs(nifly::NiShape* shape1, int p1, nifly::NiShape* shape2, int p2);
@@ -636,6 +660,10 @@ public:
 	void ChoosePhysicsData(nifly::NifFile& nif);
 	void WriteAnimToNif(nifly::NifFile& nif, const std::string& shapeException = "");
 	void ResetTransforms();
+
+	// Gives a shape without one the default shader of the target game, with an empty texture set. False if it had one
+	// or the shape can't have one.
+	bool AddShader(nifly::NiShape* s);
 
 	void CreateSkinning(nifly::NiShape* s);
 	void RemoveSkinning(nifly::NiShape* s);

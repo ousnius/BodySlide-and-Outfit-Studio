@@ -6,6 +6,7 @@ See the included LICENSE file
 #include "SFMaterialResolver.h"
 
 #include "SFMaterialFile.h"
+#include "GameDataStream.h"
 #include "../utils/StringStuff.h"
 
 #include "FSEngine/FSEngine.h"
@@ -94,6 +95,15 @@ bool SFMaterialResolver::Resolve(const std::string& shaderName, const std::strin
     std::ifstream looseInput(dataPath + matFile);
     if (looseInput)
         found = ReadMaterial(looseInput, material);
+
+    // Then the extra data folders, before the archives
+    for (auto& folder : GameDataStream::DataFolders()) {
+        if (found || folder == dataPath)
+            continue;
+        std::ifstream extraInput(folder + matFile);
+        if (extraInput)
+            found = ReadMaterial(extraInput, material);
+    }
 
     if (!found) {
         wxMemoryBuffer data;

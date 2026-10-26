@@ -15,6 +15,7 @@ See the included LICENSE file
 #include <array>
 #include <cstdint>
 #include <cmath>
+#include <unordered_map>
 
 using namespace nifly;
 
@@ -102,6 +103,63 @@ float ComputeNormalSignFromPoint(const std::vector<Vector3>& verts, const std::v
 
 	return (orientation >= 0.0f) ? 1.0f : -1.0f;
 }
+
+// Distance along the ray to the triangle, from either side, or a negative value when the ray misses it
+float RayTriangleDistance(const Vector3& origin, const Vector3& direction, const Vector3& c0, const Vector3& c1, const Vector3& c2) {
+	Vector3 e1 = c1 - c0;
+	Vector3 e2 = c2 - c0;
+	Vector3 pvec = direction.cross(e2);
+	float det = e1.dot(pvec);
+	if (std::fabs(det) < 1e-12f)
+		return -1.0f;
+
+	float inv = 1.0f / det;
+	Vector3 tvec = origin - c0;
+	float u = tvec.dot(pvec) * inv;
+	if (u < 0.0f || u > 1.0f)
+		return -1.0f;
+
+	Vector3 qvec = tvec.cross(e1);
+	float v = direction.dot(qvec) * inv;
+	if (v < 0.0f || u + v > 1.0f)
+		return -1.0f;
+
+	return e2.dot(qvec) * inv;
+}
+
+// 1 when the triangles of a body face away from its inside, -1 when they face into it: most faces have to point away
+// from the centroid. trinormal() direction depends on winding order which varies across NIF files.
+Vector3 Centroid(const std::vector<Vector3>& verts) {
+	Vector3 centroid;
+	for (auto& v : verts)
+		centroid += v;
+	return centroid / static_cast<float>(verts.size());
+}
+
+float OutwardSign(const std::vector<Vector3>& bodyVerts, const std::vector<Triangle>& bodyTris) {
+	const Vector3 bodyCentroid = Centroid(bodyVerts);
+
+	int outwardCount = 0;
+	int inwardCount = 0;
+	for (auto& tri : bodyTris) {
+		if (tri.p1 >= bodyVerts.size() || tri.p2 >= bodyVerts.size() || tri.p3 >= bodyVerts.size())
+			continue;
+		Vector3 triCenter = (bodyVerts[tri.p1] + bodyVerts[tri.p2] + bodyVerts[tri.p3]) / 3.0f;
+		if ((triCenter - bodyCentroid).dot(tri.trinormal(bodyVerts.data())) > 0.0f)
+			outwardCount++;
+		else
+			inwardCount++;
+	}
+
+	return (outwardCount >= inwardCount) ? 1.0f : -1.0f;
+}
+
+// Turns vertex normals of a body to point away from its inside
+std::vector<Vector3> Oriented(std::vector<Vector3> normals, float normalSign) {
+	for (auto& n : normals)
+		n = n * normalSign;
+	return normals;
+}
 }
 
 NiShape* ClippingFixer::FindReferenceShape(NifFile& nif) {
@@ -182,28 +240,32 @@ std::vector<float> ClippingFixer::SignedDistancesToBody(const std::vector<Vector
 	if (bodyVerts.empty() || bodyTris.empty() || points.empty())
 		return distances;
 
-	// Same outward direction as FixClipping: most faces have to point away from the centroid
-	Vector3 bodyCentroid;
-	for (auto& bv : bodyVerts)
-		bodyCentroid += bv;
-	bodyCentroid /= static_cast<float>(bodyVerts.size());
+	// Same outward direction as FixClipping
+	const float normalSign = OutwardSign(bodyVerts, bodyTris);
+	std::vector<Vector3> bodyNormals = Oriented(ComputeVertexNormals(bodyVerts, bodyTris), normalSign);
 
-	int outwardCount = 0;
-	int inwardCount = 0;
+	// Open edges: edges of only one triangle, and their vertices
+	std::unordered_map<uint32_t, int> edgeUse;
+	auto edgeKey = [](uint16_t a, uint16_t b) { return a < b ? (static_cast<uint32_t>(a) << 16) | b : (static_cast<uint32_t>(b) << 16) | a; };
 	for (auto& tri : bodyTris) {
-		if (tri.p1 >= bodyVerts.size() || tri.p2 >= bodyVerts.size() || tri.p3 >= bodyVerts.size())
-			continue;
-		Vector3 triCenter = (bodyVerts[tri.p1] + bodyVerts[tri.p2] + bodyVerts[tri.p3]) / 3.0f;
-		if ((triCenter - bodyCentroid).dot(tri.trinormal(bodyVerts.data())) > 0.0f)
-			outwardCount++;
-		else
-			inwardCount++;
+		edgeUse[edgeKey(tri.p1, tri.p2)]++;
+		edgeUse[edgeKey(tri.p2, tri.p3)]++;
+		edgeUse[edgeKey(tri.p3, tri.p1)]++;
 	}
-	float normalSign = (outwardCount >= inwardCount) ? 1.0f : -1.0f;
-
-	std::vector<Vector3> bodyNormals = ComputeVertexNormals(bodyVerts, bodyTris);
-	for (auto& n : bodyNormals)
-		n = n * normalSign;
+	std::vector<bool> openVertex(bodyVerts.size(), false);
+	for (auto& edge : edgeUse)
+		if (edge.second == 1) {
+			uint16_t a = static_cast<uint16_t>(edge.first >> 16);
+			uint16_t b = static_cast<uint16_t>(edge.first & 0xFFFF);
+			if (a < openVertex.size())
+				openVertex[a] = true;
+			if (b < openVertex.size())
+				openVertex[b] = true;
+		}
+	auto isOpenEdge = [&](uint16_t a, uint16_t b) {
+		auto it = edgeUse.find(edgeKey(a, b));
+		return it != edgeUse.end() && it->second == 1;
+	};
 
 	AABBTree bodyBVH(const_cast<Vector3*>(bodyVerts.data()), const_cast<Triangle*>(bodyTris.data()), static_cast<uint32_t>(bodyTris.size()), 100, 2);
 	std::vector<AABBTriangleDistanceData> bodyTriangleDistanceData;
@@ -239,10 +301,118 @@ std::vector<float> ClippingFixer::SignedDistancesToBody(const std::vector<Vector
 			outward.Normalize();
 
 			distances[i] = (point - closestPoint).dot(outward);
+
+			// Closest to an open edge, the point is past the opening: the normals there point sideways, so
+			// a point over the hole would read as inside, or as on the surface
+			constexpr float onEdge = 1e-3f;
+			if (bu < onEdge || bv < onEdge || bw < onEdge) {
+				bool open = (bu < onEdge && isOpenEdge(tri.p2, tri.p3)) || (bv < onEdge && isOpenEdge(tri.p3, tri.p1)) || (bw < onEdge && isOpenEdge(tri.p1, tri.p2));
+				// At a corner of the triangle, the edge the point is past may belong to a neighbor
+				open = open || (bv < onEdge && bw < onEdge && openVertex[tri.p1]) || (bu < onEdge && bw < onEdge && openVertex[tri.p2]) ||
+					   (bu < onEdge && bv < onEdge && openVertex[tri.p3]);
+				if (open)
+					distances[i] = (point - closestPoint).length();
+			}
 		}
 	});
 
 	return distances;
+}
+
+std::vector<PokeThrough> ClippingFixer::BodyPokeThrough(const std::vector<Vector3>& bodyVerts,
+														const std::vector<Triangle>& bodyTris,
+														const std::vector<Vector3>& outfitVerts,
+														const std::vector<Triangle>& outfitTris,
+														float maxDepth,
+														const std::vector<Vector3>* outwardNormals) {
+	std::vector<PokeThrough> pokes(bodyVerts.size());
+	if (bodyVerts.empty() || bodyTris.empty() || outfitVerts.empty() || outfitTris.empty() || maxDepth <= 0.0f)
+		return pokes;
+
+	std::vector<Vector3> ownNormals;
+	if (!outwardNormals || outwardNormals->size() != bodyVerts.size()) {
+		ownNormals = Oriented(ComputeVertexNormals(bodyVerts, bodyTris), OutwardSign(bodyVerts, bodyTris));
+		outwardNormals = &ownNormals;
+	}
+	const std::vector<Vector3>& bodyNormals = *outwardNormals;
+
+	auto validTri = [](const Triangle& tri, size_t count) { return tri.p1 < count && tri.p2 < count && tri.p3 < count; };
+
+	// The outfit surface closest behind each body vertex, looking inwards
+	AABBTree outfitBVH(const_cast<Vector3*>(outfitVerts.data()), const_cast<Triangle*>(outfitTris.data()), static_cast<uint32_t>(outfitTris.size()), 100, 2);
+	ParallelFor(bodyVerts.size(), clippingQueryMinItemsPerWorker, [&](size_t startIndex, size_t endIndex) {
+		std::vector<IntersectResult> candidates;
+		for (size_t b = startIndex; b < endIndex; b++) {
+			Vector3 origin = bodyVerts[b];
+			Vector3 inward = bodyNormals[b] * -1.0f;
+			if (inward.IsZero(true))
+				continue;
+
+			candidates.clear();
+			if (!outfitBVH.IntersectSphere(origin, maxDepth, &candidates))
+				continue;
+
+			for (auto& c : candidates) {
+				const Triangle& tri = outfitTris[c.HitFacet];
+				if (!validTri(tri, outfitVerts.size()))
+					continue;
+				float t = RayTriangleDistance(origin, inward, outfitVerts[tri.p1], outfitVerts[tri.p2], outfitVerts[tri.p3]);
+				if (t > 1e-5f && t <= maxDepth && (pokes[b].triangle < 0 || t < pokes[b].depth)) {
+					pokes[b].triangle = static_cast<int>(c.HitFacet);
+					pokes[b].depth = t;
+				}
+			}
+		}
+	});
+
+	bool any = false;
+	for (auto& poke : pokes)
+		any = any || poke.triangle >= 0;
+	if (!any)
+		return pokes;
+
+	// An outfit surface beyond the body's other side, like a glove's far side behind a thin finger, covers that
+	// side and isn't a poke
+	AABBTree bodyBVH(const_cast<Vector3*>(bodyVerts.data()), const_cast<Triangle*>(bodyTris.data()), static_cast<uint32_t>(bodyTris.size()), 100, 2);
+	ParallelFor(bodyVerts.size(), clippingQueryMinItemsPerWorker, [&](size_t startIndex, size_t endIndex) {
+		std::vector<IntersectResult> candidates;
+		for (size_t b = startIndex; b < endIndex; b++) {
+			if (pokes[b].triangle < 0)
+				continue;
+
+			Vector3 origin = bodyVerts[b];
+			Vector3 inward = bodyNormals[b] * -1.0f;
+			candidates.clear();
+			if (!bodyBVH.IntersectSphere(origin, pokes[b].depth, &candidates))
+				continue;
+
+			for (auto& c : candidates) {
+				const Triangle& tri = bodyTris[c.HitFacet];
+				if (!validTri(tri, bodyVerts.size()) || tri.p1 == b || tri.p2 == b || tri.p3 == b)
+					continue;
+				float t = RayTriangleDistance(origin, inward, bodyVerts[tri.p1], bodyVerts[tri.p2], bodyVerts[tri.p3]);
+				if (t > 1e-3f && t < pokes[b].depth) {
+					pokes[b] = PokeThrough();
+					break;
+				}
+			}
+		}
+	});
+
+	return pokes;
+}
+
+std::vector<float> ClippingFixer::PokeDepthPerVertex(const std::vector<PokeThrough>& pokes, const std::vector<Triangle>& outfitTris, size_t outfitVertexCount) {
+	std::vector<float> depths(outfitVertexCount, 0.0f);
+	for (auto& poke : pokes) {
+		if (poke.triangle < 0 || static_cast<size_t>(poke.triangle) >= outfitTris.size())
+			continue;
+		const Triangle& tri = outfitTris[poke.triangle];
+		for (uint16_t v : {tri.p1, tri.p2, tri.p3})
+			if (v < outfitVertexCount)
+				depths[v] = std::max(depths[v], poke.depth);
+	}
+	return depths;
 }
 
 void ClippingFixer::FixClipping(const std::vector<Vector3>& bodyVerts,
@@ -264,32 +434,9 @@ void ClippingFixer::FixClipping(const std::vector<Vector3>& bodyVerts,
 	float influenceMargin = inflationDist * 0.5f;
 	float totalInfluence = inflationDist + influenceMargin;
 
-	// Determine body normal direction (outward vs inward).
-	// trinormal() direction depends on winding order which varies across NIF files.
-	Vector3 bodyCentroid;
-	for (auto& bv : bodyVerts)
-		bodyCentroid += bv;
-	bodyCentroid /= static_cast<float>(bodyVerts.size());
-
-	int outwardCount = 0;
-	int inwardCount = 0;
-	for (auto& tri : bodyTris) {
-		if (tri.p1 >= bodyVerts.size() || tri.p2 >= bodyVerts.size() || tri.p3 >= bodyVerts.size())
-			continue;
-		Vector3 triCenter = (bodyVerts[tri.p1] + bodyVerts[tri.p2] + bodyVerts[tri.p3]) / 3.0f;
-		Vector3 toOutward = triCenter - bodyCentroid;
-		Vector3 normal = tri.trinormal(bodyVerts.data());
-		if (toOutward.dot(normal) > 0.0f)
-			outwardCount++;
-		else
-			inwardCount++;
-	}
-	float normalSign = (outwardCount >= inwardCount) ? 1.0f : -1.0f;
-
-	// Compute body vertex normals (the "inflation direction" at each vertex)
-	std::vector<Vector3> bodyNormals = ComputeVertexNormals(bodyVerts, bodyTris);
-	for (auto& n : bodyNormals)
-		n = n * normalSign;
+	// The body vertex normals pointing outward are the "inflation direction" at each vertex
+	const float normalSign = OutwardSign(bodyVerts, bodyTris);
+	std::vector<Vector3> bodyNormals = Oriented(ComputeVertexNormals(bodyVerts, bodyTris), normalSign);
 
 	// Build AABBTree for the body mesh
 	AABBTree bodyBVH(const_cast<Vector3*>(bodyVerts.data()),
@@ -310,7 +457,7 @@ void ClippingFixer::FixClipping(const std::vector<Vector3>& bodyVerts,
 	const std::vector<uint8_t>& boundaryVerts = topology.boundaryVerts;
 	const std::vector<std::vector<int>>& adjacency = topology.adjacency;
 	std::vector<Vector3> outfitNormals = ComputeVertexNormals(outfitVerts, outfitTris);
-	float outfitNormalSign = ComputeNormalSignFromPoint(outfitVerts, outfitTris, bodyCentroid);
+	float outfitNormalSign = ComputeNormalSignFromPoint(outfitVerts, outfitTris, Centroid(bodyVerts));
 	for (auto& n : outfitNormals)
 		n = n * outfitNormalSign;
 
@@ -479,6 +626,22 @@ void ClippingFixer::FixClipping(const std::vector<Vector3>& bodyVerts,
 
 				mergeDisplacement(vertIndex, contribution.displacement);
 			}
+		}
+	}
+
+	// The body poking out between outfit vertices: the triangle it went through moves out over the body vertex. A
+	// deep poke (a nipple) moves only part of the way per fix, as moving one triangle far at once makes a tent with
+	// folds around it; the strength sets how far.
+	if (options.fixPokeThrough) {
+		const float maxPush = 0.1f + strength * 0.5f;
+		std::vector<PokeThrough> pokes = BodyPokeThrough(bodyVerts, bodyTris, outfitVerts, outfitTris, totalInfluence + 1.0f, &bodyNormals);
+		for (size_t b = 0; b < pokes.size(); b++) {
+			if (pokes[b].triangle < 0)
+				continue;
+			const Triangle& tri = outfitTris[pokes[b].triangle];
+			Vector3 displacement = bodyNormals[b] * (std::min(pokes[b].depth, maxPush) + inflationDist);
+			for (uint16_t v : {tri.p1, tri.p2, tri.p3})
+				mergeDisplacement(v, displacement);
 		}
 	}
 

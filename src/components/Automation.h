@@ -36,6 +36,7 @@ enum class AutomationStepType {
 	SaveProject,
 	ImportFile,
 	ImportSliderData,
+	ImportFromGame,
 	AddProject,
 	ClearProject,
 	ClearReference,
@@ -61,6 +62,7 @@ enum class AutomationStepType {
 	ResetTransforms,
 	SeparateVertices,
 	SymmetrizeVertices,
+	SmoothVertices,
 	TransformShape,
 	SetGeometryProperties,
 	SetExtraData,
@@ -81,16 +83,19 @@ enum class AutomationStepType {
 	InvertMask,
 	LoadMask,
 	MaskAsymmetric,
+	MaskBox,
+	MaskCovered,
 	MaskBoneWeighted,
 	MaskSliderAffected,
 	MaskWeighted,
 	SaveMask,
+	SmoothMask,
 	RemoveUnusedNodes,
 	SetVariable,
 	LogMessage
 };
 
-constexpr int AutomationStepTypeCount = 65;
+constexpr int AutomationStepTypeCount = 70;
 static_assert(static_cast<int>(AutomationStepType::LogMessage) + 1 == AutomationStepTypeCount,
 	"AutomationStepTypeCount must match the number of enum values");
 
@@ -162,6 +167,7 @@ struct AutomationStep {
 	AutomationStepType type = AutomationStepType::LoadReference;
 	std::vector<std::string> targetMeshes;
 	bool targetRegex = false;
+	bool targetReference = false; // Regex patterns can match the reference shape too
 
 	// LoadReference / AddProject params
 	std::string refSourceFile;
@@ -195,6 +201,7 @@ struct AutomationStep {
 	float weightProximityRadius = 10.0f;
 	int weightMaxResults = 10;
 	std::vector<std::string> weightBoneList;
+	bool weightNormalize = false; // Make the weights of each vertex add up to 1 afterwards
 
 	// ImportSliderData params
 	std::string sliderDataFile;
@@ -207,6 +214,14 @@ struct AutomationStep {
 	bool importFromFolder = false;
 	bool importBeforeBatch = false;
 	bool importTriSliders = true;
+
+	// ImportFromGame params
+	std::string gameImportFile; // NIF, or slider set file of another BodySlide folder
+	std::string gameImportSet;
+	std::vector<std::string> gameImportDataFolders;
+	std::vector<std::string> gameImportShapes;
+	std::vector<std::string> gameImportSkipShapes;
+	std::string gameImportSliders = "local";
 
 	// TransformShape params
 	float moveX = 0.0f, moveY = 0.0f, moveZ = 0.0f;
@@ -387,6 +402,30 @@ struct AutomationStep {
 	// ClearSliderData params
 	std::vector<std::string> clearSliderNames; // Empty = every slider of the project
 	bool clearSliderUseMask = true;
+
+	// SmoothVertices params
+	int smoothIterations = 10;
+	float smoothStrength = 0.1f;
+	std::vector<std::string> smoothFollowShapes; // Shapes that move with the smoothed ones (trim lying on them)
+	float smoothFollowRadius = 1.5f;
+	bool smoothKeepBorders = true; // Open mesh edges stay in place
+
+	// MaskBox params
+	float maskBoxMinX = -100000.0f;
+	float maskBoxMinY = -100000.0f;
+	float maskBoxMinZ = -100000.0f;
+	float maskBoxMaxX = 100000.0f;
+	float maskBoxMaxY = 100000.0f;
+	float maskBoxMaxZ = 100000.0f;
+	bool maskBoxKeepOthers = false;
+
+	// MaskCovered params
+	std::vector<std::string> maskCoverShapes; // Empty = every outfit shape that isn't a target
+	float maskCoverOutside = 2.0f;			  // How far in front of a vertex the covering surface may be
+	float maskCoverInside = 1.0f;			  // How far behind it, where the surface sinks in
+
+	// SmoothMask params
+	int maskSmoothCount = 1;
 
 	// GrowShrinkMask params
 	int maskGrowShrinkMode = 0;  // 0 = grow, 1 = shrink

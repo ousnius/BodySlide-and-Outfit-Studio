@@ -37,6 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <thread>
 #include <unordered_map>
 #include <utility>
+#include <wx/spinctrl.h>
 #include <wx/wrapsizer.h>
 #include <wx/debugrpt.h>
 #include <wx/textctrl.h>
@@ -3560,6 +3561,11 @@ bool BodySlideApp::SetDefaultConfig() {
 void BodySlideApp::ApplyComplexMaterialSetting() {
 	if (preview)
 		preview->SetComplexMaterialEnabled(BodySlideConfig.GetBoolValue("Rendering/ComplexMaterial", true));
+}
+
+void BodySlideApp::RetryMissingTextures() {
+	if (preview)
+		preview->RetryMissingTextures();
 }
 
 void BodySlideApp::ApplyPBRSetting() {
@@ -7481,6 +7487,7 @@ void BodySlideFrame::OnChooseTargetGame(wxCommandEvent& event) {
 	dpGameDataPath->SetPath(dataDir);
 
 	SettingsFillDataFiles(dataFileList, dataDir, targ);
+	SettingsDialogShared::ShowExtraDataFolders(*wxGetTopLevelParent(choiceTargetGame), targ);
 }
 
 void BodySlideFrame::SettingsFillDataFiles(wxCheckListBox* dataFileList, wxString& dataDir, int targetGame) {
@@ -7540,6 +7547,8 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		// Hide the single instance setting (only relevant for Outfit Studio)
 		XRCCTRL(*settings, "lbSingleInstanceBehavior", wxStaticText)->Hide();
 		XRCCTRL(*settings, "choiceSingleInstanceBehavior", wxChoice)->Hide();
+		XRCCTRL(*settings, "cbMcpServer", wxCheckBox)->Hide();
+		XRCCTRL(*settings, "spinMcpPort", wxSpinCtrl)->Hide();
 
 		SettingsFillDataFiles(commonControls.dataFileList, gameDataPath, Config.GetIntValue("TargetGame"));
 
@@ -7582,6 +7591,7 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 				app->ResetPreviewPoses();
 			app->LoadFavorites();
 			GameUtil::InitArchives();
+			app->RetryMissingTextures();
 			app->LoadAllCategories();
 			app->LoadAllGroups();
 			app->LoadSliderSets();

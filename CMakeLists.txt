@@ -334,6 +334,11 @@ set(BSOS_COMMON_SOURCES
 	src/components/ClippingFixer.cpp
 	src/components/MaskOps.cpp
 	src/components/MeshAnalysis.cpp
+	src/components/MeshRefine.cpp
+	src/components/PoseFit.cpp
+	src/components/PoseMath.cpp
+	src/components/SurfaceFit.cpp
+	src/components/TextureConvert.cpp
 	src/components/DiffData.cpp
 	src/components/Mesh.cpp
 	src/components/NormalGenLayers.cpp
@@ -390,6 +395,7 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/files/FBXWrangler.cpp
 	src/files/MaskFile.cpp
 	src/files/ObjFile.cpp
+	src/files/PhysicsXmlFile.cpp
 	src/files/SFMaterialDatabase.cpp
 	src/files/SFMaterialFile.cpp
 	src/files/SFMaterialGraph.cpp
@@ -408,6 +414,7 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/program/OutfitStudio.cpp
 	src/program/ProjectHost.cpp
 	src/program/ProjectOperations.cpp
+	src/program/GameImport.cpp
 	src/program/BrushStrokeController.cpp
 	src/program/BadBonesDialog.cpp
 	src/program/ShapeProperties.cpp
@@ -417,6 +424,26 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/program/SliderDataDialog.cpp
 	src/program/SliderDataImportDialog.cpp
 	src/program/AddProjectDialog.cpp
+	src/mcp/McpProtocol.cpp
+	src/mcp/McpServer.cpp
+	src/mcp/McpSnapshots.cpp
+	src/mcp/OutfitStudioMcp.cpp
+	src/mcp/McpToolsAnalysis.cpp
+	src/mcp/McpToolsArchives.cpp
+	src/mcp/McpToolsAutomation.cpp
+	src/mcp/McpToolsBones.cpp
+	src/mcp/McpToolsEdit.cpp
+	src/mcp/McpToolsFitting.cpp
+	src/mcp/McpToolsGames.cpp
+	src/mcp/McpToolsGuides.cpp
+	src/mcp/McpToolsProject.cpp
+	src/mcp/McpToolsMeasure.cpp
+	src/mcp/McpToolsQuality.cpp
+	src/mcp/McpToolsShapes.cpp
+	src/mcp/McpToolsSliderFiles.cpp
+	src/mcp/McpToolsSliders.cpp
+	src/mcp/McpToolsTextures.cpp
+	src/mcp/McpToolsView.cpp
 	src/render/GLCanvas.cpp
 	src/render/GLDialog.cpp
 )
@@ -456,6 +483,7 @@ set(BSOS_COMMON_INCLUDE_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/include
 	${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/external
 	${CMAKE_CURRENT_SOURCE_DIR}/lib/TinyXML-2
+	${CMAKE_CURRENT_SOURCE_DIR}/lib/cpp-httplib
 	${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
@@ -490,8 +518,14 @@ if(BSOS_BUILD_TESTS)
 		tests/MaterialFileTest.cpp
 		tests/MainThreadDispatcherTest.cpp
 		tests/MaskTransferTest.cpp
+		tests/McpProtocolTest.cpp
 		tests/MeshAnalysisTest.cpp
+		tests/MeshRefineTest.cpp
 		tests/OutfitProjectTest.cpp
+		tests/PhysicsXmlFileTest.cpp
+		tests/PoseDataJsonTest.cpp
+		tests/PoseFitTest.cpp
+		tests/PoseMathTest.cpp
 		tests/SFMaterialDatabaseTest.cpp
 		tests/SFLayeredMaterialTest.cpp
 		tests/SFMaterialFileTest.cpp
@@ -499,6 +533,8 @@ if(BSOS_BUILD_TESTS)
 		tests/SFResourceHashTest.cpp
 		tests/StarfieldDataTest.cpp
 		tests/StarfieldSpaceTest.cpp
+		tests/SurfaceFitTest.cpp
+		tests/TextureConvertTest.cpp
 		src/components/ArchiveIndex.cpp
 		src/components/Automation.cpp
 		src/components/AutomationJson.cpp
@@ -506,6 +542,11 @@ if(BSOS_BUILD_TESTS)
 		src/components/ClothData.cpp
 		src/components/MaskTransfer.cpp
 		src/components/MeshAnalysis.cpp
+		src/components/MeshRefine.cpp
+		src/components/PoseFit.cpp
+		src/components/PoseMath.cpp
+		src/components/SurfaceFit.cpp
+		src/components/TextureConvert.cpp
 		src/components/Anim.cpp
 		src/components/Automorph.cpp
 		src/components/DiffData.cpp
@@ -517,17 +558,22 @@ if(BSOS_BUILD_TESTS)
 		src/components/WeightNorm.cpp
 		src/files/MaterialFile.cpp
 		src/files/ObjFile.cpp
+		src/files/PhysicsXmlFile.cpp
 		src/files/TriFile.cpp
 		src/program/OutfitProject.cpp
 		src/program/ProjectHost.cpp
+		src/mcp/McpProtocol.cpp
+		src/mcp/McpServer.cpp
 		src/program/ProjectOperations.cpp
 		src/program/BrushStrokeController.cpp
 		src/components/TweakBrush.cpp
 		src/components/PoseData.cpp
 		src/components/PoseDataJson.cpp
 		src/components/PoseDataYaml.cpp
+		src/components/SliderPresets.cpp
 		src/components/UndoHistory.cpp
 		src/utils/ProjectUtil.cpp
+		src/utils/GameUtil.cpp
 		src/files/HkxFile.cpp
 		src/files/GameDataStream.cpp
 		src/files/SFMaterialDatabase.cpp
@@ -574,6 +620,7 @@ if(BSOS_BUILD_TESTS)
 		${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/include
 		${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/external
 		${CMAKE_CURRENT_SOURCE_DIR}/lib/TinyXML-2
+		${CMAKE_CURRENT_SOURCE_DIR}/lib/cpp-httplib
 	)
 	target_compile_definitions(BSOSTests PRIVATE
 		${BSOS_PLATFORM_DEFINITIONS}

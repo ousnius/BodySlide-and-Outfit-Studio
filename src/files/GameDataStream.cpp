@@ -6,6 +6,7 @@ See the included LICENSE file
 #include "GameDataStream.h"
 
 #include "../utils/ConfigurationManager.h"
+#include "../utils/GameUtil.h"
 #include "../utils/PlatformUtil.h"
 #include "../utils/StringStuff.h"
 
@@ -22,6 +23,30 @@ See the included LICENSE file
 extern ConfigurationManager Config;
 
 namespace GameDataStream {
+std::vector<std::string> DataFolders() {
+	return DataFolders(Config["GameDataPath"]);
+}
+
+std::vector<std::string> DataFolders(const std::string& baseDataPath) {
+	std::vector<std::string> folders;
+	if (!baseDataPath.empty())
+		folders.push_back(baseDataPath);
+	for (auto& folder : GameUtil::GetExtraDataFolders(Config.GetIntValue("TargetGame")))
+		folders.push_back(folder);
+	return folders;
+}
+
+std::string FindAssetPath(const std::string& relPath) {
+	return FindAssetPath(relPath, Config["GameDataPath"]);
+}
+
+std::string FindAssetPath(const std::string& relPath, const std::string& baseDataPath) {
+	for (auto& folder : DataFolders(baseDataPath))
+		if (PlatformUtil::FileExists(folder + relPath))
+			return folder + relPath;
+	return baseDataPath + relPath;
+}
+
 std::unique_ptr<std::istream> OpenLoose(const std::string& fullPath) {
 	if (!PlatformUtil::FileExists(fullPath))
 		return nullptr;
@@ -64,9 +89,10 @@ std::unique_ptr<std::istream> OpenPhysicsXml(const std::string& xmlPath, const s
 	if (relPath.empty())
 		return nullptr;
 
-	// 1) Loose file in GameDataPath
-	if (auto stream = OpenLoose(Config["GameDataPath"] + relPath))
-		return stream;
+	// 1) Loose file in a data folder
+	for (auto& folder : DataFolders())
+		if (auto stream = OpenLoose(folder + relPath))
+			return stream;
 
 	// 2) Relative to the NIF the link came from: its "meshes" anchor points at
 	// the mod's data root, where SKSE/Plugins/... lives for loose mod folders
@@ -109,9 +135,12 @@ std::unique_ptr<std::istream> OpenExternalGeometry(const std::string& path, cons
 	if (meshPath.size() < 5 || meshPath.compare(meshPath.size() - 5, 5, ".mesh") != 0)
 		meshPath += ".mesh";
 
-	// 1) Loose file in the data folder
+	// 1) Loose file in the data folder, then in the extra data folders
 	if (auto stream = OpenLoose(dataPath + meshPath))
 		return stream;
+	for (auto& folder : GameUtil::GetExtraDataFolders(Config.GetIntValue("TargetGame")))
+		if (auto stream = OpenLoose(folder + meshPath))
+			return stream;
 
 	// 2) Beside the meshes folder (or NIF directory) of the loading NIF
 	if (!nifFilePath.empty()) {

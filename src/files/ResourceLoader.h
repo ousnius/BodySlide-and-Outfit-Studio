@@ -12,6 +12,7 @@ See the included LICENSE file
 #include <string>
 #include <tuple>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "../utils/StringStuff.h"
@@ -72,6 +73,9 @@ public:
 
 	// Deletes all materials and textures.
 	void Cleanup();
+	// The next AddMaterial for a material with textures that weren't found looks for them again,
+	// after the data folders or archives changed.
+	void RetryMissingTextures();
 	// Deletes a specfic texture and removes it from video memory.
 	void DeleteTexture(const std::string& texName);
 	// rename texture moves the internal texture id to a new name. this allows a function to safely 'steal' a
@@ -153,6 +157,9 @@ private:
 
 	TextureCache textures;
 	MaterialCache materials;
+	// Materials with a texture that couldn't be loaded, and those of them AddMaterial looks for again once
+	std::unordered_set<MaterialKey, MatKeyHash> incompleteMaterials;
+	std::unordered_set<MaterialKey, MatKeyHash> retryMaterials;
 	// Keyed by texture name like the texture cache, so a verdict outlives the material that
 	// triggered it and survives the material cache handing back an existing entry.
 	std::map<std::string, bool, case_insensitive_compare> complexMaterialTextures;

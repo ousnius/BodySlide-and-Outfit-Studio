@@ -18,6 +18,8 @@ class wxCheckBox;
 class wxColourPickerCtrl;
 class wxFilePickerCtrl;
 class wxCheckListBox;
+class wxListBox;
+class wxWindow;
 class wxString;
 
 enum wxLanguage;
@@ -57,7 +59,12 @@ struct CommonSettingsDialogControls {
 	wxFilePickerCtrl* fpSkeletonFile;
 	wxChoice* choiceSkeletonRoot;
 	wxCheckListBox* dataFileList;
+	wxListBox* lbExtraDataFolders;
 };
+
+// Shows the extra data folders of a game in the dialog's list, keeping the edits of the game shown before.
+// Called when the dialog opens and when its target game changes.
+void ShowExtraDataFolders(wxWindow& settings, int targetGame);
 
 void InitCommonSettingsDialog(
 	wxDialog& settings,

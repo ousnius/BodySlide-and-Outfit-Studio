@@ -267,6 +267,8 @@ public:
 	void SetSize(uint32_t w, uint32_t h);
 	void GetSize(uint32_t& w, uint32_t& h);
 	void UpdateProjection();
+	// The projection and view matrices of the camera for a viewport with this aspect ratio
+	void ComputeCameraMatrices(float aspect, glm::mat4x4& outProjection, glm::mat4x4& outView) const;
 
 	void RenderFullScreenQuad(GLMaterial* renderShader, unsigned int w, unsigned int h);
 
@@ -292,6 +294,9 @@ public:
 					  const nifly::Vector3& directional2Dir);
 
 	void ProjectPointToScreen(const nifly::Vector3& p, int& x, int& y);
+	// Where a point in model space lands in an image of this size rendered with the current camera (RenderToImage),
+	// in pixels from the top left. False when the point is behind the camera.
+	bool ProjectPointToImage(const nifly::Vector3& p, uint32_t width, uint32_t height, float& x, float& y) const;
 
 	void GetPickRay(int ScreenX, int ScreenY, Mesh* m, nifly::Vector3& dirVect, nifly::Vector3& outNearPos);
 	Mesh* PickMesh(int ScreenX, int ScreenY);
