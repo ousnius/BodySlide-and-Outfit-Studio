@@ -251,7 +251,9 @@ bool BodySlideApp::OnInit() {
 	if (!GetOutputDataPath().empty()) {
 		bool dirWritable = wxFileName::IsDirWritable(GetOutputDataPath());
 		bool dirReadable = wxFileName::IsDirReadable(GetOutputDataPath());
-		if (!dirWritable || !dirReadable)
+		if ((!dirWritable || !dirReadable) && cmdQuiet)
+			wxLogWarning("No read/write permission for game data path '%s'.", GetOutputDataPath());
+		else if (!dirWritable || !dirReadable)
 			wxMessageBox(
 				_("No read/write permission for game data path!\n\nPlease launch the program with admin elevation and make sure the game data path in the settings is correct."),
 				_("Warning"),
@@ -261,7 +263,9 @@ bool BodySlideApp::OnInit() {
 	if (!Config["ProjectPath"].empty()) {
 		bool dirWritable = wxFileName::IsDirWritable(Config["ProjectPath"]);
 		bool dirReadable = wxFileName::IsDirReadable(Config["ProjectPath"]);
-		if (!dirWritable || !dirReadable)
+		if ((!dirWritable || !dirReadable) && cmdQuiet)
+			wxLogWarning("No read/write permission for project path '%s'.", Config["ProjectPath"]);
+		else if (!dirWritable || !dirReadable)
 			wxMessageBox(
 				_("No read/write permission for project path!\n\nPlease launch the program with admin elevation and make sure the project path in the settings is correct."),
 				_("Warning"),
@@ -356,6 +360,7 @@ bool BodySlideApp::OnCmdLineParsed(wxCmdLineParser& parser) {
 	}
 
 	cmdTri = parser.Found("tri");
+	cmdQuiet = parser.Found("q");
 
 	wxString previewFiles;
 	if (parser.Found("preview", &previewFiles)) {
@@ -4767,6 +4772,25 @@ int BodySlideApp::BuildListBodies(
 	for (auto& implicitChoice : implicitChoices)
 		buildSelection.SetOutputChoice(implicitChoice.first, implicitChoice.second);
 
+	// Quiet builds take the saved choice or the first one instead of asking
+	if (!choicesList.empty() && cmdQuiet) {
+		for (size_t i = 0; i < choicesList.size(); i++) {
+			std::string choice = buildSelection.GetOutputChoice(outFileList[i]);
+			if (choice.empty() || choicesList[i].Index(wxString::FromUTF8(choice)) == wxNOT_FOUND)
+				choice = choicesList[i][0].ToUTF8().data();
+			wxLogWarning("Outfits '%s' all write '%s', building '%s'.", wxJoin(choicesList[i], ','), outFileList[i], choice);
+
+			for (auto& outfit : choicesList[i]) {
+				if (outfit.ToUTF8().data() == choice)
+					continue;
+				auto result = std::find(outfitList.begin(), outfitList.end(), outfit.ToUTF8().data());
+				if (result != outfitList.end())
+					outfitList.erase(result);
+			}
+		}
+		choicesList.clear();
+	}
+
 	if (!choicesList.empty()) {
 		wxXmlResource* rsrc = wxXmlResource::Get();
 		wxDialog* dlgBuildOverride = rsrc->LoadDialog(sliderView, "dlgBuildOverride");
@@ -4961,7 +4985,7 @@ int BodySlideApp::BuildListBodies(
 		delete dlgBuildOverride;
 	}
 
-	if (!choicesList.empty() || !implicitChoices.empty()) {
+	if ((!choicesList.empty() || !implicitChoices.empty()) && !cmdQuiet) {
 		// Save output choices to file
 		buildSelFile.UpdateOutputChoices(buildSelection);
 		buildSelFile.Save();
@@ -5642,8 +5666,10 @@ void BodySlideApp::CommandLineBuild() {
 			errlist.Add(ename + ":" + e.second);
 		}
 
-		wxSingleChoiceDialog errdisplay(sliderView, _("The following sets failed"), _("Failed"), errlist, nullptr, wxDEFAULT_DIALOG_STYLE | wxOK | wxRESIZE_BORDER);
-		errdisplay.ShowModal();
+		if (!cmdQuiet) {
+			wxSingleChoiceDialog errdisplay(sliderView, _("The following sets failed"), _("Failed"), errlist, nullptr, wxDEFAULT_DIALOG_STYLE | wxOK | wxRESIZE_BORDER);
+			errdisplay.ShowModal();
+		}
 	}
 
 	sliderView->Close(true);

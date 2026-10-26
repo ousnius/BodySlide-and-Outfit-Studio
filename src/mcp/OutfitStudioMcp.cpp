@@ -46,13 +46,17 @@ const std::set<std::string> AutoSnapshotTools = {
 	"edit_bone", "delete_bones", "set_bone_transforms", "transfer_weights", "remove_skinning",
 	"apply_pose_to_mesh", "fix_bad_bones", "new_slider", "clone_slider", "negate_sliders", "clear_slider_data",
 	"delete_sliders", "set_slider_properties", "import_slider_data", "physics_data", "transfer_zaps", "auto_fix_clipping", "import_from_game",
-	"fit_to_body",
+	"fit_to_body", "make_contact_morph",
 };
+
+// Tools of AutoSnapshotTools whose preview: true only measures, which needs no snapshot
+const std::set<std::string> ReadOnlyPreviewTools = {"make_contact_morph"};
 
 // Tools that replace the project or overwrite files, which a snapshot doesn't bring back
 const std::set<std::string> DestructiveTools = {
 	"new_project", "load_project", "save_project", "export_file", "export_slider_data", "save_preset",
 	"save_pose", "mask_file", "snapshot_delete", "snapshot_restore", "write_material", "convert_textures",
+	"build_outfits",
 };
 
 const char* LevelName(HostMessageLevel level) {
@@ -192,9 +196,11 @@ OutfitStudioMcp::ProgressHandler OutfitStudioMcp::OnMainThread(Handler handler, 
 				wxLogChain chain(capture);
 				UnattendedScope scope(owner->projectHost);
 
-				// A snapshot to go back to, the window can't undo what the tool does
+				// A snapshot to go back to, the window can't undo what the tool does. A preview changes nothing.
 				std::string snapshotName;
-				if (autoSnapshot && owner->project) {
+				const bool preview = ReadOnlyPreviewTools.count(toolName) && args.is_object() && args.contains("preview") && args["preview"].is_boolean() &&
+									 args["preview"].get<bool>();
+				if (autoSnapshot && !preview && owner->project) {
 					try {
 						snapshotName = snapshots->SaveAutomatic(*this, toolName);
 					}

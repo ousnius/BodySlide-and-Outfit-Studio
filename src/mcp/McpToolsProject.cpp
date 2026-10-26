@@ -11,13 +11,17 @@ See the included LICENSE file
 #include "../utils/GameUtil.h"
 #include "../utils/ProjectUtil.h"
 
+#include <algorithm>
 #include <cctype>
 #include <filesystem>
 #include <fstream>
+#include <map>
+#include <set>
 #include <sstream>
 
 #include <wx/dir.h>
 #include <wx/filename.h>
+#include <wx/utils.h>
 
 extern ConfigurationManager Config;
 
@@ -176,6 +180,200 @@ McpToolResult GetStatus(OutfitStudioFrame* frame) {
 	data["selectedShapes"] = frame->GetSelectedShapeNames();
 	data["sliderCount"] = project->SliderCount();
 	data["editingSlider"] = frame->editor.bEditSlider ? json(frame->editor.activeSlider) : json(nullptr);
+	return result;
+}
+
+// Escapes a name for a regular expression that matches it exactly
+std::string RegexLiteral(const std::string& text) {
+	static const std::string special = R"(.^$|()[]{}*+?\)";
+	std::string escaped;
+	for (char c : text) {
+		if (special.find(c) != std::string::npos)
+			escaped += '\\';
+		escaped += c;
+	}
+	return escaped;
+}
+
+// The errors and warnings of BodySlide's last run in its log
+json BodySlideLogProblems(const std::string& logPath) {
+	std::ifstream file(std::filesystem::u8path(logPath));
+	std::vector<std::string> run;
+	std::string line;
+	while (std::getline(file, line)) {
+		if (line.rfind("[#Log", 0) == 0)
+			run.clear();
+		run.push_back(line);
+	}
+
+	json errors = json::array();
+	json warnings = json::array();
+	for (auto& entry : run) {
+		// "[time][level]\tfile(line): text", level 1 is an error and 2 a warning
+		const size_t level = entry.find("][");
+		if (level == std::string::npos || level + 3 >= entry.size())
+			continue;
+		const size_t text = entry.find(": ", level);
+		const std::string message = text == std::string::npos ? entry : entry.substr(text + 2);
+		if (entry[level + 2] == '1')
+			errors.push_back(message);
+		else if (entry[level + 2] == '2')
+			warnings.push_back(message);
+	}
+	return {{"errors", errors}, {"warnings", warnings}};
+}
+
+McpToolResult BuildOutfits(OutfitStudioMcp& mcp, const json& args) {
+	OutfitStudioFrame* frame = mcp.GetFrame();
+	OutfitProject* project = frame->project;
+
+	wxFileName bodySlide(wxString::FromUTF8(Config["AppDir"]), "BodySlide");
+#ifdef _WIN32
+	bodySlide.SetExt("exe");
+#endif
+	if (!bodySlide.FileExists())
+		throw McpToolError("BodySlide isn't at '" + ToUTF8(bodySlide.GetFullPath()) + "', next to Outfit Studio.");
+
+	std::vector<std::string> outfits = McpArgs::Strings(args, "outfits");
+	const std::string filter = McpArgs::String(args, "filter", "");
+	const std::vector<std::string> groups = McpArgs::Strings(args, "groups");
+	if (!outfits.empty() && !filter.empty())
+		throw McpToolError("Give outfits or filter, not both.");
+	if (outfits.empty() && filter.empty() && groups.empty()) {
+		if (!project || project->mOutfitName.empty())
+			throw McpToolError("No project is open. Name the outfits to build in 'outfits'.");
+		outfits.push_back(ToUTF8(project->mOutfitName));
+	}
+
+	// Sets that don't exist are named here, BodySlide would only say that its filter matched nothing
+	json missing = json::array();
+	if (!outfits.empty()) {
+		std::set<std::string, case_insensitive_compare> known;
+		wxArrayString setFiles;
+		wxString folder = wxString::FromUTF8(ProjectUtil::GetProjectPath() + "/SliderSets");
+		if (wxDir::Exists(folder))
+			wxDir::GetAllFiles(folder, &setFiles, "*.osp");
+		for (auto& file : setFiles) {
+			SliderSetFile setFile(ToUTF8(file));
+			if (setFile.fail())
+				continue;
+			std::vector<std::string> names;
+			setFile.GetSetNames(names);
+			known.insert(names.begin(), names.end());
+		}
+
+		std::vector<std::string> existing;
+		for (auto& name : outfits) {
+			if (known.count(name))
+				existing.push_back(name);
+			else
+				missing.push_back(name);
+		}
+		if (existing.empty())
+			throw McpToolError("There is no slider set named " + missing.dump() + ". list_slider_sets lists them.");
+		outfits = existing;
+	}
+
+	// Never into the game: the build is for looking at, and the game's files stay as the user built them
+	wxString target = wxString::FromUTF8(McpArgs::String(args, "targetDir", ""));
+	if (target.empty())
+		target = wxFileName::GetTempDir() + wxFileName::GetPathSeparator() + "BodySlide MCP Build";
+	else
+		target = wxString::FromUTF8(McpFilePath(ToUTF8(target)));
+	wxFileName targetDir = wxFileName::DirName(target);
+	targetDir.Normalize(wxPATH_NORM_DOTS | wxPATH_NORM_ABSOLUTE);
+	for (const char* key : {"GameDataPath", "OutputDataPath"}) {
+		if (Config[key].empty())
+			continue;
+		wxFileName gameDir = wxFileName::DirName(wxString::FromUTF8(Config[key]));
+		gameDir.Normalize(wxPATH_NORM_DOTS | wxPATH_NORM_ABSOLUTE);
+		const wxString game = gameDir.GetPathWithSep().Lower();
+		if (targetDir.GetPathWithSep().Lower().StartsWith(game))
+			throw McpToolError("targetDir is in the game's data folder. Build into another folder; BodySlide itself builds into the game.");
+	}
+	if (!targetDir.DirExists() && !targetDir.Mkdir(wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL))
+		throw McpToolError("The folder '" + ToUTF8(targetDir.GetPath()) + "' couldn't be made.");
+
+	std::vector<wxString> argv = {bodySlide.GetFullPath(), "--quiet", "--targetdir", targetDir.GetPath()};
+	if (!outfits.empty()) {
+		// As one exact regular expression, since names can contain the separators of --build
+		std::string pattern;
+		for (auto& name : outfits)
+			pattern += (pattern.empty() ? "" : "|") + RegexLiteral(name);
+		argv.insert(argv.end(), {"--filter", wxString::FromUTF8("^(" + pattern + ")$"), "--regexfilter"});
+	}
+	else if (!filter.empty()) {
+		argv.insert(argv.end(), {"--filter", wxString::FromUTF8(filter)});
+		if (McpArgs::Bool(args, "regex", false))
+			argv.push_back("--regexfilter");
+	}
+	if (!groups.empty()) {
+		std::string joined;
+		for (auto& group : groups)
+			joined += (joined.empty() ? "" : ",") + group;
+		argv.insert(argv.end(), {"--groupbuild", wxString::FromUTF8(joined)});
+	}
+	const std::string preset = McpArgs::String(args, "preset", "");
+	if (!preset.empty())
+		argv.insert(argv.end(), {"--preset", wxString::FromUTF8(preset)});
+	if (McpArgs::Bool(args, "tri", false))
+		argv.push_back("--trimorphs");
+
+	std::vector<const wxChar*> argvPtrs;
+	for (auto& arg : argv)
+		argvPtrs.push_back(arg.wc_str());
+	argvPtrs.push_back(nullptr);
+
+	// The files there before, so only what this build wrote is reported
+	const std::filesystem::path root(targetDir.GetPath().ToStdWstring());
+	auto listFiles = [&root]() {
+		std::map<std::filesystem::path, std::filesystem::file_time_type> list;
+		std::error_code error;
+		for (auto it = std::filesystem::recursive_directory_iterator(root, error); !error && it != std::filesystem::recursive_directory_iterator(); it.increment(error))
+			if (it->is_regular_file())
+				list[it->path()] = it->last_write_time();
+		return list;
+	};
+	const auto before = listFiles();
+
+	// The window is disabled until BodySlide is done, so nobody changes the project in the meantime
+	const long code = wxExecute(argvPtrs.data(), wxEXEC_SYNC);
+	if (code == -1)
+		throw McpToolError("BodySlide couldn't be started.");
+
+	// What the build wrote, with the shapes of each NIF to compare with the project
+	json files = json::array();
+	for (auto& file : listFiles()) {
+		auto old = before.find(file.first);
+		if (old != before.end() && old->second == file.second)
+			continue;
+		const std::filesystem::path& path = file.first;
+		json entry = {{"path", ToUTF8(wxString(path.wstring()))}};
+		std::string ext = path.extension().u8string();
+		std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+		NifFile nif;
+		if (ext == ".nif" && nif.Load(path) == 0) {
+			json shapes = json::array();
+			for (auto* shape : nif.GetShapes())
+				shapes.push_back({{"name", shape->name.get()}, {"vertices", shape->GetNumVertices()}, {"triangles", shape->GetNumTriangles()}});
+			entry["shapes"] = shapes;
+		}
+		files.push_back(entry);
+	}
+
+	McpToolResult result;
+	result.data["targetDir"] = ToUTF8(targetDir.GetPath());
+	result.data["files"] = files;
+	json problems = BodySlideLogProblems(Config["AppDir"] + "/Log_BS.txt");
+	result.data["errors"] = problems["errors"];
+	if (!missing.empty())
+		result.data["missing"] = missing;
+	if (!problems["warnings"].empty())
+		result.data["warnings"] = problems["warnings"];
+	if (files.empty())
+		result.data["note"] = "Nothing was built. errors says why, e.g. an outfit name that doesn't exist.";
+	if (project && frame->HasPendingChanges())
+		result.data["unsavedChanges"] = "The open project has unsaved changes, which BodySlide doesn't see: it builds the saved slider set.";
 	return result;
 }
 
@@ -590,4 +788,24 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 		return result;
 	};
 	mcp.AddTool(std::move(exportFile));
+
+	McpTool build;
+	build.name = "build_outfits";
+	build.description =
+		"Builds outfits with BodySlide the way the user would, into a scratch folder instead of the game: zaps applied, "
+		"the low and high weight bodies, the preset's slider values, and TRI files with tri. It builds the saved slider "
+		"sets, so save_project first. Returns the files written with the shapes and vertex counts of each NIF, and "
+		"BodySlide's errors and warnings. import_file a built NIF into a new project to look at it. Without outfits, "
+		"filter or groups it builds the open project's set.";
+	build.inputSchema = McpSchema({
+		{"outfits", McpStringList("Slider set names to build. Default: the open project's.")},
+		{"filter", McpProp("string", "Builds every set whose name contains this text, like BodySlide's outfit filter")},
+		{"regex", McpProp("boolean", "filter is a regular expression. Default false.")},
+		{"groups", McpStringList("Builds the sets of these groups, narrowed by filter if given")},
+		{"preset", McpProp("string", "Preset name, or a preset XML file optionally followed by '?' and a preset name. Default: BodySlide's last preset.")},
+		{"tri", McpProp("boolean", "Write TRI morph files too. Default false.")},
+		{"targetDir", McpProp("string", "Folder to build into, never the game's data folder. Default: 'BodySlide MCP Build' in the temporary folder.")},
+	});
+	build.handler = [&mcp](const json& args) { return BuildOutfits(mcp, args); };
+	mcp.AddTool(std::move(build));
 }

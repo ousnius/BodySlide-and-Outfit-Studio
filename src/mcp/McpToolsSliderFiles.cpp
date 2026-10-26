@@ -386,13 +386,14 @@ void AddSliderFileTools(OutfitStudioMcp& mcp) {
 		{"sliders", McpStringList("Slider names. Default: every slider.")},
 		{"shapes", McpStringList("Shapes, the selected outfit shapes by default")},
 		{"useMask", McpProp("boolean", "Scale the data by the mask: masked vertices keep it, unmasked lose it. Default true.")},
+		{"allowReference", McpProp("boolean", "Also change the reference shape when it is named in shapes. Default false, which refuses it.")},
 	});
 	clear.handler = [&mcp](const json& args) {
 		std::vector<std::string> sliders = McpArgs::Strings(args, "sliders");
 		for (auto& slider : sliders)
 			SliderIndex(mcp.Project(), slider);
 		// Steps can replace the shapes, so only their names are kept
-		json shapes = Names(mcp.Shapes(args, "shapes"));
+		json shapes = Names(mcp.Shapes(args, "shapes", McpArgs::Bool(args, "allowReference", false)));
 		McpRunStep(mcp, {{"type", "ClearSliderData"}, {"TargetMeshes", shapes}, {"SliderNames", sliders}, {"UseMask", McpArgs::Bool(args, "useMask", true)}});
 		McpToolResult result = SlidersChanged(mcp.Project(), "cleared", sliders.empty() ? json("all") : json(sliders));
 		result.data["shapes"] = shapes;

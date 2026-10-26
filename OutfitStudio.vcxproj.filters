@@ -775,6 +775,21 @@
     <ClInclude Include="src\components\PoseMath.h">
       <Filter>Components</Filter>
     </ClInclude>
+    <ClInclude Include="src\components\MeshDeform.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\PoseFit.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\SurfaceFit.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\TextureConvert.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\program\GameImport.h">
+      <Filter>Program</Filter>
+    </ClInclude>
     <ClInclude Include="src\files\ObjFile.h">
       <Filter>Files</Filter>
     </ClInclude>
@@ -2225,6 +2240,27 @@
     </ClCompile>
     <ClCompile Include="src\components\PoseMath.cpp">
       <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\MeshDeform.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\PoseFit.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\SurfaceFit.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\TextureConvert.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\program\GameImport.cpp">
+      <Filter>Program</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsFitting.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsTextures.cpp">
+      <Filter>MCP</Filter>
     </ClCompile>
     <ClCompile Include="src\components\DiffData.cpp">
       <Filter>Components</Filter>

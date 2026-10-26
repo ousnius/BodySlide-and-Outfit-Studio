@@ -546,7 +546,7 @@ Vector3 VectorArg(const json& args, const char* name, const Vector3& def, bool u
 McpToolResult TransformShapes(OutfitStudioMcp& mcp, const json& args) {
 	OutfitStudioFrame* frame = mcp.GetFrame();
 	OutfitProject& project = mcp.Project();
-	std::vector<NiShape*> shapes = mcp.Shapes(args, "shapes");
+	std::vector<NiShape*> shapes = mcp.Shapes(args, "shapes", McpArgs::Bool(args, "allowReference", false));
 	if (shapes.empty())
 		throw McpToolError("No shapes are given or selected.");
 	mcp.CheckPositionEdit();
@@ -1150,6 +1150,7 @@ void AddEditTools(OutfitStudioMcp& mcp) {
 		 json{{"type", {"string", "array"}},
 			  {"description", "Pivot of rotate and scale: \"zero\" (default, the NIF origin), \"center\" (middle of the unmasked vertices) or [x, y, z]"}}},
 		{"useMask", McpProp("boolean", "Leave masked vertices alone. Default true.")},
+		{"allowReference", McpProp("boolean", "Also change the reference shape when it is named in shapes. Default false, which refuses it.")},
 	});
 	transform.handler = [&mcp](const json& args) { return TransformShapes(mcp, args); };
 	mcp.AddTool(std::move(transform));

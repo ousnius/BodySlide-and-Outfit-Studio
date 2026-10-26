@@ -319,6 +319,12 @@ std::vector<float> ClippingFixer::SignedDistancesToBody(const std::vector<Vector
 	return distances;
 }
 
+std::vector<Vector3> ClippingFixer::OutwardVertexNormals(const std::vector<Vector3>& bodyVerts, const std::vector<Triangle>& bodyTris) {
+	if (bodyVerts.empty())
+		return {};
+	return Oriented(ComputeVertexNormals(bodyVerts, bodyTris), OutwardSign(bodyVerts, bodyTris));
+}
+
 std::vector<PokeThrough> ClippingFixer::BodyPokeThrough(const std::vector<Vector3>& bodyVerts,
 														const std::vector<Triangle>& bodyTris,
 														const std::vector<Vector3>& outfitVerts,

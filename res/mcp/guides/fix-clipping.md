@@ -71,6 +71,7 @@ With everything but the area masked:
 - `brush_stroke` with `inflate` or `smooth` along the clipping vertices (`path`). In `set_slider_edit` mode it changes that slider's morph.
 - `transform_shapes` `inflate` 0.1–0.5 pushes the unmasked surface out along its normals, for clipping at rest.
 - `mask_ops` `from_analysis` also masks by `roughness`, `flipped`, `gap_change` and `seam_gap`, to smooth what a fix roughened.
+- `fix_flipped_triangles` turns back the triangles a push-out folded: with `snapshot` (the automatic one the fix took) for the base shape, with `slider` for a slider's morph. It smooths the change only around the folds, so the rest of the fix stays. After an extreme `fit_to_body` on a blouse it took 107 flipped triangles to 2, moving 755 vertices by at most 0.83.
 
 What fixing whole shapes costs, measured on an open-cleavage top converted to 3BA (BreastsNewSH, no mask):
 

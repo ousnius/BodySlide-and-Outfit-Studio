@@ -4,7 +4,10 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
+#include "McpSnapshots.h"
+#include "../components/MaskOps.h"
 #include "../components/MeshAnalysis.h"
+#include "../components/MeshDeform.h"
 #include "../components/PoseData.h"
 #include "../components/PoseFit.h"
 #include "../components/PoseMath.h"
@@ -792,6 +795,323 @@ McpToolResult FitToBody(OutfitStudioMcp& mcp, const json& args) {
 	return result;
 }
 
+// The mask of a shape as how freely each vertex may move, 1 where it's unmasked. Empty without a mask.
+std::vector<float> Freedom(OutfitProject& project, NiShape* shape, size_t count) {
+	Mesh* m = project.GetHost().GetShapeMesh(shape->name.get());
+	if (!m || m->nVerts != static_cast<int>(count))
+		return {};
+	return MaskOps::FixWeights(m);
+}
+
+McpToolResult FixFlippedTriangles(OutfitStudioMcp& mcp, const json& args) {
+	OutfitStudioFrame* frame = mcp.GetFrame();
+	OutfitProject& project = mcp.Project();
+
+	if (project.bPose)
+		throw McpToolError("A preview pose is on. Clear it with clear_preview_pose first: triangles are compared unposed.");
+
+	const std::string snapshotName = McpArgs::String(args, "snapshot", "");
+	const std::string sliderName = McpArgs::String(args, "slider", "");
+	if (snapshotName.empty() == sliderName.empty())
+		throw McpToolError("Give snapshot (the shapes before a change, e.g. the automatic one fit_to_body took) or slider (its morph), one of them.");
+
+	const bool preview = McpArgs::Bool(args, "preview", false);
+	std::vector<NiShape*> shapes = mcp.Shapes(args, "shapes", sliderName.empty() && McpArgs::Bool(args, "allowReference", false));
+
+	NifFile* before = nullptr;
+	if (!snapshotName.empty()) {
+		McpSnapshotStore& store = mcp.Snapshots();
+		store.Track(&project);
+		McpSnapshotStore::Entry* entry = store.Find(snapshotName);
+		if (!entry || !entry->snapshot || !entry->snapshot->project)
+			throw McpToolError("There is no snapshot '" + snapshotName + "'. Snapshots: " + store.Names().dump());
+		before = &entry->snapshot->project->workNif;
+		if (!preview) {
+			if (frame->editor.bEditSlider)
+				throw McpToolError("A slider is in edit mode. Leave it with set_slider_edit first.");
+			mcp.CheckPositionEdit();
+		}
+	}
+	else if (!project.ValidSlider(sliderName))
+		throw McpToolError("There is no slider '" + sliderName + "'. list_sliders lists them.");
+
+	MeshDeform::UntangleOptions options;
+	options.maxRings = std::clamp(McpArgs::Int(args, "maxRings", options.maxRings), 1, 20);
+	options.strength = std::clamp(McpArgs::Float(args, "strength", options.strength), 0.05f, 1.0f);
+	const bool useMask = McpArgs::Bool(args, "useMask", true);
+
+	UndoHistory* history = frame->glView->GetUndoHistory();
+	UndoStateProject* usp = preview ? nullptr : history->PushState();
+	if (usp)
+		usp->undoType = UndoType::VertexPosition;
+
+	ProjectOperations ops = mcp.Ops();
+	OpResult opResult;
+	json shapesResult = json::object();
+	// Shapes fixed before a failure keep their fix, as an undo step, and the view shows it
+	auto fail = [&](const std::string& error) {
+		if (usp && !usp->usss.empty()) {
+			if (before)
+				frame->glView->ApplyUndoState(usp, false);
+			else
+				mcp.Apply(opResult);
+			frame->UpdateUndoTools();
+		}
+		else if (usp)
+			history->PopState();
+		throw McpToolError(error);
+	};
+	for (NiShape* shape : shapes) {
+		const std::string name = shape->name.get();
+		std::vector<Vector3> rest;
+		project.GetWorkNif()->GetVertsForShape(shape, rest);
+		std::vector<Triangle> tris;
+		shape->GetTriangles(tris);
+
+		// Before and after the change: the snapshot and the shape now, or the shape and the shape with the slider's morph
+		std::vector<Vector3> from, to;
+		std::vector<Vector3> deltas;
+		if (before) {
+			NiShape* old = before->FindBlockByName<NiShape>(name);
+			if (!old) {
+				shapesResult[name] = {{"skipped", "not in the snapshot"}};
+				continue;
+			}
+			before->GetVertsForShape(old, from);
+			if (from.size() != rest.size()) {
+				shapesResult[name] = {{"skipped", "its vertex count changed since the snapshot"}};
+				continue;
+			}
+			to = rest;
+		}
+		else {
+			OpResult r = ops.GetSliderDeltas(shape, sliderName, deltas);
+			if (!r.ok)
+				fail(r.error);
+			from = rest;
+			to = rest;
+			for (size_t i = 0; i < to.size(); i++)
+				to[i] += deltas[i];
+		}
+
+		std::vector<size_t> flipped = MeshAnalysis::FlippedTriangles(from, to, tris);
+		if (preview) {
+			json list = json::array();
+			for (size_t i = 0; i < flipped.size() && i < 50; i++)
+				list.push_back(flipped[i]);
+			shapesResult[name] = {{"flipped", flipped.size()}, {"triangles", list}};
+			continue;
+		}
+
+		std::vector<float> freedom = useMask ? Freedom(project, shape, rest.size()) : std::vector<float>();
+		std::vector<Vector3> fixed = to;
+		MeshDeform::UntangleResult fix = MeshDeform::UntangleFlips(from, fixed, tris, freedom.empty() ? nullptr : &freedom, options);
+		shapesResult[name] = {
+			{"flippedBefore", fix.flippedBefore},
+			{"flippedAfter", fix.flippedAfter},
+			{"movedVertices", fix.movedVertices},
+			{"maxMove", Round(fix.maxMove, 0.001f)},
+			{"rings", fix.rings},
+		};
+		if (fix.movedVertices == 0)
+			continue;
+
+		std::unordered_map<uint16_t, Vector3> diffs;
+		for (size_t i = 0; i < fixed.size(); i++) {
+			Vector3 diff = fixed[i] - to[i];
+			if (!diff.IsZero(true))
+				diffs[static_cast<uint16_t>(i)] = diff;
+		}
+
+		if (before) {
+			UndoStateShape uss;
+			uss.shapeName = name;
+			for (auto& diff : diffs)
+				uss.restDiffs[diff.first] = diff.second;
+			usp->usss.push_back(std::move(uss));
+		}
+		else {
+			OpResult r = ops.ChangeSliderDeltas(shape, sliderName, diffs, *usp);
+			if (!r.ok)
+				fail(r.error);
+			opResult.refresh = opResult.refresh | r.refresh;
+		}
+	}
+
+	McpToolResult result;
+	result.data["shapes"] = shapesResult;
+	if (preview)
+		return result;
+
+	if (usp->usss.empty()) {
+		history->PopState();
+		result.data["note"] = "Nothing changed: no flipped triangles, or none the fix could turn back within maxRings (masked vertices stay).";
+		return result;
+	}
+
+	if (before)
+		frame->glView->ApplyUndoState(usp, false);
+	else
+		mcp.Apply(opResult);
+	frame->UpdateUndoTools();
+	return result;
+}
+
+McpToolResult MakeContactMorph(OutfitStudioMcp& mcp, const json& args) {
+	OutfitStudioFrame* frame = mcp.GetFrame();
+	OutfitProject& project = mcp.Project();
+
+	if (project.bPose)
+		throw McpToolError("A preview pose is on. Clear it with clear_preview_pose first: the morph is made on the unposed shapes.");
+
+	NiShape* body = McpArgs::Has(args, "body") ? mcp.Shape(McpArgs::String(args, "body")) : project.GetBaseShape();
+	if (!body)
+		throw McpToolError("No reference is loaded. Load one with load_reference, or name the body shape in 'body'.");
+	std::vector<NiShape*> covers = NamedShapes(mcp, args, "cover", true);
+	for (NiShape* cover : covers)
+		if (cover == body)
+			throw McpToolError("The body can't cover itself.");
+
+	const std::string sliderName = McpArgs::String(args, "slider");
+	if (sliderName.empty())
+		McpArgs::Wrong("slider", "a slider name");
+	const bool preview = McpArgs::Bool(args, "preview", false);
+	std::vector<NiShape*> followers = McpArgs::Has(args, "follow") ? NamedShapes(mcp, args, "follow", false) : covers;
+	for (NiShape* follower : followers)
+		if (follower == body)
+			throw McpToolError("The body is what the others follow, it can't be in 'follow'.");
+
+	if (project.ValidSlider(sliderName) && !preview && !McpArgs::Bool(args, "replace", false)) {
+		std::vector<NiShape*> written = followers;
+		written.push_back(body);
+		for (NiShape* shape : written) {
+			TargetDataDiffs* diff = project.GetDiffSet(project.activeSet[sliderName], shape);
+			if (diff && !diff->empty())
+				throw McpToolError("The slider '" + sliderName + "' already has data on '" + shape->name.get() + "'. Pass replace: true to make it again, or name a new slider.");
+		}
+	}
+
+	// The shapes as the sliders show them now, e.g. with the preset the morph is made for, without the morph itself
+	float savedValue = 0.0f;
+	if (project.ValidSlider(sliderName)) {
+		savedValue = project.SliderValue(sliderName);
+		project.SliderValue(sliderName) = 0.0f;
+	}
+	struct RestoreValue {
+		OutfitProject& project;
+		const std::string& slider;
+		float value;
+		~RestoreValue() {
+			if (project.ValidSlider(slider))
+				project.SliderValue(slider) = value;
+		}
+	} restoreValue{project, sliderName, savedValue};
+
+	std::vector<Vector3> bodyVerts;
+	project.GetMorphedVerts(body, bodyVerts);
+	std::vector<Triangle> bodyTris;
+	body->GetTriangles(bodyTris);
+
+	std::vector<std::vector<Vector3>> coverVertsOf;
+	std::vector<std::vector<Triangle>> coverTrisOf;
+	for (NiShape* cover : covers) {
+		coverVertsOf.emplace_back();
+		project.GetMorphedVerts(cover, coverVertsOf.back());
+		coverTrisOf.emplace_back();
+		cover->GetTriangles(coverTrisOf.back());
+	}
+	std::vector<Vector3> coverVerts;
+	std::vector<Triangle> coverTris;
+	MergeSurface(coverVertsOf, coverTrisOf, coverVerts, coverTris);
+
+	MeshDeform::ContactMorphOptions options;
+	options.contactDistance = std::max(McpArgs::Float(args, "contactDistance", options.contactDistance), 0.01f);
+	options.tentDistance = std::max(McpArgs::Float(args, "tentDistance", options.tentDistance), 0.0f);
+	options.depth = McpArgs::Float(args, "depth", options.depth);
+	options.depthWidth = std::max(McpArgs::Float(args, "depthWidth", options.depthWidth), 0.05f);
+	options.bulge = McpArgs::Float(args, "bulge", options.bulge);
+	options.bulgeWidth = std::max(McpArgs::Float(args, "bulgeWidth", options.bulgeWidth), 0.05f);
+	options.smoothing = std::clamp(McpArgs::Int(args, "smoothing", options.smoothing), 0, 100);
+	std::vector<float> freedom = McpArgs::Bool(args, "useMask", true) ? Freedom(project, body, bodyVerts.size()) : std::vector<float>();
+
+	MeshDeform::ContactMorph morph = MeshDeform::MakeContactMorph(bodyVerts, bodyTris, coverVerts, coverTris, freedom.empty() ? nullptr : &freedom, options);
+	if (morph.covered == 0)
+		throw McpToolError("No vertex of '" + body->name.get() + "' is within contactDistance of the cover. Raise contactDistance, or check the cover shapes.");
+
+	size_t moved = 0;
+	for (auto& delta : morph.deltas)
+		if (!delta.IsZero(true))
+			moved++;
+
+	McpToolResult result;
+	result.data["body"] = {
+		{"shape", body->name.get()},
+		{"coveredVertices", morph.covered},
+		{"movedVertices", moved},
+		{"maxDepth", Round(morph.maxDepth, 0.001f)},
+		{"maxBulge", Round(morph.maxBulge, 0.001f)},
+	};
+
+	// The outfit moves with the body under it
+	const float followRadius = std::max(McpArgs::Float(args, "followRadius", 3.0f), 0.05f);
+	std::vector<std::pair<NiShape*, std::vector<Vector3>>> followDeltas;
+	json followResult = json::object();
+	for (NiShape* follower : followers) {
+		std::vector<Vector3> verts;
+		project.GetMorphedVerts(follower, verts);
+		std::vector<Triangle> tris;
+		follower->GetTriangles(tris);
+		std::vector<Vector3> deltas = MeshDeform::FollowDeltas(bodyVerts, bodyTris, morph.deltas, verts, tris, followRadius);
+		std::vector<float> followerFreedom = McpArgs::Bool(args, "useMask", true) ? Freedom(project, follower, verts.size()) : std::vector<float>();
+		size_t followed = 0;
+		float maxMove = 0.0f;
+		for (size_t i = 0; i < deltas.size(); i++) {
+			if (!followerFreedom.empty())
+				deltas[i] *= followerFreedom[i];
+			if (!deltas[i].IsZero(true)) {
+				followed++;
+				maxMove = std::max(maxMove, deltas[i].length());
+			}
+		}
+		followResult[follower->name.get()] = {{"movedVertices", followed}, {"maxMove", Round(maxMove, 0.001f)}};
+		followDeltas.emplace_back(follower, std::move(deltas));
+	}
+	result.data["follow"] = followResult;
+	if (preview)
+		return result;
+
+	if (!project.ValidSlider(sliderName))
+		frame->NewSlider(sliderName, true);
+
+	auto write = [&project, &sliderName](NiShape* shape, const std::vector<Vector3>& deltas) {
+		project.ClearSlider(shape, sliderName);
+		TargetDataDiffs updates;
+		for (size_t i = 0; i < deltas.size(); i++)
+			if (!deltas[i].IsZero(true))
+				updates[static_cast<uint16_t>(i)] = Mesh::TransformDiffNifToMesh(deltas[i]);
+		project.UpdateMorphResult(shape, sliderName, updates);
+	};
+	write(body, morph.deltas);
+	for (auto& follower : followDeltas)
+		write(follower.first, follower.second);
+
+	if (McpArgs::Bool(args, "show", true))
+		restoreValue.value = 1.0f;
+	project.SliderValue(sliderName) = restoreValue.value;
+
+	OpResult refresh;
+	refresh.refresh = RefreshFlags::SliderValues | RefreshFlags::Meshes | RefreshFlags::SliderData | RefreshFlags::PendingChanges;
+	mcp.Apply(refresh);
+
+	result.data["slider"] = sliderName;
+	result.data["note"] =
+		"Check it at 1 with the cover (render_view, analyze_clipping), then tune depth and bulge with replace: true. Where the cover "
+		"tents over the body (a cup over the nipple) a deep squish can let the body show through: fix_clipping in combination mode "
+		"with this slider at 1, masked and at low strength, or a smaller depth. The morph is relative to the body as the sliders "
+		"showed it.";
+	return result;
+}
+
 } // namespace
 
 void AddFittingTools(OutfitStudioMcp& mcp) {
@@ -937,4 +1257,57 @@ void AddFittingTools(OutfitStudioMcp& mcp) {
 	});
 	fit.handler = [&mcp](const json& args) { return FitToBody(mcp, args); };
 	mcp.AddTool(std::move(fit));
+
+	McpTool flips;
+	flips.name = "fix_flipped_triangles";
+	flips.description =
+		"Turns triangles back that a change flipped, e.g. fit_to_body, a clipping push-out or a conform: compares the shapes "
+		"with a snapshot (the automatic one the change took) or a slider's morph with the rest shape, and smooths the change "
+		"only around the flipped triangles, ring by ring, until they face the way they did. The rest of the change stays, so "
+		"the shape keeps its relief. Masked vertices stay. One undo step; preview lists the flipped triangles without "
+		"changing anything.";
+	flips.inputSchema = McpSchema({
+		{"shapes", shapesProp},
+		{"snapshot", McpProp("string", "Snapshot with the shapes before the change, e.g. auto-3. The base shapes are fixed, with all sliders at 0.")},
+		{"slider", McpProp("string", "Slider whose morph flips triangles; its morph is fixed instead")},
+		{"maxRings", McpProp("integer", "How many rings of neighbors around the flipped triangles may change. Default 4.")},
+		{"strength", McpProp("number", "Smoothing strength of each pass, 0.05 to 1. Default 0.5.")},
+		{"useMask", McpProp("boolean", "Leave masked vertices alone. Default true.")},
+		{"allowReference", McpProp("boolean", "With snapshot, also fix the reference shape when it is named in shapes. Default false.")},
+		{"preview", McpProp("boolean", "Only count and list the flipped triangles. Default false.")},
+	});
+	flips.handler = [&mcp](const json& args) { return FixFlippedTriangles(mcp, args); };
+	mcp.AddTool(std::move(flips));
+
+	McpTool contact;
+	contact.name = "make_contact_morph";
+	contact.description =
+		"Makes a body slider for an outfit that presses into the body, e.g. a tight top squishing the breasts or a strap "
+		"cutting in: body vertices within contactDistance of the cover sink in, reaching depth over depthWidth from the edge "
+		"of the covered area, and swell out by bulge just past the edge, measured along the body so the shape follows the "
+		"cover's outline without creases. The cover and other follow shapes move with the body under them. Made on the "
+		"shapes as the sliders show them now, so set the preset it's for first. Mask the body where it must not move (e.g. "
+		"the arms with mask_ops bone_weighted). Not in the undo history: an automatic snapshot is taken first.";
+	contact.inputSchema = McpSchema(
+		{
+			{"slider", McpProp("string", "Slider to make, or to make again with replace")},
+			{"cover", McpStringList("Outfit shapes that press into the body")},
+			{"body", McpProp("string", "Body shape. Default: the reference.")},
+			{"follow", McpStringList("Shapes that move with the body. Default: the cover shapes; [] for none.")},
+			{"followRadius", McpProp("number", "How far from the body a follow vertex still moves with it, fading out over the last quarter. Default 3.")},
+			{"contactDistance", McpProp("number", "Body vertices this close to the cover are under it. Default 0.45.")},
+			{"tentDistance", McpProp("number", "Body vertices with the cover in front of them this close are under it too, where the cover tents over the body (a cup around the nipple). Default 2.")},
+			{"depth", McpProp("number", "How far the covered body sinks in. Default 1.3.")},
+			{"depthWidth", McpProp("number", "Distance from the edge of the covered area over which it reaches the depth. Default 1.8.")},
+			{"bulge", McpProp("number", "How far the body swells out past the edge where the body next to it sank the full depth, less next to thin straps. Default 0.85; 0 for none.")},
+			{"bulgeWidth", McpProp("number", "Distance from the edge to the top of the swell, which fades out after it. Default 1.2.")},
+			{"smoothing", McpProp("integer", "Passes that smooth the result over the body. Default 5.")},
+			{"useMask", McpProp("boolean", "Masked vertices of the body and follow shapes stay. Default true.")},
+			{"replace", McpProp("boolean", "Replace the slider's data on the body and follow shapes. Default false, which refuses a slider with data.")},
+			{"show", McpProp("boolean", "Set the slider to 1 afterwards. Default true.")},
+			{"preview", McpProp("boolean", "Only measure what would move. Default false.")},
+		},
+		{"slider", "cover"});
+	contact.handler = [&mcp](const json& args) { return MakeContactMorph(mcp, args); };
+	mcp.AddTool(std::move(contact));
 }

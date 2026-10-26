@@ -61,6 +61,9 @@ public:
 													float maxDepth,
 													const std::vector<nifly::Vector3>* outwardNormals = nullptr);
 
+	// Vertex normals of a body pointing away from its inside, whatever the winding order of its triangles
+	static std::vector<nifly::Vector3> OutwardVertexNormals(const std::vector<nifly::Vector3>& bodyVerts, const std::vector<nifly::Triangle>& bodyTris);
+
 	// The deepest poke through each outfit vertex's triangles, as a positive distance, 0 where there is none
 	static std::vector<float> PokeDepthPerVertex(const std::vector<PokeThrough>& pokes, const std::vector<nifly::Triangle>& outfitTris, size_t outfitVertexCount);
 

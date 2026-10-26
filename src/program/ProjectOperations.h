@@ -281,6 +281,9 @@ public:
 
 	// Sets slider values by name, 0 to 1. Fails on the first unknown slider without changing any.
 	OpResult SetSliderValues(const std::map<std::string, float>& values);
+	// Checks or unchecks sliders by name, like their check boxes: only checked sliders move the shapes. Fails on the
+	// first unknown slider, or the slider in edit mode, without changing any.
+	OpResult SetSlidersChecked(const std::map<std::string, bool>& checked);
 
 	// Morph of a slider on a shape in NIF coordinates, one delta per vertex
 	OpResult GetSliderDeltas(nifly::NiShape* shape, const std::string& sliderName, std::vector<nifly::Vector3>& outDeltas);

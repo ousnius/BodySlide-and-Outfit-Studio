@@ -867,6 +867,22 @@ OpResult ProjectOperations::SetSliderValues(const std::map<std::string, float>& 
 	return result;
 }
 
+OpResult ProjectOperations::SetSlidersChecked(const std::map<std::string, bool>& checked) {
+	for (auto& check : checked) {
+		if (!project.ValidSlider(check.first))
+			return OpResult::Fail("Slider '" + check.first + "' doesn't exist.");
+		if (!check.second && editor.bEditSlider && check.first == editor.activeSlider)
+			return OpResult::Fail("Slider '" + check.first + "' is in edit mode, which keeps it checked.");
+	}
+
+	for (auto& check : checked)
+		project.SliderShow(check.first) = check.second;
+
+	OpResult result;
+	result.refresh = RefreshFlags::SliderValues | RefreshFlags::Meshes;
+	return result;
+}
+
 OpResult ProjectOperations::ConformSliders(const std::vector<NiShape*>& shapes, const ConformOptions& options) {
 	if (!project.GetBaseShape())
 		return OpResult::Fail("No reference shape is loaded.");
@@ -1202,7 +1218,24 @@ OpResult ProjectOperations::ScaleSliderDeltas(NiShape* shape, const std::string&
 	if (!project.ValidSlider(sliderName))
 		return OpResult::Fail("Slider '" + sliderName + "' doesn't exist.");
 
-	project.ScaleMorphResult(shape, sliderName, factor);
+	// Masked vertices keep their deltas, partly masked ones a share. UV morphs are scaled as a whole.
+	size_t sliderIndex = 0;
+	project.SliderIndexFromName(sliderName, sliderIndex);
+	std::vector<float> weights = project.SliderUV(sliderIndex) ? std::vector<float>() : MaskOps::FixWeights(GetMesh(shape->name.get()));
+	if (weights.empty())
+		project.ScaleMorphResult(shape, sliderName, factor);
+	else {
+		std::vector<Vector3> deltas;
+		GetSliderDeltas(shape, sliderName, deltas);
+		TargetDataDiffs updates;
+		for (size_t i = 0; i < deltas.size() && i < weights.size(); i++) {
+			Vector3 change = deltas[i] * ((factor - 1.0f) * weights[i]);
+			if (!change.IsZero(true))
+				updates[static_cast<uint16_t>(i)] = Mesh::TransformDiffNifToMesh(change);
+		}
+		if (!updates.empty())
+			project.UpdateMorphResult(shape, sliderName, updates);
+	}
 
 	OpResult result;
 	result.refresh = RefreshFlags::Meshes | RefreshFlags::SliderData | RefreshFlags::PendingChanges;

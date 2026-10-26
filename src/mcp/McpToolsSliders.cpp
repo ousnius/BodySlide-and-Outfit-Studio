@@ -80,6 +80,8 @@ json ListSliders(OutfitStudioMcp& mcp, const json& args) {
 			entry["invert"] = true;
 		if (project.SliderHidden(i))
 			entry["hidden"] = true;
+		if (!project.SliderShow(i))
+			entry["checked"] = false;
 		entry["defaultSmall"] = project.SliderDefault(i, false);
 		entry["defaultBig"] = project.SliderDefault(i, true);
 		list.push_back(entry);
@@ -567,7 +569,8 @@ void AddSliderTools(OutfitStudioMcp& mcp) {
 	list.name = "list_sliders";
 	list.description =
 		"Lists the sliders with their current value, flags (zap, uv, clamp, invert, hidden), BodySlide defaults and the "
-		"shapes that have morph data for each.";
+		"shapes that have morph data for each. Sliders unchecked in the window have checked: false; they don't move the "
+		"shapes whatever their value.";
 	list.inputSchema = McpSchema({{"filter", McpProp("string", "Only sliders whose name contains this text, ignoring case")}});
 	list.readOnly = true;
 	list.handler = [&mcp](const json& args) {
@@ -579,10 +582,25 @@ void AddSliderTools(OutfitStudioMcp& mcp) {
 
 	McpTool setValues;
 	setValues.name = "set_slider_values";
-	setValues.description = "Sets slider values in the window, 0 to 1 (100% in the window), to see the outfit with them. Other sliders keep their values.";
-	setValues.inputSchema = McpSchema({{"values", McpNumberMap("Slider names to values, e.g. {\"Breasts\": 1, \"Waist\": 0.5}")}}, {"values"});
+	setValues.description =
+		"Sets slider values in the window, 0 to 1 (100% in the window), to see the outfit with them, and checks or "
+		"unchecks sliders like their check boxes: only checked sliders move the shapes. Other sliders keep their "
+		"values and check boxes.";
+	setValues.inputSchema = McpSchema({
+		{"values", McpNumberMap("Slider names to values, e.g. {\"Breasts\": 1, \"Waist\": 0.5}")},
+		{"checked", McpBoolMap("Slider names to checked or not, e.g. {\"Breasts\": false}")},
+	});
 	setValues.handler = [&mcp](const json& args) {
-		mcp.Apply(mcp.Ops().SetSliderValues(McpArgs::FloatMap(args, "values")));
+		const auto values = McpArgs::FloatMap(args, "values");
+		const auto checked = McpArgs::BoolMap(args, "checked");
+		if (values.empty() && checked.empty())
+			throw McpToolError("Give values or checked.");
+		for (auto& value : values)
+			CheckSlider(mcp.Project(), value.first);
+		if (!checked.empty())
+			mcp.Apply(mcp.Ops().SetSlidersChecked(checked));
+		if (!values.empty())
+			mcp.Apply(mcp.Ops().SetSliderValues(values));
 		return McpToolResult();
 	};
 	mcp.AddTool(std::move(setValues));
@@ -728,14 +746,19 @@ void AddSliderTools(OutfitStudioMcp& mcp) {
 
 	McpTool scale;
 	scale.name = "scale_slider_deltas";
-	scale.description = "Multiplies the morph of a slider on shapes by a factor, e.g. 0.8 to make it weaker. Masked vertices keep their deltas.";
+	scale.description =
+		"Multiplies the morph of a slider on shapes by a factor, e.g. 0.8 to make it weaker. Masked vertices keep their "
+		"deltas, partly masked ones a share. allowReference also scales the reference's morph.";
 	scale.inputSchema = McpSchema(
-		{{"shapes", ShapesProp}, {"slider", McpProp("string", "Slider name")}, {"factor", McpProp("number", "Factor for the deltas")}},
+		{{"shapes", ShapesProp},
+		 {"slider", McpProp("string", "Slider name")},
+		 {"factor", McpProp("number", "Factor for the deltas")},
+		 {"allowReference", McpProp("boolean", "Also change the reference shape when it is named in shapes. Default false, which refuses it.")}},
 		{"slider", "factor"});
 	scale.handler = [&mcp](const json& args) {
 		const float factor = static_cast<float>(McpArgs::Number(args, "factor"));
 		std::string slider = McpArgs::String(args, "slider");
-		for (auto* shape : mcp.Shapes(args, "shapes"))
+		for (auto* shape : mcp.Shapes(args, "shapes", McpArgs::Bool(args, "allowReference", false)))
 			mcp.Apply(mcp.Ops().ScaleSliderDeltas(shape, slider, factor));
 		return McpToolResult();
 	};

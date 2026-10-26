@@ -334,6 +334,7 @@ set(BSOS_COMMON_SOURCES
 	src/components/ClippingFixer.cpp
 	src/components/MaskOps.cpp
 	src/components/MeshAnalysis.cpp
+	src/components/MeshDeform.cpp
 	src/components/MeshRefine.cpp
 	src/components/PoseFit.cpp
 	src/components/PoseMath.cpp
@@ -520,6 +521,7 @@ if(BSOS_BUILD_TESTS)
 		tests/MaskTransferTest.cpp
 		tests/McpProtocolTest.cpp
 		tests/MeshAnalysisTest.cpp
+		tests/MeshDeformTest.cpp
 		tests/MeshRefineTest.cpp
 		tests/OutfitProjectTest.cpp
 		tests/PhysicsXmlFileTest.cpp
@@ -542,6 +544,7 @@ if(BSOS_BUILD_TESTS)
 		src/components/ClothData.cpp
 		src/components/MaskTransfer.cpp
 		src/components/MeshAnalysis.cpp
+		src/components/MeshDeform.cpp
 		src/components/MeshRefine.cpp
 		src/components/PoseFit.cpp
 		src/components/PoseMath.cpp

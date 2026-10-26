@@ -128,6 +128,22 @@ inline std::map<std::string, float> FloatMap(const nlohmann::json& args, const c
 	return map;
 }
 
+// An object of names to true or false, like the checked sliders
+inline std::map<std::string, bool> BoolMap(const nlohmann::json& args, const char* name) {
+	std::map<std::string, bool> map;
+	const nlohmann::json* value = Find(args, name);
+	if (!value)
+		return map;
+	if (!value->is_object())
+		Wrong(name, "an object of names to true or false");
+	for (auto& item : value->items()) {
+		if (!item.value().is_boolean())
+			Wrong(name, "an object of names to true or false");
+		map[item.key()] = item.value().get<bool>();
+	}
+	return map;
+}
+
 } // namespace McpArgs
 
 // Builds the input schema of a tool: an object with the given properties
@@ -153,4 +169,8 @@ inline nlohmann::json McpIntList(const std::string& description) {
 
 inline nlohmann::json McpNumberMap(const std::string& description) {
 	return {{"type", "object"}, {"additionalProperties", {{"type", "number"}}}, {"description", description}};
+}
+
+inline nlohmann::json McpBoolMap(const std::string& description) {
+	return {{"type", "object"}, {"additionalProperties", {{"type", "boolean"}}}, {"description", description}};
 }

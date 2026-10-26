@@ -3177,6 +3177,7 @@ void OutfitStudioFrame::SyncSliderPanels() {
 		int val = static_cast<int>(std::round(project->SliderValue(i) * 100.0f));
 		it->second->sliderReadout->ChangeValue(wxString::Format("%d%%", val));
 		it->second->slider->SetValue(val);
+		it->second->sliderCheck->Set3StateValue(project->SliderShow(i) ? wxCheckBoxState::wxCHK_CHECKED : wxCheckBoxState::wxCHK_UNCHECKED);
 	}
 }
 

@@ -115,13 +115,14 @@ For clipping because the outfit is coarser than the body, see `fix-clipping`.
 Most window commands have their own tool. `run_steps` runs automation steps (`get_step_schema` describes them), for script features like variables.
 
 - **Shapes:** `rename_shape`, `duplicate_shape`, `delete_shapes`, `set_reference_shape`, `delete_vertices` and `separate_vertices` (on the mask), `merge_shapes`, `refine_mesh` (every unmasked triangle), `refine_mesh_adaptive` (only where the mesh lacks detail, see `fix-clipping`), `mirror_shapes`, `symmetrize_vertices` (after `analyze_symmetry`, which lists what differs from the mirror image: positions, sliders, bones), `invert_uvs`, `recalc_normals`, `shape_transforms`, `set_base_shape`, `remove_unused_nodes`.
-- **Vertices:** `get_shape_geometry`, `set_vertex_data`, `edit_topology`, `brush_stroke`, `smooth_shapes`.
+- **Vertices:** `get_shape_geometry`, `set_vertex_data`, `edit_topology`, `brush_stroke`, `smooth_shapes`, `fix_flipped_triangles` (turns back the triangles a fit, push-out or conform flipped: give it the automatic snapshot the change took, or the slider whose morph folds).
 - **Properties:** `get_shape_properties`, `shape_shader` (add or remove the shader), `set_shader_properties`, `set_texture_paths`, `set_alpha_property` (alpha testing and blending), `set_geometry_properties` (skinned, full precision, sub index, dynamic), `set_shape_flags` (e.g. hidden), `set_extra_data` (e.g. BODYTRI on the root). Fallout 4 and 76 materials: `read_material`, `write_material` (see `cross-game`).
 - **Partitions and segments:** `get_partitions`, `set_partitions` (Skyrim and older), `set_segments` (Fallout 4), `copy_partitions` from the reference.
 - **Bones and weights:** see `bone-weights`.
 - **Sliders:** see `conform-sliders`.
 - **View:** `set_view_state` takes `overlays` for bones, nodes and the floor.
 - The base shape only changes with all sliders at 0 (`zero_sliders`), and a slider's morph only in `set_slider_edit` mode with the slider on, like in the window. This goes for `transform_shapes`, `set_vertex_data` positions and the shaping brushes.
+- `transform_shapes`, `scale_slider_deltas` and `clear_slider_data` leave the reference alone unless it is named with `allowReference: true`.
 - The vertex, topology, transform, mask and weight tools are in the undo history. Like automation, the shape, bone and slider structure tools aren't: they take an automatic snapshot, or take a `snapshot_save` yourself.
 
 ## Many outfits at once
@@ -144,6 +145,7 @@ Converting a whole mod (dozens of pieces) one tool call at a time costs a lot. D
 1. `validate_project` lists what breaks in game rather than in the view: unweighted vertices, too many bones per vertex, triangles without a partition, sliders that move the body under a shape but not the shape, zap sliders that zap nothing, and whether the body is saved with the outfit. Fix the errors and read the warnings.
 2. `save_project` with a new `displayName` and `sliderSetFile`, and `shapeDataFolder`, `outputDataPath` and `outputFileName` as the user wants them. `copyReference` defaults to what the project had: keep the body when the source set had it. `genWeights` builds `_0` and `_1` meshes for Skyrim.
 3. `export_file` writes NIF, OBJ, FBX, OSD or TRI files when they're asked for: `shapes` exports only those, `headTri` a head TRI file.
+4. `build_outfits` builds the saved set with BodySlide into a scratch folder, never the game: the meshes the user gets, with zaps applied, for a `preset` and with `tri` files. Its result lists each NIF's shapes and vertex counts and BodySlide's errors. `import_file` a built NIF into a new project to look at it. It builds what is saved, so save first.
 
 ## Pitfalls
 
@@ -151,6 +153,7 @@ Converting a whole mod (dozens of pieces) one tool call at a time costs a lot. D
 - **Measure sliders one at a time.** A superposed morph hides which slider is bad. `quality_sweep` and `analyze_slider` already do this.
 - **Read absolute numbers too.** A weak morph looks rough when normalized, a strong one smooth.
 - **Sliders stay set.** `apply_preset` and `set_slider_values` change the window and every later measurement and render: `zero_sliders` afterwards.
+- **Unchecked sliders don't move the shapes.** The user may have unchecked sliders in the window; `list_sliders` shows them with `checked: false`, and `set_slider_values` takes `checked` to change it. A value on an unchecked slider shows nothing.
 - **Automation steps can replace shapes.** Look shapes up by name again after `run_steps`.
 - **New tool arguments after an OS update:** the client may keep an old tool schema until it reconnects, and then sends unknown list arguments as text. List arguments also take a JSON list in a string or a single name.
 - Long calls (conform, weight copy, sweeps) send progress notifications when the client asks for them.

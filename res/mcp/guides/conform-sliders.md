@@ -100,17 +100,14 @@ A conversion with large deltas can leave spikes where cloth spans a crease of th
 
 ## Outfit-specific body morphs
 
-When the body is saved with the outfit (`copyReference`), a slider can move the body too, and only under this outfit: tight fabric pressing into the skin, flesh bulging over an edge or a strap. Make it on the body, then let the outfit follow:
+When the body is saved with the outfit (`copyReference`), a slider can move the body too, and only under this outfit: tight fabric pressing into the skin, flesh bulging over an edge or a strap.
 
-1. `new_slider` (empty). Set the slider values the morph is meant for first: a morph made on one body shape (a preset) won't line up with the outfit's edges on a much different one. Save it in that preset, or give it `defaultSmall`/`defaultBig` 100 when it should always be on.
-2. Edit the body's morph. Tools that change geometry or morphs (`transform_shapes`, `scale_slider_deltas`, `clear_slider_data`) refuse the reference: `set_reference_shape` `unset: true`, edit, then `set_reference_shape` back. Changing the reference sets the slider values back to 0, so set them again before measuring or rendering.
-3. `conform_sliders` with only that slider onto the outfit, so it sits on the moved body. Or compute the outfit's deltas together with the body's (below).
-4. `analyze_clipping` with the slider and the values it's made for (`zeroOthers: false`), and `render_view` before and after.
+**`make_contact_morph`** makes such a slider in one call: the body under the `cover` shapes sinks in by `depth`, smoothly from the edge of the covered area (measured along the body, so it follows the fabric's outline), and swells out by `bulge` just past the edge, less next to thin straps that barely press in. Where the cover tents over the body (a cup over the nipple) the body under it sinks too. The cover and any `follow` shapes move with the body under them. On a micro bikini the defaults (depth 1.3, bulge 0.85) moved the body by up to 0.82, about as much as a hand-tuned morph.
 
-**Masks give hard edges.** Box masks with a move or inflate leave creases at the mask border that `mask_ops` `smooth` doesn't remove, and outfit and body masks soften differently (different mesh density), so the outfit sinks in or floats. For a smooth result, compute the deltas instead:
+1. Set the slider values the morph is meant for first: a morph made on one body shape (a preset) won't line up with the outfit's edges on a much different one. Save it in that preset, or give it `defaultSmall`/`defaultBig` 100 when it should always be on.
+2. Mask the body where it must not move, e.g. the arms (bodies often weight the sides of the breasts to the upper arm too, so mask by weight values from `get_weights`, not `bone_weighted`).
+3. `make_contact_morph` with `preview: true` to see how much is covered and how far it moves, then without. Tune `depth`, `bulge` and their widths with `replace: true`.
+4. `analyze_clipping` with the slider and the values it's made for (`zeroOthers: false`), and `render_view` before and after. A deep squish can let the body show through a cup that tents over it: `fix_clipping` in combination mode with only this slider, masked and at low strength, or a smaller `depth` (0.6 left a micro bikini's clipping as it was at rest).
 
-- Read positions, normals and triangles with `get_shape_geometry` (in ranges of up to 20000 vertices). The body's weights (`get_weights` `all: true`) tell the limbs apart, e.g. to keep a bulge off the arms; bodies often weight the sides of the breasts to the upper arm too, so use the weight values, not `bone_weighted`.
-- Mark the body vertices under the fabric (within a few tenths of a unit of an outfit triangle) and take the signed distance to the edge of that area, negative under the fabric.
-- Move the body along its normals by a smooth profile of that distance: sinking under the fabric, gently from the edge inwards, and bulging just outside, peaking about a unit past the edge and fading out. Zero slope on both sides of the edge avoids a crease; the fabric edge then sits in a groove between the two. Smooth the result over neighbours within a radius.
-- Give each outfit vertex the body's displacement under it (blend the nearest body vertices), then write both as BSD files and import them.
+To edit the body's morph by hand, `transform_shapes`, `scale_slider_deltas` and `clear_slider_data` take `allowReference: true`; changing the reference keeps the slider values. **Masks give hard edges** there: box masks with a move or inflate leave creases at the mask border that `mask_ops` `smooth` doesn't remove. A morph computed by a script can come in as BSD files (above).
 - Parts that bridge a gap over the body (a band across the cleavage, straps between knots) sit away from the surface. Check them after a conform: they can take uneven morphs and kink, or end up behind a bulge. `set_slider_deltas` with `add: true` moves them by hand.

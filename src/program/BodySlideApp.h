@@ -104,6 +104,7 @@ class BodySlideApp : public wxApp {
 	bool cmdPresetResolved = false;
 	bool cmdPresetPending = false;
 	bool cmdTri = false;
+	bool cmdQuiet = false; // Command-line builds log instead of asking or showing dialogs, and don't save build choices.
 	std::vector<std::string> cmdPreviewNifs;
 	bool cmdPreviewMode = false;
 
@@ -535,6 +536,10 @@ static const wxCmdLineEntryDesc g_cmdLineDesc[] = {{wxCMD_LINE_OPTION, "gbuild",
 													"path to a preset XML file optionally followed by '?' and a preset name, defaults to last used preset",
 													wxCMD_LINE_VAL_STRING},
 												   {wxCMD_LINE_SWITCH, "tri", "trimorphs", "enables tri morph output for the specified build"},
+												   {wxCMD_LINE_SWITCH,
+													"q",
+													"quiet",
+													"builds without dialogs: conflicting outputs take the saved or first choice without saving it, failures are only logged"},
 												   {wxCMD_LINE_OPTION, "preview", "preview", "open the specified nif files in preview mode", wxCMD_LINE_VAL_STRING},
 												   wxCMD_LINE_DESC_END};
 

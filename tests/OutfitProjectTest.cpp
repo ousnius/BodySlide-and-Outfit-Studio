@@ -171,6 +171,31 @@ struct ProjectFixture {
 };
 } // namespace
 
+TEST_CASE("Unchecked sliders don't move the shapes", "[OutfitProject]") {
+	ProjectFixture f;
+	REQUIRE(f.ops.SetSliderValues({{"Grow", 1.0f}}).ok);
+
+	std::vector<Vector3> verts;
+	f.project.GetMorphedVerts(f.body, verts);
+	CHECK(verts[0].z == Catch::Approx(1.0f));
+
+	REQUIRE(f.ops.SetSlidersChecked({{"Grow", false}}).ok);
+	CHECK_FALSE(f.project.SliderShow("Grow"));
+	f.project.GetMorphedVerts(f.body, verts);
+	CHECK(verts[0].z == Catch::Approx(0.0f));
+
+	// An unknown slider fails without changing the others
+	CHECK_FALSE(f.ops.SetSlidersChecked({{"Grow", true}, {"Missing", true}}).ok);
+	CHECK_FALSE(f.project.SliderShow("Grow"));
+
+	// The slider in edit mode stays checked
+	REQUIRE(f.ops.SetSlidersChecked({{"Grow", true}}).ok);
+	f.editor.activeSlider = "Grow";
+	f.editor.bEditSlider = true;
+	CHECK_FALSE(f.ops.SetSlidersChecked({{"Grow", false}}).ok);
+	CHECK(f.project.SliderShow("Grow"));
+}
+
 TEST_CASE("Meshes are built from shapes without GL", "[OutfitProject]") {
 	ProjectFixture f;
 

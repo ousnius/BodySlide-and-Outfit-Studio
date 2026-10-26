@@ -41,7 +41,7 @@ Such models have no skeleton, other proportions, another rest pose (an A-pose or
 
 ## 6. Fit to the body
 
-`fit_to_body`, a shape or group at a time, with the target body (and hands or feet only where they show). Read `maxStrain`, `meanStrain`, `flippedTriangles`, `insideAfter` and `bodyPokingThroughAfter` in the result, and render.
+`fit_to_body`, a shape or group at a time, with the target body (and hands or feet only where they show). Read `maxStrain`, `meanStrain`, `flippedTriangles`, `insideAfter` and `bodyPokingThroughAfter` in the result, and render. Flipped triangles are turned back with `fix_flipped_triangles` and the fit's automatic snapshot.
 
 - **Garments over the model's skin body** (corset, top, pants): `gapMode: "fromShape"` with `gapFrom` = the model's skin body keeps each vertex's gap to it. `rigidParts` with `maxPartVertices` around 120 keeps buckles, studs and chain links whole.
 - **Stiff accessories** (collar, choker, bracelet, belt): `rigidParts` with `maxPartVertices` as large as the shape and `rigidScale: true`: the piece moves and scales as a whole instead of bending onto the body. A choker from a long thin neck otherwise flares down onto the shoulders.
