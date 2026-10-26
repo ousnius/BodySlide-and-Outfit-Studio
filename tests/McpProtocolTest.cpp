@@ -209,6 +209,26 @@ TEST_CASE("MCP answers with text that isn't UTF-8", "[MCP]") {
 	CHECK(json::parse(response["result"]["content"][0]["text"].get<std::string>())["name"] == "R\xEF\xBF\xBD" "be");
 }
 
+TEST_CASE("MCP answers with compact text and float precision", "[MCP]") {
+	McpToolRegistry tools;
+	McpTool vertex;
+	vertex.name = "vertex";
+	vertex.description = "Returns float positions, which carry noise digits as doubles";
+	vertex.handler = [](const json&) {
+		McpToolResult result;
+		result.data["index"] = 0;
+		result.data["position"] = json::array({8.208552360534668f, -0.001f, 0.0f});
+		result.data["weight"] = 0.00001234567891;
+		return result;
+	};
+	tools.Add(vertex);
+
+	McpProtocol protocol(tools, "test-server", "1.0.0");
+	json result = protocol.HandleMessage(Request(1, "tools/call", {{"name", "vertex"}}))["result"];
+	CHECK(result["content"][0]["text"] == R"({"index":0,"position":[8.208552,-0.001,0.0],"weight":1.234568e-05})");
+	CHECK(result["structuredContent"]["position"][0] == 8.208552);
+}
+
 TEST_CASE("MCP only takes requests from this machine", "[MCP]") {
 	CHECK(McpProtocol::IsAllowedOrigin(""));
 	CHECK(McpProtocol::IsAllowedOrigin("http://localhost"));

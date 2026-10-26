@@ -7,6 +7,7 @@ See the included LICENSE file
 
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <condition_variable>
 #include <deque>
 #include <random>
@@ -34,6 +35,27 @@ struct RpcError {
 	int code;
 	std::string message;
 };
+
+// Mesh floats hold about seven significant digits, the rest of a double is noise that only costs tokens
+void TrimFloats(json& value) {
+	if (value.is_number_float()) {
+		double number = value.get<double>();
+		if (number == 0.0 || !std::isfinite(number) || std::fabs(number) >= 1e7)
+			return;
+
+		int decimals = 7 - static_cast<int>(std::ceil(std::log10(std::fabs(number))));
+		if (decimals > 22)
+			return;
+
+		// Dividing by an exact power of ten gives the double closest to the short decimal
+		double scale = std::pow(10.0, decimals);
+		value = std::round(number * scale) / scale;
+	}
+	else if (value.is_structured()) {
+		for (auto& item : value)
+			TrimFloats(item);
+	}
+}
 
 std::string ToLower(std::string text) {
 	std::transform(text.begin(), text.end(), text.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
@@ -419,8 +441,10 @@ json McpProtocol::CallTool(const json& params, const McpProgress& progress) {
 		}
 	}
 
+	// Compact, since agents read it as tokens and whitespace doesn't help them
+	TrimFloats(result.data);
 	json content = json::array();
-	content.push_back({{"type", "text"}, {"text", result.data.dump(1, '\t', false, json::error_handler_t::replace)}});
+	content.push_back({{"type", "text"}, {"text", result.data.dump(-1, ' ', false, json::error_handler_t::replace)}});
 	for (auto& image : result.images)
 		content.push_back({{"type", "image"}, {"data", Base64(image.png)}, {"mimeType", "image/png"}});
 
