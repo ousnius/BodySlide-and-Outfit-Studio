@@ -816,8 +816,24 @@ McpToolResult GetShapeProperties(OutfitStudioMcp& mcp, const json& args) {
 				 {"environmentMapping", shader->HasEnvironmentMapping()},
 				 {"emissive", shader->IsEmissive()},
 				 {"specular", shader->HasSpecular()},
+				 {"glowMap", shader->HasGlowmap()},
+				 {"softLighting", shader->HasSoftlight()},
+				 {"rimLighting", shader->HasRimlight()},
+				 {"backLighting", shader->HasBacklight()},
 			 }},
 		};
+
+		// The rest of the flags set_shader_properties takes, and the values of its LightingEffect1/2 (soft and rim light)
+		if (auto* lighting = dynamic_cast<BSLightingShaderProperty*>(shader)) {
+			json& flags = data["shader"]["flags"];
+			flags["castShadows"] = (lighting->shaderFlags1 & SLSF1_CAST_SHADOWS) != 0;
+			flags["receiveShadows"] = (lighting->shaderFlags1 & SLSF1_RECEIVE_SHADOWS) != 0;
+			if (nif->GetHeader().GetVersion().Stream() < 130) {
+				json& properties = data["shader"]["properties"];
+				properties["LightingEffect1"] = lighting->softlighting;
+				properties["LightingEffect2"] = lighting->rimlightPower;
+			}
+		}
 	}
 	else
 		data["shader"] = nullptr;

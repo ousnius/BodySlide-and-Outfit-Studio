@@ -14,8 +14,9 @@ See the included LICENSE file
 
 class OutfitStudioFrame;
 
-// Modeless tree of the mesh files in all loaded BSA/BA2 archives, to load them
-// as the outfit or import them into the project.
+// Modeless tree of the files in all loaded BSA/BA2 archives, filtered by file
+// extension (.nif by default), to load meshes as the outfit or into the project
+// beside it, or to export files to a folder.
 class ArchiveBrowser : public wxDialog {
 public:
 	ArchiveBrowser(OutfitStudioFrame* parent);
@@ -29,24 +30,33 @@ private:
 	OutfitStudioFrame* frame = nullptr;
 
 	wxSearchCtrl* search = nullptr;
+	wxComboBox* extension = nullptr;
 	wxTreeListCtrl* tree = nullptr;
 	wxStaticText* status = nullptr;
 	wxButton* btnReplace = nullptr;
-	wxButton* btnImport = nullptr;
+	wxButton* btnLoad = nullptr;
+	wxButton* btnExport = nullptr;
 	wxTimer searchTimer;
+	wxString exportDir; // Folder of the last export, where the next one starts
 
 	ArchiveIndex index;
 	ArchiveIndex::Node filtered;
 	const ArchiveIndex::Node* shown = nullptr;
 
+	void FillExtensions();
 	void ApplyFilter();
 	void ShowTree(bool expandAll);
 	void PopulateItem(wxTreeListItem parent, const ArchiveIndex::Node& node);
 	void PopulateFolder(wxTreeListItem item);
 	void ExpandAll(wxTreeListItem parent);
 
+	// The selected file when exactly one item is selected and it's a file
 	const ArchiveIndex::Entry* GetSelectedFile() const;
-	void LoadSelected(bool import);
+	// All selected files, folders left out
+	std::vector<const ArchiveIndex::Entry*> GetSelectedFiles() const;
+	void LoadSelected(bool add);
+	void ExportSelected();
+	bool ExportFile(const ArchiveIndex::Entry& file, const wxString& target, wxString& error) const;
 	void UpdateButtons();
 
 	void OnSearchText(wxCommandEvent& event);

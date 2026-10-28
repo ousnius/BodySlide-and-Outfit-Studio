@@ -27,7 +27,7 @@ using nifly::NiShape;
 
 namespace {
 
-// The meshes of the loaded archives, as the Browse Archives dialog lists them. Built on first use and
+// The files of the loaded archives, as the Browse Archives dialog lists them. Built on first use and
 // again when the loaded archives change.
 class ArchiveCache {
 public:
@@ -79,24 +79,32 @@ std::string ToLower(std::string text) {
 	return text;
 }
 
-// Which files of the index a call means: below a folder, with optional path and archive filters
+// Which files of the index a call means: below a folder, with an extension and optional path and archive filters
 struct FileSelection {
 	std::string folder;
 	std::string filter;
 	std::string pattern;
 	std::string archive;
+	std::string extension;
+	bool meshesOnly = false;
 
-	explicit FileSelection(const json& args)
+	FileSelection(const json& args, const std::string& defaultExtension, bool meshesOnly = false)
 		: folder(NormalizePath(McpArgs::String(args, "folder", "")))
 		, filter(NormalizePath(McpArgs::String(args, "filter", "")))
 		, pattern(ToLower(McpArgs::String(args, "pattern", "")))
-		, archive(ToLower(McpArgs::String(args, "archive", ""))) {
+		, archive(ToLower(McpArgs::String(args, "archive", "")))
+		, extension(McpArgs::String(args, "extension", defaultExtension))
+		, meshesOnly(meshesOnly) {
 		std::replace(pattern.begin(), pattern.end(), '\\', '/');
 	}
 
 	bool HasFilters() const { return !filter.empty() || !pattern.empty() || !archive.empty(); }
 
 	bool Matches(const ArchiveIndex& index, const ArchiveIndex::Entry& file) const {
+		if (meshesOnly && !ArchiveIndex::IsMeshFile(file.path))
+			return false;
+		if (!ArchiveIndex::HasExtension(file.path, extension))
+			return false;
 		if (!filter.empty() && file.path.find(filter) == std::string::npos)
 			return false;
 		if (!pattern.empty() && !wxMatchWild(wxString::FromUTF8(pattern), wxString::FromUTF8(file.path), false))
@@ -156,13 +164,13 @@ size_t CountFiles(const ArchiveIndex& index, const ArchiveIndex::Node& node, con
 	return count;
 }
 
-void CountByArchive(const ArchiveIndex::Node& node, std::vector<size_t>& counts) {
+void CountByArchive(const ArchiveIndex& index, const ArchiveIndex::Node& node, const FileSelection& selection, std::vector<size_t>& counts) {
 	for (auto& file : node.files)
-		if (file.second.archive < counts.size())
+		if (file.second.archive < counts.size() && selection.Matches(index, file.second))
 			counts[file.second.archive]++;
 
 	for (auto& folder : node.folders)
-		CountByArchive(folder.second, counts);
+		CountByArchive(index, folder.second, selection, counts);
 }
 
 json FileJson(const ArchiveIndex& index, const ArchiveIndex::Entry& file) {
@@ -189,6 +197,7 @@ const json SelectionProps = {
 	{"filter", McpProp("string", "Only files whose path contains this text, like the search box of the dialog")},
 	{"pattern", McpProp("string", "Only files whose full path matches this wildcard pattern (* and ?), e.g. \"*/clothes/monk/*_1.nif\"")},
 	{"archive", McpProp("string", "Only files from archives whose file name contains this text")},
+	{"extension", McpProp("string", "Only files with this extension, e.g. \".dds\", \".hkx\" or \".bgsm\"; \"*\" for all files. Default \".nif\".")},
 };
 
 } // namespace
@@ -200,11 +209,12 @@ void AddArchiveTools(OutfitStudioMcp& mcp) {
 	McpTool browse;
 	browse.name = "browse_archives";
 	browse.description =
-		"Browses the meshes (.nif, .bto, .btr) in the game's loaded BSA/BA2 archives, like File > Browse Archives. "
-		"Archives are merged into one folder tree, and a path in several archives is listed from the first, the one "
-		"the game would use. Without filters, lists the subfolders (with their mesh counts) and the files of 'folder'. "
-		"With filter, pattern or archive, or recursive: true, lists the matching files anywhere below 'folder'. "
-		"Load files with load_from_archive.";
+		"Browses the files in the game's loaded BSA/BA2 archives, like File > Browse Archives: meshes (.nif) by default, "
+		"any other type with extension, e.g. \".dds\" for textures or \"*\" for everything. Archives are merged into one "
+		"folder tree, and a path in several archives is listed from the first, the one the game would use. Without "
+		"filters, lists the subfolders (with their file counts) and the files of 'folder'; at the top also the file "
+		"count per extension. With filter, pattern or archive, or recursive: true, lists the matching files anywhere "
+		"below 'folder'. Load meshes with load_from_archive.";
 	json browseProps = SelectionProps;
 	browseProps["recursive"] = McpProp("boolean", "List the files of all subfolders too. Default false, true when a filter is given.");
 	browseProps["limit"] = McpProp("integer", "Most files to list. Default 200.");
@@ -213,7 +223,7 @@ void AddArchiveTools(OutfitStudioMcp& mcp) {
 	browse.readOnly = true;
 	browse.handler = [cache](const json& args) {
 		const ArchiveIndex& index = cache->Get(McpArgs::Bool(args, "refresh", false));
-		FileSelection selection(args);
+		FileSelection selection(args, ".nif");
 		const ArchiveIndex::Node& node = RequireFolder(index, selection.folder);
 		bool recursive = McpArgs::Bool(args, "recursive", selection.HasFilters());
 		int limit = std::max(1, McpArgs::Int(args, "limit", 200));
@@ -221,17 +231,24 @@ void AddArchiveTools(OutfitStudioMcp& mcp) {
 		McpToolResult result;
 		json& data = result.data;
 
-		// The archives with meshes, at the top only, where the agent starts
-		data["meshCount"] = index.FileCount();
+		data["extension"] = selection.extension;
+		data["extensionFileCount"] = index.FileCount(selection.extension);
+
+		// The archives with such files and the counts of all extensions, at the top only, where the agent starts
 		if (selection.folder.empty() && !selection.HasFilters()) {
 			std::vector<size_t> counts(index.Archives().size());
-			CountByArchive(index.Root(), counts);
+			CountByArchive(index, index.Root(), selection, counts);
 
 			json archives = json::array();
 			for (size_t i = 0; i < counts.size(); i++)
 				if (counts[i] > 0)
-					archives.push_back({{"name", index.Archives()[i].name}, {"meshes", counts[i]}});
+					archives.push_back({{"name", index.Archives()[i].name}, {"files", counts[i]}});
 			data["archives"] = archives;
+
+			json extensions = json::object();
+			for (auto& ext : index.ExtensionCounts())
+				extensions[ext.first.empty() ? "(none)" : ext.first] = ext.second;
+			data["extensions"] = extensions;
 		}
 		data["folder"] = selection.folder;
 
@@ -267,9 +284,10 @@ void AddArchiveTools(OutfitStudioMcp& mcp) {
 	McpTool load;
 	load.name = "load_from_archive";
 	load.description =
-		"Loads meshes from the game's archives into the project, like the Import and Replace Outfit buttons of "
+		"Loads meshes from the game's archives into the project, like the Load and Replace Outfit buttons of "
 		"File > Browse Archives. Name the files with 'files' (archive paths from browse_archives), or select them "
-		"with folder, filter, pattern and archive (all files below the folder that match). mode \"import\" (the "
+		"with folder, filter, pattern, archive and extension (all meshes below the folder that match; only .nif, .bto "
+		"and .btr files load, .nif when extension isn't given). mode \"import\" (the "
 		"default) adds the shapes to the outfit; \"replace\" replaces the outfit shapes with the first file and "
 		"imports the others. The reference stays.";
 	json loadProps = SelectionProps;
@@ -280,14 +298,16 @@ void AddArchiveTools(OutfitStudioMcp& mcp) {
 	load.inputSchema = McpSchema(loadProps);
 	load.handler = [&mcp, frame, cache](const json& args) {
 		const ArchiveIndex& index = cache->Get(false);
-		FileSelection selection(args);
+		FileSelection selection(args, ".nif", true);
 
 		std::vector<const ArchiveIndex::Entry*> files;
 		if (McpArgs::Has(args, "files")) {
 			for (auto& path : McpArgs::Strings(args, "files")) {
 				const ArchiveIndex::Entry* file = FindFile(index, NormalizePath(path));
 				if (!file)
-					throw McpToolError("The archives have no mesh '" + path + "'. browse_archives lists them.");
+					throw McpToolError("The archives have no file '" + path + "'. browse_archives lists them.");
+				if (!ArchiveIndex::IsMeshFile(file->path))
+					throw McpToolError("'" + path + "' isn't a mesh. Only .nif, .bto and .btr files load.");
 				files.push_back(file);
 			}
 		}

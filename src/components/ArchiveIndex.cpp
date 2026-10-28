@@ -16,15 +16,36 @@ std::string NormalizePath(std::string path) {
 	return path;
 }
 
-bool FilterNode(const ArchiveIndex::Node& in, ArchiveIndex::Node& out, const std::string& needle, size_t& matchCount) {
+// Lowercase with a leading dot, empty for "*" or nothing
+std::string NormalizeExtension(std::string extension) {
+	extension.erase(0, extension.find_first_not_of(" \t"));
+	extension.erase(extension.find_last_not_of(" \t") + 1);
+	if (extension.empty() || extension == "*" || extension == "*.*")
+		return std::string();
+
+	std::string result = NormalizePath(extension);
+	if (result.rfind("*.", 0) == 0)
+		result.erase(0, 1);
+	if (result.front() != '.')
+		result.insert(result.begin(), '.');
+	return result;
+}
+
+bool EndsWith(const std::string& path, const std::string& suffix) {
+	return path.size() >= suffix.size() && std::equal(suffix.begin(), suffix.end(), path.end() - suffix.size(), [](char a, char b) {
+			   return a == std::tolower(static_cast<unsigned char>(b));
+		   });
+}
+
+bool FilterNode(const ArchiveIndex::Node& in, ArchiveIndex::Node& out, const std::string& needle, const std::string& extension, size_t& matchCount) {
 	for (auto& folder : in.folders) {
 		ArchiveIndex::Node child;
-		if (FilterNode(folder.second, child, needle, matchCount))
+		if (FilterNode(folder.second, child, needle, extension, matchCount))
 			out.folders.emplace(folder.first, std::move(child));
 	}
 
 	for (auto& file : in.files) {
-		if (file.second.path.find(needle) != std::string::npos) {
+		if (EndsWith(file.second.path, extension) && file.second.path.find(needle) != std::string::npos) {
 			out.files.emplace(file.first, file.second);
 			matchCount++;
 		}
@@ -37,6 +58,7 @@ bool FilterNode(const ArchiveIndex::Node& in, ArchiveIndex::Node& out, const std
 void ArchiveIndex::Clear() {
 	root = Node();
 	archives.clear();
+	extensionCounts.clear();
 	fileCount = 0;
 }
 
@@ -46,9 +68,6 @@ size_t ArchiveIndex::AddArchive(const std::string& path, const std::string& name
 }
 
 bool ArchiveIndex::AddFile(const std::string& path, int64_t size, size_t archive) {
-	if (!IsMeshFile(path))
-		return false;
-
 	std::string fullPath = NormalizePath(path);
 
 	Node* node = &root;
@@ -69,32 +88,41 @@ bool ArchiveIndex::AddFile(const std::string& path, int64_t size, size_t archive
 		return false;
 
 	node->files.emplace(fileName, Entry{fullPath, size, archive});
+	extensionCounts[Extension(fileName)]++;
 	fileCount++;
 	return true;
 }
 
 bool ArchiveIndex::IsMeshFile(const std::string& path) {
 	static const std::array<const char*, 3> meshExtensions = {".nif", ".bto", ".btr"};
-
-	for (const char* ext : meshExtensions) {
-		size_t extLen = std::char_traits<char>::length(ext);
-		if (path.size() < extLen)
-			continue;
-
-		bool match = std::equal(path.end() - extLen, path.end(), ext, [](char a, char b) {
-			return std::tolower(static_cast<unsigned char>(a)) == b;
-		});
-		if (match)
-			return true;
-	}
-
-	return false;
+	return std::any_of(meshExtensions.begin(), meshExtensions.end(), [&](const char* ext) { return EndsWith(path, ext); });
 }
 
-ArchiveIndex::Node ArchiveIndex::Filter(const std::string& needle, size_t* matchCount) const {
+std::string ArchiveIndex::Extension(const std::string& path) {
+	size_t dot = path.rfind('.');
+	size_t sep = path.find_last_of("/\\");
+	if (dot == std::string::npos || (sep != std::string::npos && dot < sep) || dot + 1 == path.size())
+		return std::string();
+	return NormalizePath(path.substr(dot));
+}
+
+bool ArchiveIndex::HasExtension(const std::string& path, const std::string& extension) {
+	return EndsWith(path, NormalizeExtension(extension));
+}
+
+size_t ArchiveIndex::FileCount(const std::string& extension) const {
+	std::string ext = NormalizeExtension(extension);
+	if (ext.empty())
+		return fileCount;
+
+	auto it = extensionCounts.find(ext);
+	return it != extensionCounts.end() ? it->second : 0;
+}
+
+ArchiveIndex::Node ArchiveIndex::Filter(const std::string& needle, const std::string& extension, size_t* matchCount) const {
 	Node out;
 	size_t count = 0;
-	FilterNode(root, out, NormalizePath(needle), count);
+	FilterNode(root, out, NormalizePath(needle), NormalizeExtension(extension), count);
 
 	if (matchCount)
 		*matchCount = count;

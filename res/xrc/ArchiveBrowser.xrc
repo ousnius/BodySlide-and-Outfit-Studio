@@ -9,10 +9,28 @@
 				<option>0</option>
 				<flag>wxALL|wxEXPAND</flag>
 				<border>5</border>
-				<object class="wxSearchCtrl" name="archiveSearch">
-					<hint>Search meshes...</hint>
-					<tooltip>Show only the meshes whose path contains the text.</tooltip>
-					<style>wxTE_PROCESS_ENTER</style>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxRIGHT|wxALIGN_CENTER_VERTICAL</flag>
+						<border>5</border>
+						<object class="wxSearchCtrl" name="archiveSearch">
+							<hint>Search files...</hint>
+							<tooltip>Show only the files whose path contains the text.</tooltip>
+							<style>wxTE_PROCESS_ENTER</style>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_CENTER_VERTICAL</flag>
+						<object class="wxComboBox" name="archiveExtension">
+							<size>90,-1</size>
+							<value>.nif</value>
+							<tooltip>File extension to list, e.g. .nif or .dds. * lists all files. Only meshes can be loaded.</tooltip>
+							<style>wxTE_PROCESS_ENTER</style>
+						</object>
+					</object>
 				</object>
 			</object>
 			<object class="sizeritem">
@@ -49,9 +67,19 @@
 						<option>0</option>
 						<flag>wxRIGHT</flag>
 						<border>5</border>
-						<object class="wxButton" name="btnArchiveImport">
-							<label>Import</label>
-							<tooltip>Import the shapes of the selected mesh into the project.</tooltip>
+						<object class="wxButton" name="btnArchiveLoad">
+							<label>Load</label>
+							<tooltip>Load the shapes of the selected mesh into the project, beside the current outfit.</tooltip>
+							<enabled>0</enabled>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxButton" name="btnArchiveExport">
+							<label>Export...</label>
+							<tooltip>Save the selected files from the archives to a folder. Hold Ctrl or Shift to select several.</tooltip>
 							<enabled>0</enabled>
 						</object>
 					</object>
