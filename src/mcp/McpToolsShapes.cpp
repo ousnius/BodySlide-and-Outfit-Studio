@@ -10,6 +10,7 @@ See the included LICENSE file
 #include <algorithm>
 #include <cfloat>
 #include <cmath>
+#include <filesystem>
 #include <limits>
 #include <set>
 
@@ -749,6 +750,49 @@ std::string PartitionName(int slot) {
 	return "Unknown";
 }
 
+// Flag name to its word (1 or 2) and bit in Skyrim's lighting shader, for set_shader_properties
+const std::map<std::string, std::pair<int, uint32_t>>& LightingFlagBits() {
+	static const std::map<std::string, std::pair<int, uint32_t>> bits = {
+		{"specular", {1, SLSF1_SPECULAR}},
+		{"environmentMapping", {1, SLSF1_ENVIRONMENT_MAPPING}},
+		{"emissive", {1, SLSF1_OWN_EMIT}},
+		{"castShadows", {1, SLSF1_CAST_SHADOWS}},
+		{"receiveShadows", {1, SLSF1_RECEIVE_SHADOWS}},
+		{"modelSpaceNormals", {1, SLSF1_MODEL_SPACE_NORMALS}},
+		{"vertexAlpha", {1, SLSF1_VERTEX_ALPHA}},
+		{"doubleSided", {2, SLSF2_DOUBLE_SIDED}},
+		{"vertexColors", {2, SLSF2_VERTEX_COLORS}},
+		{"glowMap", {2, SLSF2_GLOW_MAP}},
+		{"softLighting", {2, SLSF2_SOFT_LIGHTING}},
+		{"rimLighting", {2, SLSF2_RIM_LIGHTING}},
+		{"backLighting", {2, SLSF2_BACK_LIGHTING}},
+	};
+	return bits;
+}
+
+// The shader flags get_shape_properties shows
+json ShaderFlags(NiShader* shader) {
+	json flags = {
+		{"doubleSided", shader->IsDoubleSided()},
+		{"modelSpaceNormals", shader->IsModelSpace()},
+		{"vertexColors", shader->HasVertexColors()},
+		{"vertexAlpha", shader->HasVertexAlpha()},
+		{"skinTinted", shader->IsSkinTinted()},
+		{"environmentMapping", shader->HasEnvironmentMapping()},
+		{"emissive", shader->IsEmissive()},
+		{"specular", shader->HasSpecular()},
+		{"glowMap", shader->HasGlowmap()},
+		{"softLighting", shader->HasSoftlight()},
+		{"rimLighting", shader->HasRimlight()},
+		{"backLighting", shader->HasBacklight()},
+	};
+	if (auto* lighting = dynamic_cast<BSLightingShaderProperty*>(shader)) {
+		flags["castShadows"] = (lighting->shaderFlags1 & SLSF1_CAST_SHADOWS) != 0;
+		flags["receiveShadows"] = (lighting->shaderFlags1 & SLSF1_RECEIVE_SHADOWS) != 0;
+	}
+	return flags;
+}
+
 McpToolResult GetShapeProperties(OutfitStudioMcp& mcp, const json& args) {
 	OutfitProject& project = mcp.Project();
 	NifFile* nif = project.GetWorkNif();
@@ -806,28 +850,11 @@ McpToolResult GetShapeProperties(OutfitStudioMcp& mcp, const json& args) {
 				 {"UVOffset", {uvOffset.u, uvOffset.v}},
 				 {"UVScale", {uvScale.u, uvScale.v}},
 			 }},
-			{"flags",
-			 {
-				 {"doubleSided", shader->IsDoubleSided()},
-				 {"modelSpaceNormals", shader->IsModelSpace()},
-				 {"vertexColors", shader->HasVertexColors()},
-				 {"vertexAlpha", shader->HasVertexAlpha()},
-				 {"skinTinted", shader->IsSkinTinted()},
-				 {"environmentMapping", shader->HasEnvironmentMapping()},
-				 {"emissive", shader->IsEmissive()},
-				 {"specular", shader->HasSpecular()},
-				 {"glowMap", shader->HasGlowmap()},
-				 {"softLighting", shader->HasSoftlight()},
-				 {"rimLighting", shader->HasRimlight()},
-				 {"backLighting", shader->HasBacklight()},
-			 }},
+			{"flags", ShaderFlags(shader)},
 		};
 
-		// The rest of the flags set_shader_properties takes, and the values of its LightingEffect1/2 (soft and rim light)
+		// The values of set_shader_properties' LightingEffect1/2 (soft and rim light)
 		if (auto* lighting = dynamic_cast<BSLightingShaderProperty*>(shader)) {
-			json& flags = data["shader"]["flags"];
-			flags["castShadows"] = (lighting->shaderFlags1 & SLSF1_CAST_SHADOWS) != 0;
-			flags["receiveShadows"] = (lighting->shaderFlags1 & SLSF1_RECEIVE_SHADOWS) != 0;
 			if (nif->GetHeader().GetVersion().Stream() < 130) {
 				json& properties = data["shader"]["properties"];
 				properties["LightingEffect1"] = lighting->softlighting;
@@ -1341,6 +1368,155 @@ McpToolResult ShapeShader(OutfitStudioMcp& mcp, const json& args) {
 	return result;
 }
 
+// Clones a block of srcNif into nif with the blocks it refers to (a shader's texture set and controllers)
+uint32_t CloneBlockInto(NifFile* nif, NifFile* srcNif, NiObject* src) {
+	const uint32_t srcId = srcNif->GetBlockID(src);
+	NiHeader& hdr = nif->GetHeader();
+	auto clone = src->Clone();
+	NiObject* block = clone.get();
+	std::vector<NiStringRef*> strRefs;
+	block->GetStringRefs(strRefs);
+	for (auto* str : strRefs)
+		str->SetIndex(hdr.AddOrFindStringId(str->get()));
+	uint32_t id = hdr.AddBlock(std::move(clone));
+	nif->CloneChildren(block, srcNif);
+
+	// CloneChildren rebinds pointers to the children only: a controller's target still names the source block
+	for (uint32_t i = id + 1; i < hdr.GetNumBlocks(); i++) {
+		std::set<NiRef*> ptrs;
+		hdr.GetBlock<NiObject>(i)->GetPtrs(ptrs);
+		for (auto* ptr : ptrs)
+			if (ptr->index == srcId)
+				ptr->index = id;
+	}
+	return id;
+}
+
+// Deletes the block a shape refers to unless other blocks use it too, and clears the reference
+void ReleaseBlock(NifFile* nif, NiRef& ref) {
+	NiHeader& hdr = nif->GetHeader();
+	if (ref.IsEmpty())
+		return;
+	if (hdr.GetBlockRefCount(ref.index, false) == 1) {
+		if (auto* shader = hdr.GetBlock<NiShader>(ref)) {
+			if (shader->HasTextureSet() && hdr.GetBlockRefCount(shader->TextureSetRef()->index, false) == 1)
+				hdr.DeleteBlock(*shader->TextureSetRef());
+			hdr.DeleteBlock(shader->controllerRef);
+		}
+		hdr.DeleteBlock(ref);
+	}
+	ref.Clear();
+}
+
+// Copies the shader with its texture set, only the texture paths, or the alpha property onto shapes, from shapes of
+// a NIF file (a backup or the saved shape data of a set before it was rebuilt) or of the project
+McpToolResult CopyShader(OutfitStudioMcp& mcp, const json& args) {
+	OutfitStudioFrame* frame = mcp.GetFrame();
+	OutfitProject& project = mcp.Project();
+	NifFile* nif = project.GetWorkNif();
+
+	bool copyShader = false, copyTextures = false, copyAlpha = false;
+	std::vector<std::string> parts = McpArgs::Strings(args, "copy");
+	if (parts.empty())
+		parts = {"shader", "alpha"};
+	for (auto& part : parts) {
+		if (part == "shader")
+			copyShader = true;
+		else if (part == "textures")
+			copyTextures = true;
+		else if (part == "alpha")
+			copyAlpha = true;
+		else
+			McpArgs::Wrong("copy", "a list of \"shader\", \"textures\" and \"alpha\"");
+	}
+	// The shader comes with its texture set
+	if (copyShader)
+		copyTextures = false;
+
+	// Older games keep shaders in the property list, which this doesn't handle
+	const NiVersion& version = nif->GetHeader().GetVersion();
+	if (!version.IsSK() && !version.IsSSE() && !version.IsFO4() && !version.IsFO76() && !version.IsSF())
+		throw McpToolError("copy_shader takes Skyrim, Fallout 4 and newer. Use set_shader_properties and set_texture_paths for older games.");
+
+	const std::string fromShape = McpArgs::String(args, "fromShape", "");
+	NifFile fileNif;
+	NifFile* srcNif = nif;
+	std::string file;
+	if (McpArgs::Has(args, "file")) {
+		file = McpFilePath(McpArgs::String(args, "file"));
+		if (fileNif.Load(std::filesystem::u8path(file)) != 0)
+			throw McpToolError("'" + file + "' couldn't be loaded as a NIF file.");
+		const NiVersion& from = fileNif.GetHeader().GetVersion();
+		const NiVersion& to = nif->GetHeader().GetVersion();
+		if (from.File() != to.File() || from.User() != to.User() || from.Stream() != to.Stream())
+			throw McpToolError("'" + file + "' is made for another game than the project. Convert its materials instead (import_from_game).");
+		srcNif = &fileNif;
+	}
+	else if (fromShape.empty())
+		throw McpToolError("Give file, fromShape, or both.");
+
+	// Sources are found and checked before anything changes
+	std::vector<std::pair<NiShape*, NiShape*>> pairs;
+	for (NiShape* shape : mcp.Shapes(args, "shapes", true)) {
+		std::string name = fromShape.empty() ? shape->name.get() : fromShape;
+		NiShape* src = srcNif->FindBlockByName<NiShape>(name);
+		if (!src)
+			throw McpToolError("There is no shape '" + name + "' " + (file.empty() ? "in the project." : "in '" + file + "'."));
+		if (src == shape)
+			throw McpToolError("'" + name + "' can't copy from itself.");
+		if (!shape->ShaderPropertyRef() || !src->ShaderPropertyRef())
+			throw McpToolError("'" + shape->name.get() + "' or its source can't have a shader.");
+		if (copyTextures && !nif->GetShader(shape))
+			throw McpToolError("'" + shape->name.get() + "' has no shader for the texture paths. Copy the shader instead.");
+		pairs.emplace_back(shape, src);
+	}
+
+	McpToolResult result;
+	json notes = json::array();
+	for (auto& [shape, src] : pairs) {
+		if (copyShader) {
+			ReleaseBlock(nif, *shape->ShaderPropertyRef());
+			if (NiShader* srcShader = srcNif->GetShader(src)) {
+				shape->ShaderPropertyRef()->index = CloneBlockInto(nif, srcNif, srcShader);
+				// Like CloneShape: model space normal maps don't use the vertex normals in Skyrim
+				if ((version.IsSK() || version.IsSSE()) && nif->GetShader(shape)->IsModelSpace()) {
+					shape->SetNormals(false);
+					shape->SetTangents(false);
+				}
+			}
+			else
+				notes.push_back("'" + src->name.get() + "' has no shader, so '" + shape->name.get() + "' has none now.");
+		}
+		else if (copyTextures) {
+			auto paths = srcNif->GetTexturePathRefs(src);
+			for (size_t i = 0; i < paths.size(); i++) {
+				std::string path = paths[i].get();
+				nif->SetTextureSlot(shape, path, static_cast<uint32_t>(i));
+			}
+		}
+
+		if (copyAlpha) {
+			ReleaseBlock(nif, *shape->AlphaPropertyRef());
+			if (NiAlphaProperty* srcAlpha = srcNif->GetAlphaProperty(src))
+				shape->AlphaPropertyRef()->index = CloneBlockInto(nif, srcNif, srcAlpha);
+		}
+
+		project.SetTextures(shape);
+		NiShader* shader = nif->GetShader(shape);
+		result.data["shapes"][shape->name.get()] = {
+			{"from", src->name.get()},
+			{"shader", shader ? json(shader->GetBlockName()) : json(nullptr)},
+			{"alpha", AlphaProperty(nif, shape)},
+		};
+	}
+
+	frame->SetPendingChanges();
+	frame->glView->Render();
+	if (!notes.empty())
+		result.data["notes"] = notes;
+	return result;
+}
+
 } // namespace
 
 void AddShapeTools(OutfitStudioMcp& mcp) {
@@ -1802,7 +1978,8 @@ void AddShapeTools(OutfitStudioMcp& mcp) {
 		"SkinTintColor [r, g, b], HairTintColor [r, g, b], RefractionStrength. Properties the shader doesn't have "
 		"are skipped with a log entry. flags turns shader flags of Skyrim's lighting shader on or off, e.g. "
 		"{\"doubleSided\": true} for a cape seen from both sides, {\"specular\": true} for the normal map's specular "
-		"mask, {\"emissive\": false}.";
+		"mask, {\"emissive\": false}. Flags that already have the value are left alone on any shader, so the shader "
+		"of get_shape_properties can be passed back as it is. To copy a whole shader from another file, use copy_shader.";
 	shaderProps.inputSchema = McpSchema({
 		{"shapes", ShapesProp},
 		{"properties", {{"type", "object"}, {"description", "Property name to a number, a list of numbers or text"}}},
@@ -1810,7 +1987,8 @@ void AddShapeTools(OutfitStudioMcp& mcp) {
 		 {{"type", "object"},
 		  {"additionalProperties", {{"type", "boolean"}}},
 		  {"description", "Flag name to on or off: specular, environmentMapping, emissive (own emit), castShadows, receiveShadows, "
-						  "modelSpaceNormals, doubleSided, vertexColors, glowMap, softLighting, rimLighting, backLighting"}}},
+						  "modelSpaceNormals, vertexAlpha, doubleSided, vertexColors, glowMap, softLighting, rimLighting, backLighting. "
+						  "skinTinted is taken when it doesn't change (it's the shader type)."}}},
 	});
 	shaderProps.handler = [&mcp](const json& args) {
 		const json* props = McpArgs::Find(args, "properties");
@@ -1821,46 +1999,58 @@ void AddShapeTools(OutfitStudioMcp& mcp) {
 		json names = Names(shapes);
 
 		if (flags && flags->is_object()) {
-			// Flag name to its word (1 or 2) and bit
-			static const std::map<std::string, std::pair<int, uint32_t>> flagBits = {
-				{"specular", {1, SLSF1_SPECULAR}},
-				{"environmentMapping", {1, SLSF1_ENVIRONMENT_MAPPING}},
-				{"emissive", {1, SLSF1_OWN_EMIT}},
-				{"castShadows", {1, SLSF1_CAST_SHADOWS}},
-				{"receiveShadows", {1, SLSF1_RECEIVE_SHADOWS}},
-				{"modelSpaceNormals", {1, SLSF1_MODEL_SPACE_NORMALS}},
-				{"doubleSided", {2, SLSF2_DOUBLE_SIDED}},
-				{"vertexColors", {2, SLSF2_VERTEX_COLORS}},
-				{"glowMap", {2, SLSF2_GLOW_MAP}},
-				{"softLighting", {2, SLSF2_SOFT_LIGHTING}},
-				{"rimLighting", {2, SLSF2_RIM_LIGHTING}},
-				{"backLighting", {2, SLSF2_BACK_LIGHTING}},
-			};
+			const auto& flagBits = LightingFlagBits();
 			for (auto& item : flags->items())
-				if (!flagBits.count(item.key()) || !item.value().is_boolean())
+				if ((!flagBits.count(item.key()) && item.key() != "skinTinted") || !item.value().is_boolean())
 					throw McpToolError("'" + item.key() + "' isn't a shader flag this takes, or its value isn't true or false.");
 
+			// Flags that already have the value are left alone, so what get_shape_properties shows can be passed back
+			// as it is, for any shader. All shapes are checked before any changes.
 			OutfitProject& project = mcp.Project();
+			std::vector<std::pair<BSLightingShaderProperty*, NiShape*>> changing;
 			for (NiShape* shape : shapes) {
-				auto* shader = dynamic_cast<BSLightingShaderProperty*>(project.GetWorkNif()->GetShader(shape));
-				if (!shader)
-					throw McpToolError("'" + shape->name.get() + "' has no lighting shader (BSLightingShaderProperty) for these flags.");
+				NiShader* shader = project.GetWorkNif()->GetShader(shape);
+				json current = shader ? ShaderFlags(shader) : json::object();
+				bool changes = false;
 				for (auto& item : flags->items()) {
+					if (current.contains(item.key()) && current[item.key()] == item.value())
+						continue;
+					if (item.key() == "skinTinted")
+						throw McpToolError("skinTinted comes from the shader type: set ShaderType to \"BSLighting:5\" (skin tint) or another type instead.");
+					changes = true;
+				}
+				if (!changes)
+					continue;
+				auto* lighting = dynamic_cast<BSLightingShaderProperty*>(shader);
+				if (!lighting)
+					throw McpToolError("'" + shape->name.get() + "' has no lighting shader (BSLightingShaderProperty) for these flags.");
+				changing.emplace_back(lighting, shape);
+			}
+
+			for (auto& [shader, shape] : changing) {
+				for (auto& item : flags->items()) {
+					if (item.key() == "skinTinted")
+						continue;
 					const auto& bit = flagBits.at(item.key());
 					uint32_t& word = bit.first == 1 ? shader->shaderFlags1 : shader->shaderFlags2;
 					word = item.value().get<bool>() ? (word | bit.second) : (word & ~bit.second);
 				}
 				project.SetTextures(shape);
 			}
-			mcp.GetFrame()->SetPendingChanges(true);
-			mcp.GetFrame()->glView->Render();
+			if (!changing.empty()) {
+				mcp.GetFrame()->SetPendingChanges(true);
+				mcp.GetFrame()->glView->Render();
+			}
 		}
 
 		if (props && props->is_object() && !props->empty()) {
 			json list = json::array();
 			for (auto& item : props->items())
-				list.push_back(ShaderPropertyEntry(item.key(), item.value()));
-			McpRunStep(mcp, {{"type", "SetShaderProperties"}, {"TargetMeshes", names}, {"ShaderProperties", list}});
+				// get_shape_properties shows ShaderType null for shaders without one
+				if (!item.value().is_null())
+					list.push_back(ShaderPropertyEntry(item.key(), item.value()));
+			if (!list.empty())
+				McpRunStep(mcp, {{"type", "SetShaderProperties"}, {"TargetMeshes", names}, {"ShaderProperties", list}});
 		}
 		return GetShapeProperties(mcp, {{"shape", names.front()}});
 	};
@@ -1968,6 +2158,26 @@ void AddShapeTools(OutfitStudioMcp& mcp) {
 	}, {"op"});
 	shader.handler = [&mcp](const json& args) { return ShapeShader(mcp, args); };
 	mcp.AddTool(std::move(shader));
+
+	McpTool copyShader;
+	copyShader.name = "copy_shader";
+	copyShader.description =
+		"Copies the shader (with its texture set and every property and flag), only the texture paths, or the alpha "
+		"property onto shapes from shapes of a NIF file or of the project, exactly as they are there. Use it to keep a "
+		"set's look when it's rebuilt from its source: the saved shape data or a backup of it has the shaders, gloss, "
+		"environment maps and transparency set up since. By default each shape takes the shape of the same name in "
+		"file; fromShape names one shape for all. The file has to be for the same game.";
+	copyShader.inputSchema = McpSchema({
+		{"shapes", McpStringList("Shapes to change, the selected ones by default")},
+		{"file", McpProp("string", "NIF file to copy from, absolute or relative to the BodySlide folder. Without it, fromShape is a shape of the project.")},
+		{"fromShape", McpProp("string", "Shape to copy from. Default: the shape of the same name in file.")},
+		{"copy",
+		 {{"type", "array"},
+		  {"items", {{"type", "string"}, {"enum", {"shader", "textures", "alpha"}}}},
+		  {"description", "What to copy: shader (with its textures), textures (only the paths, keeping the shader) and alpha (removed when the source has none). Default [\"shader\", \"alpha\"]."}}},
+	});
+	copyShader.handler = [&mcp](const json& args) { return CopyShader(mcp, args); };
+	mcp.AddTool(std::move(copyShader));
 
 	json blendModes = {{"type", "string"}, {"enum", std::vector<std::string>(std::begin(AlphaBlendModes), std::end(AlphaBlendModes))}};
 	json testFuncs = {{"type", "string"}, {"enum", std::vector<std::string>(std::begin(AlphaTestFuncs), std::end(AlphaTestFuncs))}};
