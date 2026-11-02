@@ -277,6 +277,7 @@
     <ClCompile Include="src\components\NormalGenLayers.cpp" />
     <ClCompile Include="src\components\SliderData.cpp" />
     <ClCompile Include="src\components\SliderSet.cpp" />
+    <ClCompile Include="src\components\SliderSetIndex.cpp" />
     <ClCompile Include="src\components\WeightNorm.cpp" />
     <ClCompile Include="src\files\MaterialFile.cpp" />
     <ClCompile Include="src\files\ObjFile.cpp" />

@@ -767,6 +767,7 @@
     <ClInclude Include="src\components\SliderManager.h" />
     <ClInclude Include="src\components\SliderPresets.h" />
     <ClInclude Include="src\components\SliderSet.h" />
+    <ClInclude Include="src\components\SliderSetIndex.h" />
     <ClInclude Include="src\components\UndoState.h" />
     <ClInclude Include="src\physics\NiflyBullet.h" />
     <ClInclude Include="src\physics\Controller.h" />
@@ -881,6 +882,7 @@
     <ClCompile Include="src\components\SliderManager.cpp" />
     <ClCompile Include="src\components\SliderPresets.cpp" />
     <ClCompile Include="src\components\SliderSet.cpp" />
+    <ClCompile Include="src\components\SliderSetIndex.cpp" />
     <ClCompile Include="src\physics\Controller.cpp" />
     <ClCompile Include="src\physics\DebugDraw.cpp" />
     <ClCompile Include="src\physics\SystemBuilder.cpp" />

@@ -7,6 +7,7 @@ See the included LICENSE file
 #include "../components/ClippingFixer.h"
 #include "../components/MaskOps.h"
 #include "../components/SliderDataFileUtil.h"
+#include "../components/SliderSetIndex.h"
 #include "../components/WeightNorm.h"
 #include "../files/FBXWrangler.h"
 #include "../files/GameDataStream.h"
@@ -24,6 +25,7 @@ See the included LICENSE file
 #include <algorithm>
 #include <atomic>
 #include <cfloat>
+#include <filesystem>
 #include <limits>
 #include <regex>
 #include <sstream>
@@ -409,6 +411,22 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 	if (ssFileName.IsRelative())
 		ssFileName.MakeAbsolute(wxString::FromUTF8(ProjectUtil::GetProjectPath()));
 
+	// Other projects can have the same NIF and .osd files
+	std::string saveFolderPath = ProjectUtil::GetProjectPath() + PathSepStr + "ShapeData" + PathSepStr + strDataDir.ToUTF8().data();
+	std::string nifFilePath = saveFolderPath + PathSepStr + baseFile;
+	std::string osdFilePath = saveFolderPath + PathSepStr + baseFile.substr(0, baseFile.find_last_of('.')) + ".osd";
+	std::set<std::string> otherProjectData;
+	if (PlatformUtil::FileExists(nifFilePath) || PlatformUtil::FileExists(osdFilePath)) {
+		SliderSetIndex index(ProjectUtil::GetProjectPath());
+		std::string setFile{ssFileName.GetFullPath().ToUTF8()};
+		if (!ConfirmSharedNifShapes(index, nifFilePath, setFile, outfit, copyRef)) {
+			errmsg = _("Saving was cancelled.");
+			return errmsg;
+		}
+
+		otherProjectData = index.DataUsedInFile(osdFilePath, setFile, outfit);
+	}
+
 	std::string prevOSDFileName = ProjectOSDFileName();
 
 	mFileName = ssFileName.GetFullPath();
@@ -526,7 +544,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 	}
 
 	std::string saveDataPath = ProjectUtil::GetProjectPath() + PathSepStr + "ShapeData" + PathSepStr + mDataDir.ToUTF8().data();
-	SaveSliderData(saveDataPath + PathSepStr + osdFileName, copyRef, osdFileName, prevOSDFileName);
+	SaveSliderData(saveDataPath + PathSepStr + osdFileName, copyRef, osdFileName, prevOSDFileName, &otherProjectData);
 
 	prog = 60;
 	UpdateProgress(prog, _("Creating slider set file..."));
@@ -595,7 +613,11 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 	return errmsg;
 }
 
-bool OutfitProject::SaveSliderData(const std::string& fileName, bool copyRef, const std::string& osdFileName, const std::string& prevOSDFileName) {
+bool OutfitProject::SaveSliderData(const std::string& fileName,
+								   bool copyRef,
+								   const std::string& osdFileName,
+								   const std::string& prevOSDFileName,
+								   const std::set<std::string>* otherProjectData) {
 	auto shapes = workNif.GetShapes();
 
 	if (activeSet.size() > 0) {
@@ -638,11 +660,66 @@ bool OutfitProject::SaveSliderData(const std::string& fileName, bool copyRef, co
 			}
 		}
 
-		if (!osdDiffs.SaveData(osdNames))
+		// Data of other projects in the same file stays in it
+		std::map<std::string, std::set<std::string>> keepData;
+		if (otherProjectData && !otherProjectData->empty()) {
+			auto& savedNames = osdNames[fileName];
+			size_t keptCount = 0;
+			for (auto& dataName : *otherProjectData)
+				if (savedNames.find(dataName) == savedNames.end())
+					keptCount++;
+
+			if (keptCount > 0) {
+				keepData[fileName] = *otherProjectData;
+				wxLogMessage("Keeping %zu slider data entries of other projects in '%s'.", keptCount, fileName);
+			}
+
+			if (savedNames.empty())
+				osdNames.erase(fileName);
+		}
+
+		if (!osdDiffs.SaveData(osdNames, &keepData))
 			return false;
 	}
 
 	return true;
+}
+
+bool OutfitProject::ConfirmSharedNifShapes(const SliderSetIndex& index, const std::string& nifFilePath, const std::string& setFile, const std::string& setName, bool copyRef) {
+	auto otherSets = index.SetsUsingNif(nifFilePath, setFile, setName);
+	if (otherSets.empty())
+		return true;
+
+	std::fstream file;
+	PlatformUtil::OpenFileStream(file, nifFilePath, std::ios::in | std::ios::binary);
+
+	NifFile oldNif;
+	if (oldNif.Load(file) != 0)
+		return true;
+
+	std::set<std::string> savedShapes;
+	for (auto& shape : workNif.GetShapes())
+		if (copyRef || !IsBaseShape(shape))
+			savedShapes.insert(shape->name.get());
+
+	wxString lostShapes;
+	for (auto* entry : otherSets) {
+		std::vector<std::string> shapeNames;
+		for (auto& shapeName : oldNif.GetShapeNames())
+			if (savedShapes.find(shapeName) == savedShapes.end() && entry->set.HasShape(shapeName))
+				shapeNames.push_back(shapeName);
+
+		if (!shapeNames.empty())
+			lostShapes += wxString::Format("\n%s: %s", wxString::FromUTF8(entry->setName), wxString::FromUTF8(JoinStrings(shapeNames, ", ")));
+	}
+
+	if (lostShapes.empty())
+		return true;
+
+	wxString msg = wxString::Format(_("Other projects use '%s' too. Saving would remove shapes from it that they need:\n%s\n\nSave anyway?"),
+									wxString::FromUTF8(std::filesystem::u8path(nifFilePath).filename().u8string()),
+									lostShapes);
+	return host->Ask(msg, _("Shared NIF File"), false, HostAnswer::No) == HostAnswer::Yes;
 }
 
 std::string OutfitProject::ProjectOSDFileName() {

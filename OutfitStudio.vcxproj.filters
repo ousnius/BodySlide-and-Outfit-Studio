@@ -736,6 +736,9 @@
     <ClInclude Include="src\components\SliderSet.h">
       <Filter>Components</Filter>
     </ClInclude>
+    <ClInclude Include="src\components\SliderSetIndex.h">
+      <Filter>Components</Filter>
+    </ClInclude>
     <ClInclude Include="src\components\TweakBrush.h">
       <Filter>Components</Filter>
     </ClInclude>
@@ -2206,6 +2209,9 @@
       <Filter>Components</Filter>
     </ClCompile>
     <ClCompile Include="src\components\SliderSet.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\SliderSetIndex.cpp">
       <Filter>Components</Filter>
     </ClCompile>
     <ClCompile Include="src\components\TweakBrush.cpp">

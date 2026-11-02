@@ -322,7 +322,7 @@ int DiffDataSets::SaveSet(const std::string& name, const std::string& target, co
 	return 0;
 }
 
-bool DiffDataSets::SaveData(const std::map<std::string, std::map<std::string, std::string>>& osdNames) {
+bool DiffDataSets::SaveData(const std::map<std::string, std::map<std::string, std::string>>& osdNames, const std::map<std::string, std::set<std::string>>* keepData) {
 	for (auto& osd : osdNames) {
 		OSDataFile osdFile;
 		for (auto& dataNames : osd.second) {
@@ -334,6 +334,26 @@ bool DiffDataSets::SaveData(const std::map<std::string, std::map<std::string, st
 				continue;
 
 			osdFile.SetDataDiff(dataNames.first, *data);
+		}
+
+		if (keepData) {
+			auto keep = keepData->find(osd.first);
+			if (keep != keepData->end()) {
+				std::map<std::string, std::string> keepNames;
+				auto& newData = osdFile.GetDataDiffs();
+				for (auto& dataName : keep->second)
+					if (newData.find(dataName) == newData.end())
+						keepNames[dataName] = "";
+
+				OSDataFile oldFile;
+				if (!keepNames.empty() && oldFile.Read(osd.first, &keepNames)) {
+					for (auto& dataName : keepNames) {
+						auto oldData = oldFile.GetDataDiff(dataName.first);
+						if (oldData && *oldData)
+							osdFile.SetDataDiff(dataName.first, **oldData);
+					}
+				}
+			}
 		}
 
 		if (!osdFile.Write(osd.first))

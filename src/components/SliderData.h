@@ -16,6 +16,18 @@ See the included LICENSE file
 
 using namespace tinyxml2;
 
+// Text of an element, empty if it has none
+inline std::string ElementText(const XMLElement* element) {
+	const char* text = element->GetText();
+	return text ? text : "";
+}
+
+// Value of an attribute, empty if it's missing
+inline std::string AttributeText(const XMLElement* element, const char* name) {
+	const char* value = element->Attribute(name);
+	return value ? value : "";
+}
+
 struct DiffInfo {
 	bool bLocal;			// Local files use the slider set's directory for path info. Otherwise, it uses the target's data path.
 	std::string dataName;	// Alias for the data.

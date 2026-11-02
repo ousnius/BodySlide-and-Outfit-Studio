@@ -353,6 +353,7 @@ set(BSOS_COMMON_SOURCES
 	src/components/SliderManager.cpp
 	src/components/SliderPresets.cpp
 	src/components/SliderSet.cpp
+	src/components/SliderSetIndex.cpp
 	src/files/EXRImage.cpp
 	src/files/GameDataStream.cpp
 	src/files/HkxFile.cpp
@@ -558,6 +559,7 @@ if(BSOS_BUILD_TESTS)
 		src/components/NormalGenLayers.cpp
 		src/components/SliderData.cpp
 		src/components/SliderSet.cpp
+		src/components/SliderSetIndex.cpp
 		src/components/WeightNorm.cpp
 		src/files/MaterialFile.cpp
 		src/files/ObjFile.cpp

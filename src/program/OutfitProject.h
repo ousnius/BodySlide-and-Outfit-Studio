@@ -36,6 +36,8 @@ See the included LICENSE file
 #include <wx/arrstr.h>
 #include <wx/filename.h>
 
+class SliderSetIndex;
+
 struct ConformOptions {
 	float proximityRadius = 10.0f;
 	int maxResults = 10;
@@ -251,6 +253,8 @@ class OutfitProject {
 							const bool hasDiff,
 							const std::string& osdFileName,
 							const std::string& prevOSDFileName);
+	// Asks before saving removes shapes from a NIF file that other projects use as their source file.
+	bool ConfirmSharedNifShapes(const SliderSetIndex& index, const std::string& nifFilePath, const std::string& setFile, const std::string& setName, bool copyRef);
 
 	SFMaterialResolver sfMaterialResolver;
 
@@ -378,7 +382,12 @@ public:
 					 const wxString& strSFMorphPath = "",
 					 const wxString& strSFMorphTargetShape = "");
 
-	bool SaveSliderData(const std::string& fileName, bool copyRef = true, const std::string& osdFileName = "", const std::string& prevOSDFileName = "");
+	// Data that other projects use from the same file ('otherProjectData') stays in it.
+	bool SaveSliderData(const std::string& fileName,
+						bool copyRef = true,
+						const std::string& osdFileName = "",
+						const std::string& prevOSDFileName = "",
+						const std::set<std::string>* otherProjectData = nullptr);
 
 	nifly::NifFile* GetWorkNif() { return &workNif; }
 	AnimInfo* GetWorkAnim() { return &workAnim; }

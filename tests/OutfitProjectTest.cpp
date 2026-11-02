@@ -75,6 +75,26 @@ struct TargetGameScope {
 	~TargetGameScope() { Config.SetValue("TargetGame", previous); }
 };
 
+// Points the project path at a folder for the lifetime of a fixture
+struct ProjectPathScope {
+	std::string previousProjectPath;
+	std::string previousAppDir;
+
+	explicit ProjectPathScope(const std::filesystem::path& path) {
+		previousProjectPath = Config["ProjectPath"];
+		previousAppDir = Config["AppDir"];
+		Config.SetValue("ProjectPath", path.u8string());
+		Config.SetValue("AppDir", path.u8string());
+		std::filesystem::create_directories(path / "SliderSets");
+		std::filesystem::create_directories(path / "ShapeData");
+	}
+
+	~ProjectPathScope() {
+		Config.SetValue("ProjectPath", previousProjectPath);
+		Config.SetValue("AppDir", previousAppDir);
+	}
+};
+
 std::string WriteGridNif(const std::filesystem::path& dir, const std::string& fileName, const std::string& shapeName, int n, float z) {
 	std::vector<Vector3> verts;
 	std::vector<Triangle> tris;
@@ -604,4 +624,81 @@ TEST_CASE("Adaptive refining splits only the chosen edges and keeps the mesh clo
 	f.project.ApplyShapeMeshUndo(f.skirt, noMask, usp.usss[0], true);
 	CHECK(f.skirt->GetNumVertices() == 49);
 	CHECK(f.skirt->GetNumTriangles() == 72);
+}
+
+namespace {
+// The fixture's project, saved as set "A" into a project folder of its own
+struct SavedProjectFixture : ProjectFixture {
+	TempFolder projectFolder;
+	ProjectPathScope projectPath{projectFolder.path};
+
+	std::string Save(const std::string& setName = "A", const std::string& nifName = "Shared.nif") {
+		wxFileName setFile(wxString::FromUTF8((projectFolder.path / "SliderSets" / (setName + ".osp")).u8string()));
+		return project.Save(setFile, wxString::FromUTF8(setName), "Shared", wxString::FromUTF8(nifName), "meshes", setName, false, true, false, false, "", "");
+	}
+
+	std::filesystem::path DataPath(const std::string& fileName) const { return projectFolder.path / "ShapeData" / "Shared" / fileName; }
+
+	// A second project in its own file that uses the shared NIF, with data of its own in the shared .osd
+	void AddOtherProject() {
+		SliderSet other;
+		other.SetName("B");
+		other.SetDataFolder("Shared");
+		other.SetInputFile("Shared.nif");
+		other.AddShapeTarget("Skirt", "Skirt");
+		size_t slider = other.CreateSlider("Flare");
+		other[slider].AddDataFile("Skirt", "SkirtFlare", "Shared.osd" + std::string(PathSepStr) + "SkirtFlare");
+
+		SliderSetFile otherFile;
+		otherFile.New((projectFolder.path / "SliderSets" / "B.osp").u8string());
+		otherFile.UpdateSet(other);
+		REQUIRE(otherFile.Save());
+
+		OSDataFile osd;
+		REQUIRE(osd.Read(DataPath("Shared.osd").u8string()));
+		osd.SetDataDiff("SkirtFlare", TargetDataDiffs{{0, Vector3(1.0f, 0.0f, 0.0f)}});
+		REQUIRE(osd.Write(DataPath("Shared.osd").u8string()));
+	}
+
+	std::set<std::string> OSDDataNames() const {
+		OSDataFile osd;
+		REQUIRE(osd.Read(DataPath("Shared.osd").u8string()));
+		std::set<std::string> names;
+		for (auto& data : osd.GetDataDiffs())
+			names.insert(data.first);
+		return names;
+	}
+};
+} // namespace
+
+TEST_CASE("Saving keeps the slider data of other projects in the same .osd file", "[OutfitProject]") {
+	SavedProjectFixture f;
+	REQUIRE(f.Save().empty());
+	CHECK(f.OSDDataNames() == std::set<std::string>{"BodyGrow"});
+
+	f.AddOtherProject();
+	REQUIRE(f.Save().empty());
+	CHECK(f.OSDDataNames() == std::set<std::string>{"BodyGrow", "SkirtFlare"});
+
+	// Without the other project, its data isn't kept
+	std::filesystem::remove(f.projectFolder.path / "SliderSets" / "B.osp");
+	REQUIRE(f.Save().empty());
+	CHECK(f.OSDDataNames() == std::set<std::string>{"BodyGrow"});
+}
+
+TEST_CASE("Saving asks before a shared NIF file loses shapes that other projects use", "[OutfitProject]") {
+	SavedProjectFixture f;
+	REQUIRE(f.Save().empty());
+	f.AddOtherProject();
+
+	// The unattended host answers no, so nothing is written
+	f.project.DeleteShape(f.skirt);
+	CHECK_FALSE(f.Save().empty());
+
+	NifFile nif;
+	REQUIRE(nif.Load(f.DataPath("Shared.nif")) == 0);
+	CHECK(nif.FindBlockByName<NiShape>("Skirt"));
+
+	// A NIF of its own is fine
+	CHECK(f.Save("A", "Own.nif").empty());
 }

@@ -193,21 +193,21 @@ int SliderSet::LoadSliderSet(XMLElement* element, bool appendNewSliders, const s
 	std::string shapeStr = version >= 1 ? "Shape" : "BaseShapeName";
 	std::string dataFolderStr = version >= 1 ? "DataFolder" : "SetFolder";
 
-	name = element->Attribute("name");
+	name = AttributeText(element, "name");
 
 	XMLElement* tmpElement = element->FirstChildElement(dataFolderStr.c_str());
 	if (tmpElement) {
 		tmpElement->SetName("DataFolder");
-		datafolder = ToOSSlashes(tmpElement->GetText());
+		datafolder = ToOSSlashes(ElementText(tmpElement));
 	}
 
 	tmpElement = element->FirstChildElement("SourceFile");
 	if (tmpElement)
-		inputfile = tmpElement->GetText();
+		inputfile = ElementText(tmpElement);
 
 	tmpElement = element->FirstChildElement("OutputPath");
 	if (tmpElement)
-		outputpath = ToOSSlashes(tmpElement->GetText());
+		outputpath = ToOSSlashes(ElementText(tmpElement));
 
 	genWeights = true;
 	preventMorphFile = false;
@@ -215,7 +215,7 @@ int SliderSet::LoadSliderSet(XMLElement* element, bool appendNewSliders, const s
 
 	tmpElement = element->FirstChildElement("OutputFile");
 	if (tmpElement) {
-		outputfile = tmpElement->GetText();
+		outputfile = ElementText(tmpElement);
 		genWeights = tmpElement->BoolAttribute("GenWeights", true);
 		preventMorphFile = tmpElement->BoolAttribute("PreventMorphFile");
 		keepZappedShapes = tmpElement->BoolAttribute("KeepZappedShapes");
@@ -662,7 +662,7 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 
 }
 
-std::string SliderSet::GetInputFileName() {
+std::string SliderSet::GetInputFileName() const {
 	std::string o;
 	o = baseDataPath + PathSepStr;
 	o += datafolder + PathSepStr;
@@ -733,7 +733,7 @@ void SliderSetFile::Open(const std::string& srcFileName) {
 	std::string setname;
 	setElement = root->FirstChildElement("SliderSet");
 	while (setElement) {
-		setname = setElement->Attribute("name");
+		setname = AttributeText(setElement, "name");
 		setsInFile[setname] = setElement;
 		setsOrder.push_back(setname);
 		setElement = setElement->NextSiblingElement("SliderSet");
@@ -814,7 +814,7 @@ void SliderSetFile::SetShapes(const std::string& set, std::vector<std::string>& 
 	XMLElement* setElement = setsInFile[set];
 	XMLElement* shapeElement = setElement->FirstChildElement("Shape");
 	while (shapeElement) {
-		outShapeNames.push_back(shapeElement->GetText());
+		outShapeNames.push_back(ElementText(shapeElement));
 		shapeElement = shapeElement->NextSiblingElement("Shape");
 	}
 }
@@ -853,12 +853,12 @@ void SliderSetFile::GetSetOutputFilePath(const std::string& setName, std::string
 	XMLElement* setPtr = setsInFile[setName];
 	XMLElement* tmpElement = setPtr->FirstChildElement("OutputPath");
 	if (tmpElement)
-		outFilePath += ToOSSlashes(tmpElement->GetText());
+		outFilePath += ToOSSlashes(ElementText(tmpElement));
 
 	tmpElement = setPtr->FirstChildElement("OutputFile");
 	if (tmpElement) {
 		outFilePath += PathSepStr;
-		outFilePath += tmpElement->GetText();
+		outFilePath += ElementText(tmpElement);
 	}
 }
 

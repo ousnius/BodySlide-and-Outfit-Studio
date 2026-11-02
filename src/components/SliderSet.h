@@ -137,8 +137,8 @@ public:
 
 	std::string GetName() { return name; }
 
-	std::string GetInputFile() { return inputfile; }
-	std::string GetInputFileName();
+	std::string GetInputFile() const { return inputfile; }
+	std::string GetInputFileName() const;
 	std::string GetOutputPath() { return outputpath; }
 	std::string GetOutputFile() { return outputfile; }
 	std::string GetOutputFilePath();
@@ -326,8 +326,8 @@ public:
 		}
 	}
 
-	std::map<std::string, SliderSetShape>::const_iterator ShapesBegin() { return shapeAttributes.cbegin(); }
-	std::map<std::string, SliderSetShape>::const_iterator ShapesEnd() { return shapeAttributes.cend(); }
+	std::map<std::string, SliderSetShape>::const_iterator ShapesBegin() const { return shapeAttributes.cbegin(); }
+	std::map<std::string, SliderSetShape>::const_iterator ShapesEnd() const { return shapeAttributes.cend(); }
 
 	std::string ShapeToDataName(const size_t index, const std::string& shapeName) {
 		auto shape = shapeAttributes.find(shapeName);
@@ -336,6 +336,8 @@ public:
 
 		return "";
 	}
+
+	bool HasShape(const std::string& shapeName) const { return shapeAttributes.find(shapeName) != shapeAttributes.end(); }
 
 	std::string ShapeToTarget(const std::string& shapeName) {
 		auto shape = shapeAttributes.find(shapeName);
@@ -357,9 +359,10 @@ public:
 		return dataFolders;
 	}
 
-	size_t size() { return sliders.size(); }
+	size_t size() const { return sliders.size(); }
 
 	SliderData& operator[](const size_t idx) { return sliders[idx]; }
+	const SliderData& operator[](const size_t idx) const { return sliders[idx]; }
 
 	SliderData& operator[](const std::string& sliderName) {
 		for (size_t i = 0; i < sliders.size(); i++)

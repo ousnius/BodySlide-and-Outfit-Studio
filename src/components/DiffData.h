@@ -10,6 +10,7 @@ See the included LICENSE file
 #include <cstdint>
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -71,7 +72,8 @@ public:
 	int LoadSet(const std::string& name, const std::string& target, const std::string& fromFile);
 	int SaveSet(const std::string& name, const std::string& target, const std::string& toFile);
 	bool LoadData(const std::map<std::string, std::map<std::string, std::string>>& osdNames);
-	bool SaveData(const std::map<std::string, std::map<std::string, std::string>>& osdNames);
+	// 'keepData' names data per file that is copied over from the file being replaced, unless it's saved anew.
+	bool SaveData(const std::map<std::string, std::map<std::string, std::string>>& osdNames, const std::map<std::string, std::set<std::string>>* keepData = nullptr);
 
 	void RenameSet(const std::string& oldName, const std::string& newName);
 	void RenameDataTarget(const std::string& oldTarget, const std::string& newTarget);
