@@ -381,14 +381,44 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 	std::string outfit{strOutfitName.ToUTF8()};
 	std::string baseFile{strBaseFile.ToUTF8()};
 	std::string gameFile{strGameFile.ToUTF8()};
+	wxString dataDir = strDataDir;
+
+	// An add-on uses the NIF file of its base project, which it never writes
+	bool addOn = activeSet.IsAddOn();
+	if (addOn && ShapeGeometryHash() != addOnGeometryHash) {
+		wxString msg = _("This add-on uses the shapes of its base project, so changes to them can't be saved with it.\n\nSave it as a variant of the base project with a NIF file of its own instead?");
+		if (host->Ask(msg, _("Slider Add-on"), false, HostAnswer::No) != HostAnswer::Yes) {
+			errmsg = _("Saving was cancelled.");
+			return errmsg;
+		}
+
+		// The data of the add-on stays in its .osd file, which is named like the NIF file of a variant
+		std::string dataFile = activeSet.GetSliderDataFile();
+		baseFile = dataFile.empty() ? outfit + ".nif" : dataFile.substr(0, dataFile.find_last_of('.')) + ".nif";
+		activeSet.SetAddOn(false);
+		activeSet.SetSliderDataFile("");
+		addOn = false;
+	}
+	else if (addOn) {
+		baseFile = activeSet.GetInputFile();
+		dataDir = wxString::FromUTF8(activeSet.GetDefaultDataFolder());
+	}
 
 	ReplaceForbidden(outfit);
 	ReplaceForbidden(baseFile);
 	ReplaceForbidden(gameFile);
 
+	// A variant writes a NIF file of its own, never the one of its base project
+	const SliderSetResolveStatus& resolveStatus = activeSet.GetResolveStatus();
+	if (!addOn && activeSet.HasBaseProject() && StringsEqualInsens(baseFile.c_str(), resolveStatus.baseInputFile.c_str())
+		&& StringsEqualInsens(ToOSSlashes(dataDir.ToUTF8().data()).c_str(), ToOSSlashes(resolveStatus.baseDataFolder).c_str())) {
+		errmsg = wxString::Format(_("A variant needs a NIF file of its own, '%s' is the one of its base project."), wxString::FromUTF8(baseFile));
+		return errmsg;
+	}
+
 	SliderSet outSet;
 	outSet.SetName(outfit);
-	outSet.SetDataFolder(strDataDir.ToUTF8().data());
+	outSet.SetDataFolder(dataDir.ToUTF8().data());
 	outSet.SetInputFile(baseFile);
 	outSet.SetOutputPath(strGamePath.ToUTF8().data());
 	outSet.SetOutputFile(gameFile);
@@ -412,14 +442,15 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 		ssFileName.MakeAbsolute(wxString::FromUTF8(ProjectUtil::GetProjectPath()));
 
 	// Other projects can have the same NIF and .osd files
-	std::string saveFolderPath = ProjectUtil::GetProjectPath() + PathSepStr + "ShapeData" + PathSepStr + strDataDir.ToUTF8().data();
+	std::string saveFolderPath = ProjectUtil::GetProjectPath() + PathSepStr + "ShapeData" + PathSepStr + dataDir.ToUTF8().data();
 	std::string nifFilePath = saveFolderPath + PathSepStr + baseFile;
-	std::string osdFilePath = saveFolderPath + PathSepStr + baseFile.substr(0, baseFile.find_last_of('.')) + ".osd";
+	std::string osdName = addOn ? activeSet.GetSliderDataFile() : baseFile.substr(0, baseFile.find_last_of('.')) + ".osd";
+	std::string osdFilePath = saveFolderPath + PathSepStr + osdName;
 	std::set<std::string> otherProjectData;
-	if (PlatformUtil::FileExists(nifFilePath) || PlatformUtil::FileExists(osdFilePath)) {
+	if ((!addOn && PlatformUtil::FileExists(nifFilePath)) || PlatformUtil::FileExists(osdFilePath)) {
 		SliderSetIndex index(ProjectUtil::GetProjectPath());
 		std::string setFile{ssFileName.GetFullPath().ToUTF8()};
-		if (!ConfirmSharedNifShapes(index, nifFilePath, setFile, outfit, copyRef)) {
+		if (!addOn && !ConfirmSharedNifShapes(index, nifFilePath, setFile, outfit, copyRef)) {
 			errmsg = _("Saving was cancelled.");
 			return errmsg;
 		}
@@ -427,11 +458,35 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 		otherProjectData = index.DataUsedInFile(osdFilePath, setFile, outfit);
 	}
 
+	// Saving under another name or into another file makes a new project
+	bool sameProject = !mFileName.empty() && wxFileName(mFileName).SameAs(ssFileName) && mOutfitName == wxString::FromUTF8(outfit);
+	outSet.SetProjectID(sameProject ? activeSet.GetProjectID() : SliderSet::GenerateProjectID());
+
+	if (activeSet.HasBaseProject()) {
+		outSet.SetBaseProject(activeSet.GetBaseProjectFile(), activeSet.GetBaseProjectName(), activeSet.GetBaseProjectID());
+		outSet.SetAddOn(addOn);
+		if (addOn)
+			outSet.SetSliderDataFile(activeSet.GetSliderDataFile());
+
+		// A slider of the project's own with the name takes the place of the base project's
+		std::vector<std::string> removedSliders;
+		for (auto& removedSlider : activeSet.GetRemovedSliders())
+			if (!activeSet.SliderExists(removedSlider))
+				removedSliders.push_back(removedSlider);
+		outSet.SetRemovedSliders(removedSliders);
+	}
+
+	outSet.SetUnknownElements(activeSet.GetUnknownElements());
+
+	// Inherited data that was found in the data folder is in the base project's folder after moving
+	const std::string prevDataFolder = activeSet.GetDefaultDataFolder();
+	const bool dataFolderChanges = !StringsEqualInsens(ToOSSlashes(prevDataFolder).c_str(), ToOSSlashes(dataDir.ToUTF8().data()).c_str());
+
 	std::string prevOSDFileName = ProjectOSDFileName();
 
 	mFileName = ssFileName.GetFullPath();
 	mOutfitName = wxString::FromUTF8(outfit);
-	mDataDir = strDataDir;
+	mDataDir = dataDir;
 	mBaseFile = wxString::FromUTF8(baseFile);
 	mGamePath = strGamePath;
 	mGameFile = wxString::FromUTF8(gameFile);
@@ -443,7 +498,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 	mSFMorphTargetShape = strSFMorphTargetShape;
 	activeSet.ClearLocalOnlyDataFolders();
 
-	wxString folder(wxString::Format("%s/%s/%s", wxString::FromUTF8(ProjectUtil::GetProjectPath()), "ShapeData", strDataDir));
+	wxString folder(wxString::Format("%s/%s/%s", wxString::FromUTF8(ProjectUtil::GetProjectPath()), "ShapeData", dataDir));
 	wxFileName::Mkdir(folder, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 
 	int prog = 5;
@@ -494,6 +549,11 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 		UpdateProgress(prog += step, _("Adding outfit shapes..."));
 	}
 
+	// The data of an add-on fits the base project's shapes as they are now
+	if (addOn)
+		for (auto& s : shapes)
+			outSet.SetShapeVertexCount(s->name.get(), s->GetNumVertices());
+
 	std::string osdFileName = ProjectOSDFileName();
 
 	if (activeSet.size() > 0) {
@@ -511,7 +571,16 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 
 			auto addDataFile = [&](const std::string& shapeName, const bool isBaseShape, const bool hasDiff) {
 				const DiffInfo* dataFile = activeSet[i].GetDataFile(targSlider);
-				if (KeepSliderDataLink(dataFile, shapeName, isBaseShape, hasDiff, osdFileName, prevOSDFileName))
+				if (dataFile && dataFile->bInherited) {
+					bool local = dataFile->bLocal;
+					if (local && dataFolderChanges) {
+						local = false;
+						outSet.AddInheritedDataFolders(targ, {prevDataFolder});
+					}
+
+					outSet[id].AddDataFile(targ, targSlider, dataFile->fileName, local, true);
+				}
+				else if (KeepSliderDataLink(dataFile, shapeName, isBaseShape, hasDiff, osdFileName, prevOSDFileName))
 					outSet[id].AddDataFile(targ, targSlider, dataFile->fileName, dataFile->bLocal);
 				else if (hasDiff)
 					outSet[id].AddDataFile(targ, targSlider, osdFileName + PathSepStr + targSlider);
@@ -568,11 +637,15 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 		return errmsg;
 	}
 
+	activeSet.SetProjectID(outSet.GetProjectID());
+	if (activeSet.HasBaseProject())
+		activeSet.SetRemovedSliders(outSet.GetRemovedSliders());
+
 	UpdateProgress(70, _("Saving NIF file..."));
 
 	std::string saveFileName = saveDataPath + PathSepStr + baseFile;
 
-	if (workNif.IsValid()) {
+	if (workNif.IsValid() && !addOn) {
 		workAnim.CleanupBones();
 		host->OnAnimationChanged();
 
@@ -723,6 +796,10 @@ bool OutfitProject::ConfirmSharedNifShapes(const SliderSetIndex& index, const st
 }
 
 std::string OutfitProject::ProjectOSDFileName() {
+	// The NIF file of an add-on is the base project's
+	if (activeSet.IsAddOn())
+		return activeSet.GetSliderDataFile();
+
 	std::string baseFile{mBaseFile.ToUTF8()};
 	if (baseFile.empty())
 		return "";
@@ -731,7 +808,7 @@ std::string OutfitProject::ProjectOSDFileName() {
 }
 
 bool OutfitProject::SliderDataIsLinked(const DiffInfo& dataFile) {
-	if (!dataFile.bLocal || SliderDataFileIsBSD(dataFile.fileName))
+	if (dataFile.bInherited || !dataFile.bLocal || SliderDataFileIsBSD(dataFile.fileName))
 		return false;
 
 	std::string projectOSDFileName = ProjectOSDFileName();
@@ -756,6 +833,15 @@ void OutfitProject::UnlinkSliderData(DiffInfo& dataFile) {
 		dataFile.fileName = projectOSDFileName + PathSepStr + dataFile.dataName;
 }
 
+void OutfitProject::DetachSliderData(DiffInfo& dataFile) {
+	if (!dataFile.bInherited)
+		return;
+
+	dataFile.bInherited = false;
+	dataFile.bLocal = true;
+	UnlinkSliderData(dataFile);
+}
+
 bool OutfitProject::KeepSliderDataLink(const DiffInfo* dataFile,
 									   const std::string& shapeName,
 									   const bool isBaseShape,
@@ -764,6 +850,10 @@ bool OutfitProject::KeepSliderDataLink(const DiffInfo* dataFile,
 									   const std::string& prevOSDFileName) {
 	if (!dataFile)
 		return false;
+
+	// The base project owns inherited data
+	if (dataFile->bInherited)
+		return true;
 
 	if (!dataFile->bLocal) {
 		// Reference data, external data outside of the default data folder and external data that wasn't loaded keep their link
@@ -1234,6 +1324,7 @@ void OutfitProject::RetargetShapeData(const std::string& shapeName, const std::s
 			dataFile.dataName = newDataName;
 			dataFile.fileName = newDataName;
 			dataFile.bLocal = true;
+			dataFile.bInherited = false;
 			sliderDataNames.emplace_back(slider.name, newDataName);
 		}
 	}
@@ -1335,8 +1426,10 @@ void OutfitProject::GetSliderDataLocations(std::vector<SliderDataLocation>& outL
 			location.fileName = dataFile.fileName;
 			location.dataFileName = resolution.dataFileName;
 			location.dataNameInFile = resolution.dataNameInFile;
+			location.inherited = dataFile.bInherited;
+			location.overridden = !dataFile.bInherited && activeSet.BaseData(location.key.sliderName, dataFile.targetName);
 			location.linked = SliderDataIsLinked(dataFile);
-			location.local = dataFile.bLocal && !location.linked;
+			location.local = dataFile.bLocal && !location.linked && !location.inherited;
 			location.resolved = resolution.resolved;
 			location.isBSD = resolution.isBSD;
 			location.resolvedPath = resolution.resolvedPath;
@@ -1360,10 +1453,175 @@ bool OutfitProject::SliderDataIsExternal(const std::string& sliderName, NiShape*
 		return false;
 
 	for (auto& dataFile : activeSet[sliderIndex].dataFiles)
-		if (dataFile.targetName == target && (!dataFile.bLocal || SliderDataIsLinked(dataFile)))
+		if (dataFile.targetName == target && (dataFile.bInherited || !dataFile.bLocal || SliderDataIsLinked(dataFile)))
 			return true;
 
 	return false;
+}
+
+bool OutfitProject::SliderFromBase(const std::string& sliderName) {
+	return activeSet.HasBaseProject() && activeSet.BaseHasSlider(sliderName);
+}
+
+std::vector<SliderDataKey> OutfitProject::RenameDisconnectsFromBase(const std::string& sliderName, const std::string& shapeName) {
+	std::vector<SliderDataKey> keys;
+	std::string target = shapeName.empty() ? "" : ShapeTargetOrDefault(shapeName);
+
+	for (size_t i = 0; i < activeSet.size(); i++) {
+		if (!sliderName.empty() && activeSet[i].name != sliderName)
+			continue;
+
+		for (auto& dataFile : activeSet[i].dataFiles) {
+			if (!dataFile.bInherited || (!target.empty() && dataFile.targetName != target))
+				continue;
+
+			SliderDataKey key;
+			key.sliderName = activeSet[i].name;
+			key.targetName = dataFile.targetName;
+			key.dataName = dataFile.dataName;
+			keys.push_back(std::move(key));
+		}
+	}
+
+	return keys;
+}
+
+bool OutfitProject::RevertSliderDataToBase(const SliderDataKey& key, std::string* errorMessage) {
+	size_t sliderIndex = 0;
+	size_t dataIndex = 0;
+	if (!ResolveSliderDataEntry(key, sliderIndex, dataIndex)) {
+		if (errorMessage)
+			*errorMessage = "Slider data entry no longer exists.";
+		return false;
+	}
+
+	DiffInfo* dataFile = activeSet.GetSliderDataFile(sliderIndex, dataIndex);
+	if (dataFile->bInherited)
+		return true;
+
+	std::string sliderName = activeSet[sliderIndex].name;
+	const DiffInfo* baseData = activeSet.BaseData(sliderName, dataFile->targetName);
+	if (!baseData) {
+		if (errorMessage)
+			*errorMessage = "The base project has no data of the slider for this shape.";
+		return false;
+	}
+
+	DiffInfo inherited = *baseData;
+	const auto& baseDataFolders = activeSet.GetResolveStatus().baseDataFolders;
+	auto targetFolders = baseDataFolders.find(inherited.targetName);
+	if (targetFolders != baseDataFolders.end())
+		activeSet.AddInheritedDataFolders(inherited.targetName, targetFolders->second);
+
+	SliderDataFileResolution resolution = activeSet.ResolveSliderDataFile(inherited);
+	if (!resolution.resolved) {
+		if (errorMessage)
+			*errorMessage = "The slider data file of the base project wasn't found.";
+		return false;
+	}
+
+	DiffDataSets loaded;
+	std::string loadedName = resolution.isBSD ? inherited.dataName : resolution.dataNameInFile;
+	if (resolution.isBSD)
+		loaded.LoadSet(loadedName, inherited.targetName, resolution.resolvedPath);
+	else
+		loaded.LoadData({{resolution.resolvedPath, {{loadedName, inherited.targetName}}}});
+
+	TargetDataDiffs baseDiff;
+	if (TargetDataDiffs* diff = loaded.GetDiffSet(loadedName))
+		baseDiff = *diff;
+
+	// The project's own data makes way for the base project's
+	NiShape* shape = workNif.FindBlockByName<NiShape>(activeSet.TargetToShape(inherited.targetName));
+	if (shape && IsBaseShape(shape)) {
+		baseDiffData.ClearSet(dataFile->dataName);
+		baseDiffData.LoadSet(inherited.dataName, inherited.targetName, baseDiff);
+	}
+	else {
+		morpher.ClearResultSet(dataFile->dataName);
+		morpher.SetResultDataName(inherited.targetName, sliderName, inherited.dataName);
+		morpher.SetResultDiff(inherited.targetName, sliderName, baseDiff);
+	}
+
+	*dataFile = inherited;
+	return true;
+}
+
+uint64_t OutfitProject::ShapeGeometryHash() {
+	uint64_t hash = 14695981039346656037ull;
+	auto add = [&hash](const void* data, size_t size) {
+		auto bytes = static_cast<const uint8_t*>(data);
+		for (size_t i = 0; i < size; i++) {
+			hash ^= bytes[i];
+			hash *= 1099511628211ull;
+		}
+	};
+	auto addString = [&add](const std::string& text) { add(text.c_str(), text.size() + 1); };
+
+	auto shapes = workNif.GetShapes();
+	std::sort(shapes.begin(), shapes.end(), [](NiShape* a, NiShape* b) { return a->name.get() < b->name.get(); });
+
+	for (auto* shape : shapes) {
+		std::string shapeName = shape->name.get();
+		addString(shapeName);
+
+		std::vector<Vector3> verts;
+		workNif.GetVertsForShape(shape, verts);
+		add(verts.data(), verts.size() * sizeof(Vector3));
+
+		std::vector<Triangle> tris;
+		shape->GetTriangles(tris);
+		add(tris.data(), tris.size() * sizeof(Triangle));
+
+		std::vector<Vector2> uvs;
+		workNif.GetUvsForShape(shape, uvs);
+		add(uvs.data(), uvs.size() * sizeof(Vector2));
+
+		auto bones = workAnim.shapeBones.find(shapeName);
+		if (bones == workAnim.shapeBones.end())
+			continue;
+
+		for (auto& bone : bones->second) {
+			addString(bone);
+
+			std::unordered_map<uint16_t, float> weights;
+			workAnim.GetWeights(shapeName, bone, weights);
+			std::map<uint16_t, float> sortedWeights(weights.begin(), weights.end());
+			for (auto& weight : sortedWeights) {
+				add(&weight.first, sizeof(weight.first));
+				add(&weight.second, sizeof(weight.second));
+			}
+		}
+	}
+
+	return hash;
+}
+
+void OutfitProject::ReportResolveStatus() {
+	const SliderSetResolveStatus& status = activeSet.GetResolveStatus();
+
+	wxString msg;
+	if (status.newerVersion)
+		msg += _("This project was saved by a newer version of Outfit Studio. Saving it with this version can lose what only the newer version knows.") + "\n";
+
+	for (auto& warning : status.warnings)
+		msg += wxString::FromUTF8(warning) + "\n";
+
+	// The base project's shapes may have changed since the add-on's data was made for them
+	if (activeSet.IsAddOn()) {
+		for (auto* shape : workNif.GetShapes()) {
+			uint32_t vertexCount = activeSet.GetShapeVertexCount(shape->name.get());
+			if (vertexCount > 0 && vertexCount != shape->GetNumVertices())
+				msg += wxString::Format(_("The add-on's slider data of shape '%s' was made for %u vertices, but the base project's shape has %u now."),
+										wxString::FromUTF8(shape->name.get()),
+										vertexCount,
+										static_cast<uint32_t>(shape->GetNumVertices()))
+					+ "\n";
+		}
+	}
+
+	if (!msg.empty())
+		host->ShowMessage(HostMessageLevel::Warning, msg.Trim(), _("Base Project"));
 }
 
 std::string OutfitProject::EnsureSliderDataLocal(const std::string& sliderName, NiShape* shape) {
@@ -1381,9 +1639,12 @@ std::string OutfitProject::EnsureSliderDataLocal(const std::string& sliderName, 
 		activeSet[sliderIndex].AddDataFile(target, dataName, dataName);
 	}
 	else {
+		// Inherited data becomes the project's own, which overrides the base project's
 		activeSet[sliderIndex].SetLocalData(dataName);
-		if (DiffInfo* dataFile = activeSet[sliderIndex].GetDataFile(dataName))
+		if (DiffInfo* dataFile = activeSet[sliderIndex].GetDataFile(dataName)) {
+			dataFile->bInherited = false;
 			UnlinkSliderData(*dataFile);
+		}
 	}
 
 	if (!activeSet.TargetHasExternalData(target))
@@ -1414,6 +1675,7 @@ bool OutfitProject::SetSliderDataLocal(const size_t sliderIndex, const size_t da
 
 	std::string targetName = dataFile->targetName;
 	activeSet.SetSliderDataFileLocal(sliderIndex, dataIndex, true);
+	dataFile->bInherited = false;
 	UnlinkSliderData(*dataFile);
 	if (!activeSet.TargetHasExternalData(targetName))
 		activeSet.ClearLocalOnlyDataFolders();
@@ -1586,6 +1848,8 @@ bool OutfitProject::SetSliderDataExternal(const std::vector<std::pair<size_t, si
 	for (auto& dataEntry : checkedEntries) {
 		activeSet.SetSliderDataFileName(dataEntry.sliderIndex, dataEntry.dataIndex, dataEntry.fileName);
 		activeSet.SetSliderDataFileLocal(dataEntry.sliderIndex, dataEntry.dataIndex, false);
+		if (DiffInfo* dataFile = activeSet.GetSliderDataFile(dataEntry.sliderIndex, dataEntry.dataIndex))
+			dataFile->bInherited = false;
 	}
 
 	return true;
@@ -1635,11 +1899,23 @@ bool OutfitProject::SliderHidden(const size_t index) {
 	return activeSet[index].bHidden;
 }
 
+namespace {
+// Changing a property of an inherited slider makes its properties the project's own
+template<typename T>
+void SetSliderProperty(SliderData& slider, T& property, const T& value) {
+	if (property == value)
+		return;
+
+	property = value;
+	slider.bInherited = false;
+}
+} // namespace
+
 void OutfitProject::SetSliderZap(const size_t index, const bool zap) {
 	if (!ValidSlider(index))
 		return;
 
-	activeSet[index].bZap = zap;
+	SetSliderProperty(activeSet[index], activeSet[index].bZap, zap);
 }
 
 void OutfitProject::SetSliderZapToggles(const size_t index, const wxArrayString& toggles) {
@@ -1650,28 +1926,28 @@ void OutfitProject::SetSliderZapToggles(const size_t index, const wxArrayString&
 	for (auto& s : toggles)
 		zapToggles.push_back(s.ToUTF8().data());
 
-	activeSet[index].zapToggles = zapToggles;
+	SetSliderProperty(activeSet[index], activeSet[index].zapToggles, zapToggles);
 }
 
 void OutfitProject::SetSliderInvert(const size_t index, const bool inv) {
 	if (!ValidSlider(index))
 		return;
 
-	activeSet[index].bInvert = inv;
+	SetSliderProperty(activeSet[index], activeSet[index].bInvert, inv);
 }
 
 void OutfitProject::SetSliderUV(const size_t index, const bool uv) {
 	if (!ValidSlider(index))
 		return;
 
-	activeSet[index].bUV = uv;
+	SetSliderProperty(activeSet[index], activeSet[index].bUV, uv);
 }
 
 void OutfitProject::SetSliderHidden(const size_t index, const bool hidden) {
 	if (!ValidSlider(index))
 		return;
 
-	activeSet[index].bHidden = hidden;
+	SetSliderProperty(activeSet[index], activeSet[index].bHidden, hidden);
 }
 
 void OutfitProject::SetSliderDefault(const size_t index, const int val, const bool isHi) {
@@ -1679,9 +1955,9 @@ void OutfitProject::SetSliderDefault(const size_t index, const int val, const bo
 		return;
 
 	if (!isHi)
-		activeSet[index].defSmallValue = val;
+		SetSliderProperty(activeSet[index], activeSet[index].defSmallValue, static_cast<float>(val));
 	else
-		activeSet[index].defBigValue = val;
+		SetSliderProperty(activeSet[index], activeSet[index].defBigValue, static_cast<float>(val));
 }
 
 void OutfitProject::SetSliderName(const size_t index, const std::string& newName) {
@@ -1689,6 +1965,7 @@ void OutfitProject::SetSliderName(const size_t index, const std::string& newName
 		return;
 
 	std::string oldName = activeSet[index].name;
+	bool fromBase = activeSet.HasBaseProject() && activeSet.BaseHasSlider(oldName);
 	for (auto& s : workNif.GetShapes()) {
 		std::string shapeName = s->name.get();
 		std::string oldDT = shapeName + oldName;
@@ -1703,6 +1980,15 @@ void OutfitProject::SetSliderName(const size_t index, const std::string& newName
 		activeSet[index].SetLocalData(newDT);
 	}
 
+	// Under another name, the slider of the base project is hidden and its data becomes the project's own
+	if (fromBase) {
+		activeSet.AddRemovedSlider(oldName);
+		activeSet[index].bInherited = false;
+		for (auto& dataFile : activeSet[index].dataFiles)
+			DetachSliderData(dataFile);
+	}
+
+	activeSet.RemoveRemovedSlider(newName);
 	activeSet[index].name = newName;
 }
 
@@ -1754,6 +2040,8 @@ void OutfitProject::CloneSlider(const std::string& sliderName, const std::string
 		// Adjust all data names to cloned slider name and make it local
 		activeSet[cloneIndex].RenameData(oldDT, newDT);
 		activeSet[cloneIndex].SetLocalData(newDT);
+		if (DiffInfo* dataFile = activeSet[cloneIndex].GetDataFile(newDT))
+			UnlinkSliderData(*dataFile);
 
 		std::string data = activeSet[sliderName].TargetDataName(target);
 
@@ -3270,6 +3558,10 @@ void OutfitProject::DeleteSlider(const std::string& sliderName) {
 			morpher.ClearResultSet(data);
 	}
 
+	// The base project still has the slider, the project only leaves it out
+	if (activeSet.HasBaseProject() && activeSet.BaseHasSlider(sliderName))
+		activeSet.AddRemovedSlider(sliderName);
+
 	activeSet.DeleteSlider(sliderName);
 }
 
@@ -3646,8 +3938,86 @@ int OutfitProject::LoadFromSliderSet(const std::string& fileName,
 		mRefShapeName = baseShape->name.get();
 	}
 
+	// An add-on can't save changes to the shapes of its base project
+	addOnGeometryHash = activeSet.IsAddOn() ? ShapeGeometryHash() : 0;
+
 	host->EndProgress();
+	ReportResolveStatus();
 	return 0;
+}
+
+int OutfitProject::ReloadReferenceShape() {
+	NiShape* shape = GetBaseShape();
+	if (!shape)
+		return 0;
+
+	std::string shapeName = shape->name.get();
+
+	// The reference template the set names, which deleting and reloading the shape clears. It's saved again.
+	const std::string refProjectFile = mRefProjectFile;
+	const std::string refProjectName = mRefProjectName;
+
+	// Prevent duplication if valid reference was found
+	DeleteShape(shape);
+
+	wxLogMessage("Loading reference shape '%s'...", shapeName);
+	UpdateProgress(50, wxString::Format(_("Loading reference shape '%s'..."), shapeName));
+
+	int error = LoadReferenceNif(activeSet.GetInputFileName(), shapeName, true, true);
+	if (error)
+		return error;
+
+	if (!refProjectFile.empty() && GetBaseShape()) {
+		mRefProjectFile = refProjectFile;
+		mRefProjectName = refProjectName;
+		SetShapeReferenceSource(shapeName, refProjectFile, refProjectName);
+	}
+
+	if (activeSet.IsAddOn())
+		addOnGeometryHash = ShapeGeometryHash();
+
+	return 0;
+}
+
+int OutfitProject::CreateFromBase(const std::string& fileName, const std::string& sliderSetName, bool addOn, const std::string& projectName) {
+	std::vector<std::string> shapeOrder;
+	int error = LoadFromSliderSet(fileName, sliderSetName, &shapeOrder);
+	if (!error)
+		error = ReloadReferenceShape();
+	if (error)
+		return error;
+
+	workNif.SetShapeOrder(shapeOrder);
+	MakeDerivedProject(fileName, sliderSetName, addOn, projectName);
+	return 0;
+}
+
+void OutfitProject::MakeDerivedProject(const std::string& fileName, const std::string& sliderSetName, bool addOn, const std::string& projectName) {
+	// The base project is referred to like a reference project
+	wxFileName baseFileName(wxString::FromUTF8(fileName));
+	if (baseFileName.IsRelative())
+		baseFileName.MakeAbsolute(wxString::FromUTF8(ProjectUtil::GetProjectPath()));
+
+	std::string baseProjectFile = fileName;
+	if (baseFileName.MakeRelativeTo(wxString::FromUTF8(ProjectUtil::GetProjectPath())))
+		baseProjectFile = baseFileName.GetFullPath().ToUTF8().data();
+
+	activeSet.MakeDerivedFrom(baseProjectFile, sliderSetName, addOn);
+
+	std::string name = projectName;
+	ReplaceForbidden(name);
+	activeSet.SetName(name);
+	outfitName = name;
+	mOutfitName = wxString::FromUTF8(name);
+	mFileName.clear();
+
+	// A variant gets a NIF file of its own, an add-on keeps the base project's
+	if (addOn)
+		activeSet.SetSliderDataFile(name + ".osd");
+	else
+		mBaseFile.clear();
+
+	addOnGeometryHash = addOn ? ShapeGeometryHash() : 0;
 }
 
 int OutfitProject::AddFromSliderSet(const std::string& fileName,
@@ -5996,6 +6366,13 @@ void OutfitProject::RenameShape(NiShape* shape, const std::string& newShapeName)
 	}
 
 	activeSet.RenameShape(shapeName, newShapeName);
+
+	// The base project's data is for the old name, so it becomes the project's own
+	std::string newTarget = ShapeToTarget(newShapeName);
+	for (size_t si = 0; si < activeSet.size(); ++si)
+		for (auto& dataFile : activeSet[si].dataFiles)
+			if (dataFile.targetName == newTarget)
+				DetachSliderData(dataFile);
 
 	auto tex = shapeTextures.find(shapeName);
 	if (tex != shapeTextures.end()) {

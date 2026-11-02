@@ -3011,32 +3011,11 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName,
 	}
 
 	if (clearProject) {
-		NiShape* shape = project->GetBaseShape();
-		if (shape) {
-			std::string shapeName = shape->name.get();
-
-			// The reference template the set names, which deleting and reloading the shape clears. It's saved again.
-			const std::string refProjectFile = project->mRefProjectFile;
-			const std::string refProjectName = project->mRefProjectName;
-
-			// Prevent duplication if valid reference was found
-			project->DeleteShape(shape);
-
-			wxLogMessage("Loading reference shape '%s'...", shapeName);
-			UpdateProgress(50, wxString::Format(_("Loading reference shape '%s'..."), shapeName));
-
-			error = project->LoadReferenceNif(project->activeSet.GetInputFileName(), shapeName, true, true);
-			if (error) {
-				EndProgress();
-				RefreshGUIFromProj();
-				return false;
-			}
-
-			if (!refProjectFile.empty() && project->GetBaseShape()) {
-				project->mRefProjectFile = refProjectFile;
-				project->mRefProjectName = refProjectName;
-				project->SetShapeReferenceSource(shapeName, refProjectFile, refProjectName);
-			}
+		error = project->ReloadReferenceShape();
+		if (error) {
+			EndProgress();
+			RefreshGUIFromProj();
+			return false;
 		}
 
 		project->GetWorkNif()->SetShapeOrder(origShapeOrder);

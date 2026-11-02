@@ -24,6 +24,11 @@ void SliderSet::InheritFrom(const SliderSet& base) {
 	SliderSetResolveStatus status = resolveStatus;
 	status.baseFound = true;
 	status.baseMissing = false;
+	status.baseDataFolder = base.datafolder;
+	status.baseInputFile = base.inputfile;
+	status.baseSliders.clear();
+	status.baseData.clear();
+	status.baseDataFolders.clear();
 
 	// The geometry of an add-on is the base project's
 	if (addOn) {
@@ -49,8 +54,10 @@ void SliderSet::InheritFrom(const SliderSet& base) {
 		targets.insert(shape.second.targetShape);
 
 	std::map<std::string, const SliderData*> baseSliders;
-	for (auto& baseSlider : base.sliders)
+	for (auto& baseSlider : base.sliders) {
 		baseSliders[baseSlider.name] = &baseSlider;
+		status.baseSliders.insert(baseSlider.name);
+	}
 
 	// Data names are unique across the sliders, the project's own data keeps its names
 	std::set<std::string> ownDataNames;
@@ -58,21 +65,6 @@ void SliderSet::InheritFrom(const SliderSet& base) {
 		for (auto& df : slider.dataFiles)
 			if (!df.bInherited)
 				ownDataNames.insert(df.dataName);
-
-	// Inherited data uses the data folders the base project finds it in
-	auto addTargetDataFolders = [&](const std::string& targetName, const std::vector<std::string>& dataFolders) {
-		for (auto& shape : shapeAttributes) {
-			if (shape.second.targetShape != targetName)
-				continue;
-
-			if (shape.second.dataFolders.empty())
-				shape.second.dataFolders.push_back(datafolder);
-
-			for (auto& dataFolder : dataFolders)
-				if (std::find(shape.second.dataFolders.begin(), shape.second.dataFolders.end(), dataFolder) == shape.second.dataFolders.end())
-					shape.second.dataFolders.push_back(dataFolder);
-		}
-	};
 
 	// Own data first takes the place of the base project's data for the same shape
 	auto mergeData = [&](const std::string& sliderName, const std::vector<DiffInfo>& ownData, const std::vector<DiffInfo>& baseData) {
@@ -82,6 +74,24 @@ void SliderSet::InheritFrom(const SliderSet& base) {
 		for (auto& baseDataFile : baseData) {
 			if (targets.find(baseDataFile.targetName) == targets.end())
 				continue;
+
+			// Inherited data uses the data folders the base project finds it in
+			DiffInfo inherited = baseDataFile;
+			inherited.bInherited = true;
+
+			std::vector<std::string> inheritedFolders;
+			if (!inherited.bLocal)
+				inheritedFolders = base.GetTargetDataFolders(inherited.targetName);
+			else if (!sameDataFolder) {
+				inherited.bLocal = false;
+				inheritedFolders.push_back(base.datafolder);
+			}
+
+			status.baseData[std::make_pair(sliderName, inherited.targetName)] = inherited;
+			auto& targetFolders = status.baseDataFolders[inherited.targetName];
+			for (auto& dataFolder : inheritedFolders)
+				if (std::find(targetFolders.begin(), targetFolders.end(), dataFolder) == targetFolders.end())
+					targetFolders.push_back(dataFolder);
 
 			auto own = std::find_if(ownData.begin(), ownData.end(), [&](const DiffInfo& df) { return df.targetName == baseDataFile.targetName; });
 			if (own != ownData.end()) {
@@ -101,16 +111,7 @@ void SliderSet::InheritFrom(const SliderSet& base) {
 				continue;
 			}
 
-			DiffInfo inherited = baseDataFile;
-			inherited.bInherited = true;
-
-			if (!inherited.bLocal)
-				addTargetDataFolders(inherited.targetName, base.GetTargetDataFolders(inherited.targetName));
-			else if (!sameDataFolder) {
-				inherited.bLocal = false;
-				addTargetDataFolders(inherited.targetName, {base.datafolder});
-			}
-
+			AddInheritedDataFolders(inherited.targetName, inheritedFolders);
 			merged.push_back(std::move(inherited));
 		}
 
@@ -121,16 +122,14 @@ void SliderSet::InheritFrom(const SliderSet& base) {
 		return merged;
 	};
 
+	// Only base sliders that the set doesn't have stay left out
 	std::vector<std::string> keptRemovedSliders;
 	for (auto& removedSlider : removedSliders)
-		if (baseSliders.find(removedSlider) != baseSliders.end())
+		if (baseSliders.find(removedSlider) != baseSliders.end() && !SliderExists(removedSlider))
 			keptRemovedSliders.push_back(removedSlider);
 
 	std::vector<SliderData> mergedSliders;
 	for (auto& slider : sliders) {
-		if (IsRemovedSlider(slider.name))
-			continue;
-
 		std::vector<DiffInfo> ownData;
 		for (auto& df : slider.dataFiles)
 			if (!df.bInherited)
@@ -219,6 +218,69 @@ void SliderSet::InheritFrom(const SliderSet& base) {
 	sliders = std::move(mergedSliders);
 	removedSliders = std::move(keptRemovedSliders);
 	resolveStatus = std::move(status);
+}
+
+void SliderSet::MakeDerivedFrom(const std::string& projectFile, const std::string& projectName, bool asAddOn) {
+	SliderSetResolveStatus status;
+	status.baseFound = true;
+	status.baseDataFolder = datafolder;
+	status.baseInputFile = inputfile;
+
+	for (auto& slider : sliders) {
+		slider.bInherited = true;
+		status.baseSliders.insert(slider.name);
+
+		for (auto& df : slider.dataFiles) {
+			df.bInherited = true;
+			status.baseData[std::make_pair(slider.name, df.targetName)] = df;
+			if (!df.bLocal)
+				status.baseDataFolders[df.targetName] = GetTargetDataFolders(df.targetName);
+		}
+	}
+
+	baseProjectFile = projectFile;
+	baseProjectName = projectName;
+	baseProjectID = projectID;
+	projectID.clear();
+	addOn = asAddOn;
+	sliderDataFile.clear();
+	removedSliders.clear();
+	notes.clear();
+	resolveStatus = std::move(status);
+}
+
+bool SliderSet::BaseHasSlider(const std::string& sliderName) {
+	if (resolveStatus.baseFound)
+		return resolveStatus.baseSliders.find(sliderName) != resolveStatus.baseSliders.end();
+
+	if (!SliderExists(sliderName))
+		return false;
+
+	auto& slider = (*this)[sliderName];
+	return HasBaseProject() && (slider.bInherited || slider.HasInheritedData());
+}
+
+const DiffInfo* SliderSet::BaseData(const std::string& sliderName, const std::string& targetName) const {
+	auto data = resolveStatus.baseData.find(std::make_pair(sliderName, targetName));
+	return data != resolveStatus.baseData.end() ? &data->second : nullptr;
+}
+
+void SliderSet::AddInheritedDataFolders(const std::string& targetName, const std::vector<std::string>& dataFolders) {
+	if (dataFolders.empty())
+		return;
+
+	for (auto& shape : shapeAttributes) {
+		if (shape.second.targetShape != targetName)
+			continue;
+
+		// No data folders of its own stands for the default one, which comes first
+		if (shape.second.dataFolders.empty())
+			shape.second.dataFolders.push_back(datafolder);
+
+		for (auto& dataFolder : dataFolders)
+			if (std::find(shape.second.dataFolders.begin(), shape.second.dataFolders.end(), dataFolder) == shape.second.dataFolders.end())
+				shape.second.dataFolders.push_back(dataFolder);
+	}
 }
 
 SliderSetResolver::SliderSetResolver(const std::string& inProjectPath)

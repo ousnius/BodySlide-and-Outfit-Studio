@@ -66,8 +66,10 @@ struct SliderDataLocation {
 	std::string fileName;
 	std::string dataFileName;
 	std::string dataNameInFile;
-	bool local = false;	 // Data of this project
-	bool linked = false; // Data in the .osd file of another project in the same data folder
+	bool local = false;		 // Data of this project
+	bool linked = false;	 // Data in the .osd file of another project in the same data folder
+	bool inherited = false;	 // Data of the base project, which owns it
+	bool overridden = false; // Data of this project in place of the base project's
 	bool resolved = false;
 	bool isBSD = false;
 	std::string resolvedPath;
@@ -246,6 +248,10 @@ class OutfitProject {
 	// Local slider data can point to the .osd file of another project in the same data folder.
 	bool SliderDataIsLinked(const DiffInfo& dataFile);
 	void UnlinkSliderData(DiffInfo& dataFile);
+	// Makes inherited slider data the project's own, which is saved to its own .osd file then.
+	void DetachSliderData(DiffInfo& dataFile);
+	// Shows what loading the base project of a variant or add-on turned up.
+	void ReportResolveStatus();
 	// Whether saving keeps the slider data entry as it is instead of writing its data to the project's own .osd file.
 	bool KeepSliderDataLink(const DiffInfo* dataFile,
 							const std::string& shapeName,
@@ -255,6 +261,9 @@ class OutfitProject {
 							const std::string& prevOSDFileName);
 	// Asks before saving removes shapes from a NIF file that other projects use as their source file.
 	bool ConfirmSharedNifShapes(const SliderSetIndex& index, const std::string& nifFilePath, const std::string& setFile, const std::string& setName, bool copyRef);
+
+	// Geometry of an add-on's shapes when it was loaded, which come from its base project
+	uint64_t addOnGeometryHash = 0;
 
 	SFMaterialResolver sfMaterialResolver;
 
@@ -443,6 +452,14 @@ public:
 	void GetSliderDataLocations(std::vector<SliderDataLocation>& outLocations, const std::string& sliderName = "");
 	bool SliderDataIsExternal(const std::string& sliderName, nifly::NiShape* shape);
 	std::string EnsureSliderDataLocal(const std::string& sliderName, nifly::NiShape* shape);
+	// Whether the base project of a variant or add-on has the slider.
+	bool SliderFromBase(const std::string& sliderName);
+	// The inherited data that renaming a slider or shape makes the project's own, which disconnects it from the base project.
+	std::vector<SliderDataKey> RenameDisconnectsFromBase(const std::string& sliderName, const std::string& shapeName);
+	// Replaces the project's own data of a slider with the base project's again.
+	bool RevertSliderDataToBase(const SliderDataKey& key, std::string* errorMessage = nullptr);
+	// Shapes, their vertices, triangles, UVs and weights, to tell whether they changed.
+	uint64_t ShapeGeometryHash();
 	bool SetSliderDataLocal(const SliderDataKey& key, std::string* errorMessage = nullptr);
 	bool SetSliderDataLocal(const size_t sliderIndex, const size_t dataIndex, std::string* errorMessage = nullptr);
 	bool SetSliderDataExternal(const size_t sliderIndex, const size_t dataIndex, const std::vector<std::string>& dataFolders, std::string* errorMessage = nullptr);
@@ -607,6 +624,13 @@ public:
 						  const std::string& setName,
 						  std::vector<std::string>* origShapeOrder = nullptr,
 						  const std::string& shapeDataPath = "");
+	// Loads the reference shape again with its slider data, after loading a set with LoadFromSliderSet.
+	int ReloadReferenceShape();
+	// Makes a new variant or add-on of a project, which inherits all of its sliders.
+	// It's saved under 'projectName' once it gets a project file.
+	int CreateFromBase(const std::string& fileName, const std::string& setName, bool addOn, const std::string& projectName);
+	// Turns the project just loaded from 'fileName' into a new variant or add-on of it.
+	void MakeDerivedProject(const std::string& fileName, const std::string& setName, bool addOn, const std::string& projectName);
 	int AddFromSliderSet(const std::string& fileName,
 						 const std::string& setName,
 						 const bool newDataLocal = false,

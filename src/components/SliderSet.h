@@ -13,7 +13,9 @@ See the included LICENSE file
 #include <algorithm>
 #include <cstddef>
 #include <map>
+#include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 using namespace tinyxml2;
@@ -37,6 +39,14 @@ struct SliderSetResolveStatus {
 	bool baseMissing = false;  // The set names a base project that wasn't found, so it's used as it was saved.
 	bool newerVersion = false; // The file was saved by a newer version, which can have left out things this one doesn't read.
 	std::vector<std::string> warnings;
+
+	// With the base project found: its data folder and NIF file, its sliders, and its data of each
+	// slider and target the way the set inherits it
+	std::string baseDataFolder;
+	std::string baseInputFile;
+	std::set<std::string> baseSliders;
+	std::map<std::pair<std::string, std::string>, DiffInfo> baseData;
+	std::map<std::string, std::vector<std::string>> baseDataFolders; // By target, the data folders inherited data is in
 };
 
 struct SliderDataFileResolution {
@@ -178,6 +188,17 @@ public:
 	// Merges the sliders of the base project into this set, which holds what was saved for it.
 	// 'base' already has everything that it inherits itself.
 	void InheritFrom(const SliderSet& base);
+
+	// Turns the set, as loaded from a project file, into a new variant or add-on of that project that
+	// inherits all of it.
+	void MakeDerivedFrom(const std::string& projectFile, const std::string& projectName, bool asAddOn);
+
+	// Whether the base project has the slider. Without the base project loaded, what the slider inherits tells.
+	bool BaseHasSlider(const std::string& sliderName);
+	// The base project's data of a slider for a target as the set would inherit it, or nullptr.
+	const DiffInfo* BaseData(const std::string& sliderName, const std::string& targetName) const;
+	// Adds data folders that inherited data of a target needs, after the ones the target has.
+	void AddInheritedDataFolders(const std::string& targetName, const std::vector<std::string>& dataFolders);
 
 	void Clear() {
 		shapeAttributes.clear();
