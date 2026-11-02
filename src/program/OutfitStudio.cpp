@@ -4732,9 +4732,7 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 		ConfigDialogUtil::LoadDialogChoices(OutfitStudioConfig, wiz, "LoadReference", "npTemplateChoice", refTemplates);
 
 		// An add-on or variant picks its base project where a new project picks its reference
-		auto intro1 = XRCCTRL(wiz, "lbNewProj1", wxStaticText);
 		auto intro2 = XRCCTRL(wiz, "lbNewProj2", wxStaticText);
-		const wxString newProjectIntro1 = intro1->GetLabel();
 		const wxString newProjectIntro2 = intro2->GetLabel();
 
 		wxStaticBox* referenceBox = nullptr;
@@ -4744,21 +4742,9 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 					referenceBox = box;
 
 		auto updateProjectType = [&](wxCommandEvent&) {
-			bool addOn = XRCCTRL(wiz, "npTypeAddOn", wxRadioButton)->GetValue();
-			bool derived = addOn || XRCCTRL(wiz, "npTypeVariant", wxRadioButton)->GetValue();
+			bool derived = !XRCCTRL(wiz, "npTypeNew", wxRadioButton)->GetValue();
 
-			if (!derived)
-				intro1->SetLabel(newProjectIntro1);
-			else if (addOn)
-				intro1->SetLabel(
-					_("Welcome to the New Project wizard!\n\nFirst, please choose the project to add sliders to, such as a body. The add-on uses its shapes and inherits its sliders. "
-					  "Only the add-on's own slider data is saved, in a file of its own."));
-			else
-				intro1->SetLabel(
-					_("Welcome to the New Project wizard!\n\nFirst, please choose the project to make a variant of. The variant gets a NIF file of its own and inherits the "
-					  "project's sliders. Only the slider data it adds or changes is saved with it."));
-			intro1->Wrap(FromDIP(380));
-
+			// Shorter than the label it replaces, so it fits the page as it was sized
 			intro2->SetLabel(derived ? _("Next, enter a display name for the new project.") : newProjectIntro2);
 			intro2->Wrap(FromDIP(380));
 

@@ -13,7 +13,7 @@
 					<flag>wxALL|wxEXPAND</flag>
 					<border>5</border>
 					<object class="wxStaticText" name="lbNewProj1">
-						<label>Welcome to the New Project wizard!\n\nFirst, please choose a reference. Typically, this is a body (such as CBBE) or a conversion set (such as Vanilla To CBBE) and comes with its sliders.</label>
+						<label>Welcome to the New Project wizard!\n\nFirst, please choose a reference. Typically, this is a body (such as CBBE) or a conversion set (such as Vanilla To CBBE) and comes with its sliders. An add-on or variant uses the project it's based on instead.</label>
 						<wrap>380</wrap>
 					</object>
 				</object>
