@@ -205,7 +205,7 @@ public:
 		sliders.clear();
 	}
 
-	std::string GetBaseDataPath() { return baseDataPath; }
+	std::string GetBaseDataPath() const { return baseDataPath; }
 	void SetBaseDataPath(const std::string& inPath) { baseDataPath = inPath; }
 
 	std::vector<NormalGenLayer>& GetNormalsGenLayers() { return defNormalGen; }
@@ -238,7 +238,7 @@ public:
 	std::string GetOutputPath() { return outputpath; }
 	std::string GetOutputFile() { return outputfile; }
 	std::string GetOutputFilePath();
-	std::string GetDefaultDataFolder() { return datafolder; }
+	std::string GetDefaultDataFolder() const { return datafolder; }
 	std::vector<std::string> GetTargetDataFolders(const std::string& targetName) const;
 	SliderDataFileResolution ResolveSliderDataFile(const DiffInfo& dataFile, const std::vector<std::string>* externalDataFolders = nullptr) const;
 	DiffInfo* GetSliderDataFile(const size_t sliderIndex, const size_t dataFileIndex);

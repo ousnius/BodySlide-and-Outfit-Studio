@@ -9,6 +9,7 @@ See the included LICENSE file
 #include "../utils/StringStuff.h"
 
 #include <filesystem>
+#include <map>
 #include <wx/dir.h>
 
 SliderSetIndex::SliderSetIndex(const std::string& inProjectPath) {
@@ -65,6 +66,26 @@ std::set<std::string> SliderSetIndex::DataUsedInFile(const std::string& osdFileP
 
 	std::string osdName = std::filesystem::u8path(osdFilePath).filename().u8string();
 
+	// Many sets name the same files, so paths are compared as text and each one is looked up once
+	auto normalize = [](const std::string& path) {
+		std::string normalized = std::filesystem::u8path(path).lexically_normal().u8string();
+#ifdef _WINDOWS
+		normalized = ToLower(normalized);
+#endif
+		return normalized;
+	};
+
+	std::map<std::string, bool> existingFiles;
+	auto fileExists = [&existingFiles](const std::string& path) {
+		auto existing = existingFiles.find(path);
+		if (existing != existingFiles.end())
+			return existing->second;
+
+		return existingFiles[path] = PlatformUtil::FileExists(path);
+	};
+
+	const std::string osdPath = normalize(osdFilePath);
+
 	for (auto& entry : entries) {
 		if (entry.setName == exceptSet && SameFile(entry.fileName, exceptFile))
 			continue;
@@ -84,9 +105,23 @@ std::set<std::string> SliderSetIndex::DataUsedInFile(const std::string& osdFileP
 				if (!StringsEqualInsens(dataOSDFileName.c_str(), osdName.c_str()))
 					continue;
 
-				SliderDataFileResolution resolution = set.ResolveSliderDataFile(dataFile);
-				if (resolution.resolved && SameFile(resolution.resolvedPath, osdFilePath))
-					dataNames.insert(resolution.dataNameInFile);
+				// The data is in the first of its data folders that has the file, like ResolveSliderDataFile finds it
+				std::vector<std::string> dataFolders;
+				if (dataFile.bLocal)
+					dataFolders.push_back(set.GetDefaultDataFolder());
+				else
+					dataFolders = set.GetTargetDataFolders(dataFile.targetName);
+
+				for (auto& dataFolder : dataFolders) {
+					std::string candidatePath = normalize(set.GetBaseDataPath() + PathSepStr + dataFolder + PathSepStr + dataOSDFileName);
+					if (candidatePath == osdPath) {
+						dataNames.insert(dataNameInFile);
+						break;
+					}
+
+					if (fileExists(candidatePath))
+						break;
+				}
 			}
 		}
 	}
