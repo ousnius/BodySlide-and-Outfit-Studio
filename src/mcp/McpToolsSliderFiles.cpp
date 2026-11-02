@@ -54,7 +54,7 @@ json SliderProperties(OutfitProject& project, size_t index) {
 	for (auto& toggle : project.SliderZapToggles(index))
 		toggles.push_back(toggle.ToUTF8().data());
 
-	return {
+	json properties = {
 		{"name", project.GetSliderName(index)},
 		{"zap", project.SliderZap(index)},
 		{"zapToggles", toggles},
@@ -64,6 +64,24 @@ json SliderProperties(OutfitProject& project, size_t index) {
 		{"defaultSmall", project.SliderDefault(index, false)},
 		{"defaultBig", project.SliderDefault(index, true)},
 	};
+
+	// Where a variant's or add-on's slider and its data come from
+	if (project.activeSet.HasBaseProject()) {
+		std::string name = project.GetSliderName(index);
+		properties["fromBaseProject"] = project.SliderFromBase(name);
+		properties["inheritsProperties"] = project.activeSet[index].bInherited;
+
+		std::vector<SliderDataLocation> locations;
+		project.GetSliderDataLocations(locations, name);
+		json data = json::array();
+		for (auto& location : locations) {
+			const char* source = location.inherited ? "inherited" : location.overridden ? "overridden" : location.local ? "local" : location.linked ? "linked" : "external";
+			data.push_back({{"shape", location.shapeName}, {"source", source}});
+		}
+		properties["data"] = data;
+	}
+
+	return properties;
 }
 
 McpToolResult SliderNames(OutfitProject& project) {

@@ -74,6 +74,18 @@ using namespace nifly;
 
 namespace {
 
+// A packed variant or add-on refers to its base project in the merged file when that's packed along.
+// Otherwise the base project has to be installed already, which is noted.
+void PackBaseProject(SliderSet& set, const std::set<std::string>& packedProjects, const std::string& mergedFile, std::set<std::string>& missingBaseProjects) {
+	if (!set.HasBaseProject())
+		return;
+
+	if (packedProjects.find(set.GetBaseProjectName()) != packedProjects.end())
+		set.SetBaseProject("SliderSets" + std::string(PathSepStr) + mergedFile, set.GetBaseProjectName(), set.GetBaseProjectID());
+	else
+		missingBaseProjects.insert(set.GetBaseProjectName());
+}
+
 // The playback timer only backs OnAnimIdle up for stretches where no idle events
 // arrive. It cannot pace playback on its own: on MSW it is a WM_TIMER, which
 // Windows rounds up to a multiple of the ~15.6 ms system clock tick, making 15 ms
@@ -2026,12 +2038,14 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 
 			SliderSetFile projectFile;
 			projectFile.New(mergedFilePath);
+			std::set<std::string> missingBaseProjects;
 
 			for (auto& setName : selectedProjects) {
 				if (projectSources.find(setName) == projectSources.end())
 					continue;
 
 				SliderSet set = projectSources[setName];
+				PackBaseProject(set, selectedProjects, mergedFile, missingBaseProjects);
 				projectFile.UpdateSet(set);
 
 				// Add input file to folder
@@ -2061,7 +2075,7 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 					for (auto it = set.ShapesBegin(); it != set.ShapesEnd(); ++it) {
 						std::string target = set.ShapeToTarget(it->first);
 						std::string targetDataName = set[i].TargetDataName(target);
-						if (set[i].IsLocalData(targetDataName)) {
+						if (set[i].IsLocalData(targetDataName) && !set[i].IsInheritedData(targetDataName)) {
 							std::string dataFileName = set[i].DataFileName(targetDataName);
 							if (dataFileName.compare(dataFileName.size() - 4, dataFileName.size(), ".bsd") != 0) {
 								// Split target file name to get OSD file name
@@ -2156,6 +2170,13 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 				}
 			}
 
+			if (!missingBaseProjects.empty())
+				wxMessageBox(wxString::Format(_("These base projects of packed variants or add-ons aren't in the pack, so they have to be installed for them: %s"),
+											  wxString::FromUTF8(JoinStrings(std::vector<std::string>(missingBaseProjects.begin(), missingBaseProjects.end()), ", "))),
+							 _("Pack Projects"),
+							 wxOK | wxICON_INFORMATION,
+							 packProjects);
+
 			EndProgress(_("Packing finished."));
 		});
 
@@ -2173,6 +2194,7 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 
 			SliderSetFile projectFile;
 			projectFile.New(mergedFilePath);
+			std::set<std::string> missingBaseProjects;
 
 			wxFFileOutputStream out(fileName);
 			wxZipOutputStream zip(out);
@@ -2182,6 +2204,7 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 					continue;
 
 				SliderSet set = projectSources[setName];
+				PackBaseProject(set, selectedProjects, mergedFile, missingBaseProjects);
 				projectFile.UpdateSet(set);
 
 				// Add input file to archive
@@ -2215,7 +2238,7 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 					for (auto it = set.ShapesBegin(); it != set.ShapesEnd(); ++it) {
 						std::string target = set.ShapeToTarget(it->first);
 						std::string targetDataName = set[i].TargetDataName(target);
-						if (set[i].IsLocalData(targetDataName)) {
+						if (set[i].IsLocalData(targetDataName) && !set[i].IsInheritedData(targetDataName)) {
 							std::string dataFileName = set[i].DataFileName(targetDataName);
 							if (dataFileName.compare(dataFileName.size() - 4, dataFileName.size(), ".bsd") != 0) {
 								// Split target file name to get OSD file name
@@ -2321,6 +2344,13 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 					return;
 				}
 			}
+
+			if (!missingBaseProjects.empty())
+				wxMessageBox(wxString::Format(_("These base projects of packed variants or add-ons aren't in the pack, so they have to be installed for them: %s"),
+											  wxString::FromUTF8(JoinStrings(std::vector<std::string>(missingBaseProjects.begin(), missingBaseProjects.end()), ", "))),
+							 _("Pack Projects"),
+							 wxOK | wxICON_INFORMATION,
+							 packProjects);
 
 			EndProgress(_("Packing finished."));
 		});

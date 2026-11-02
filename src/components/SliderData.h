@@ -155,6 +155,14 @@ public:
 		return false;
 	}
 
+	bool IsInheritedData(const std::string& dataAlias) {
+		for (auto& df : dataFiles)
+			if (df.dataName == dataAlias)
+				return df.bInherited;
+
+		return false;
+	}
+
 	void SetLocalData(const std::string& dataAlias) {
 		for (auto& df : dataFiles)
 			if (df.dataName == dataAlias)

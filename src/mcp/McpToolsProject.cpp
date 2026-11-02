@@ -171,6 +171,25 @@ McpToolResult GetStatus(OutfitStudioFrame* frame) {
 									}
 								  : json(nullptr);
 
+	// Variants and add-ons inherit the sliders of their base project
+	const SliderSet& set = project->activeSet;
+	data["project"]["projectID"] = set.GetProjectID();
+	if (set.HasBaseProject()) {
+		const SliderSetResolveStatus& status = set.GetResolveStatus();
+		data["baseProject"] = {
+			{"kind", set.IsAddOn() ? "add-on" : "variant"},
+			{"projectName", set.GetBaseProjectName()},
+			{"projectFile", set.GetBaseProjectFile()},
+			{"projectID", set.GetBaseProjectID()},
+			{"found", status.baseFound},
+			{"warnings", status.warnings},
+		};
+		if (set.IsAddOn())
+			data["baseProject"]["sliderDataFile"] = set.GetSliderDataFile();
+	}
+	else
+		data["baseProject"] = nullptr;
+
 	json shapes = json::array();
 	for (auto& name : project->GetShapeOrder())
 		if (!baseShape || name != baseShape->name.get())
