@@ -37,7 +37,7 @@ constexpr const char* Instructions =
 const std::set<std::string> AutoSnapshotTools = {
 	"run_steps", "run_automation_script", "load_reference", "add_project", "import_file", "load_from_archive",
 	"conform_sliders", "fix_clipping", "set_slider_deltas", "scale_slider_deltas", "smooth_slider_deltas",
-	"rename_shape", "delete_shapes", "duplicate_shape", "set_reference_shape", "delete_vertices",
+	"rename_shape", "delete_shapes", "duplicate_shape", "reorder_shapes", "set_reference_shape", "delete_vertices",
 	"separate_vertices", "merge_shapes", "refine_mesh", "mirror_shapes", "invert_uvs", "recalc_normals",
 	"symmetrize_vertices", "shape_transforms", "set_base_shape", "make_conversion_reference",
 	"remove_unused_nodes", "set_shader_properties", "set_texture_paths", "set_geometry_properties",

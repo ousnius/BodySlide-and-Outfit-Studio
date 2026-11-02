@@ -1557,6 +1557,55 @@ void AddShapeTools(OutfitStudioMcp& mcp) {
 	};
 	mcp.AddTool(std::move(duplicate));
 
+	McpTool reorder;
+	reorder.name = "reorder_shapes";
+	reorder.description =
+		"Changes the order of the shapes in the shape list and the saved NIF, like dragging them in the window. The named "
+		"shapes move together, in the order given, to a position among the others: all shapes in the new order, or one "
+		"shape with a position to move only that one. In game, the order decides which alpha-blended shapes draw over "
+		"others, and alternate texture sets of armor addons pick their shapes by index, so reordering a shape they swap "
+		"needs the plugin's indices updated too.";
+	reorder.inputSchema = McpSchema(
+		{
+			{"shapes", McpStringList("Shapes to move, in their new order. The reference can be one of them.")},
+			{"position", McpProp("integer", "Index among the shapes not named where the named ones go, -1 for the end. Default 0, the start.")},
+		},
+		{"shapes"});
+	reorder.handler = [&mcp](const json& args) {
+		if (McpArgs::Strings(args, "shapes").empty())
+			McpArgs::Wrong("shapes", "a list of shape names");
+		std::vector<std::string> moved = Names(mcp.Shapes(args, "shapes", true));
+		if (std::set<std::string>(moved.begin(), moved.end()).size() != moved.size())
+			throw McpToolError("A shape is named more than once in 'shapes'.");
+
+		NifFile* nif = mcp.Project().GetWorkNif();
+		if (nif->HasUnknown())
+			throw McpToolError("The NIF has blocks Outfit Studio doesn't know, so the order of its shapes can't change.");
+
+		std::vector<std::string> order;
+		for (auto& name : nif->GetShapeNames())
+			if (std::find(moved.begin(), moved.end(), name) == moved.end())
+				order.push_back(name);
+
+		const int position = McpArgs::Int(args, "position", 0);
+		if (position < -1 || position > static_cast<int>(order.size()))
+			McpArgs::Wrong("position", ("-1 or an index from 0 to " + std::to_string(order.size())).c_str());
+		order.insert(position == -1 ? order.end() : order.begin() + position, moved.begin(), moved.end());
+
+		if (order != nif->GetShapeNames()) {
+			nif->SetShapeOrder(order);
+			if (nif->GetShapeNames() != order)
+				throw McpToolError("The NIF didn't take the new shape order.");
+
+			OutfitStudioFrame* frame = mcp.GetFrame();
+			frame->RefreshGUIFromProj();
+			frame->ApplySliders();
+			frame->SetPendingChanges();
+		}
+		return ShapeList(mcp);
+	};
+	mcp.AddTool(std::move(reorder));
+
 	McpTool setReference;
 	setReference.name = "set_reference_shape";
 	setReference.description =
