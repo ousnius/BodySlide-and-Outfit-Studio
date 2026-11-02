@@ -134,6 +134,28 @@ wxString EnsurePoseFileExtension(const wxString& filePath, int filterIndex) {
 	return fn.GetFullPath();
 }
 
+// wxTextEntryDialog sets its value on init, which puts the text cursor at the start on MSW
+class TextEntryDialogCursorAtEnd : public wxTextEntryDialog {
+public:
+	using wxTextEntryDialog::wxTextEntryDialog;
+
+	bool TransferDataToWindow() override {
+		bool result = wxTextEntryDialog::TransferDataToWindow();
+		if (m_textctrl)
+			m_textctrl->SetInsertionPointEnd();
+		return result;
+	}
+};
+
+// Same as wxGetTextFromUser, but with the text cursor at the end of the default value
+wxString GetTextFromUser(const wxString& message, const wxString& caption, const wxString& defaultValue, wxWindow* parent) {
+	TextEntryDialogCursorAtEnd dialog(parent, message, caption, defaultValue);
+	if (dialog.ShowModal() != wxID_OK)
+		return wxEmptyString;
+
+	return dialog.GetValue();
+}
+
 }
 
 // IPC connection handler for Outfit Studio single-instance checking
@@ -3149,7 +3171,7 @@ std::string OutfitStudioFrame::NewSlider(const std::string& suggestedName, bool 
 	std::string sliderName;
 	if (!skipPrompt) {
 		do {
-			sliderName = wxGetTextFromUser(_("Enter a name for the new slider:"), _("Create New Slider"), fillName, this).ToUTF8();
+			sliderName = GetTextFromUser(_("Enter a name for the new slider:"), _("Create New Slider"), fillName, this).ToUTF8();
 			if (sliderName.empty())
 				return sliderName;
 		} while (project->ValidSlider(sliderName));
@@ -3743,7 +3765,7 @@ bool OutfitStudioProjectHost::GetText(const wxString& msg, const wxString& title
 	if (!interactive)
 		return NonInteractiveHost::GetText(msg, title, value);
 
-	value = wxGetTextFromUser(msg, title, value, frame);
+	value = GetTextFromUser(msg, title, value, frame);
 	return !value.empty();
 }
 
@@ -5960,7 +5982,7 @@ void OutfitStudioFrame::OnImportTRIHead(wxCommandEvent& WXUNUSED(event)) {
 
 		std::string shapeName{fileName.GetName().ToUTF8()};
 		while (project->IsValidShape(shapeName)) {
-			std::string result{wxGetTextFromUser(_("Please enter a new unique name for the shape."), _("Rename Shape"), shapeName, this).ToUTF8()};
+			std::string result{GetTextFromUser(_("Please enter a new unique name for the shape."), _("Rename Shape"), shapeName, this).ToUTF8()};
 			if (result.empty())
 				continue;
 
@@ -6095,7 +6117,7 @@ void OutfitStudioFrame::OnMakeConvRef(wxCommandEvent& WXUNUSED(event)) {
 		snprintf(thename, 256, "%s%d", namebase.c_str(), count++);
 
 	std::string finalName{
-		wxGetTextFromUser(_("Create a conversion slider for the current slider settings with the following name: "), _("Create New Conversion Slider"), thename, this).ToUTF8()};
+		GetTextFromUser(_("Create a conversion slider for the current slider settings with the following name: "), _("Create New Conversion Slider"), thename, this).ToUTF8()};
 	if (finalName.empty())
 		return;
 
@@ -6909,7 +6931,7 @@ void OutfitStudioFrame::ResetSegments() {
 void OutfitStudioFrame::OnSegmentEditSSF(wxCommandEvent& WXUNUSED(event)) {
 	auto segmentSSF = (wxTextCtrl*)FindWindowByName("segmentSSF");
 
-	wxString result = wxGetTextFromUser(_("Please enter an SSF file path."), _("SSF File"), segmentSSF->GetValue());
+	wxString result = GetTextFromUser(_("Please enter an SSF file path."), _("SSF File"), segmentSSF->GetValue(), this);
 	if (result.empty())
 		return;
 
@@ -10026,7 +10048,7 @@ void OutfitStudioFrame::OnNewZapSlider(wxCommandEvent& WXUNUSED(event)) {
 
 	std::string sliderName;
 	do {
-		sliderName = wxGetTextFromUser(_("Enter a name for the new zap:"), _("Create New Zap"), fillName, this).ToUTF8();
+		sliderName = GetTextFromUser(_("Enter a name for the new zap:"), _("Create New Zap"), fillName, this).ToUTF8();
 		if (sliderName.empty())
 			return;
 	} while (project->ValidSlider(sliderName));
@@ -10057,7 +10079,7 @@ void OutfitStudioFrame::OnNewCombinedSlider(wxCommandEvent& WXUNUSED(event)) {
 
 	std::string sliderName;
 	do {
-		sliderName = wxGetTextFromUser(_("Enter a name for the new slider:"), _("Create New Slider"), fillName, this).ToUTF8();
+		sliderName = GetTextFromUser(_("Enter a name for the new slider:"), _("Create New Slider"), fillName, this).ToUTF8();
 		if (sliderName.empty())
 			return;
 	} while (project->ValidSlider(sliderName));
@@ -10089,7 +10111,7 @@ void OutfitStudioFrame::OnSliderClone(wxCommandEvent& WXUNUSED(event)) {
 
 	std::string sliderName;
 	do {
-		sliderName = wxGetTextFromUser(_("Enter a name for the cloned slider:"), _("Clone Slider"), fillName, this).ToUTF8();
+		sliderName = GetTextFromUser(_("Enter a name for the cloned slider:"), _("Clone Slider"), fillName, this).ToUTF8();
 		if (sliderName.empty())
 			return;
 	} while (project->ValidSlider(sliderName));
@@ -10951,7 +10973,7 @@ void OutfitStudioFrame::OnRenameShape(wxCommandEvent& WXUNUSED(event)) {
 	std::string shapeName = activeItem->GetShape()->name.get();
 	std::string newShapeName;
 	do {
-		std::string result{wxGetTextFromUser(_("Please enter a new unique name for the shape."), _("Rename Shape"), wxString::FromUTF8(shapeName), this).ToUTF8()};
+		std::string result{GetTextFromUser(_("Please enter a new unique name for the shape."), _("Rename Shape"), wxString::FromUTF8(shapeName), this).ToUTF8()};
 		if (result.empty())
 			return;
 
@@ -11806,7 +11828,7 @@ void OutfitStudioFrame::OnSeparateVerts(wxCommandEvent& WXUNUSED(event)) {
 	std::string shapeName = activeItem->GetShape()->name.get();
 	std::string newShapeName;
 	do {
-		std::string result{wxGetTextFromUser(_("Please enter a unique name for the new separated shape."), _("Separate Vertices..."), wxString::FromUTF8(shapeName), this).ToUTF8()};
+		std::string result{GetTextFromUser(_("Please enter a unique name for the new separated shape."), _("Separate Vertices..."), wxString::FromUTF8(shapeName), this).ToUTF8()};
 		if (result.empty())
 			return;
 
@@ -11991,7 +12013,7 @@ void OutfitStudioFrame::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
 
 		std::string shapeName = activeItem->GetShape()->name.get();
 		do {
-			std::string result{wxGetTextFromUser(_("Please enter a unique name for the duplicated shape."), _("Duplicate Shape"), wxString::FromUTF8(shapeName), this).ToUTF8()};
+			std::string result{GetTextFromUser(_("Please enter a unique name for the duplicated shape."), _("Duplicate Shape"), wxString::FromUTF8(shapeName), this).ToUTF8()};
 			if (result.empty())
 				return;
 
