@@ -631,6 +631,15 @@ public:
 	int CreateFromBase(const std::string& fileName, const std::string& setName, bool addOn, const std::string& projectName);
 	// Turns the project just loaded from 'fileName' into a new variant or add-on of it.
 	void MakeDerivedProject(const std::string& fileName, const std::string& setName, bool addOn, const std::string& projectName);
+	// Makes the project a variant or add-on of another one. Its sliders and data that equal the base project's
+	// become inherited, the base project's sliders it doesn't have are left out.
+	bool SetBaseProject(const std::string& fileName, const std::string& setName, bool addOn, std::string* errorMessage = nullptr);
+	// Makes a variant or add-on a project of its own again, with all of its sliders and data.
+	void ClearBaseProject();
+	// The .osd file an add-on saves its own slider data to.
+	void SetAddOnDataFile(const std::string& fileName);
+	// Whether the project has the shapes of the other project, which an add-on of it needs.
+	bool BaseGeometryMatches(const std::string& fileName, const std::string& setName);
 	int AddFromSliderSet(const std::string& fileName,
 						 const std::string& setName,
 						 const bool newDataLocal = false,

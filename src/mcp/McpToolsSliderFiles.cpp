@@ -122,6 +122,7 @@ McpToolResult SetSliderProperties(OutfitStudioMcp& mcp, const json& args) {
 		project.SetSliderDefault(index, percent("defaultBig"), true);
 
 	RefreshFlags refresh = RefreshFlags::PendingChanges;
+	std::string renameNote;
 	if (McpArgs::Has(args, "newName")) {
 		std::string newName = McpArgs::String(args, "newName");
 		if (newName != name) {
@@ -129,6 +130,10 @@ McpToolResult SetSliderProperties(OutfitStudioMcp& mcp, const json& args) {
 			// The slider panels are named after their slider, so they are made anew
 			if (frame->editor.bEditSlider)
 				frame->ExitSliderEdit();
+
+			if (project.SliderFromBase(name))
+				renameNote = "'" + name + "' came from the base project. Its data is the project's own now, and '" + name + "' is hidden in this project.";
+
 			project.SetSliderName(index, newName);
 			refresh |= RefreshFlags::SliderSet;
 		}
@@ -138,6 +143,8 @@ McpToolResult SetSliderProperties(OutfitStudioMcp& mcp, const json& args) {
 
 	McpToolResult result;
 	result.data["slider"] = SliderProperties(project, index);
+	if (!renameNote.empty())
+		result.data["note"] = renameNote;
 	return result;
 }
 

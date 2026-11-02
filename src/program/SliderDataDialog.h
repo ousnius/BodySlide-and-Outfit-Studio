@@ -24,6 +24,11 @@ class wxWindow;
 
 class SliderDataList {
 public:
+	// Where the data of an entry comes from, as the list shows it
+	static wxString SourceLabel(const SliderDataLocation& location);
+	static bool AllOverridden(const std::vector<SliderDataLocation>& rows, const std::vector<size_t>& rowIndices);
+	static bool AnyInherited(const std::vector<SliderDataLocation>& rows, const std::vector<size_t>& rowIndices);
+	static bool RevertToBase(wxWindow* parent, OutfitProject* project, const std::vector<SliderDataLocation>& rows, const std::vector<size_t>& rowIndices);
 	static wxString JoinDataFolders(const std::vector<std::string>& dataFolders);
 	static void Configure(wxListCtrl* list, bool includeSlider);
 	static void Populate(wxListCtrl* list, const std::vector<SliderDataLocation>& rows, const std::vector<size_t>* visibleRows, bool includeSlider);
@@ -53,6 +58,7 @@ private:
 	wxButton* btnMakeLocal = nullptr;
 	wxButton* btnMakeExternal = nullptr;
 	wxButton* btnEditFolders = nullptr;
+	wxButton* btnRevertToBase = nullptr;
 	std::vector<SliderDataLocation> rows;
 	std::vector<size_t> visibleRows;
 };

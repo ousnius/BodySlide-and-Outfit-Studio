@@ -1706,6 +1706,15 @@ int AutomationRunner::ExecuteStepRenameShape(const AutomationStep& step) {
 		return 1;
 	}
 
+	if (project->activeSet.IsAddOn()) {
+		wxLogError("Automation: RenameShape - the shapes of an add-on belong to its base project and can't be renamed.");
+		return 1;
+	}
+
+	size_t disconnected = project->RenameDisconnectsFromBase("", step.renameOldName).size();
+	if (disconnected > 0)
+		wxLogMessage("Automation: RenameShape - %zu slider data entries of shape '%s' are taken from the base project and become this project's own.", disconnected, step.renameOldName);
+
 	wxLogMessage("Automation: Renaming shape '%s' to '%s'...", step.renameOldName, step.renameNewName);
 	project->RenameShape(shape, step.renameNewName);
 	outfitStudio->glView->RenameShape(step.renameOldName, step.renameNewName);

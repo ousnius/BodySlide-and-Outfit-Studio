@@ -1287,6 +1287,10 @@ public:
 	// more than one. If preferredName is given and present in the file, it is used without
 	// prompting. Returns an empty string on failure (an error is shown) or if cancelled.
 	std::string ChooseSliderSetName(const std::string& fileName, const std::string& preferredName = "");
+	// The project file and set the New Project wizard has as the base project of an add-on or variant.
+	bool GetNewProjectBase(wxWizard& wiz, std::string& outFile, std::string& outSet);
+	// Asks before renaming a slider or shape takes it from the base project. Pass one of the names.
+	bool ConfirmRenameFromBase(const std::string& sliderName, const std::string& shapeName);
 	void CreateSetSliders();
 
 	void UpdateReferenceTemplates();

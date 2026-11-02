@@ -865,3 +865,58 @@ TEST_CASE("Add-ons save their own slider data without a NIF file", "[OutfitProje
 	f.derived.DeleteShape(skirt);
 	CHECK_FALSE(f.SaveDerived("Ignored.nif").empty());
 }
+
+TEST_CASE("A copy of a project with the same NIF file becomes an add-on of it", "[OutfitProject]") {
+	// Issue #626: the copy only added sliders, but saved everything into the original's .osd file
+	DerivedProjectFixture f(false);
+	std::string baseFile = (f.projectFolder.path / "SliderSets" / "A.osp").u8string();
+
+	NonInteractiveHost copyHost;
+	OutfitProject copy{&copyHost, false};
+	REQUIRE(copy.LoadFromSliderSet(baseFile, "A") == 0);
+	REQUIRE(copy.ReloadReferenceShape() == 0);
+	copy.AddEmptySlider("Extra");
+	NiShape* skirt = copy.GetWorkNif()->FindBlockByName<NiShape>("Skirt");
+	copy.SetSliderFromDiff("Extra", skirt, TargetDataDiffs{{0, Vector3(1.0f, 0.0f, 0.0f)}});
+
+	wxFileName copyFile(wxString::FromUTF8((f.projectFolder.path / "SliderSets" / "Derived.osp").u8string()));
+	REQUIRE(copy.Save(copyFile, "B", "Shared", "Shared.nif", "meshes", "B", false, true, false, false, "", "").empty());
+	CHECK(f.DataNames("Shared.osd") == std::set<std::string>{"BodyGrow", "SkirtGrow", "SkirtExtra"});
+
+	CHECK(copy.BaseGeometryMatches(baseFile, "A"));
+	REQUIRE(copy.SetBaseProject(baseFile, "A", true));
+	CHECK(copy.SliderFromBase("Grow"));
+	CHECK_FALSE(copy.SliderFromBase("Extra"));
+	REQUIRE(copy.Save(copyFile, "B", "Shared", "Shared.nif", "meshes", "B", false, true, false, false, "", "").empty());
+	CHECK(f.DataNames("B.osd") == std::set<std::string>{"SkirtExtra"});
+
+	SliderSetFile savedFile(copyFile.GetFullPath().ToUTF8().data());
+	CHECK(savedFile.IsAddOn("B"));
+	SliderSet saved;
+	REQUIRE(savedFile.GetSet("B", saved) == 0);
+	CHECK(saved.GetResolveStatus().baseFound);
+	CHECK(saved["Grow"].bInherited);
+	CHECK(FindDataFile(saved, "Grow", "Skirt")->bInherited);
+	CHECK_FALSE(FindDataFile(saved, "Extra", "Skirt")->bInherited);
+
+	// The original no longer keeps data for the copy
+	REQUIRE(f.Save().empty());
+	CHECK(f.DataNames("Shared.osd") == std::set<std::string>{"BodyGrow", "SkirtGrow"});
+}
+
+TEST_CASE("Clearing the base project makes an add-on a project of its own", "[OutfitProject]") {
+	DerivedProjectFixture f(true);
+	f.derived.ClearBaseProject();
+	CHECK_FALSE(f.derived.SliderFromBase("Grow"));
+	CHECK(f.derived.mBaseFile == "A Extra.nif");
+
+	REQUIRE(f.SaveDerived(f.derived.mBaseFile.ToUTF8().data()).empty());
+	CHECK(std::filesystem::exists(f.DataPath("A Extra.nif")));
+	CHECK(f.DataNames("A Extra.osd") == std::set<std::string>{"BodyGrow", "SkirtGrow"});
+
+	SliderSetFile file((f.projectFolder.path / "SliderSets" / "Derived.osp").u8string());
+	CHECK_FALSE(file.IsAddOn("A Extra"));
+	SliderSet saved = f.LoadSaved("A Extra");
+	CHECK_FALSE(saved.HasBaseProject());
+	CHECK_FALSE(saved["Grow"].bInherited);
+}
