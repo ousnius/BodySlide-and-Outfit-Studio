@@ -273,6 +273,7 @@ struct AutomationStep {
 	// RenameShape params
 	std::string renameOldName;
 	std::string renameNewName;
+	bool renameSkipIfMissing = false; // Continue without renaming if the shape doesn't exist
 
 	// DeleteSlider params
 	std::vector<std::string> deleteSliderNames;
@@ -281,6 +282,7 @@ struct AutomationStep {
 	// SetReferenceShape params
 	std::string setRefShapeName;
 	bool setRefUnset = false;
+	bool setRefSkipIfMissing = false; // Keep the current reference if the shape doesn't exist
 
 	// SaveProject params
 	std::string saveName;
@@ -384,6 +386,7 @@ struct AutomationStep {
 	std::string mergeSourceShape;
 	std::string mergeTargetShape;
 	bool mergeDeleteSource = false;
+	bool mergeSkipIfMissing = false; // Continue without merging if either shape doesn't exist
 
 	// SymmetrizeVertices / MaskAsymmetric params
 	bool asymDoPositions = true;

@@ -3112,6 +3112,10 @@ void AutomationDialog::UpdateSetRefFieldsEnabled(bool enabled) {
 	auto* txt = XRCCTRL(*this, "txtSetRefShapeName", wxTextCtrl);
 	if (txt)
 		txt->Enable(enabled);
+
+	auto* chkSkip = XRCCTRL(*this, "chkSetRefSkipIfMissing", wxCheckBox);
+	if (chkSkip)
+		chkSkip->Enable(enabled);
 }
 
 void AutomationDialog::OnSliderPropZapChanged(wxCommandEvent& WXUNUSED(event)) {

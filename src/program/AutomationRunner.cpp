@@ -852,8 +852,8 @@ int AutomationRunner::ExecuteStepSetSliderValues(const AutomationStep& step) {
 	else {
 		for (const auto& name : step.setSliderNames) {
 			if (!project->ValidSlider(name)) {
-				wxLogError("Automation: SetSliderValues - slider '%s' not found.", name);
-				return 1;
+				wxLogWarning("Automation: SetSliderValues - slider '%s' not found, skipping.", name);
+				continue;
 			}
 			wxLogMessage("Automation: Setting slider '%s' to %d%%...", name, intVal);
 			outfitStudio->SetSliderValue(name, intVal);
@@ -1697,6 +1697,11 @@ int AutomationRunner::ExecuteStepRenameShape(const AutomationStep& step) {
 
 	NiShape* shape = FindShapeByName(step.renameOldName);
 	if (!shape) {
+		if (step.renameSkipIfMissing) {
+			wxLogMessage("Automation: RenameShape - shape '%s' not found, skipping.", step.renameOldName);
+			return 0;
+		}
+
 		wxLogError("Automation: RenameShape - shape '%s' not found.", step.renameOldName);
 		return 1;
 	}
@@ -1945,6 +1950,11 @@ int AutomationRunner::ExecuteStepSetReferenceShape(const AutomationStep& step) {
 
 	NiShape* shape = FindShapeByName(step.setRefShapeName);
 	if (!shape) {
+		if (step.setRefSkipIfMissing) {
+			wxLogMessage("Automation: SetReferenceShape - shape '%s' not found, skipping.", step.setRefShapeName);
+			return 0;
+		}
+
 		wxLogError("Automation: SetReferenceShape - shape '%s' not found.", step.setRefShapeName);
 		return 1;
 	}
@@ -3127,12 +3137,22 @@ int AutomationRunner::ExecuteStepMergeGeometry(const AutomationStep& step) {
 
 	NiShape* sourceShape = FindShapeByName(step.mergeSourceShape);
 	if (!sourceShape) {
+		if (step.mergeSkipIfMissing) {
+			wxLogMessage("Automation: MergeGeometry - source shape '%s' not found, skipping.", step.mergeSourceShape);
+			return 0;
+		}
+
 		wxLogError("Automation: MergeGeometry - source shape '%s' not found.", step.mergeSourceShape);
 		return 1;
 	}
 
 	NiShape* targetShape = FindShapeByName(step.mergeTargetShape);
 	if (!targetShape) {
+		if (step.mergeSkipIfMissing) {
+			wxLogMessage("Automation: MergeGeometry - target shape '%s' not found, skipping.", step.mergeTargetShape);
+			return 0;
+		}
+
 		wxLogError("Automation: MergeGeometry - target shape '%s' not found.", step.mergeTargetShape);
 		return 1;
 	}
@@ -3548,8 +3568,8 @@ int AutomationRunner::ExecuteStepMaskCovered(const AutomationStep& step) {
 		for (auto& name : step.maskCoverShapes) {
 			NiShape* shape = FindShapeByName(name);
 			if (!shape) {
-				wxLogError("Automation: MaskCovered - cover shape '%s' not found.", name);
-				return 1;
+				wxLogWarning("Automation: MaskCovered - cover shape '%s' not found, skipping.", name);
+				continue;
 			}
 			covers.push_back(shape);
 		}

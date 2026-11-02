@@ -337,6 +337,7 @@ std::vector<AutomationStepInfo> BuildStepTypes() {
 		{
 			FieldString("ShapeName", &Step::setRefShapeName, "txtSetRefShapeName"),
 			FieldBool("UnsetReference", &Step::setRefUnset, false, "chkSetRefUnset"),
+			FieldBool("SkipIfMissing", &Step::setRefSkipIfMissing, false, "chkSetRefSkipIfMissing"),
 		});
 
 	// Shapes
@@ -386,6 +387,7 @@ std::vector<AutomationStepInfo> BuildStepTypes() {
 			FieldString("SourceShape", &Step::mergeSourceShape, "txtMergeSourceShape"),
 			FieldString("TargetShape", &Step::mergeTargetShape, "txtMergeTargetShape"),
 			FieldBool("DeleteSource", &Step::mergeDeleteSource, false, "chkMergeDeleteSource"),
+			FieldBool("SkipIfMissing", &Step::mergeSkipIfMissing, false, "chkMergeSkipIfMissing"),
 		});
 
 	add(AutomationStepType::MirrorShape, "MirrorShape", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Mirror Shape"), "pageMirrorShape",
@@ -410,6 +412,7 @@ std::vector<AutomationStepInfo> BuildStepTypes() {
 		{
 			FieldString("OldName", &Step::renameOldName, "txtRenameOldName"),
 			FieldString("NewName", &Step::renameNewName, "txtRenameNewName"),
+			FieldBool("SkipIfMissing", &Step::renameSkipIfMissing, false, "chkRenameSkipIfMissing"),
 		});
 
 	add(AutomationStepType::ApplyTransforms, "ApplyTransforms", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Apply Transforms"), "pageApplyTransforms");

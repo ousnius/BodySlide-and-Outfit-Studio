@@ -1591,6 +1591,17 @@ Equivalent to "Slider -> Set Base Shape" in the menu.</label>
 																	<tooltip>Unset the reference shape instead of setting one. Morph data will be moved.</tooltip>
 																</object>
 															</object>
+
+															<object class="spacer">
+																<size>0,0</size>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxCheckBox" name="chkSetRefSkipIfMissing">
+																	<label>Skip if the shape doesn't exist</label>
+																	<tooltip>Keep the current reference and continue with the next step instead of stopping when no shape has this name</tooltip>
+																</object>
+															</object>
 														</object>
 													</object>
 												</object>
@@ -2073,6 +2084,17 @@ If Target Meshes is empty, all shapes are deleted. Use Regex mode for pattern ma
 																<object class="wxTextCtrl" name="txtRenameNewName">
 																	<tooltip>New name for the shape (supports {{PLACEHOLDER}} variables)</tooltip>
 																	<hint>New shape name</hint>
+																</object>
+															</object>
+
+															<object class="spacer">
+																<size>0,0</size>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxCheckBox" name="chkRenameSkipIfMissing">
+																	<label>Skip if the shape doesn't exist</label>
+																	<tooltip>Continue with the next step instead of stopping when no shape has the old name</tooltip>
 																</object>
 															</object>
 														</object>
@@ -3547,6 +3569,17 @@ If Target Meshes is empty, all shapes are deleted. Use Regex mode for pattern ma
 																<flag>wxEXPAND</flag>
 																<object class="wxCheckBox" name="chkMergeDeleteSource">
 																	<label>Delete the source shape afterwards</label>
+																</object>
+															</object>
+
+															<object class="spacer">
+																<size>0,0</size>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxCheckBox" name="chkMergeSkipIfMissing">
+																	<label>Skip if either shape doesn't exist</label>
+																	<tooltip>Continue with the next step instead of stopping when the source or target shape is missing</tooltip>
 																</object>
 															</object>
 														</object>
