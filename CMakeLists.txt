@@ -354,6 +354,7 @@ set(BSOS_COMMON_SOURCES
 	src/components/SliderPresets.cpp
 	src/components/SliderSet.cpp
 	src/components/SliderSetIndex.cpp
+	src/components/SliderSetInheritance.cpp
 	src/files/EXRImage.cpp
 	src/files/GameDataStream.cpp
 	src/files/HkxFile.cpp
@@ -534,6 +535,7 @@ if(BSOS_BUILD_TESTS)
 		tests/SFMaterialFileTest.cpp
 		tests/SFMorphFileTest.cpp
 		tests/SFResourceHashTest.cpp
+		tests/SliderSetTest.cpp
 		tests/StarfieldDataTest.cpp
 		tests/StarfieldSpaceTest.cpp
 		tests/SurfaceFitTest.cpp
@@ -560,6 +562,7 @@ if(BSOS_BUILD_TESTS)
 		src/components/SliderData.cpp
 		src/components/SliderSet.cpp
 		src/components/SliderSetIndex.cpp
+		src/components/SliderSetInheritance.cpp
 		src/components/WeightNorm.cpp
 		src/files/MaterialFile.cpp
 		src/files/ObjFile.cpp

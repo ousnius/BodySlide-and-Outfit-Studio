@@ -239,6 +239,7 @@
     <ClCompile Include="tests\SFLayeredMaterialTest.cpp" />
     <ClCompile Include="tests\SFMaterialFileTest.cpp" />
     <ClCompile Include="tests\SFResourceHashTest.cpp" />
+    <ClCompile Include="tests\SliderSetTest.cpp" />
     <ClCompile Include="src\files\SFMaterialDatabase.cpp" />
     <ClCompile Include="src\files\SFMaterialFile.cpp" />
     <ClCompile Include="src\files\SFLayeredMaterial.cpp" />
@@ -278,6 +279,7 @@
     <ClCompile Include="src\components\SliderData.cpp" />
     <ClCompile Include="src\components\SliderSet.cpp" />
     <ClCompile Include="src\components\SliderSetIndex.cpp" />
+    <ClCompile Include="src\components\SliderSetInheritance.cpp" />
     <ClCompile Include="src\components\WeightNorm.cpp" />
     <ClCompile Include="src\files\MaterialFile.cpp" />
     <ClCompile Include="src\files\ObjFile.cpp" />

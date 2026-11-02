@@ -694,6 +694,9 @@
     <ClInclude Include="src\components\SliderSetIndex.h">
       <Filter>Components</Filter>
     </ClInclude>
+    <ClInclude Include="src\components\SliderSetInheritance.h">
+      <Filter>Components</Filter>
+    </ClInclude>
     <ClInclude Include="src\components\Automorph.h">
       <Filter>Components</Filter>
     </ClInclude>
@@ -1831,6 +1834,9 @@
       <Filter>Components</Filter>
     </ClCompile>
     <ClCompile Include="src\components\SliderSetIndex.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\SliderSetInheritance.cpp">
       <Filter>Components</Filter>
     </ClCompile>
     <ClCompile Include="src\components\Automorph.cpp">

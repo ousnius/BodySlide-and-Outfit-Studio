@@ -41,7 +41,7 @@ void SliderSetIndex::Load(const std::string& inProjectPath) {
 
 		for (auto& setName : setNames) {
 			SliderSetIndexEntry entry;
-			if (sliderSetFile.GetSet(setName, entry.set) != 0)
+			if (sliderSetFile.GetSet(setName, entry.set, true, "", false) != 0)
 				continue;
 
 			entry.fileName = fileName;

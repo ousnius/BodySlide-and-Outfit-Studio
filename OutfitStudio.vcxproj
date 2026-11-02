@@ -833,6 +833,7 @@
     <ClInclude Include="src\components\SliderPresets.h" />
     <ClInclude Include="src\components\SliderSet.h" />
     <ClInclude Include="src\components\SliderSetIndex.h" />
+    <ClInclude Include="src\components\SliderSetInheritance.h" />
     <ClInclude Include="src\components\TweakBrush.h" />
     <ClInclude Include="src\components\UndoState.h" />
     <ClInclude Include="src\components\UndoHistory.h" />
@@ -993,6 +994,7 @@
     <ClCompile Include="src\components\SliderPresets.cpp" />
     <ClCompile Include="src\components\SliderSet.cpp" />
     <ClCompile Include="src\components\SliderSetIndex.cpp" />
+    <ClCompile Include="src\components\SliderSetInheritance.cpp" />
     <ClCompile Include="src\components\TweakBrush.cpp" />
     <ClCompile Include="src\components\UndoHistory.cpp" />
     <ClCompile Include="src\components\WeightNorm.cpp" />
