@@ -5,7 +5,28 @@ See the included LICENSE file
 
 #include "wxBrushSettingsPopup.h"
 
-#include <wx/valnum.h>
+#include <algorithm>
+#include <cmath>
+#include <functional>
+
+namespace {
+constexpr int SliderSteps = 1000;
+
+// Size and strength are mostly used at small values, so their sliders map position
+// to value on a square curve to give the low end more travel.
+float SliderToValue(int pos, bool squared) {
+	float p = pos / static_cast<float>(SliderSteps);
+	return squared ? p * p : p;
+}
+
+int ValueToSlider(float value, bool squared) {
+	if (value < 0.0f)
+		value = 0.0f;
+
+	float p = squared ? std::sqrt(value) : value;
+	return static_cast<int>(std::round(p * SliderSteps));
+}
+}
 
 wxBrushSettingsPopupBase::wxBrushSettingsPopupBase(OutfitStudioFrame* parent, wxWindow* popupWin) {
 	os = parent;
@@ -13,100 +34,80 @@ wxBrushSettingsPopupBase::wxBrushSettingsPopupBase(OutfitStudioFrame* parent, wx
 }
 
 void wxBrushSettingsPopupBase::Setup(wxWindow* popupWin) {
-	auto onSliderSize = [&](wxCommandEvent& WXUNUSED(event)) {
-		float slideSize = brushSize->GetValue() / 1000.0f;
-
-		wxString valSizeStr = wxString::Format("%0.4f", slideSize);
-		brushSizeVal->ChangeValue(valSizeStr);
-
+	auto applySize = [&](float value) {
 		TweakBrush* brush = os->glView->GetActiveBrush();
 		if (brush) {
-			os->glView->SetBrushSize(slideSize);
+			os->glView->SetBrushSize(value);
 			os->CheckBrushBounds();
 		}
 	};
 
-	auto onSliderStrength = [&](wxCommandEvent& WXUNUSED(event)) {
-		float slideStrength = brushStrength->GetValue() / 1000.0f;
-
-		wxString valStrengthStr = wxString::Format("%0.4f", slideStrength);
-		brushStrengthVal->ChangeValue(valStrengthStr);
-
+	auto applyStrength = [&](float value) {
 		TweakBrush* brush = os->glView->GetActiveBrush();
 		if (brush) {
-			brush->setStrength(slideStrength);
+			brush->setStrength(value);
 			os->CheckBrushBounds();
 		}
 	};
 
-	auto onSliderFocus = [&](wxCommandEvent& WXUNUSED(event)) {
-		float slideFocus = brushFocus->GetValue() / 1000.0f;
-
-		wxString valFocusStr = wxString::Format("%0.4f", slideFocus);
-		brushFocusVal->ChangeValue(valFocusStr);
-
+	auto applyFocus = [&](float value) {
 		TweakBrush* brush = os->glView->GetActiveBrush();
 		if (brush) {
-			brush->setFocus(slideFocus);
+			brush->setFocus(value);
 			os->CheckBrushBounds();
 		}
 	};
 
-	auto onSliderSpacing = [&](wxCommandEvent& WXUNUSED(event)) {
-		float slideSpacing = brushSpacing->GetValue() / 1000.0f;
-
-		wxString valSpacingStr = wxString::Format("%0.4f", slideSpacing);
-		brushSpacingVal->ChangeValue(valSpacingStr);
-
+	auto applySpacing = [&](float value) {
 		TweakBrush* brush = os->glView->GetActiveBrush();
 		if (brush) {
-			brush->setSpacing(slideSpacing);
+			brush->setSpacing(value);
 			os->CheckBrushBounds();
 		}
 	};
 
-	auto onSliderTextChangedSize = [&](wxCommandEvent& WXUNUSED(event)) {
-		float textSize = atof(brushSizeVal->GetValue().c_str());
-		brushSize->SetValue(textSize * 1000);
-
-		TweakBrush* brush = os->glView->GetActiveBrush();
-		if (brush) {
-			os->glView->SetBrushSize(textSize);
-			os->CheckBrushBounds();
-		}
+	auto onSliderSize = [&, applySize](wxCommandEvent& WXUNUSED(event)) {
+		float slideSize = SliderToValue(brushSize->GetValue(), true);
+		brushSizeVal->SetValue(slideSize);
+		applySize(slideSize);
 	};
 
-	auto onSliderTextChangedStrength = [&](wxCommandEvent& WXUNUSED(event)) {
-		float textStrength = atof(brushStrengthVal->GetValue().c_str());
-		brushStrength->SetValue(textStrength * 1000);
-
-		TweakBrush* brush = os->glView->GetActiveBrush();
-		if (brush) {
-			brush->setStrength(textStrength);
-			os->CheckBrushBounds();
-		}
+	auto onSliderStrength = [&, applyStrength](wxCommandEvent& WXUNUSED(event)) {
+		float slideStrength = SliderToValue(brushStrength->GetValue(), true);
+		brushStrengthVal->SetValue(slideStrength);
+		applyStrength(slideStrength);
 	};
 
-	auto onSliderTextChangedFocus = [&](wxCommandEvent& WXUNUSED(event)) {
-		float textFocus = atof(brushFocusVal->GetValue().c_str());
-		brushFocus->SetValue(textFocus * 1000);
-
-		TweakBrush* brush = os->glView->GetActiveBrush();
-		if (brush) {
-			brush->setFocus(textFocus);
-			os->CheckBrushBounds();
-		}
+	auto onSliderFocus = [&, applyFocus](wxCommandEvent& WXUNUSED(event)) {
+		float slideFocus = SliderToValue(brushFocus->GetValue(), false);
+		brushFocusVal->SetValue(slideFocus);
+		applyFocus(slideFocus);
 	};
 
-	auto onSliderTextChangedSpacing = [&](wxCommandEvent& WXUNUSED(event)) {
-		float textSpacing = atof(brushSpacingVal->GetValue().c_str());
-		brushSpacing->SetValue(textSpacing * 1000);
+	auto onSliderSpacing = [&, applySpacing](wxCommandEvent& WXUNUSED(event)) {
+		float slideSpacing = SliderToValue(brushSpacing->GetValue(), false);
+		brushSpacingVal->SetValue(slideSpacing);
+		applySpacing(slideSpacing);
+	};
 
-		TweakBrush* brush = os->glView->GetActiveBrush();
-		if (brush) {
-			brush->setSpacing(textSpacing);
-			os->CheckBrushBounds();
-		}
+	// Spin events cover the arrows, the mouse wheel and committed text,
+	// text events apply values while they are still being typed.
+	auto bindValueCtrl = [](wxSpinCtrlDouble* ctrl, wxSlider* slider, bool squared, std::function<void(float)> apply) {
+		ctrl->Bind(wxEVT_SPINCTRLDOUBLE, [ctrl, slider, squared, apply](wxSpinDoubleEvent& event) {
+			float value = static_cast<float>(event.GetValue());
+			slider->SetValue(ValueToSlider(value, squared));
+			apply(value);
+		});
+
+		ctrl->Bind(wxEVT_TEXT, [ctrl, slider, squared, apply](wxCommandEvent& WXUNUSED(event)) {
+			double value = 0.0;
+			if (!ctrl->GetTextValue().ToDouble(&value))
+				return;
+
+			value = std::clamp(value, ctrl->GetMin(), ctrl->GetMax());
+			slider->SetValue(ValueToSlider(static_cast<float>(value), squared));
+			apply(static_cast<float>(value));
+		});
 	};
 
 	auto onButtonReset = [&](wxCommandEvent& WXUNUSED(event)) {
@@ -120,10 +121,13 @@ void wxBrushSettingsPopupBase::Setup(wxWindow* popupWin) {
 	};
 
 	const int sliderWidth = 250;
-	const int textCtrlWidth = 50;
+	const int valueCtrlWidth = 90;
 
-	wxFloatingPointValidator<float> floatValidator(4);
-	floatValidator.SetRange(0.0, 10.0);
+	auto createValueCtrl = [&](double increment) {
+		auto ctrl = new wxSpinCtrlDouble(panel, wxID_ANY, "", wxDefaultPosition, panel->FromDIP(wxSize(valueCtrlWidth, -1)), wxSP_ARROW_KEYS, 0.0, 10.0, 0.0, increment);
+		ctrl->SetDigits(4);
+		return ctrl;
+	};
 
 	panel = new wxPanel(popupWin);
 	topSizer = new wxBoxSizer(wxVERTICAL);
@@ -133,50 +137,46 @@ void wxBrushSettingsPopupBase::Setup(wxWindow* popupWin) {
 	lbBrushSize = new wxStaticText(panel, wxID_ANY, _("Size"));
 	flexGridSizer->Add(lbBrushSize, 0, wxALL, 5);
 
-	brushSize = new wxSlider(panel, wxID_ANY, 0, 0, 1000, wxDefaultPosition, panel->FromDIP(wxSize(sliderWidth, -1)), wxSL_HORIZONTAL);
-	brushSize->SetToolTip(_("Shortcut: 'S' + mouse wheel"));
+	brushSize = new wxSlider(panel, wxID_ANY, 0, 0, SliderSteps, wxDefaultPosition, panel->FromDIP(wxSize(sliderWidth, -1)), wxSL_HORIZONTAL);
+	brushSize->SetToolTip(_("Shortcut: 'S' + mouse wheel, 'Shift+S' + mouse wheel for finer steps"));
 	brushSize->Bind(wxEVT_SLIDER, onSliderSize);
 	flexGridSizer->Add(brushSize, 1, wxALL, 5);
 
-	brushSizeVal = new wxTextCtrl(panel, wxID_ANY, "0.0000", wxDefaultPosition, panel->FromDIP(wxSize(textCtrlWidth, -1)));
-	brushSizeVal->SetValidator(floatValidator);
-	brushSizeVal->Bind(wxEVT_TEXT, onSliderTextChangedSize);
+	brushSizeVal = createValueCtrl(0.001);
+	bindValueCtrl(brushSizeVal, brushSize, true, applySize);
 	flexGridSizer->Add(brushSizeVal, 0, wxALL, 5);
 
 	lbBrushStrength = new wxStaticText(panel, wxID_ANY, _("Strength"));
 	flexGridSizer->Add(lbBrushStrength, 0, wxALL, 5);
 
-	brushStrength = new wxSlider(panel, wxID_ANY, 0, 0, 1000, wxDefaultPosition, panel->FromDIP(wxSize(sliderWidth, -1)), wxSL_HORIZONTAL);
+	brushStrength = new wxSlider(panel, wxID_ANY, 0, 0, SliderSteps, wxDefaultPosition, panel->FromDIP(wxSize(sliderWidth, -1)), wxSL_HORIZONTAL);
 	brushStrength->Bind(wxEVT_SLIDER, onSliderStrength);
 	flexGridSizer->Add(brushStrength, 1, wxALL, 5);
 
-	brushStrengthVal = new wxTextCtrl(panel, wxID_ANY, "0.0000", wxDefaultPosition, panel->FromDIP(wxSize(textCtrlWidth, -1)));
-	brushStrengthVal->SetValidator(floatValidator);
-	brushStrengthVal->Bind(wxEVT_TEXT, onSliderTextChangedStrength);
+	brushStrengthVal = createValueCtrl(0.001);
+	bindValueCtrl(brushStrengthVal, brushStrength, true, applyStrength);
 	flexGridSizer->Add(brushStrengthVal, 0, wxALL, 5);
 
 	lbBrushFocus = new wxStaticText(panel, wxID_ANY, _("Focus"));
 	flexGridSizer->Add(lbBrushFocus, 0, wxALL, 5);
 
-	brushFocus = new wxSlider(panel, wxID_ANY, 0, 0, 1000, wxDefaultPosition, panel->FromDIP(wxSize(sliderWidth, -1)), wxSL_HORIZONTAL);
+	brushFocus = new wxSlider(panel, wxID_ANY, 0, 0, SliderSteps, wxDefaultPosition, panel->FromDIP(wxSize(sliderWidth, -1)), wxSL_HORIZONTAL);
 	brushFocus->Bind(wxEVT_SLIDER, onSliderFocus);
 	flexGridSizer->Add(brushFocus, 1, wxALL, 5);
 
-	brushFocusVal = new wxTextCtrl(panel, wxID_ANY, "0.0000", wxDefaultPosition, panel->FromDIP(wxSize(textCtrlWidth, -1)));
-	brushFocusVal->SetValidator(floatValidator);
-	brushFocusVal->Bind(wxEVT_TEXT, onSliderTextChangedFocus);
+	brushFocusVal = createValueCtrl(0.01);
+	bindValueCtrl(brushFocusVal, brushFocus, false, applyFocus);
 	flexGridSizer->Add(brushFocusVal, 0, wxALL, 5);
 
 	lbBrushSpacing = new wxStaticText(panel, wxID_ANY, _("Spacing"));
 	flexGridSizer->Add(lbBrushSpacing, 0, wxALL, 5);
 
-	brushSpacing = new wxSlider(panel, wxID_ANY, 0, 0, 1000, wxDefaultPosition, panel->FromDIP(wxSize(sliderWidth, -1)), wxSL_HORIZONTAL);
+	brushSpacing = new wxSlider(panel, wxID_ANY, 0, 0, SliderSteps, wxDefaultPosition, panel->FromDIP(wxSize(sliderWidth, -1)), wxSL_HORIZONTAL);
 	brushSpacing->Bind(wxEVT_SLIDER, onSliderSpacing);
 	flexGridSizer->Add(brushSpacing, 1, wxALL, 5);
 
-	brushSpacingVal = new wxTextCtrl(panel, wxID_ANY, "0.0000", wxDefaultPosition, panel->FromDIP(wxSize(textCtrlWidth, -1)));
-	brushSpacingVal->SetValidator(floatValidator);
-	brushSpacingVal->Bind(wxEVT_TEXT, onSliderTextChangedSpacing);
+	brushSpacingVal = createValueCtrl(0.001);
+	bindValueCtrl(brushSpacingVal, brushSpacing, false, applySpacing);
 	flexGridSizer->Add(brushSpacingVal, 0, wxALL, 5);
 
 	topSizer->Add(flexGridSizer, 0, wxALL, 0);
@@ -203,27 +203,23 @@ void wxBrushSettingsPopupBase::SetBrushName(const wxString& brushName) {
 }
 
 void wxBrushSettingsPopupBase::SetBrushSize(float value) {
-	wxString valStr = wxString::Format("%0.4f", value);
-	brushSize->SetValue(std::atof(valStr.c_str()) * 1000.0f);
-	brushSizeVal->ChangeValue(valStr);
+	brushSize->SetValue(ValueToSlider(value, true));
+	brushSizeVal->SetValue(value);
 }
 
 void wxBrushSettingsPopupBase::SetBrushStrength(float value) {
-	wxString valStr = wxString::Format("%0.4f", value);
-	brushStrength->SetValue(std::atof(valStr.c_str()) * 1000.0f);
-	brushStrengthVal->ChangeValue(valStr);
+	brushStrength->SetValue(ValueToSlider(value, true));
+	brushStrengthVal->SetValue(value);
 }
 
 void wxBrushSettingsPopupBase::SetBrushFocus(float value) {
-	wxString valStr = wxString::Format("%0.4f", value);
-	brushFocus->SetValue(std::atof(valStr.c_str()) * 1000.0f);
-	brushFocusVal->ChangeValue(valStr);
+	brushFocus->SetValue(ValueToSlider(value, false));
+	brushFocusVal->SetValue(value);
 }
 
 void wxBrushSettingsPopupBase::SetBrushSpacing(float value) {
-	wxString valStr = wxString::Format("%0.4f", value);
-	brushSpacing->SetValue(std::atof(valStr.c_str()) * 1000.0f);
-	brushSpacingVal->ChangeValue(valStr);
+	brushSpacing->SetValue(ValueToSlider(value, false));
+	brushSpacingVal->SetValue(value);
 }
 
 

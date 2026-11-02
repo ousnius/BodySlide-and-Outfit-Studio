@@ -18484,11 +18484,12 @@ void wxGLPanel::OnMouseWheel(wxMouseEvent& event) {
 		wxPoint p = event.GetPosition();
 
 		if (brushMode) {
-			// Adjust brush size
+			// Adjust brush size, in finer steps with Shift held
+			float step = wxGetKeyState(WXK_SHIFT) ? 0.001f : 0.010f;
 			if (delt < 0)
-				DecBrush();
+				DecBrush(step);
 			else
-				IncBrush();
+				IncBrush(step);
 
 			os->CheckBrushBounds();
 			os->UpdateBrushSettings();

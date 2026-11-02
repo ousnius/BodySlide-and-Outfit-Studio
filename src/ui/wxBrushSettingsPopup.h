@@ -8,6 +8,7 @@ See the included LICENSE file
 #include "../program/OutfitStudio.h"
 
 #include <wx/popupwin.h>
+#include <wx/spinctrl.h>
 
 class wxBrushSettingsPopupBase {
 protected:
@@ -19,19 +20,19 @@ protected:
 
 	wxStaticText* lbBrushSize = nullptr;
 	wxSlider* brushSize = nullptr;
-	wxTextCtrl* brushSizeVal = nullptr;
+	wxSpinCtrlDouble* brushSizeVal = nullptr;
 
 	wxStaticText* lbBrushStrength = nullptr;
 	wxSlider* brushStrength = nullptr;
-	wxTextCtrl* brushStrengthVal = nullptr;
+	wxSpinCtrlDouble* brushStrengthVal = nullptr;
 
 	wxStaticText* lbBrushFocus = nullptr;
 	wxSlider* brushFocus = nullptr;
-	wxTextCtrl* brushFocusVal = nullptr;
+	wxSpinCtrlDouble* brushFocusVal = nullptr;
 
 	wxStaticText* lbBrushSpacing = nullptr;
 	wxSlider* brushSpacing = nullptr;
-	wxTextCtrl* brushSpacingVal = nullptr;
+	wxSpinCtrlDouble* brushSpacingVal = nullptr;
 
 	wxBoxSizer* bottomSizer = nullptr;
 	wxButton* buttonReset = nullptr;

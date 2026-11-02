@@ -441,15 +441,15 @@ public:
 		gls.SetCursorSize(brushSize);
 	}
 
-	float IncBrush() {
-		gls.SetCursorSize(gls.GetCursorSize() + 0.010f);
-		brushSize += 0.010f;
+	float IncBrush(float step = 0.010f) {
+		gls.SetCursorSize(gls.GetCursorSize() + step);
+		brushSize += step;
 		LimitBrushSize();
 		return brushSize;
 	}
-	float DecBrush() {
-		gls.SetCursorSize(gls.GetCursorSize() - 0.010f);
-		brushSize -= 0.010f;
+	float DecBrush(float step = 0.010f) {
+		gls.SetCursorSize(gls.GetCursorSize() - step);
+		brushSize -= step;
 		LimitBrushSize();
 		return brushSize;
 	}
