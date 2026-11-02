@@ -132,6 +132,73 @@ TEST_CASE("Starfield export writes weights independently of the editing skeleton
 	AnimSkeleton::getInstance().Clear();
 }
 
+TEST_CASE("Starfield import keeps SkinAttach bones when a node shares a bone's name", "[anim][import][starfield]") {
+	AnimSkeleton::getInstance().Clear();
+	NifFile source;
+	source.Create(NiVersion::getSF());
+	// Physics helper node that has the same name as the first skin bone
+	source.AddNode("Cloth_A", MatTransform());
+	auto shapeBlock = std::make_unique<BSGeometry>();
+	auto shape = shapeBlock.get();
+	shape->name.get() = "Cloth";
+	shape->SetInternalGeomData(true);
+	auto mesh = shape->AddMesh();
+	mesh->meshData.version = 2;
+	mesh->meshData.scale = 1.0f;
+	mesh->meshData.nVertices = 3;
+	mesh->meshData.vertices = {{0, 0, 0}, {1, 0, 0}, {0, 1, 0}};
+	mesh->meshData.nWeightsPerVert = 1;
+	mesh->meshData.skinWeights = {{{0, 65535}}, {{1, 65535}}, {{2, 65535}}};
+	source.GetRootNode()->childRefs.AddBlockRef(source.GetHeader().AddBlock(std::move(shapeBlock)));
+
+	const std::vector<std::string> names{"Cloth_A", "Cloth_B", "Cloth_C"};
+	auto attach = std::make_unique<SkinAttach>();
+	attach->bones.resize(3);
+	for (uint32_t i = 0; i < names.size(); ++i)
+		attach->bones[i].get() = names[i];
+	source.AssignExtraData(shape, std::move(attach));
+	auto data = std::make_unique<BSSkinBoneData>();
+	data->nBones = 3;
+	data->boneXforms.resize(3);
+	auto skin = std::make_unique<BSSkinInstance>();
+	skin->dataRef.index = source.GetHeader().AddBlock(std::move(data));
+	skin->targetRef.index = source.GetBlockID(source.GetRootNode());
+	for (size_t i = 0; i < names.size(); ++i)
+		skin->boneRefs.AddBlockRef(NIF_NPOS);
+	shape->SkinInstanceRef()->index = source.GetHeader().AddBlock(std::move(skin));
+
+	NifFile work;
+	work.Create(NiVersion::getSF());
+	auto cloned = work.CloneShape(shape, "Cloth", &source);
+	REQUIRE(cloned);
+
+	std::vector<std::string> clonedNames;
+	work.GetShapeBoneList(cloned, clonedNames);
+	CHECK(clonedNames == names);
+	auto clonedSkin = work.GetHeader().GetBlock<BSSkinInstance>(cloned->SkinInstanceRef());
+	REQUIRE(clonedSkin);
+	CHECK(clonedSkin->boneRefs.GetSize() == names.size());
+	for (const auto& boneRef : clonedSkin->boneRefs)
+		CHECK(boneRef.IsEmpty());
+
+	// A ref to the same-named node, as written by older versions, must not hide the other bones
+	auto node = work.FindBlockByName<NiNode>("Cloth_A");
+	REQUIRE(node);
+	clonedSkin->boneRefs.SetBlockRef(0, work.GetBlockID(node));
+	work.GetShapeBoneList(cloned, clonedNames);
+	CHECK(clonedNames == names);
+
+	AnimInfo anim;
+	REQUIRE(anim.LoadFromNif(&work, cloned, true));
+	for (uint16_t i = 0; i < names.size(); ++i) {
+		INFO(names[i]);
+		std::unordered_map<uint16_t, float> weights;
+		anim.GetWeights("Cloth", names[i], weights);
+		CHECK(weights == std::unordered_map<uint16_t, float>{{i, 1.0f}});
+	}
+	AnimSkeleton::getInstance().Clear();
+}
+
 TEST_CASE("Non-Starfield export still warns about missing skeleton bones", "[anim][export]") {
 	NifFile nif;
 	nif.Create(NiVersion::getFO4());

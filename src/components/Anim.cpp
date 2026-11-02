@@ -177,8 +177,10 @@ void AnimWeight::LoadFromNif(NifFile* loadFromFile, NiShape* shape, const int& i
 
 void AnimSkin::LoadFromNif(NifFile* loadFromFile, NiShape* shape) {
 	bool gotGTS = loadFromFile->GetShapeTransformGlobalToSkin(shape, xformGlobalToSkin);
+	// SF BSGeometry binds by SkinAttach names, even when a node shares a bone's name
 	std::vector<int> idList;
-	loadFromFile->GetShapeBoneIDList(shape, idList);
+	if (!shape->HasType<BSGeometry>())
+		loadFromFile->GetShapeBoneIDList(shape, idList);
 
 	int newID = 0;
 	std::vector<MatTransform> eachXformGlobalToSkin;
