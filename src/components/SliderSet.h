@@ -231,7 +231,7 @@ public:
 	size_t CloneSlider(const std::string& sliderName, const std::string& cloneName);
 	void DeleteSlider(const std::string& sliderName);
 
-	std::string GetName() { return name; }
+	std::string GetName() const { return name; }
 
 	std::string GetInputFile() const { return inputfile; }
 	std::string GetInputFileName() const;

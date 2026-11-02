@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "BodySlideApp.h"
 #include "../components/ClippingFixer.h"
 #include "../components/Mesh.h"
+#include "../components/SliderSetIndex.h"
 #include "../files/GameDataStream.h"
 #include "../files/SFMorphFile.h"
 #include "../files/wxDDSImage.h"
@@ -51,7 +52,31 @@ namespace {
 constexpr char FavoriteSeparator = ';';
 constexpr char FavoriteEscape = '\\';
 constexpr int MinBodySlideLeftPaneWidthDip = 850;
+
+// Logs what loading the base project of a variant or add-on turned up. With the NIF file, also
+// whether the base project's shapes still fit the data of an add-on.
+void LogBaseProjectStatus(const SliderSet& set, NifFile* nif = nullptr) {
+	const SliderSetResolveStatus& status = set.GetResolveStatus();
+	if (status.newerVersion)
+		wxLogWarning("Project '%s' was saved by a newer version of Outfit Studio.", set.GetName());
+
+	for (auto& warning : status.warnings)
+		wxLogWarning("Project '%s': %s", set.GetName(), wxString::FromUTF8(warning));
+
+	if (!nif || !set.IsAddOn())
+		return;
+
+	for (auto* shape : nif->GetShapes()) {
+		uint32_t vertexCount = set.GetShapeVertexCount(shape->name.get());
+		if (vertexCount > 0 && vertexCount != shape->GetNumVertices())
+			wxLogWarning("Add-on '%s': its slider data of shape '%s' was made for %u vertices, but the base project's shape has %u now.",
+						 set.GetName(),
+						 shape->name.get(),
+						 vertexCount,
+						 static_cast<uint32_t>(shape->GetNumVertices()));
+	}
 }
+} // namespace
 
 const std::array<wxLanguage, 37> SupportedLangs = {wxLANGUAGE_ENGLISH,	  wxLANGUAGE_AFRIKAANS,		   wxLANGUAGE_ARABIC,  wxLANGUAGE_CATALAN,	  wxLANGUAGE_CZECH,
 												   wxLANGUAGE_DANISH,	  wxLANGUAGE_GERMAN,		   wxLANGUAGE_GREEK,   wxLANGUAGE_SPANISH,	  wxLANGUAGE_BASQUE,
@@ -640,6 +665,7 @@ int BodySlideApp::CreateSetSliders(const std::string& outfit) {
 		activeSet.Clear();
 		sliderManager.ClearSliders();
 		if (!sliderDoc.GetSet(outfit, activeSet)) {
+			LogBaseProjectStatus(activeSet);
 			activeSet.SetBaseDataPath(ProjectUtil::GetProjectPath() + PathSepStr + "ShapeData");
 			sliderManager.AddSlidersInSet(activeSet);
 			DisplayActiveSet();
@@ -673,6 +699,7 @@ int BodySlideApp::AddProjectSliders(const std::string& projectFile, const std::s
 	if (sliderDoc.GetSet(setName, pp->sliderSet))
 		return 3;
 
+	LogBaseProjectStatus(pp->sliderSet);
 	pp->sliderSet.SetBaseDataPath(ProjectUtil::GetProjectPath() + PathSepStr + "ShapeData");
 	pp->setName = setName;
 
@@ -993,6 +1020,31 @@ void BodySlideApp::ActivatePreset(const std::string& presetName, const bool upda
 
 	if (preview && updatePreview)
 		zapChanged ? RebuildPreviewMeshes() : UpdatePreview();
+}
+
+std::vector<std::string> BodySlideApp::GetDerivedProjects(const std::string& outfitName) {
+	std::vector<std::string> derived;
+	auto outfit = outfitNameSource.find(outfitName);
+	if (outfit == outfitNameSource.end())
+		return derived;
+
+	SliderSetFile sliderDoc(outfit->second);
+	SliderSet set;
+	std::string projectID;
+	if (!sliderDoc.fail() && sliderDoc.GetSet(outfitName, set, true, "", false) == 0)
+		projectID = set.GetProjectID();
+
+	SliderSetIndex index(ProjectUtil::GetProjectPath());
+	for (auto& entry : index.Entries()) {
+		if (!entry.set.HasBaseProject())
+			continue;
+
+		bool sameID = !projectID.empty() && entry.set.GetBaseProjectID() == projectID;
+		if (sameID || (entry.set.GetBaseProjectID().empty() && entry.set.GetBaseProjectName() == outfitName))
+			derived.push_back(entry.setName);
+	}
+
+	return derived;
 }
 
 void BodySlideApp::DeleteOutfit(const std::string& outfitName) {
@@ -4285,6 +4337,8 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 		return 1;
 	}
 
+	LogBaseProjectStatus(activeSet, &nifBig);
+
 	if (activeSet.GenWeights())
 		nifSmall.CopyFrom(nifBig);
 
@@ -5092,6 +5146,8 @@ int BodySlideApp::BuildListBodies(
 			recordFailure(outfit, _("Unable to load input nif: ") + currentSet.GetInputFileName());
 			return;
 		}
+
+		LogBaseProjectStatus(currentSet, &nifBig);
 
 		if (currentSet.GenWeights())
 			nifSmall.CopyFrom(nifBig);
@@ -6904,11 +6960,19 @@ void BodySlideFrame::OnFavoritePreset(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void BodySlideFrame::OnDeleteProject(wxCommandEvent& WXUNUSED(event)) {
-	int res = wxMessageBox(_("Do you really wish to delete the selected project?"), _("Delete Project"), wxYES_NO | wxICON_WARNING, this);
+	std::string outfitName = BodySlideConfig["SelectedOutfit"];
+
+	wxString msg = _("Do you really wish to delete the selected project?");
+	std::vector<std::string> dependents = app->GetDerivedProjects(outfitName);
+	if (!dependents.empty())
+		msg += "\n\n"
+			   + wxString::Format(_("These projects are variants or add-ons of it: %s. They keep the sliders they were last saved with, but get no more changes from it."),
+								  wxString::FromUTF8(JoinStrings(dependents, ", ")));
+
+	int res = wxMessageBox(msg, _("Delete Project"), wxYES_NO | wxICON_WARNING, this);
 	if (res != wxYES)
 		return;
 
-	std::string outfitName = BodySlideConfig["SelectedOutfit"];
 	app->DeleteOutfit(outfitName);
 }
 

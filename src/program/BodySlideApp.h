@@ -368,6 +368,8 @@ public:
 		return outFileCount.find(GetActiveSet().GetOutputFilePath())->second;
 	}
 
+	// Projects that are variants or add-ons of the outfit.
+	std::vector<std::string> GetDerivedProjects(const std::string& outfitName);
 	void DeleteOutfit(const std::string& outfitName);
 	void DeletePreset(const std::string& presetName);
 
