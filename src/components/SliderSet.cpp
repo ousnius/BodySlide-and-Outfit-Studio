@@ -47,6 +47,28 @@ bool IsKnownSliderSetElement(const char* elementName) {
 
 	return false;
 }
+
+// OSD data that is kept under another name than its name in the file
+struct RenamedOSDData {
+	std::string dataNameInFile;
+	std::string dataName;
+	std::string targetName;
+};
+
+void LoadRenamedOSDData(DiffDataSets& dataStorage, const std::map<std::string, std::vector<RenamedOSDData>>& renamedData) {
+	for (auto& file : renamedData) {
+		std::map<std::string, std::string> dataNames;
+		for (auto& data : file.second)
+			dataNames[data.dataNameInFile] = data.targetName;
+
+		DiffDataSets loaded;
+		loaded.LoadData({{file.first, dataNames}});
+
+		for (auto& data : file.second)
+			if (TargetDataDiffs* diff = loaded.GetDiffSet(data.dataNameInFile))
+				dataStorage.LoadSet(data.dataName, data.targetName, *diff);
+	}
+}
 } // namespace
 
 SliderSet::SliderSet() {}
@@ -519,6 +541,8 @@ void SliderSet::Merge(
 	SliderSet& mergeSet, DiffDataSets& inDataStorage, DiffDataSets& baseDiffData, const std::string& baseShape, const bool newDataLocal, const bool appendNewSliders) {
 	std::map<std::string, std::map<std::string, std::string>> osdNames;
 	std::map<std::string, std::map<std::string, std::string>> osdNamesBase;
+	std::map<std::string, std::vector<RenamedOSDData>> osdRenamed;
+	std::map<std::string, std::vector<RenamedOSDData>> osdRenamedBase;
 
 	auto addSlider = [&](DiffInfo& ddf) {
 		if (ddf.fileName.size() <= 4)
@@ -575,6 +599,11 @@ void SliderSet::Merge(
 				baseDiffData.LoadSet(ddf.dataName, ddf.targetName, fullFilePath);
 		}
 		// OSD format
+		else if (dataName != ddf.dataName) {
+			// Data of renamed shapes is stored under its new name
+			auto& renamed = shapeName != baseShape ? osdRenamed : osdRenamedBase;
+			renamed[fullFilePath].push_back({dataName, ddf.dataName, ddf.targetName});
+		}
 		else {
 			// Cache data locations
 			if (shapeName != baseShape)
@@ -625,6 +654,8 @@ void SliderSet::Merge(
 	// Load from cached data locations at once
 	inDataStorage.LoadData(osdNames);
 	baseDiffData.LoadData(osdNamesBase);
+	LoadRenamedOSDData(inDataStorage, osdRenamed);
+	LoadRenamedOSDData(baseDiffData, osdRenamedBase);
 }
 
 void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {

@@ -4306,6 +4306,27 @@ int OutfitProject::AddFromSliderSet(const std::string& fileName,
 		return 3;
 	}
 
+	// Shapes renamed on import take their slider data along under the new name.
+	// It would otherwise be merged into the data of the shapes they clashed with.
+	std::set<std::string> renamedTargets;
+	if (!renamedShapes.empty()) {
+		std::vector<std::string> renamedShapesInfo;
+		renamedShapesInfo.reserve(renamedShapes.size());
+		for (auto& rs : renamedShapes) {
+			renamedShapesInfo.push_back(rs.first + " -> " + rs.second);
+
+			if (addSet.HasShape(rs.first)) {
+				addSet.RenameShape(rs.first, rs.second);
+				renamedTargets.insert(addSet.ShapeToTarget(rs.second));
+			}
+		}
+
+		std::string shapesJoin = JoinStrings(renamedShapesInfo, "; ");
+		host->ShowMessage(HostMessageLevel::Warning,
+						  wxString::Format("%s\n \n%s", _("The following shapes were renamed because the project already has shapes with the same names."), shapesJoin),
+						  _("Renamed Shapes"));
+	}
+
 	if (setAsReference && !baseShape) {
 		NiShape* newBaseShape = nullptr;
 
@@ -4341,24 +4362,8 @@ int OutfitProject::AddFromSliderSet(const std::string& fileName,
 		baseShape = newBaseShape;
 	}
 
-	if (!renamedShapes.empty()) {
-		std::vector<std::string> renamedShapesOrig;
-		renamedShapesOrig.reserve(renamedShapes.size());
-		for (auto& rs : renamedShapes)
-			renamedShapesOrig.push_back(rs.first);
-
-		std::string shapesJoin = JoinStrings(renamedShapesOrig, "; ");
-		host->ShowMessage(HostMessageLevel::Warning, wxString::Format("%s\n \n%s",
-									  _("The following shapes were renamed and won't have slider data attached. Rename the duplicates yourself beforehand."),
-									  shapesJoin),
-					 _("Renamed Shapes"));
-	}
-
 	std::vector<std::pair<std::string, std::string>> incomingShapeTargets;
 	for (auto shapeTarget = addSet.ShapesBegin(); shapeTarget != addSet.ShapesEnd(); ++shapeTarget) {
-		if (renamedShapes.find(shapeTarget->first) != renamedShapes.end())
-			continue;
-
 		if (workNif.FindBlockByName<NiShape>(shapeTarget->first))
 			incomingShapeTargets.emplace_back(shapeTarget->first, shapeTarget->second.targetShape);
 	}
@@ -4366,6 +4371,18 @@ int OutfitProject::AddFromSliderSet(const std::string& fileName,
 
 	UpdateProgress(70, _("Updating slider data..."));
 	morpher.MergeResultDiffs(activeSet, addSet, baseDiffData, baseShape ? baseShape->name.get() : "", newDataLocal, appendNewSliders);
+
+	// The renamed data doesn't exist under its new name in the added project's files, so it becomes the project's own
+	for (size_t i = 0; i < activeSet.size(); i++) {
+		for (auto& dataFile : activeSet[i].dataFiles) {
+			if (renamedTargets.find(dataFile.targetName) == renamedTargets.end())
+				continue;
+
+			dataFile.fileName = dataFile.dataName;
+			dataFile.bLocal = true;
+			dataFile.bInherited = false;
+		}
+	}
 
 	// Set reference info if not already present and a new base shape was found
 	if (baseShape && !hadBaseShape && mRefProjectFile.empty() && mRefProjectName.empty() && mRefShapeName.empty()) {
