@@ -468,6 +468,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_TREE_ITEM_RIGHT_CLICK(XRCID("outfitShapes"), OutfitStudioFrame::OnShapeContext)
 	EVT_TREE_BEGIN_DRAG(XRCID("outfitShapes"), OutfitStudioFrame::OnShapeDrag)
 	EVT_TREE_END_DRAG(XRCID("outfitShapes"), OutfitStudioFrame::OnShapeDrop)
+	EVT_TREE_ITEM_GETTOOLTIP(XRCID("outfitShapes"), OutfitStudioFrame::OnShapeTooltip)
 
 	EVT_TEXT_ENTER(XRCID("bonesFilter"), OutfitStudioFrame::OnBonesFilterChanged)
 	EVT_TEXT(XRCID("bonesFilter"), OutfitStudioFrame::OnBonesFilterChanged)
@@ -4619,6 +4620,10 @@ void OutfitStudioFrame::UpdateTitle() {
 		name = project->mBaseFile;
 
 	if (!name.empty()) {
+		wxString baseLabel = BaseProjectLabel();
+		if (!baseLabel.empty())
+			name += " [" + baseLabel + "]";
+
 		if (pendingChanges)
 			SetTitle(name + "* - Outfit Studio");
 		else
@@ -4626,6 +4631,83 @@ void OutfitStudioFrame::UpdateTitle() {
 	}
 	else
 		SetTitle("Outfit Studio");
+
+	UpdateProjectNode();
+}
+
+wxString OutfitStudioFrame::BaseProjectLabel() const {
+	const SliderSet& set = project->activeSet;
+	if (!set.HasBaseProject())
+		return wxEmptyString;
+
+	wxString baseName = wxString::FromUTF8(set.GetBaseProjectName());
+	if (set.GetResolveStatus().baseMissing)
+		return wxString::Format(set.IsAddOn() ? _("Add-on of %s, not found") : _("Variant of %s, not found"), baseName);
+
+	return wxString::Format(set.IsAddOn() ? _("Add-on of %s") : _("Variant of %s"), baseName);
+}
+
+void OutfitStudioFrame::UpdateProjectNode() {
+	if (!outfitRoot.IsOk())
+		return;
+
+	const SliderSet& set = project->activeSet;
+	wxString baseLabel = BaseProjectLabel();
+
+	auto shapes = project->GetWorkNif()->GetShapes();
+	wxString text;
+	if (baseLabel.empty() && shapes.size() == 1 && project->IsBaseShape(shapes.front()))
+		text = "Reference Only";
+	else
+		text = wxString::FromUTF8(project->OutfitName());
+
+	if (!baseLabel.empty())
+		text += "  [" + baseLabel + "]";
+
+	outfitShapes->SetItemText(outfitRoot, text);
+
+	if (baseLabel.empty()) {
+		outfitShapes->SetItemBold(outfitRoot, false);
+		outfitShapes->SetItemTextColour(outfitRoot, outfitShapes->GetForegroundColour());
+	}
+	else {
+		wxColour colour;
+		if (set.GetResolveStatus().baseMissing)
+			colour = wxColour(255, 110, 110);
+		else if (set.IsAddOn())
+			colour = wxColour(255, 190, 90);
+		else
+			colour = wxColour(120, 190, 255);
+
+		outfitShapes->SetItemBold(outfitRoot);
+		outfitShapes->SetItemTextColour(outfitRoot, colour);
+	}
+}
+
+void OutfitStudioFrame::OnShapeTooltip(wxTreeEvent& event) {
+	// The tree's own tooltip is replaced only when the next one shows, so OnShapeTreeMotion sets it instead
+	event.Veto();
+}
+
+wxString OutfitStudioFrame::ProjectNodeTooltip() const {
+	const SliderSet& set = project->activeSet;
+	if (!set.HasBaseProject())
+		return wxEmptyString;
+
+	wxString baseName = wxString::FromUTF8(set.GetBaseProjectName());
+	wxString tip = wxString::Format(set.IsAddOn() ? _("Slider add-on of project '%s'") : _("Variant of project '%s'"), baseName);
+
+	if (!set.GetBaseProjectFile().empty())
+		tip += "\n" + wxString::FromUTF8(set.GetBaseProjectFile());
+
+	if (set.GetResolveStatus().baseMissing)
+		tip += "\n\n" + _("The base project wasn't found, so this project is used as it was last saved.");
+	else if (set.IsAddOn())
+		tip += "\n\n" + _("Its shapes and NIF file belong to the base project. Sliders that come from the base project change with it.");
+	else
+		tip += "\n\n" + _("Sliders that come from the base project change with it.");
+
+	return tip;
 }
 
 void OutfitStudioFrame::AddProjectHistory(const std::string& fileName, const std::string& projectName) {
@@ -5432,9 +5514,6 @@ void OutfitStudioFrame::ClearProject() {
 
 void OutfitStudioFrame::RenameProject(const std::string& projectName) {
 	project->outfitName = projectName;
-	if (outfitRoot.IsOk())
-		outfitShapes->SetItemText(outfitRoot, wxString::FromUTF8(projectName));
-
 	UpdateTitle();
 }
 
@@ -5482,10 +5561,8 @@ void OutfitStudioFrame::RefreshGUIFromProj(bool render, bool stashMasks) {
 
 	auto shapes = project->GetWorkNif()->GetShapes();
 	if (shapes.size() > 0) {
-		if (shapes.size() == 1 && project->IsBaseShape(shapes.front()))
-			outfitRoot = outfitShapes->AppendItem(shapesRoot, "Reference Only");
-		else
-			outfitRoot = outfitShapes->AppendItem(shapesRoot, wxString::FromUTF8(project->OutfitName()));
+		outfitRoot = outfitShapes->AppendItem(shapesRoot, wxEmptyString);
+		UpdateProjectNode();
 	}
 
 	wxTreeItemId item;
@@ -6772,14 +6849,27 @@ void OutfitStudioFrame::OnShapeTreeMotion(wxMouseEvent& event) {
 	if (!outfitShapes || !glView)
 		return;
 
+	const wxPoint mousePos = event.GetPosition();
+	int flags = 0;
+	wxTreeItemId item = outfitShapes->HitTest(mousePos, flags);
+
+	// The project's node explains what it's an add-on or variant of
+	wxString tip;
+	if (item.IsOk() && item == outfitRoot && (flags & wxTREE_HITTEST_ONITEMLABEL) != 0)
+		tip = ProjectNodeTooltip();
+
+	wxString currentTip = outfitShapes->GetToolTipText();
+	if (tip != currentTip) {
+		if (tip.empty())
+			outfitShapes->UnsetToolTip();
+		else
+			outfitShapes->SetToolTip(tip);
+	}
+
 	if (!Config.GetBoolValue("Input/ShapeHoverHighlight")) {
 		glView->ClearHoverHighlight();
 		return;
 	}
-
-	const wxPoint mousePos = event.GetPosition();
-	int flags = 0;
-	wxTreeItemId item = outfitShapes->HitTest(mousePos, flags);
 
 	bool onItemLabelText = false;
 	if ((flags & wxTREE_HITTEST_ONITEMLABEL) != 0 && item.IsOk() && outfitShapes->GetItemParent(item).IsOk()) {

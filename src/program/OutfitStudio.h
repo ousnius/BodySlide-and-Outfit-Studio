@@ -1410,6 +1410,10 @@ public:
 	int ConformShapes(std::vector<nifly::NiShape*> shapes, bool silent = false);
 	void SetBaseShape();
 	void UpdateTitle();
+	// "Add-on of <base>" or "Variant of <base>", empty for a project without a base project
+	wxString BaseProjectLabel() const;
+	void UpdateProjectNode();
+	wxString ProjectNodeTooltip() const;
 
 	void CheckBrushBounds() {
 		TweakBrush* brush = glView->GetActiveBrush();
@@ -1661,6 +1665,7 @@ private:
 	void OnShapeContext(wxTreeEvent& event);
 	void OnShapeDrag(wxTreeEvent& event);
 	void OnShapeDrop(wxTreeEvent& event);
+	void OnShapeTooltip(wxTreeEvent& event);
 	void OnCheckTreeSel(wxTreeEvent& event);
 
 	void OnShapeTreeMotion(wxMouseEvent& event);
