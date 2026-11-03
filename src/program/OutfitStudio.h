@@ -97,6 +97,17 @@ struct ShapeItemState {
 	bool selected = false;
 };
 
+// NIF and .osd file that saving writes, and the project that writes them
+struct SharedFilesTarget {
+	std::string dataDir; // Relative to the "ShapeData" folder
+	std::string nifName;
+	std::string osdName;
+	std::string setFile;
+	std::string setName;
+	bool addOn = false;
+	bool hasBase = false;
+};
+
 class SegmentItemData : public wxTreeItemData {
 public:
 	// partID: a small nonnegative integer uniquely identifying this
@@ -1277,6 +1288,8 @@ public:
 
 	bool SaveProject();
 	bool SaveProjectAs();
+	// Files the Save Project As dialog would write, and the project that writes them
+	SharedFilesTarget SaveAsSharedFilesTarget(wxDialog& dlg, bool hasBase, bool addOn);
 	bool LoadProject(const std::string& fileName,
 					 const std::string& projectName = "",
 					 bool clearProject = true,

@@ -2693,6 +2693,7 @@ bool OutfitStudioFrame::SaveProject() {
 	if (projectNotes)
 		project->activeSet.SetNotes(projectNotes->GetValue().ToUTF8().data());
 
+	// The files don't change here, so other projects that use them aren't looked for
 	std::string error = project->Save(project->mFileName,
 									  project->mOutfitName,
 									  project->mDataDir,
@@ -2704,7 +2705,8 @@ bool OutfitStudioFrame::SaveProject() {
 									  project->bPreventMorphFile,
 									  project->bKeepZappedShapes,
 									  project->mSFMorphPath,
-									  project->mSFMorphTargetShape);
+									  project->mSFMorphTargetShape,
+									  SharedFilesCheck::Skip);
 
 	if (!error.empty()) {
 		wxLogError(error.c_str());
@@ -2718,9 +2720,66 @@ bool OutfitStudioFrame::SaveProject() {
 	return true;
 }
 
+namespace {
+// Data folder of the Save Project As dialog, relative to the "ShapeData" folder
+wxString SaveAsDataDir(wxDialog& dlg) {
+	auto shapeDataFolder = XRCCTRL(dlg, "sssShapeDataFolder", wxDirPickerCtrl);
+	wxString dataDir = shapeDataFolder->GetDirName().GetFullName();
+	if (dataDir.empty())
+		dataDir = shapeDataFolder->GetPath();
+
+	wxFileName relativeFolder(dataDir);
+	if (!dataDir.empty() && !relativeFolder.IsRelative()) {
+		relativeFolder.MakeRelativeTo(wxString::Format("%s/%s", wxString::FromUTF8(ProjectUtil::GetProjectPath()), "ShapeData"));
+		dataDir = relativeFolder.GetFullPath();
+	}
+
+	return dataDir;
+}
+} // namespace
+
+SharedFilesTarget OutfitStudioFrame::SaveAsSharedFilesTarget(wxDialog& dlg, bool hasBase, bool addOn) {
+	SharedFilesTarget target;
+	target.hasBase = hasBase;
+	target.addOn = addOn;
+	target.dataDir = SaveAsDataDir(dlg).ToUTF8();
+
+	wxString nifName = XRCCTRL(dlg, "sssShapeDataFile", wxFilePickerCtrl)->GetFileName().GetFullName();
+	if (!nifName.EndsWith(".nif"))
+		nifName.Append(".nif");
+	target.nifName = nifName.ToUTF8();
+	project->ReplaceForbidden(target.nifName);
+
+	if (addOn) {
+		wxString dataFile = XRCCTRL(dlg, "sssSliderDataFile", wxTextCtrl)->GetValue();
+		if (!dataFile.Lower().EndsWith(".osd"))
+			dataFile.Append(".osd");
+		target.osdName = dataFile.ToUTF8();
+		project->ReplaceForbidden(target.osdName);
+	}
+	else
+		target.osdName = target.nifName.substr(0, target.nifName.find_last_of('.')) + ".osd";
+
+	// The project itself isn't one of the others, like when saving
+	wxFileName setFile = XRCCTRL(dlg, "sssSliderSetFile", wxFilePickerCtrl)->GetFileName();
+	if (setFile.GetExt() != "osp")
+		setFile.SetExt("osp");
+	if (setFile.GetDirs().Index("SliderSets") == wxNOT_FOUND)
+		setFile = wxFileName("SliderSets" + wxString(PathSepStr) + setFile.GetFullName());
+	if (setFile.IsRelative())
+		setFile.MakeAbsolute(wxString::FromUTF8(ProjectUtil::GetProjectPath()));
+	target.setFile = setFile.GetFullPath().ToUTF8();
+	target.setName = XRCCTRL(dlg, "sssName", wxTextCtrl)->GetValue().ToUTF8();
+
+	return target;
+}
+
 bool OutfitStudioFrame::SaveProjectAs() {
 	wxDialog dlg;
 	int result = wxID_CANCEL;
+
+	// Looks for other projects that use the files while the dialog is open
+	std::unique_ptr<SliderSetIndexTask> sharedFilesTask;
 
 	// Base project chosen or cleared in the dialog
 	struct {
@@ -2945,28 +3004,118 @@ bool OutfitStudioFrame::SaveProjectAs() {
 			showBaseProject();
 		});
 
-		// Other projects with the same NIF file could be the base project of this one
-		if (!project->activeSet.HasBaseProject() && !project->mBaseFile.empty()) {
-			SliderSetIndex index(ProjectUtil::GetProjectPath(), {std::string(project->mBaseFile.ToUTF8())});
-			std::string nifPath = ProjectUtil::GetProjectPath() + PathSepStr + "ShapeData" + PathSepStr + project->mDataDir.ToUTF8().data() + PathSepStr
-								  + project->mBaseFile.ToUTF8().data();
+		// Other projects that use the NIF and .osd file are looked for while the dialog is open, and again
+		// when the files change. The fields are read on a timer, because some of them change without events.
+		auto sharedFilesHint = XRCCTRL(dlg, "sssSharedNifHint", wxStaticText);
+		std::string sharedFilesKey;	  // Files and project the hint was made for
+		std::string pendingFilesKey;  // Files that changed and are looked for once they stay the same
+		wxLongLong pendingSince = 0;
+		bool sharedFilesShown = false;
 
-			std::vector<std::string> sharingNames;
-			for (auto* entry : index.SetsUsingNif(nifPath, project->mFileName.ToUTF8().data(), project->mOutfitName.ToUTF8().data()))
-				sharingNames.push_back(entry->setName);
+		// Green when no other project uses the files, orange when some do
+		enum class SharedFilesState { Checking, Unused, Used };
+		auto setSharedFilesHint = [&](const wxString& text, SharedFilesState state) {
+			bool dark = dlg.GetBackgroundColour().GetLuminance() < 0.5;
+			if (state == SharedFilesState::Unused)
+				sharedFilesHint->SetForegroundColour(dark ? wxColour(110, 200, 110) : wxColour(0, 128, 0));
+			else if (state == SharedFilesState::Used)
+				sharedFilesHint->SetForegroundColour(dark ? wxColour(255, 170, 80) : wxColour(196, 98, 0));
+			else
+				sharedFilesHint->SetForegroundColour(dlg.GetForegroundColour());
 
-			if (!sharingNames.empty()) {
-				auto hint = XRCCTRL(dlg, "sssSharedNifHint", wxStaticText);
-				hint->SetLabel(wxString::Format(_("Other projects use this NIF file too: %s. If this project only adds sliders to one of them, make it an add-on of that project with Base Project > Choose..., so that it saves only its own slider data."),
-												wxString::FromUTF8(JoinStrings(sharingNames, ", "))));
-				hint->Wrap(FromDIP(440));
-				hint->Show();
+			// Wrap() does nothing for the width it wrapped at before, even with a new label
+			sharedFilesHint->SetLabel(text);
+			sharedFilesHint->Wrap(-1);
+			sharedFilesHint->Wrap(FromDIP(440));
+			sharedFilesHint->Show(!text.empty());
+
+			wxSize size = dlg.GetSize();
+			dlg.Layout();
+			dlg.Fit();
+			dlg.SetSize(std::max(size.x, dlg.GetSize().x), dlg.GetSize().y);
+		};
+
+		auto listSets = [](const std::vector<const SliderSetIndexEntry*>& sets) {
+			std::vector<std::string> names;
+			for (auto* entry : sets)
+				if (std::find(names.begin(), names.end(), entry->setName) == names.end())
+					names.push_back(entry->setName);
+
+			const size_t maxNames = 5;
+			wxString list = wxString::FromUTF8(JoinStrings(std::vector<std::string>(names.begin(), names.begin() + std::min(names.size(), maxNames)), ", "));
+			if (names.size() > maxNames)
+				list += wxString::Format(_(" and %zu more"), names.size() - maxNames);
+			return list;
+		};
+
+		auto showSharedFiles = [&](const SharedFilesTarget& target) {
+			const SliderSetIndex& index = sharedFilesTask->Index();
+			std::string projectPath = ProjectUtil::GetProjectPath();
+			std::string folderPath = projectPath + PathSepStr + "ShapeData" + PathSepStr + target.dataDir;
+
+			wxString text;
+			if (!target.addOn) {
+				auto nifSets = index.SetsUsingNif(folderPath + PathSepStr + target.nifName, target.setFile, target.setName);
+				if (!nifSets.empty()) {
+					text = wxString::Format(_("Other projects use this NIF file too: %s."), listSets(nifSets));
+					if (!target.hasBase)
+						text += " " + _("If this project only adds sliders to one of them, make it an add-on of that project with Base Project > Choose..., so that it saves only its own slider data.");
+				}
 			}
-		}
+
+			auto dataSets = index.SetsUsingDataFile(folderPath + PathSepStr + target.osdName, target.setFile, target.setName);
+			if (!dataSets.empty()) {
+				if (!text.empty())
+					text += "\n\n";
+				text += wxString::Format(_("Other projects have slider data in '%s', which stays in it: %s."), wxString::FromUTF8(target.osdName), listSets(dataSets));
+			}
+
+			if (text.empty())
+				setSharedFilesHint(_("No other project uses these files."), SharedFilesState::Unused);
+			else
+				setSharedFilesHint(text, SharedFilesState::Used);
+		};
+
+		wxTimer sharedFilesTimer(&dlg);
+		dlg.Bind(wxEVT_TIMER, [&](wxTimerEvent&) {
+			SharedFilesTarget target = SaveAsSharedFilesTarget(dlg, baseChoice.changed ? !baseChoice.set.empty() : project->activeSet.HasBaseProject(),
+															   baseChoice.changed ? !baseChoice.set.empty() && baseChoice.addOn : project->activeSet.IsAddOn());
+			std::string filesKey = target.nifName + "|" + target.osdName;
+			std::string key = filesKey + "|" + target.dataDir + "|" + target.setFile + "|" + target.setName + (target.addOn ? "|addon" : "") + (target.hasBase ? "|base" : "");
+
+			if (!sharedFilesTask || filesKey != JoinStrings(sharedFilesTask->FileNames(), "|")) {
+				// Wait until the files stay the same for a moment before looking again
+				if (sharedFilesTask && filesKey != pendingFilesKey) {
+					pendingFilesKey = filesKey;
+					pendingSince = wxGetLocalTimeMillis();
+					return;
+				}
+
+				if (sharedFilesTask && wxGetLocalTimeMillis() - pendingSince < 400)
+					return;
+
+				sharedFilesTask.reset();
+				sharedFilesTask = std::make_unique<SliderSetIndexTask>(ProjectUtil::GetProjectPath(), std::vector<std::string>{target.nifName, target.osdName});
+				sharedFilesShown = false;
+				sharedFilesKey.clear();
+				setSharedFilesHint(_("Looking for other projects that use these files..."), SharedFilesState::Checking);
+			}
+
+			if (sharedFilesTask->IsDone() && (!sharedFilesShown || key != sharedFilesKey)) {
+				showSharedFiles(target);
+				sharedFilesShown = true;
+				sharedFilesKey = key;
+			}
+		});
 
 		showBaseProject();
 
+		sharedFilesTimer.Start(150);
+		wxTimerEvent firstCheck(sharedFilesTimer);
+		dlg.ProcessWindowEvent(firstCheck);
+
 		result = dlg.ShowModal();
+		sharedFilesTimer.Stop();
 	}
 	if (result == wxID_CANCEL)
 		return false;
@@ -2992,20 +3141,10 @@ bool OutfitStudioFrame::SaveProjectAs() {
 		return false;
 	}
 
-	strDataDir = XRCCTRL(dlg, "sssShapeDataFolder", wxDirPickerCtrl)->GetDirName().GetFullName();
+	strDataDir = SaveAsDataDir(dlg);
 	if (strDataDir.empty()) {
-		strDataDir = XRCCTRL(dlg, "sssShapeDataFolder", wxDirPickerCtrl)->GetPath();
-		if (strDataDir.empty()) {
-			wxMessageBox(_("No data folder specified! Please try again."), _("Error"), wxOK | wxICON_ERROR);
-			return false;
-		}
-	}
-
-	wxFileName relativeFolder(strDataDir);
-	if (!relativeFolder.IsRelative()) {
-		wxString dataFolder(wxString::Format("%s/%s", wxString::FromUTF8(ProjectUtil::GetProjectPath()), "ShapeData"));
-		relativeFolder.MakeRelativeTo(dataFolder);
-		strDataDir = relativeFolder.GetFullPath();
+		wxMessageBox(_("No data folder specified! Please try again."), _("Error"), wxOK | wxICON_ERROR);
+		return false;
 	}
 
 	strBaseFile = XRCCTRL(dlg, "sssShapeDataFile", wxFilePickerCtrl)->GetFileName().GetFullName();
@@ -3081,7 +3220,30 @@ bool OutfitStudioFrame::SaveProjectAs() {
 	if (projectNotes)
 		project->activeSet.SetNotes(projectNotes->GetValue().ToUTF8().data());
 
-	std::string error = project->Save(sliderSetFile, strOutfitName, strDataDir, strBaseFile, strGamePath, strGameFile, genWeights, copyRef, preventMorphFile, keepZappedShapes, strSFMorphPath, strSFMorphTargetShape);
+	// Saving doesn't wait for the look for other projects that use the files
+	SharedFilesCheck sharedFilesCheck = SharedFilesCheck::Skip;
+	const SliderSetIndex* sharedFilesIndex = nullptr;
+	if (sharedFilesTask && sharedFilesTask->IsDone()) {
+		sharedFilesCheck = SharedFilesCheck::Index;
+		sharedFilesIndex = &sharedFilesTask->Index();
+	}
+	else if (sharedFilesTask)
+		sharedFilesTask->Cancel();
+
+	std::string error = project->Save(sliderSetFile,
+									  strOutfitName,
+									  strDataDir,
+									  strBaseFile,
+									  strGamePath,
+									  strGameFile,
+									  genWeights,
+									  copyRef,
+									  preventMorphFile,
+									  keepZappedShapes,
+									  strSFMorphPath,
+									  strSFMorphTargetShape,
+									  sharedFilesCheck,
+									  sharedFilesIndex);
 
 	if (error.empty()) {
 		SetPendingChanges(false);

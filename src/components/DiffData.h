@@ -43,6 +43,8 @@ public:
 	bool Write(const std::string& fileName);
 
 	TargetData& GetDataDiffs();
+	// Names of all data in the file, without converting the data
+	std::vector<std::string> GetDataNames() const;
 	std::unique_ptr<TargetDataDiffs>* GetDataDiff(const std::string& dataName);
 	void SetDataDiff(const std::string& dataName, const TargetDataDiffs& inDataDiff);
 };

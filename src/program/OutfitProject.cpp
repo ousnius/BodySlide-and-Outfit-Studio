@@ -368,7 +368,9 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 								bool preventMorphFile,
 								bool keepZappedShapes,
 								const wxString& strSFMorphPath,
-								const wxString& strSFMorphTargetShape) {
+								const wxString& strSFMorphTargetShape,
+								SharedFilesCheck sharedFilesCheck,
+								const SliderSetIndex* sharedFilesIndex) {
 	std::string errmsg = "";
 
 	auto shapes = workNif.GetShapes();
@@ -448,15 +450,36 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 	std::string osdFilePath = saveFolderPath + PathSepStr + osdName;
 	std::set<std::string> otherProjectData;
 	if ((!addOn && PlatformUtil::FileExists(nifFilePath)) || PlatformUtil::FileExists(osdFilePath)) {
-		// Only projects that mention the NIF or .osd file can use them
-		SliderSetIndex index(ProjectUtil::GetProjectPath(), {baseFile, osdName});
-		std::string setFile{ssFileName.GetFullPath().ToUTF8()};
-		if (!addOn && !ConfirmSharedNifShapes(index, nifFilePath, setFile, outfit, copyRef)) {
-			errmsg = _("Saving was cancelled.");
-			return errmsg;
+		// An index loaded before only helps if it was for these files
+		if (sharedFilesCheck == SharedFilesCheck::Index && !(sharedFilesIndex && sharedFilesIndex->Covers({baseFile, osdName})))
+			sharedFilesCheck = SharedFilesCheck::Skip;
+
+		std::unique_ptr<SliderSetIndex> ownIndex;
+		if (sharedFilesCheck == SharedFilesCheck::Now) {
+			// Only projects that mention the NIF or .osd file can use them
+			ownIndex = std::make_unique<SliderSetIndex>(ProjectUtil::GetProjectPath(), std::vector<std::string>{baseFile, osdName});
+			sharedFilesIndex = ownIndex.get();
 		}
 
-		otherProjectData = index.DataUsedInFile(osdFilePath, setFile, outfit);
+		if (sharedFilesCheck != SharedFilesCheck::Skip) {
+			std::string setFile{ssFileName.GetFullPath().ToUTF8()};
+			if (!addOn && !ConfirmSharedNifShapes(*sharedFilesIndex, nifFilePath, setFile, outfit, copyRef)) {
+				errmsg = _("Saving was cancelled.");
+				return errmsg;
+			}
+
+			otherProjectData = sharedFilesIndex->DataUsedInFile(osdFilePath, setFile, outfit);
+		}
+		else {
+			// Without knowing which data other projects use, none of the data in the file is removed
+			OSDataFile oldFile;
+			if (oldFile.Read(osdFilePath)) {
+				std::vector<std::string> dataNames = oldFile.GetDataNames();
+				otherProjectData.insert(dataNames.begin(), dataNames.end());
+			}
+
+			wxLogMessage("Saving without looking for other projects that use '%s', so the data of '%s' that the project doesn't save is kept.", baseFile, osdName);
+		}
 	}
 
 	// Saving under another name or into another file makes a new project

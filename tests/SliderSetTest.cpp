@@ -6,10 +6,12 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <algorithm>
+#include <chrono>
 #include <cstring>
 #include <filesystem>
 #include <random>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -436,4 +438,34 @@ TEST_CASE("The save index only loads sets that mention the files", "[SliderSet]"
 	// A name that's escaped in XML can't be looked for in the text, so every set is loaded
 	SliderSetIndex escaped(projectPath, {"Robe & Cape.nif"});
 	CHECK(escaped.Entries().size() == 4);
+	CHECK(escaped.Covers({"Anything.osd"}));
+
+	CHECK(filtered.Covers({"robe.NIF", "Robe.osd"}));
+	CHECK_FALSE(filtered.Covers({"Robe.nif", "Hood.osd"}));
+
+	auto dataSets = filtered.SetsUsingDataFile(robeOSD, folder.SetFile("Robe.osp"), "Robe");
+	REQUIRE(dataSets.size() == 1);
+	CHECK(dataSets[0]->setName == "Hood");
+}
+
+TEST_CASE("The save index loads on a thread of its own", "[SliderSet]") {
+	ProjectFolder folder;
+	const std::string projectPath = folder.path.u8string();
+	SaveSets(folder.SetFile("Robe.osp"), {MakeBase()});
+
+	SliderSetIndexTask task(projectPath, {"Robe.nif", "Robe.osd"});
+	for (int i = 0; i < 500 && !task.IsDone(); i++)
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+	REQUIRE(task.IsDone());
+	REQUIRE(task.Index().Entries().size() == 1);
+	CHECK(task.Index().Entries()[0].setName == "Robe");
+
+	// A cancelled task isn't done, unless it was before
+	SliderSetIndexTask cancelled(projectPath, {"Robe.nif", "Robe.osd"});
+	cancelled.Cancel();
+	if (!cancelled.IsDone())
+		CHECK(cancelled.Index().Entries().size() <= 1);
+	task.Cancel();
+	CHECK(task.IsDone());
 }

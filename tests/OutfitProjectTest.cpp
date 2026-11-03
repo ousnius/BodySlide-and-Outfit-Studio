@@ -1,4 +1,5 @@
 #include "../src/components/MaskOps.h"
+#include "../src/components/SliderSetIndex.h"
 #include "../src/program/BrushStrokeController.h"
 #include "../src/program/OutfitProject.h"
 #include "../src/program/ProjectOperations.h"
@@ -632,9 +633,12 @@ struct SavedProjectFixture : ProjectFixture {
 	TempFolder projectFolder;
 	ProjectPathScope projectPath{projectFolder.path};
 
-	std::string Save(const std::string& setName = "A", const std::string& nifName = "Shared.nif") {
+	std::string Save(const std::string& setName = "A",
+					 const std::string& nifName = "Shared.nif",
+					 SharedFilesCheck check = SharedFilesCheck::Now,
+					 const SliderSetIndex* index = nullptr) {
 		wxFileName setFile(wxString::FromUTF8((projectFolder.path / "SliderSets" / (setName + ".osp")).u8string()));
-		return project.Save(setFile, wxString::FromUTF8(setName), "Shared", wxString::FromUTF8(nifName), "meshes", setName, false, true, false, false, "", "");
+		return project.Save(setFile, wxString::FromUTF8(setName), "Shared", wxString::FromUTF8(nifName), "meshes", setName, false, true, false, false, "", "", check, index);
 	}
 
 	std::filesystem::path DataPath(const std::string& fileName) const { return projectFolder.path / "ShapeData" / "Shared" / fileName; }
@@ -701,6 +705,48 @@ TEST_CASE("Saving asks before a shared NIF file loses shapes that other projects
 
 	// A NIF of its own is fine
 	CHECK(f.Save("A", "Own.nif").empty());
+}
+
+TEST_CASE("Saving without looking for other projects keeps all other data in the .osd file", "[OutfitProject]") {
+	SavedProjectFixture f;
+	REQUIRE(f.Save().empty());
+	f.AddOtherProject();
+	std::filesystem::remove(f.projectFolder.path / "SliderSets" / "B.osp");
+
+	// Nobody uses SkirtFlare any more, but that isn't known without looking
+	REQUIRE(f.Save("A", "Shared.nif", SharedFilesCheck::Skip).empty());
+	CHECK(f.OSDDataNames() == std::set<std::string>{"BodyGrow", "SkirtFlare"});
+
+	REQUIRE(f.Save().empty());
+	CHECK(f.OSDDataNames() == std::set<std::string>{"BodyGrow"});
+
+	// It doesn't ask about shapes of the NIF file either
+	f.AddOtherProject();
+	f.project.DeleteShape(f.skirt);
+	CHECK(f.Save("A", "Shared.nif", SharedFilesCheck::Skip).empty());
+}
+
+TEST_CASE("Saving uses the index loaded before for the same files", "[OutfitProject]") {
+	SavedProjectFixture f;
+	REQUIRE(f.Save().empty());
+	f.AddOtherProject();
+	const std::string projectPath = f.projectFolder.path.u8string();
+
+	SliderSetIndex index(projectPath, {"Shared.nif", "Shared.osd"});
+	REQUIRE(f.Save("A", "Shared.nif", SharedFilesCheck::Index, &index).empty());
+	CHECK(f.OSDDataNames() == std::set<std::string>{"BodyGrow", "SkirtFlare"});
+
+	std::filesystem::remove(f.projectFolder.path / "SliderSets" / "B.osp");
+	SliderSetIndex withoutOther(projectPath, {"Shared.nif", "Shared.osd"});
+	REQUIRE(f.Save("A", "Shared.nif", SharedFilesCheck::Index, &withoutOther).empty());
+	CHECK(f.OSDDataNames() == std::set<std::string>{"BodyGrow"});
+
+	// An index for other files says nothing about these, so all data is kept
+	f.AddOtherProject();
+	std::filesystem::remove(f.projectFolder.path / "SliderSets" / "B.osp");
+	SliderSetIndex otherFiles(projectPath, {"Other.nif", "Other.osd"});
+	REQUIRE(f.Save("A", "Shared.nif", SharedFilesCheck::Index, &otherFiles).empty());
+	CHECK(f.OSDDataNames() == std::set<std::string>{"BodyGrow", "SkirtFlare"});
 }
 
 namespace {

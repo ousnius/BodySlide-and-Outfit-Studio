@@ -89,6 +89,17 @@ TargetData& OSDataFile::GetDataDiffs() {
 	return dataDiffs;
 }
 
+std::vector<std::string> OSDataFile::GetDataNames() const {
+	std::vector<std::string> names;
+	names.reserve(dataDiffs.size() + dataDiffLists.size());
+	for (auto& data : dataDiffs)
+		names.push_back(data.first);
+	for (auto& data : dataDiffLists)
+		if (dataDiffs.find(data.first) == dataDiffs.end())
+			names.push_back(data.first);
+	return names;
+}
+
 std::unique_ptr<TargetDataDiffs>* OSDataFile::GetDataDiff(const std::string& dataName) {
 	MaterializeDataDiff(dataName);
 

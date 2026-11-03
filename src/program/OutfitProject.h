@@ -38,6 +38,13 @@ See the included LICENSE file
 
 class SliderSetIndex;
 
+// How saving finds the other projects that use the NIF and .osd file it writes
+enum class SharedFilesCheck {
+	Now,   // Looks through the projects while saving
+	Index, // Uses an index that was loaded for those file names before
+	Skip   // Doesn't look: keeps all other data in the .osd file, and doesn't ask about shapes of the NIF file
+};
+
 struct ConformOptions {
 	float proximityRadius = 10.0f;
 	int maxResults = 10;
@@ -389,7 +396,9 @@ public:
 					 bool preventMorphFile,
 					 bool keepZappedShapes,
 					 const wxString& strSFMorphPath = "",
-					 const wxString& strSFMorphTargetShape = "");
+					 const wxString& strSFMorphTargetShape = "",
+					 SharedFilesCheck sharedFilesCheck = SharedFilesCheck::Now,
+					 const SliderSetIndex* sharedFilesIndex = nullptr);
 
 	// Data that other projects use from the same file ('otherProjectData') stays in it.
 	bool SaveSliderData(const std::string& fileName,

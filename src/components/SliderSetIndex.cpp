@@ -94,9 +94,10 @@ SliderSetIndex::SliderSetIndex(const std::string& inProjectPath, const std::vect
 	Load(inProjectPath, mentionedFileNames);
 }
 
-void SliderSetIndex::Load(const std::string& inProjectPath, const std::vector<std::string>& mentionedFileNames) {
+void SliderSetIndex::Load(const std::string& inProjectPath, const std::vector<std::string>& mentionedFileNames, const std::atomic<bool>* cancel) {
 	projectPath = inProjectPath;
 	entries.clear();
+	filterNames.clear();
 
 	// Without a name that can be found in the text, every file has to be loaded
 	std::vector<std::string> lowerNames;
@@ -110,6 +111,9 @@ void SliderSetIndex::Load(const std::string& inProjectPath, const std::vector<st
 		lowerNames.push_back(ToLower(name));
 	}
 
+	if (filterFiles)
+		filterNames = lowerNames;
+
 	wxString sliderSetsPath = wxString::FromUTF8(projectPath + PathSepStr + "SliderSets");
 	if (!wxDir::Exists(sliderSetsPath))
 		return;
@@ -121,6 +125,9 @@ void SliderSetIndex::Load(const std::string& inProjectPath, const std::vector<st
 	const std::string shapeDataPath = projectPath + PathSepStr + "ShapeData";
 
 	for (auto& file : files) {
+		if (cancel && *cancel)
+			return;
+
 		std::string fileName{file.ToUTF8()};
 		if (filterFiles && !FileMentions(fileName, lowerNames))
 			continue;
@@ -133,6 +140,9 @@ void SliderSetIndex::Load(const std::string& inProjectPath, const std::vector<st
 		sliderSetFile.GetSetNamesUnsorted(setNames, false);
 
 		for (auto& setName : setNames) {
+			if (cancel && *cancel)
+				return;
+
 			if (filterFiles && !sliderSetFile.SetMentions(setName, lowerNames))
 				continue;
 
@@ -156,9 +166,19 @@ const SliderSetIndexEntry* SliderSetIndex::Find(const std::string& setName) cons
 	return nullptr;
 }
 
-std::set<std::string> SliderSetIndex::DataUsedInFile(const std::string& osdFilePath, const std::string& exceptFile, const std::string& exceptSet) const {
-	std::set<std::string> dataNames;
+bool SliderSetIndex::Covers(const std::vector<std::string>& fileNames) const {
+	if (filterNames.empty())
+		return true;
 
+	for (auto& fileName : fileNames)
+		if (std::find(filterNames.begin(), filterNames.end(), ToLower(fileName)) == filterNames.end())
+			return false;
+
+	return true;
+}
+
+template<typename Use>
+void SliderSetIndex::ForDataInFile(const std::string& osdFilePath, const std::string& exceptFile, const std::string& exceptSet, Use use) const {
 	std::string osdName = std::filesystem::u8path(osdFilePath).filename().u8string();
 
 	// Many sets name the same files, so paths are compared as text and each one is looked up once
@@ -210,7 +230,7 @@ std::set<std::string> SliderSetIndex::DataUsedInFile(const std::string& osdFileP
 				for (auto& dataFolder : dataFolders) {
 					std::string candidatePath = normalize(set.GetBaseDataPath() + PathSepStr + dataFolder + PathSepStr + dataOSDFileName);
 					if (candidatePath == osdPath) {
-						dataNames.insert(dataNameInFile);
+						use(entry, dataNameInFile);
 						break;
 					}
 
@@ -220,8 +240,21 @@ std::set<std::string> SliderSetIndex::DataUsedInFile(const std::string& osdFileP
 			}
 		}
 	}
+}
 
+std::set<std::string> SliderSetIndex::DataUsedInFile(const std::string& osdFilePath, const std::string& exceptFile, const std::string& exceptSet) const {
+	std::set<std::string> dataNames;
+	ForDataInFile(osdFilePath, exceptFile, exceptSet, [&dataNames](const SliderSetIndexEntry&, const std::string& dataName) { dataNames.insert(dataName); });
 	return dataNames;
+}
+
+std::vector<const SliderSetIndexEntry*> SliderSetIndex::SetsUsingDataFile(const std::string& osdFilePath, const std::string& exceptFile, const std::string& exceptSet) const {
+	std::vector<const SliderSetIndexEntry*> sets;
+	ForDataInFile(osdFilePath, exceptFile, exceptSet, [&sets](const SliderSetIndexEntry& entry, const std::string&) {
+		if (sets.empty() || sets.back() != &entry)
+			sets.push_back(&entry);
+	});
+	return sets;
 }
 
 std::vector<const SliderSetIndexEntry*> SliderSetIndex::SetsUsingNif(const std::string& nifFilePath, const std::string& exceptFile, const std::string& exceptSet) const {
@@ -247,4 +280,23 @@ std::vector<const SliderSetIndexEntry*> SliderSetIndex::SetsUsingNif(const std::
 bool SliderSetIndex::SameFile(const std::string& fileName1, const std::string& fileName2) {
 	std::error_code error;
 	return std::filesystem::equivalent(std::filesystem::u8path(fileName1), std::filesystem::u8path(fileName2), error);
+}
+
+SliderSetIndexTask::SliderSetIndexTask(const std::string& projectPath, const std::vector<std::string>& inFileNames)
+	: fileNames(inFileNames) {
+	thread = std::thread([this, projectPath] {
+		index.Load(projectPath, fileNames, &cancel);
+		if (!cancel)
+			done = true;
+	});
+}
+
+SliderSetIndexTask::~SliderSetIndexTask() {
+	Cancel();
+}
+
+void SliderSetIndexTask::Cancel() {
+	cancel = true;
+	if (thread.joinable())
+		thread.join();
 }
