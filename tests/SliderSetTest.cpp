@@ -1,9 +1,11 @@
 #include "../src/components/SliderSet.h"
+#include "../src/components/SliderSetIndex.h"
 #include "../src/components/SliderSetInheritance.h"
 #include "../src/utils/StringStuff.h"
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <algorithm>
 #include <cstring>
 #include <filesystem>
 #include <random>
@@ -397,4 +399,41 @@ TEST_CASE("Elements of newer versions are written back", "[SliderSet]") {
 	CHECK(setElement->FirstChildElement("Hologram")->FirstChildElement("Part"));
 	CHECK(setElement->FirstChildElement("NormalsGeneration"));
 	CHECK(saved.FirstChildElement("SliderSetInfo")->IntAttribute("version") == 3);
+}
+
+TEST_CASE("The save index only loads sets that mention the files", "[SliderSet]") {
+	ProjectFolder folder;
+	const std::string projectPath = folder.path.u8string();
+	const std::string robeNif = projectPath + PathSepStr + "ShapeData" + PathSepStr + "Robe" + PathSepStr + "Robe.nif";
+	const std::string robeOSD = projectPath + PathSepStr + "ShapeData" + PathSepStr + "Robe" + PathSepStr + "Robe.osd";
+
+	// Another set in the same file that doesn't use Robe's files
+	SliderSet boots = MakeSet("Boots", "Boots", "Boots.nif", {"Boots"});
+	AddSlider(boots, "Heels").AddDataFile("Boots", "BootsHeels", DataFile("Boots.osd", "BootsHeels"));
+	SaveSets(folder.SetFile("Robe.osp"), {MakeBase(), boots});
+
+	// The names are compared without case
+	SliderSet hood = MakeSet("Hood", "Robe", "Hood.nif", {"Hood"});
+	AddSlider(hood, "Breasts").AddDataFile("Hood", "HoodBreasts", DataFile("ROBE.OSD", "HoodBreasts"));
+	SaveSets(folder.SetFile("Hood.osp"), {hood});
+
+	SaveSets(folder.SetFile("Gloves.osp"), {MakeSet("Gloves", "Gloves", "Gloves.nif", {"Gloves"})});
+
+	SliderSetIndex full(projectPath);
+	SliderSetIndex filtered(projectPath, {"Robe.nif", "Robe.osd"});
+
+	std::vector<std::string> loaded;
+	for (auto& entry : filtered.Entries())
+		loaded.push_back(entry.setName);
+	std::sort(loaded.begin(), loaded.end());
+	CHECK(loaded == std::vector<std::string>{"Hood", "Robe"});
+	CHECK(full.Entries().size() == 4);
+
+	CHECK(filtered.DataUsedInFile(robeOSD, "", "") == full.DataUsedInFile(robeOSD, "", ""));
+	CHECK(filtered.DataUsedInFile(robeOSD, "", "").count("HoodBreasts") == 1);
+	CHECK(filtered.SetsUsingNif(robeNif, "", "").size() == full.SetsUsingNif(robeNif, "", "").size());
+
+	// A name that's escaped in XML can't be looked for in the text, so every set is loaded
+	SliderSetIndex escaped(projectPath, {"Robe & Cape.nif"});
+	CHECK(escaped.Entries().size() == 4);
 }

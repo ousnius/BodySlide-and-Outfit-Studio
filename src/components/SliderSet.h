@@ -530,6 +530,8 @@ public:
 	bool IsAddOn(const std::string& setName);
 	// Name of the set's base project as it was saved, empty for a project without one. Doesn't look the base up.
 	std::string GetSetBaseProjectName(const std::string& setName);
+	// True if the set's source file or one of its slider data names contains one of the lower case names
+	bool SetMentions(const std::string& setName, const std::vector<std::string>& lowerNames);
 	// Name of the set with the project ID, empty if there's none.
 	std::string FindSetByID(const std::string& projectID);
 	// Adds all of the slider sets in the file to the supplied slider set vector. Does not clear the vector before doing so.

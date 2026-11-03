@@ -448,7 +448,8 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 	std::string osdFilePath = saveFolderPath + PathSepStr + osdName;
 	std::set<std::string> otherProjectData;
 	if ((!addOn && PlatformUtil::FileExists(nifFilePath)) || PlatformUtil::FileExists(osdFilePath)) {
-		SliderSetIndex index(ProjectUtil::GetProjectPath());
+		// Only projects that mention the NIF or .osd file can use them
+		SliderSetIndex index(ProjectUtil::GetProjectPath(), {baseFile, osdName});
 		std::string setFile{ssFileName.GetFullPath().ToUTF8()};
 		if (!addOn && !ConfirmSharedNifShapes(index, nifFilePath, setFile, outfit, copyRef)) {
 			errmsg = _("Saving was cancelled.");

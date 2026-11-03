@@ -26,8 +26,12 @@ class SliderSetIndex {
 public:
 	SliderSetIndex() {}
 	explicit SliderSetIndex(const std::string& inProjectPath);
+	// Only the sets of the project files that mention one of the file names, which are all that
+	// DataUsedInFile and SetsUsingNif can find for those files. Much faster than loading every set.
+	SliderSetIndex(const std::string& inProjectPath, const std::vector<std::string>& mentionedFileNames);
 
-	void Load(const std::string& inProjectPath);
+	// With 'mentionedFileNames', only the project files whose text has one of them are loaded
+	void Load(const std::string& inProjectPath, const std::vector<std::string>& mentionedFileNames = {});
 
 	const std::string& GetProjectPath() const { return projectPath; }
 	const std::vector<SliderSetIndexEntry>& Entries() const { return entries; }

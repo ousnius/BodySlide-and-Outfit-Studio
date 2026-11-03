@@ -2947,7 +2947,7 @@ bool OutfitStudioFrame::SaveProjectAs() {
 
 		// Other projects with the same NIF file could be the base project of this one
 		if (!project->activeSet.HasBaseProject() && !project->mBaseFile.empty()) {
-			SliderSetIndex index(ProjectUtil::GetProjectPath());
+			SliderSetIndex index(ProjectUtil::GetProjectPath(), {std::string(project->mBaseFile.ToUTF8())});
 			std::string nifPath = ProjectUtil::GetProjectPath() + PathSepStr + "ShapeData" + PathSepStr + project->mDataDir.ToUTF8().data() + PathSepStr
 								  + project->mBaseFile.ToUTF8().data();
 

@@ -8,17 +8,107 @@ See the included LICENSE file
 #include "../utils/PlatformUtil.h"
 #include "../utils/StringStuff.h"
 
+#include <algorithm>
 #include <filesystem>
+#include <fstream>
+#include <iterator>
 #include <map>
 #include <wx/dir.h>
+
+namespace {
+// A name is written as it is into the XML text, unless it has characters that get escaped there or
+// that a case-insensitive comparison could fold differently
+bool CanFindInText(const std::string& name) {
+	if (name.empty())
+		return false;
+
+	for (unsigned char c : name)
+		if (c >= 0x80 || c == '&' || c == '<' || c == '>' || c == '"' || c == '\'')
+			return false;
+
+	return true;
+}
+
+unsigned char LowerASCII(unsigned char c) {
+	return c >= 'A' && c <= 'Z' ? static_cast<unsigned char>(c - 'A' + 'a') : c;
+}
+
+// Case-insensitive Boyer-Moore-Horspool search, which skips through the text instead of looking at every character
+bool ContainsInsens(const std::string& text, const std::string& lowerName) {
+	const size_t nameSize = lowerName.size();
+	if (nameSize == 0 || text.size() < nameSize)
+		return false;
+
+	size_t skip[256];
+	std::fill(std::begin(skip), std::end(skip), nameSize);
+	for (size_t i = 0; i + 1 < nameSize; i++) {
+		unsigned char c = static_cast<unsigned char>(lowerName[i]);
+		skip[c] = nameSize - 1 - i;
+		if (c >= 'a' && c <= 'z')
+			skip[c - 'a' + 'A'] = nameSize - 1 - i;
+	}
+
+	const auto* textData = reinterpret_cast<const unsigned char*>(text.data());
+	const auto* nameData = reinterpret_cast<const unsigned char*>(lowerName.data());
+	for (size_t pos = 0; pos + nameSize <= text.size(); pos += skip[textData[pos + nameSize - 1]]) {
+		size_t i = nameSize;
+		while (i > 0 && LowerASCII(textData[pos + i - 1]) == nameData[i - 1])
+			i--;
+
+		if (i == 0)
+			return true;
+	}
+
+	return false;
+}
+
+bool FileMentions(const std::string& fileName, const std::vector<std::string>& lowerNames) {
+	std::fstream file;
+	PlatformUtil::OpenFileStream(file, fileName, std::ios::in | std::ios::binary);
+	if (!file.is_open())
+		return true;
+
+	file.seekg(0, std::ios::end);
+	std::streamoff size = file.tellg();
+	if (size <= 0)
+		return true;
+
+	std::string text(static_cast<size_t>(size), '\0');
+	file.seekg(0, std::ios::beg);
+	file.read(text.data(), size);
+	text.resize(static_cast<size_t>(file.gcount()));
+
+	for (auto& name : lowerNames)
+		if (ContainsInsens(text, name))
+			return true;
+
+	return false;
+}
+} // namespace
 
 SliderSetIndex::SliderSetIndex(const std::string& inProjectPath) {
 	Load(inProjectPath);
 }
 
-void SliderSetIndex::Load(const std::string& inProjectPath) {
+SliderSetIndex::SliderSetIndex(const std::string& inProjectPath, const std::vector<std::string>& mentionedFileNames) {
+	Load(inProjectPath, mentionedFileNames);
+}
+
+void SliderSetIndex::Load(const std::string& inProjectPath, const std::vector<std::string>& mentionedFileNames) {
 	projectPath = inProjectPath;
 	entries.clear();
+
+	// Without a name that can be found in the text, every file has to be loaded
+	std::vector<std::string> lowerNames;
+	bool filterFiles = !mentionedFileNames.empty();
+	for (auto& name : mentionedFileNames) {
+		if (!CanFindInText(name)) {
+			filterFiles = false;
+			break;
+		}
+
+		lowerNames.push_back(ToLower(name));
+	}
 
 	wxString sliderSetsPath = wxString::FromUTF8(projectPath + PathSepStr + "SliderSets");
 	if (!wxDir::Exists(sliderSetsPath))
@@ -32,6 +122,8 @@ void SliderSetIndex::Load(const std::string& inProjectPath) {
 
 	for (auto& file : files) {
 		std::string fileName{file.ToUTF8()};
+		if (filterFiles && !FileMentions(fileName, lowerNames))
+			continue;
 
 		SliderSetFile sliderSetFile(fileName);
 		if (sliderSetFile.fail())
@@ -41,6 +133,9 @@ void SliderSetIndex::Load(const std::string& inProjectPath) {
 		sliderSetFile.GetSetNamesUnsorted(setNames, false);
 
 		for (auto& setName : setNames) {
+			if (filterFiles && !sliderSetFile.SetMentions(setName, lowerNames))
+				continue;
+
 			SliderSetIndexEntry entry;
 			if (sliderSetFile.GetSet(setName, entry.set, true, "", false) != 0)
 				continue;

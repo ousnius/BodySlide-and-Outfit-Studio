@@ -1024,6 +1024,36 @@ std::string SliderSetFile::GetSetBaseProjectName(const std::string& setName) {
 	return AttributeText(baseElement, "ProjectName");
 }
 
+bool SliderSetFile::SetMentions(const std::string& setName, const std::vector<std::string>& lowerNames) {
+	auto setIt = setsInFile.find(setName);
+	if (setIt == setsInFile.end())
+		return false;
+
+	auto mentions = [&lowerNames](const char* text) {
+		if (!text)
+			return false;
+
+		std::string lowerText = ToLower(text);
+		for (auto& name : lowerNames)
+			if (lowerText.find(name) != std::string::npos)
+				return true;
+
+		return false;
+	};
+
+	XMLElement* setElement = setIt->second;
+	for (XMLElement* source = setElement->FirstChildElement("SourceFile"); source; source = source->NextSiblingElement("SourceFile"))
+		if (mentions(source->GetText()))
+			return true;
+
+	for (XMLElement* slider = setElement->FirstChildElement("Slider"); slider; slider = slider->NextSiblingElement("Slider"))
+		for (XMLElement* data = slider->FirstChildElement("Data"); data; data = data->NextSiblingElement("Data"))
+			if (mentions(data->GetText()))
+				return true;
+
+	return false;
+}
+
 std::string SliderSetFile::FindSetByID(const std::string& projectID) {
 	if (projectID.empty())
 		return "";
