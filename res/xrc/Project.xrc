@@ -438,19 +438,27 @@
 							</object>
 							<object class="sizeritem">
 								<option>3</option>
-								<flag>wxALL</flag>
+								<flag>wxALL|wxALIGN_CENTER_VERTICAL</flag>
 								<border>5</border>
-								<object class="wxTextCtrl" name="sssOutputDataPath">
-									<tooltip>The location in the game's data path where BodySlide-built outfit files will be placed, e.g: meshes\clothes\lovelydress</tooltip>
-									<value></value>
-								</object>
-							</object>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxALL</flag>
-								<border>5</border>
-								<object class="wxButton" name="sssOutputDataPathBrowse">
-									<label>Browse</label>
+								<object class="wxBoxSizer">
+									<orient>wxHORIZONTAL</orient>
+									<object class="sizeritem">
+										<option>1</option>
+										<flag>wxALIGN_CENTER_VERTICAL</flag>
+										<border>0</border>
+										<object class="wxTextCtrl" name="sssOutputDataPath">
+											<tooltip>The location in the game's data path where BodySlide-built outfit files will be placed, e.g: meshes\clothes\lovelydress</tooltip>
+											<value></value>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxLEFT|wxALIGN_CENTER_VERTICAL</flag>
+										<border>5</border>
+										<object class="wxButton" name="sssOutputDataPathBrowse">
+											<label>Browse</label>
+										</object>
+									</object>
 								</object>
 							</object>
 						</object>
@@ -472,19 +480,27 @@
 							</object>
 							<object class="sizeritem">
 								<option>3</option>
-								<flag>wxALL</flag>
+								<flag>wxALL|wxALIGN_CENTER_VERTICAL</flag>
 								<border>5</border>
-								<object class="wxTextCtrl" name="sssSFMorphPath">
-									<tooltip>Starfield morph.dat output folder relative to the game data path (e.g. meshes\morphs\human\female\chargen\body). Leave empty to skip morph.dat output.</tooltip>
-									<value></value>
-								</object>
-							</object>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxALL</flag>
-								<border>5</border>
-								<object class="wxButton" name="sssSFMorphPathBrowse">
-									<label>Browse</label>
+								<object class="wxBoxSizer">
+									<orient>wxHORIZONTAL</orient>
+									<object class="sizeritem">
+										<option>1</option>
+										<flag>wxALIGN_CENTER_VERTICAL</flag>
+										<border>0</border>
+										<object class="wxTextCtrl" name="sssSFMorphPath">
+											<tooltip>Starfield morph.dat output folder relative to the game data path (e.g. meshes\morphs\human\female\chargen\body). Leave empty to skip morph.dat output.</tooltip>
+											<value></value>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxLEFT|wxALIGN_CENTER_VERTICAL</flag>
+										<border>5</border>
+										<object class="wxButton" name="sssSFMorphPathBrowse">
+											<label>Browse</label>
+										</object>
+									</object>
 								</object>
 							</object>
 						</object>
@@ -670,31 +686,39 @@
 								</object>
 							</object>
 							<object class="sizeritem">
-								<option>2</option>
-								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<option>3</option>
+								<flag>wxALL|wxALIGN_CENTER_VERTICAL</flag>
 								<border>5</border>
-								<object class="wxTextCtrl" name="sssBaseProject">
-									<tooltip>The project whose sliders this variant or add-on inherits. Only the slider data it adds or changes is saved with it.</tooltip>
-									<style>wxTE_READONLY</style>
-									<value></value>
-								</object>
-							</object>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-								<border>5</border>
-								<object class="wxButton" name="sssBaseProjectChoose">
-									<tooltip>Makes this project a variant or add-on of another project.</tooltip>
-									<label>Choose...</label>
-								</object>
-							</object>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-								<border>5</border>
-								<object class="wxButton" name="sssBaseProjectClear">
-									<tooltip>Makes this project one of its own again, with all of its sliders and slider data.</tooltip>
-									<label>Clear</label>
+								<object class="wxBoxSizer">
+									<orient>wxHORIZONTAL</orient>
+									<object class="sizeritem">
+										<option>1</option>
+										<flag>wxALIGN_CENTER_VERTICAL</flag>
+										<border>0</border>
+										<object class="wxTextCtrl" name="sssBaseProject">
+											<tooltip>The project whose sliders this variant or add-on inherits. Only the slider data it adds or changes is saved with it.</tooltip>
+											<style>wxTE_READONLY</style>
+											<value></value>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxLEFT|wxALIGN_CENTER_VERTICAL</flag>
+										<border>5</border>
+										<object class="wxButton" name="sssBaseProjectChoose">
+											<tooltip>Makes this project a variant or add-on of another project.</tooltip>
+											<label>Choose...</label>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxLEFT|wxALIGN_CENTER_VERTICAL</flag>
+										<border>5</border>
+										<object class="wxButton" name="sssBaseProjectClear">
+											<tooltip>Makes this project one of its own again, with all of its sliders and slider data.</tooltip>
+											<label>Clear</label>
+										</object>
+									</object>
 								</object>
 							</object>
 						</object>
