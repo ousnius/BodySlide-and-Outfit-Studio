@@ -669,14 +669,14 @@ int BodySlideApp::CreateSetSliders(const std::string& outfit) {
 			activeSet.SetBaseDataPath(ProjectUtil::GetProjectPath() + PathSepStr + "ShapeData");
 			sliderManager.AddSlidersInSet(activeSet);
 			DisplayActiveSet();
+			return 0;
 		}
-		else
-			return 3;
 	}
-	else
-		return 2;
 
-	return 0;
+	if (sliderView)
+		sliderView->ShowOutfitBaseProject(nullptr);
+
+	return sliderDoc.fail() ? 2 : 3;
 }
 
 int BodySlideApp::AddProjectSliders(const std::string& projectFile, const std::string& setName) {
@@ -871,6 +871,7 @@ int BodySlideApp::LoadSliderSets() {
 	outfitNameSource.clear();
 	outfitNameOrder.clear();
 	outfitHasZaps.clear();
+	outfitBaseProjects.clear();
 	outFileCount.clear();
 
 	wxArrayString files;
@@ -903,6 +904,10 @@ int BodySlideApp::LoadSliderSets() {
 
 			outfitNameSource[o] = fileName;
 			outfitNameOrder.push_back(o);
+
+			std::string baseProject = sliderDoc.GetSetBaseProjectName(o);
+			if (!baseProject.empty())
+				outfitBaseProjects[o] = {baseProject, sliderDoc.IsAddOn(o)};
 
 			if (filterHasZaps) {
 				bool hasZaps = false;
@@ -1176,6 +1181,8 @@ void BodySlideApp::DisplayActiveSet() {
 		return;
 
 	auto& activeSet = GetActiveSet();
+	sliderView->ShowOutfitBaseProject(&activeSet);
+
 	if (activeSet.GenWeights())
 		sliderView->ShowLowColumn(true);
 	else
@@ -5943,6 +5950,7 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize& size)
 	splitter->Bind(EVT_PREVIEW_POPOUT, &BodySlideFrame::OnPreviewPopout, this);
 
 	outfitChoice = (wxChoice*)FindWindowByName("outfitChoice", this);
+	lblOutfitBase = (wxStaticText*)FindWindowByName("lblOutfitBase", this);
 	presetChoice = (wxChoice*)FindWindowByName("presetChoice", this);
 	btnFavoriteOutfit = (wxButton*)FindWindowByName("btnFavoriteOutfit", this);
 	btnFavoritePreset = (wxButton*)FindWindowByName("btnFavoritePreset", this);
@@ -6171,6 +6179,7 @@ void BodySlideFrame::ClearOutfitList() {
 	if (outfitChoice)
 		outfitChoice->Clear();
 
+	ShowOutfitBaseProject(nullptr);
 	UpdateFavoriteButtons();
 }
 
@@ -6200,6 +6209,53 @@ wxString BodySlideFrame::FavoriteChoiceLabel(const std::string& name, bool favor
 		return label;
 
 	return wxString::FromUTF8(FavoriteStar) + " " + label;
+}
+
+wxString BodySlideFrame::OutfitChoiceLabel(const std::string& name) const {
+	wxString label = FavoriteChoiceLabel(name, app->IsFavoriteOutfit(name));
+
+	bool addOn = false;
+	if (!app->GetOutfitBaseProject(name, &addOn).empty())
+		label += addOn ? _(" (add-on)") : _(" (variant)");
+
+	return label;
+}
+
+void BodySlideFrame::ShowOutfitBaseProject(const SliderSet* set) {
+	if (!lblOutfitBase)
+		return;
+
+	wxString text;
+	wxColour colour;
+	wxString tip;
+	if (set && set->HasBaseProject()) {
+		wxString baseName = wxString::FromUTF8(set->GetBaseProjectName());
+		if (set->GetResolveStatus().baseMissing) {
+			text = wxString::Format(set->IsAddOn() ? _("Add-on of %s (not found)") : _("Variant of %s (not found)"), baseName);
+			colour = wxColour(255, 110, 110);
+			tip = _("The base project wasn't found, so this project is built as it was last saved.");
+		}
+		else {
+			text = wxString::Format(set->IsAddOn() ? _("Add-on of %s") : _("Variant of %s"), baseName);
+			colour = set->IsAddOn() ? wxColour(255, 190, 90) : wxColour(120, 190, 255);
+			tip = set->IsAddOn() ? _("Adds sliders to the base project and builds its shapes.") : _("Has its own shapes and uses the sliders of the base project.");
+		}
+
+		if (!set->GetBaseProjectFile().empty())
+			tip += "\n" + wxString::FromUTF8(set->GetBaseProjectFile());
+	}
+
+	bool show = !text.empty();
+	if (show == lblOutfitBase->IsShown() && text == lblOutfitBase->GetLabel())
+		return;
+
+	lblOutfitBase->SetLabel(text);
+	lblOutfitBase->SetToolTip(tip);
+	if (show)
+		lblOutfitBase->SetForegroundColour(colour);
+
+	lblOutfitBase->Show(show);
+	Layout();
 }
 
 bool BodySlideFrame::SelectChoiceName(wxChoice* choice, const std::vector<std::string>& names, const std::string& selectItem) const {
@@ -6255,7 +6311,7 @@ void BodySlideFrame::RebuildOutfitChoice(const std::string& selectItem) {
 	outfitChoice->Clear();
 
 	for (const auto& rawName : outfitChoiceNames)
-		outfitChoice->Append(FavoriteChoiceLabel(rawName, app->IsFavoriteOutfit(rawName)));
+		outfitChoice->Append(OutfitChoiceLabel(rawName));
 
 	if (!SelectChoiceName(outfitChoice, outfitChoiceNames, selectedName)) {
 		int i = wxNOT_FOUND;
@@ -6266,7 +6322,7 @@ void BodySlideFrame::RebuildOutfitChoice(const std::string& selectItem) {
 		}
 		else if (!missingItem.StartsWith("[")) {
 			outfitChoiceNames.push_back(selectedName);
-			i = outfitChoice->Append("[" + missingItem + "]");
+			i = outfitChoice->Append("[" + OutfitChoiceLabel(selectedName) + "]");
 		}
 		else {
 			outfitChoiceNames.push_back(selectedName);

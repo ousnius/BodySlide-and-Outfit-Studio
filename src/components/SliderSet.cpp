@@ -1012,6 +1012,18 @@ bool SliderSetFile::IsAddOn(const std::string& setName) {
 	return setIt != setsInFile.end() && std::strcmp(setIt->second->Name(), SliderSetAddOnElement) == 0;
 }
 
+std::string SliderSetFile::GetSetBaseProjectName(const std::string& setName) {
+	auto setIt = setsInFile.find(setName);
+	if (setIt == setsInFile.end())
+		return "";
+
+	XMLElement* baseElement = setIt->second->FirstChildElement("BaseProject");
+	if (!baseElement)
+		return "";
+
+	return AttributeText(baseElement, "ProjectName");
+}
+
 std::string SliderSetFile::FindSetByID(const std::string& projectID) {
 	if (projectID.empty())
 		return "";

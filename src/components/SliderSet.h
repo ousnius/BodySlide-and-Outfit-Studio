@@ -528,6 +528,8 @@ public:
 	int GetSet(const std::string& setName, SliderSet& outSliderSet, bool appendNewSliders = true, const std::string& onlyShapeName = "", bool resolveBase = true);
 	// True if the set is stored as a slider add-on.
 	bool IsAddOn(const std::string& setName);
+	// Name of the set's base project as it was saved, empty for a project without one. Doesn't look the base up.
+	std::string GetSetBaseProjectName(const std::string& setName);
 	// Name of the set with the project ID, empty if there's none.
 	std::string FindSetByID(const std::string& projectID);
 	// Adds all of the slider sets in the file to the supplied slider set vector. Does not clear the vector before doing so.
