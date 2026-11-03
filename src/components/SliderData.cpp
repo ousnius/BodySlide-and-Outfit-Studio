@@ -24,7 +24,7 @@ int SliderData::LoadSliderData(XMLElement* element, bool genWeights) {
 
 	std::string dataFileStr = version >= 1 ? "Data" : "datafile";
 
-	name = element->Attribute("name");
+	name = AttributeText(element, "name");
 	if (element->Attribute("invert"))
 		bInvert = StringsEqualNInsens(element->Attribute("invert"), "true", 4);
 	else
@@ -67,6 +67,8 @@ int SliderData::LoadSliderData(XMLElement* element, bool genWeights) {
 	else
 		bClamp = false;
 
+	bInherited = element->BoolAttribute("inherited");
+
 	if (bZap) {
 		wxStringTokenizer tokenizer(element->Attribute("zaptoggles"), ";");
 		while (tokenizer.HasMoreTokens())
@@ -77,12 +79,14 @@ int SliderData::LoadSliderData(XMLElement* element, bool genWeights) {
 	XMLElement* datafile = element->FirstChildElement(dataFileStr.c_str());
 	while (datafile) {
 		datafile->SetName("Data");
-		tmpDataFile.targetName = datafile->Attribute("target");
+		tmpDataFile.targetName = AttributeText(datafile, "target");
 
 		if (datafile->Attribute("local"))
 			tmpDataFile.bLocal = StringsEqualNInsens(datafile->Attribute("local"), "true", 4);
 		else
 			tmpDataFile.bLocal = false;
+
+		tmpDataFile.bInherited = datafile->BoolAttribute("inherited");
 
 		if (datafile->Attribute("name"))
 			tmpDataFile.dataName = datafile->Attribute("name");

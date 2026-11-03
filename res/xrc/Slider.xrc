@@ -273,6 +273,17 @@
 									<enabled>0</enabled>
 								</object>
 							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxButton" name="btnSliderDataRevert">
+									<label>Revert to Base</label>
+									<tooltip>Replaces this project's slider data with the base project's again.</tooltip>
+									<enabled>0</enabled>
+									<hidden>1</hidden>
+								</object>
+							</object>
 						</object>
 					</object>
 				</object>

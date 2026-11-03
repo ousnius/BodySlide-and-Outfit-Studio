@@ -17,6 +17,66 @@ See the included LICENSE file
 #include <wx/textctrl.h>
 #include <wx/tokenzr.h>
 
+wxString SliderDataList::SourceLabel(const SliderDataLocation& location) {
+	if (location.inherited)
+		return _("Inherited");
+	if (location.overridden)
+		return _("Overridden");
+	if (location.local)
+		return _("Local");
+	if (location.linked)
+		return _("Linked");
+
+	return _("External");
+}
+
+bool SliderDataList::AllOverridden(const std::vector<SliderDataLocation>& rows, const std::vector<size_t>& rowIndices) {
+	if (rowIndices.empty())
+		return false;
+
+	for (auto rowIndex : rowIndices)
+		if (rowIndex >= rows.size() || !rows[rowIndex].overridden)
+			return false;
+
+	return true;
+}
+
+bool SliderDataList::AnyInherited(const std::vector<SliderDataLocation>& rows, const std::vector<size_t>& rowIndices) {
+	for (auto rowIndex : rowIndices)
+		if (rowIndex < rows.size() && rows[rowIndex].inherited)
+			return true;
+
+	return false;
+}
+
+bool SliderDataList::RevertToBase(wxWindow* parent, OutfitProject* project, const std::vector<SliderDataLocation>& rows, const std::vector<size_t>& rowIndices) {
+	if (rowIndices.empty())
+		return false;
+
+	if (wxMessageBox(_("Replace this project's slider data with the base project's? The changes this project made to it are lost when it's saved."),
+					 _("Revert to Base"),
+					 wxYES_NO | wxICON_WARNING,
+					 parent)
+		!= wxYES)
+		return false;
+
+	bool changed = false;
+	for (auto rowIndex : rowIndices) {
+		if (rowIndex >= rows.size() || !rows[rowIndex].overridden)
+			continue;
+
+		std::string errorMessage;
+		if (!project->RevertSliderDataToBase(rows[rowIndex].key, &errorMessage)) {
+			wxMessageBox(wxString::FromUTF8(errorMessage), _("Slider Data"), wxOK | wxICON_WARNING, parent);
+			return changed;
+		}
+
+		changed = true;
+	}
+
+	return changed;
+}
+
 wxString SliderDataList::JoinDataFolders(const std::vector<std::string>& dataFolders) {
 	if (dataFolders.empty())
 		return wxString();
@@ -57,6 +117,10 @@ void SliderDataList::Configure(wxListCtrl* list, bool includeSlider) {
 				tip = _("Stored in another project's data file in the same data folder.");
 			else if (source == _("External"))
 				tip = _("Stored in the shape's data folders, separate from this project.");
+			else if (source == _("Inherited"))
+				tip = _("Comes from the base project, which owns it. Editing it makes it this project's own.");
+			else if (source == _("Overridden"))
+				tip = _("Stored in this project's own data file, in place of the base project's data.");
 		}
 
 		if (list->GetToolTipText() != tip) {
@@ -84,7 +148,7 @@ void SliderDataList::Populate(wxListCtrl* list, const std::vector<SliderDataLoca
 
 		list->SetItem(item, column++, wxString::FromUTF8(row.key.targetName));
 		list->SetItem(item, column++, wxString::FromUTF8(row.key.dataName));
-		list->SetItem(item, column++, row.local ? _("Local") : row.linked ? _("Linked") : _("External"));
+		list->SetItem(item, column++, SourceLabel(row));
 		list->SetItem(item, column++, JoinDataFolders(row.dataFolders));
 		list->SetItem(item, column++, wxString::FromUTF8(row.fileName));
 		list->SetItem(item, column++, row.fileName.empty() ? _("No file") : row.resolved ? _("Found") : _("Missing"));
@@ -293,6 +357,7 @@ SliderDataLocationsDialog::SliderDataLocationsDialog(OutfitStudioFrame* owner, O
 	sourceChoice->Append(_("All"));
 	sourceChoice->Append(_("Local"));
 	sourceChoice->Append(_("External"));
+	sourceChoice->Append(_("Inherited"));
 	sourceChoice->SetSelection(0);
 	auto* statusLabel = new wxStaticText(this, wxID_ANY, _("Status:"));
 	statusChoice = new wxChoice(this, wxID_ANY);
@@ -317,10 +382,14 @@ SliderDataLocationsDialog::SliderDataLocationsDialog(OutfitStudioFrame* owner, O
 	btnMakeLocal = new wxButton(this, wxID_ANY, _("Make Local"));
 	btnMakeExternal = new wxButton(this, wxID_ANY, _("Make External"));
 	btnEditFolders = new wxButton(this, wxID_ANY, _("Edit Folders..."));
+	btnRevertToBase = new wxButton(this, wxID_ANY, _("Revert to Base"));
+	btnRevertToBase->SetToolTip(_("Replaces this project's slider data with the base project's again."));
+	btnRevertToBase->Show(project && project->activeSet.HasBaseProject());
 	auto* btnClose = new wxButton(this, wxID_CLOSE, _("Close"));
 	buttonSizer->Add(btnMakeLocal, 0, wxRIGHT, 5);
 	buttonSizer->Add(btnMakeExternal, 0, wxRIGHT, 5);
 	buttonSizer->Add(btnEditFolders, 0, wxRIGHT, 5);
+	buttonSizer->Add(btnRevertToBase, 0, wxRIGHT, 5);
 	buttonSizer->AddStretchSpacer(1);
 	buttonSizer->Add(btnClose, 0);
 	mainSizer->Add(buttonSizer, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, 8);
@@ -351,6 +420,15 @@ SliderDataLocationsDialog::SliderDataLocationsDialog(OutfitStudioFrame* owner, O
 		if (SliderDataList::EditFolders(this, this->project, rows, selectedRows))
 			MarkChangedAndRefresh();
 	});
+	btnRevertToBase->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+		std::vector<size_t> selectedRows;
+		SliderDataList::GetSelectedRows(sliderDataList, rows, selectedRows);
+		if (SliderDataList::RevertToBase(this, this->project, rows, selectedRows)) {
+			if (this->owner)
+				this->owner->ApplySliders();
+			MarkChangedAndRefresh();
+		}
+	});
 	btnClose->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { EndModal(wxID_CLOSE); });
 
 	RefreshRows();
@@ -362,9 +440,11 @@ void SliderDataLocationsDialog::UpdateButtons() {
 	size_t selectionCount = SliderDataList::GetSelectedRows(sliderDataList, rows, selectedRows);
 	bool allLocal = SliderDataList::AllHaveSource(rows, selectedRows, true);
 	bool allExternal = SliderDataList::AllHaveSource(rows, selectedRows, false);
+	bool anyInherited = SliderDataList::AnyInherited(rows, selectedRows);
 	btnMakeLocal->Enable(selectionCount > 0 && allExternal);
 	btnMakeExternal->Enable(selectionCount > 0 && allLocal);
-	btnEditFolders->Enable(selectionCount > 0 && allExternal);
+	btnEditFolders->Enable(selectionCount > 0 && allExternal && !anyInherited);
+	btnRevertToBase->Enable(SliderDataList::AllOverridden(rows, selectedRows));
 }
 
 void SliderDataLocationsDialog::ApplyFilters() {
@@ -377,7 +457,9 @@ void SliderDataLocationsDialog::ApplyFilters() {
 		const auto& row = rows[rowIndex];
 		if (sourceFilter == 1 && !row.local)
 			continue;
-		if (sourceFilter == 2 && row.local)
+		if (sourceFilter == 2 && (row.local || row.inherited))
+			continue;
+		if (sourceFilter == 3 && !row.inherited)
 			continue;
 		if (statusFilter == 1 && !row.resolved)
 			continue;

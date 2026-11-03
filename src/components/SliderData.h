@@ -16,13 +16,27 @@ See the included LICENSE file
 
 using namespace tinyxml2;
 
+// Text of an element, empty if it has none
+inline std::string ElementText(const XMLElement* element) {
+	const char* text = element->GetText();
+	return text ? text : "";
+}
+
+// Value of an attribute, empty if it's missing
+inline std::string AttributeText(const XMLElement* element, const char* name) {
+	const char* value = element->Attribute(name);
+	return value ? value : "";
+}
+
 struct DiffInfo {
 	bool bLocal;			// Local files use the slider set's directory for path info. Otherwise, it uses the target's data path.
+	bool bInherited;		// Comes from the base project, which owns the data.
 	std::string dataName;	// Alias for the data.
 	std::string targetName; // Shape affected by the data.
 	std::string fileName;	// File name not including path.
-	DiffInfo(bool l = false, const std::string& dn = "", const std::string& tn = "", const std::string& fn = "")
+	DiffInfo(bool l = false, const std::string& dn = "", const std::string& tn = "", const std::string& fn = "", bool inherited = false)
 		: bLocal(l)
+		, bInherited(inherited)
 		, dataName(dn)
 		, targetName(tn)
 		, fileName(fn) {}
@@ -39,6 +53,7 @@ public:
 	float defSmallValue = 0.0f;
 	float defBigValue = 0.0f;
 	std::vector<std::string> zapToggles;
+	bool bInherited = false; // The properties above come from the base project.
 
 	float curValue = 0.0f;
 	bool bShow = true;
@@ -100,15 +115,50 @@ public:
 	}
 
 	// Creates a data file record and returns the record index.
-	size_t AddDataFile(const std::string& shapeTarget, const std::string& dataAlias, const std::string& fileName, bool localData = true) {
-		dataFiles.emplace_back(localData, dataAlias, shapeTarget, fileName);
+	size_t AddDataFile(const std::string& shapeTarget, const std::string& dataAlias, const std::string& fileName, bool localData = true, bool inherited = false) {
+		dataFiles.emplace_back(localData, dataAlias, shapeTarget, fileName, inherited);
 		return dataFiles.size() - 1;
+	}
+
+	// Takes the properties of another slider, but not its name and data.
+	void CopyPropertiesFrom(const SliderData& other) {
+		bHidden = other.bHidden;
+		bInvert = other.bInvert;
+		bZap = other.bZap;
+		bClamp = other.bClamp;
+		bUV = other.bUV;
+		defSmallValue = other.defSmallValue;
+		defBigValue = other.defBigValue;
+		zapToggles = other.zapToggles;
+	}
+
+	bool HasInheritedData() const {
+		for (auto& df : dataFiles)
+			if (df.bInherited)
+				return true;
+
+		return false;
+	}
+
+	// Makes the slider and its data the project's own.
+	void ClearInherited() {
+		bInherited = false;
+		for (auto& df : dataFiles)
+			df.bInherited = false;
 	}
 
 	bool IsLocalData(const std::string& dataAlias) {
 		for (auto& df : dataFiles)
 			if (df.dataName == dataAlias)
 				return df.bLocal;
+
+		return false;
+	}
+
+	bool IsInheritedData(const std::string& dataAlias) {
+		for (auto& df : dataFiles)
+			if (df.dataName == dataAlias)
+				return df.bInherited;
 
 		return false;
 	}

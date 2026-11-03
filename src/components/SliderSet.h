@@ -13,7 +13,9 @@ See the included LICENSE file
 #include <algorithm>
 #include <cstddef>
 #include <map>
+#include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 using namespace tinyxml2;
@@ -28,6 +30,23 @@ public:
 	bool smoothSeamNormals = true;
 	float smoothSeamNormalsAngle = SliderSetDefaultSmoothAngle;
 	bool lockNormals = false;
+	uint32_t vertexCount = 0; // Add-ons: vertices of the base project's shape that their data was made for, 0 if unknown.
+};
+
+// What came of loading the base projects of a slider set.
+struct SliderSetResolveStatus {
+	bool baseFound = false;	   // The base project was found and merged in.
+	bool baseMissing = false;  // The set names a base project that wasn't found, so it's used as it was saved.
+	bool newerVersion = false; // The file was saved by a newer version, which can have left out things this one doesn't read.
+	std::vector<std::string> warnings;
+
+	// With the base project found: its data folder and NIF file, its sliders, and its data of each
+	// slider and target the way the set inherits it
+	std::string baseDataFolder;
+	std::string baseInputFile;
+	std::set<std::string> baseSliders;
+	std::map<std::pair<std::string, std::string>, DiffInfo> baseData;
+	std::map<std::string, std::vector<std::string>> baseDataFolders; // By target, the data folders inherited data is in
 };
 
 struct SliderDataFileResolution {
@@ -42,6 +61,7 @@ struct SliderDataFileResolution {
 
 class SliderSet {
 	std::string name;
+	std::string projectID; // GUID of the project, which stays the same when it's renamed. Empty for older projects.
 	std::string baseDataPath; // Base data path - from application configuration.
 	std::string datafolder;	  // Default data folder specified for a slider set.
 	std::string inputfile;
@@ -64,6 +84,16 @@ class SliderSet {
 	std::string refProjectFile;     // OSP file path relative to project dir
 	std::string refProjectName;     // Slider set name in the OSP file
 	std::string refShapeName;       // Shape name in the project
+
+	// Base project of a variant or add-on, which the sliders are inherited from
+	std::string baseProjectFile;			 // OSP file path relative to project dir, only a hint
+	std::string baseProjectName;			 // Slider set name, which identifies the base project
+	std::string baseProjectID;				 // GUID of the base project, if it has one
+	bool addOn = false;						 // Uses the shapes and NIF file of the base project, saved as <SliderSetAddOn>
+	std::string sliderDataFile;				 // Add-ons: .osd file name of their own data in the data folder
+	std::vector<std::string> removedSliders; // Sliders of the base project that aren't used
+	std::vector<std::string> unknownElements; // Elements this version doesn't know, as XML text to write them back
+	SliderSetResolveStatus resolveStatus;
 
 	SliderData Empty;
 
@@ -104,12 +134,78 @@ public:
 	const std::string& GetReferenceProjectName() const { return refProjectName; }
 	const std::string& GetReferenceShapeName() const { return refShapeName; }
 
+	const std::string& GetProjectID() const { return projectID; }
+	void SetProjectID(const std::string& id) { projectID = id; }
+	// A new random GUID for a project
+	static std::string GenerateProjectID();
+
+	bool HasBaseProject() const { return !baseProjectName.empty(); }
+	const std::string& GetBaseProjectFile() const { return baseProjectFile; }
+	const std::string& GetBaseProjectName() const { return baseProjectName; }
+	const std::string& GetBaseProjectID() const { return baseProjectID; }
+	void SetBaseProject(const std::string& projectFile, const std::string& projectName, const std::string& id) {
+		baseProjectFile = projectFile;
+		baseProjectName = projectName;
+		baseProjectID = id;
+	}
+	// Turns a variant or add-on into a normal project. Its inherited sliders and data become its own.
+	void ClearBaseProject();
+
+	bool IsAddOn() const { return addOn; }
+	void SetAddOn(bool inAddOn) { addOn = inAddOn; }
+	const std::string& GetSliderDataFile() const { return sliderDataFile; }
+	void SetSliderDataFile(const std::string& fileName) { sliderDataFile = fileName; }
+
+	const std::vector<std::string>& GetRemovedSliders() const { return removedSliders; }
+	void SetRemovedSliders(const std::vector<std::string>& sliderNames) { removedSliders = sliderNames; }
+	bool IsRemovedSlider(const std::string& sliderName) const {
+		return std::find(removedSliders.begin(), removedSliders.end(), sliderName) != removedSliders.end();
+	}
+	void AddRemovedSlider(const std::string& sliderName) {
+		if (!IsRemovedSlider(sliderName))
+			removedSliders.push_back(sliderName);
+	}
+	void RemoveRemovedSlider(const std::string& sliderName) {
+		removedSliders.erase(std::remove(removedSliders.begin(), removedSliders.end(), sliderName), removedSliders.end());
+	}
+
+	const std::vector<std::string>& GetUnknownElements() const { return unknownElements; }
+	void SetUnknownElements(const std::vector<std::string>& elements) { unknownElements = elements; }
+
+	const SliderSetResolveStatus& GetResolveStatus() const { return resolveStatus; }
+	void SetResolveStatus(const SliderSetResolveStatus& status) { resolveStatus = status; }
+
+	uint32_t GetShapeVertexCount(const std::string& shapeName) const {
+		auto shape = shapeAttributes.find(shapeName);
+		return shape != shapeAttributes.end() ? shape->second.vertexCount : 0;
+	}
+	void SetShapeVertexCount(const std::string& shapeName, uint32_t vertexCount) {
+		auto shape = shapeAttributes.find(shapeName);
+		if (shape != shapeAttributes.end())
+			shape->second.vertexCount = vertexCount;
+	}
+
+	// Merges the sliders of the base project into this set, which holds what was saved for it.
+	// 'base' already has everything that it inherits itself.
+	void InheritFrom(const SliderSet& base);
+
+	// Turns the set, as loaded from a project file, into a new variant or add-on of that project that
+	// inherits all of it.
+	void MakeDerivedFrom(const std::string& projectFile, const std::string& projectName, bool asAddOn);
+
+	// Whether the base project has the slider. Without the base project loaded, what the slider inherits tells.
+	bool BaseHasSlider(const std::string& sliderName);
+	// The base project's data of a slider for a target as the set would inherit it, or nullptr.
+	const DiffInfo* BaseData(const std::string& sliderName, const std::string& targetName) const;
+	// Adds data folders that inherited data of a target needs, after the ones the target has.
+	void AddInheritedDataFolders(const std::string& targetName, const std::vector<std::string>& dataFolders);
+
 	void Clear() {
 		shapeAttributes.clear();
 		sliders.clear();
 	}
 
-	std::string GetBaseDataPath() { return baseDataPath; }
+	std::string GetBaseDataPath() const { return baseDataPath; }
 	void SetBaseDataPath(const std::string& inPath) { baseDataPath = inPath; }
 
 	std::vector<NormalGenLayer>& GetNormalsGenLayers() { return defNormalGen; }
@@ -135,14 +231,14 @@ public:
 	size_t CloneSlider(const std::string& sliderName, const std::string& cloneName);
 	void DeleteSlider(const std::string& sliderName);
 
-	std::string GetName() { return name; }
+	std::string GetName() const { return name; }
 
-	std::string GetInputFile() { return inputfile; }
-	std::string GetInputFileName();
+	std::string GetInputFile() const { return inputfile; }
+	std::string GetInputFileName() const;
 	std::string GetOutputPath() { return outputpath; }
 	std::string GetOutputFile() { return outputfile; }
 	std::string GetOutputFilePath();
-	std::string GetDefaultDataFolder() { return datafolder; }
+	std::string GetDefaultDataFolder() const { return datafolder; }
 	std::vector<std::string> GetTargetDataFolders(const std::string& targetName) const;
 	SliderDataFileResolution ResolveSliderDataFile(const DiffInfo& dataFile, const std::vector<std::string>* externalDataFolders = nullptr) const;
 	DiffInfo* GetSliderDataFile(const size_t sliderIndex, const size_t dataFileIndex);
@@ -326,8 +422,8 @@ public:
 		}
 	}
 
-	std::map<std::string, SliderSetShape>::const_iterator ShapesBegin() { return shapeAttributes.cbegin(); }
-	std::map<std::string, SliderSetShape>::const_iterator ShapesEnd() { return shapeAttributes.cend(); }
+	std::map<std::string, SliderSetShape>::const_iterator ShapesBegin() const { return shapeAttributes.cbegin(); }
+	std::map<std::string, SliderSetShape>::const_iterator ShapesEnd() const { return shapeAttributes.cend(); }
 
 	std::string ShapeToDataName(const size_t index, const std::string& shapeName) {
 		auto shape = shapeAttributes.find(shapeName);
@@ -336,6 +432,8 @@ public:
 
 		return "";
 	}
+
+	bool HasShape(const std::string& shapeName) const { return shapeAttributes.find(shapeName) != shapeAttributes.end(); }
 
 	std::string ShapeToTarget(const std::string& shapeName) {
 		auto shape = shapeAttributes.find(shapeName);
@@ -357,9 +455,10 @@ public:
 		return dataFolders;
 	}
 
-	size_t size() { return sliders.size(); }
+	size_t size() const { return sliders.size(); }
 
 	SliderData& operator[](const size_t idx) { return sliders[idx]; }
+	const SliderData& operator[](const size_t idx) const { return sliders[idx]; }
 
 	SliderData& operator[](const std::string& sliderName) {
 		for (size_t i = 0; i < sliders.size(); i++)
@@ -395,6 +494,10 @@ class SliderSetFile {
 	void UpgradeLegacyFormat();
 
 public:
+	// Version 2 adds base projects (<BaseProject>) and slider add-ons (<SliderSetAddOn>).
+	// Files only get it when they use them, older versions read the rest of version 2 files.
+	static constexpr int CurrentVersion = 2;
+
 	std::string fileName;
 
 	SliderSetFile() {}
@@ -402,6 +505,7 @@ public:
 
 	bool fail() { return error != 0; }
 	int GetError() { return error; }
+	int GetVersion() const { return version; }
 
 	// Loads the XML document and identifies included slider set names. On a failure, sets the internal error value.
 	void Open(const std::string& srcFileName);
@@ -419,7 +523,17 @@ public:
 	void SetShapes(const std::string& set, std::vector<std::string>& outShapeNames);
 
 	// Gets a single slider set from the XML document based on the name.
-	int GetSet(const std::string& setName, SliderSet& outSliderSet, bool appendNewSliders = true, const std::string& onlyShapeName = "");
+	// With 'resolveBase', the sliders of a variant's or add-on's base project are merged in. Otherwise the set
+	// is read as it was saved, which still has all sliders, but not the changes to the base since then.
+	int GetSet(const std::string& setName, SliderSet& outSliderSet, bool appendNewSliders = true, const std::string& onlyShapeName = "", bool resolveBase = true);
+	// True if the set is stored as a slider add-on.
+	bool IsAddOn(const std::string& setName);
+	// Name of the set's base project as it was saved, empty for a project without one. Doesn't look the base up.
+	std::string GetSetBaseProjectName(const std::string& setName);
+	// True if the set's source file or one of its slider data names contains one of the lower case names
+	bool SetMentions(const std::string& setName, const std::vector<std::string>& lowerNames);
+	// Name of the set with the project ID, empty if there's none.
+	std::string FindSetByID(const std::string& projectID);
 	// Adds all of the slider sets in the file to the supplied slider set vector. Does not clear the vector before doing so.
 	int GetAllSets(std::vector<SliderSet>& outAppendSets);
 	// Gets only the output file path for the set

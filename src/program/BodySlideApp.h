@@ -131,6 +131,7 @@ private:
 	std::map<std::string, std::string, case_insensitive_compare> outfitNameSource; // All currently defined outfits.
 	std::vector<std::string> outfitNameOrder;									   // All currently defined outfits, in their order of appearance.
 	std::vector<std::string> outfitHasZaps;										   // All currently defined outfits that have visible zaps.
+	std::map<std::string, std::pair<std::string, bool>, case_insensitive_compare> outfitBaseProjects; // Variants and add-ons: base project name, and whether it's an add-on
 	std::map<std::string, std::vector<std::string>> groupMembers;				   // All currently defined groups.
 	std::map<std::string, std::string> groupAlias;								   // Group name aliases.
 	std::vector<std::string> ungroupedOutfits;									   // Outfits without a group.
@@ -305,6 +306,13 @@ public:
 	void CharHook(wxKeyEvent& event);
 
 	bool OutfitExists(const std::string& name) const { return outfitNameSource.find(name) != outfitNameSource.end(); }
+	// Name of the outfit's base project, empty for a project without one. 'addOn' tells whether it's an add-on or a variant.
+	std::string GetOutfitBaseProject(const std::string& name, bool* addOn = nullptr) const {
+		auto base = outfitBaseProjects.find(name);
+		if (addOn)
+			*addOn = base != outfitBaseProjects.end() && base->second.second;
+		return base != outfitBaseProjects.end() ? base->second.first : "";
+	}
 	bool PresetExists(const std::string& name);
 
 	void LoadFavorites();
@@ -368,6 +376,8 @@ public:
 		return outFileCount.find(GetActiveSet().GetOutputFilePath())->second;
 	}
 
+	// Projects that are variants or add-ons of the outfit.
+	std::vector<std::string> GetDerivedProjects(const std::string& outfitName);
 	void DeleteOutfit(const std::string& outfitName);
 	void DeletePreset(const std::string& presetName);
 
@@ -631,6 +641,7 @@ public:
 	wxTimer delayLoad;
 
 	wxChoice* outfitChoice = nullptr;
+	wxStaticText* lblOutfitBase = nullptr;
 	wxChoice* presetChoice = nullptr;
 	wxButton* btnFavoriteOutfit = nullptr;
 	wxButton* btnFavoritePreset = nullptr;
@@ -689,6 +700,8 @@ public:
 
 	void ClearPresetList();
 	void ClearOutfitList();
+	// Shows under the outfit list what the loaded project is an add-on or variant of
+	void ShowOutfitBaseProject(const SliderSet* set);
 	void ClearSliderGUI();
 	void SetPresetChanged(bool changed = true);
 
@@ -714,6 +727,7 @@ private:
 
 	void OnEnterSliderWindow(wxMouseEvent& event);
 	wxString FavoriteChoiceLabel(const std::string& name, bool favorite) const;
+	wxString OutfitChoiceLabel(const std::string& name) const;
 	bool SelectChoiceName(wxChoice* choice, const std::vector<std::string>& names, const std::string& selectItem) const;
 	void SetFavoriteButtonBitmap(wxButton* button, bool favorite) const;
 	void UpdateFavoriteButtons();

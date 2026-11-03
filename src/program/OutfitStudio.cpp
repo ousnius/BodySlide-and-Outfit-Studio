@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../components/MaskOps.h"
 #include "../components/SliderGroup.h"
 #include "../components/SliderPresets.h"
+#include "../components/SliderSetIndex.h"
 #include "../files/HkxFile.h"
 #include "../files/MaskFile.h"
 #include "../files/TriFile.h"
@@ -72,6 +73,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 using namespace nifly;
 
 namespace {
+
+// A packed variant or add-on refers to its base project in the merged file when that's packed along.
+// Otherwise the base project has to be installed already, which is noted.
+void PackBaseProject(SliderSet& set, const std::set<std::string>& packedProjects, const std::string& mergedFile, std::set<std::string>& missingBaseProjects) {
+	if (!set.HasBaseProject())
+		return;
+
+	if (packedProjects.find(set.GetBaseProjectName()) != packedProjects.end())
+		set.SetBaseProject("SliderSets" + std::string(PathSepStr) + mergedFile, set.GetBaseProjectName(), set.GetBaseProjectID());
+	else
+		missingBaseProjects.insert(set.GetBaseProjectName());
+}
 
 // The playback timer only backs OnAnimIdle up for stretches where no idle events
 // arrive. It cannot pace playback on its own: on MSW it is a WM_TIMER, which
@@ -455,6 +468,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_TREE_ITEM_RIGHT_CLICK(XRCID("outfitShapes"), OutfitStudioFrame::OnShapeContext)
 	EVT_TREE_BEGIN_DRAG(XRCID("outfitShapes"), OutfitStudioFrame::OnShapeDrag)
 	EVT_TREE_END_DRAG(XRCID("outfitShapes"), OutfitStudioFrame::OnShapeDrop)
+	EVT_TREE_ITEM_GETTOOLTIP(XRCID("outfitShapes"), OutfitStudioFrame::OnShapeTooltip)
 
 	EVT_TEXT_ENTER(XRCID("bonesFilter"), OutfitStudioFrame::OnBonesFilterChanged)
 	EVT_TEXT(XRCID("bonesFilter"), OutfitStudioFrame::OnBonesFilterChanged)
@@ -2025,12 +2039,14 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 
 			SliderSetFile projectFile;
 			projectFile.New(mergedFilePath);
+			std::set<std::string> missingBaseProjects;
 
 			for (auto& setName : selectedProjects) {
 				if (projectSources.find(setName) == projectSources.end())
 					continue;
 
 				SliderSet set = projectSources[setName];
+				PackBaseProject(set, selectedProjects, mergedFile, missingBaseProjects);
 				projectFile.UpdateSet(set);
 
 				// Add input file to folder
@@ -2060,7 +2076,7 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 					for (auto it = set.ShapesBegin(); it != set.ShapesEnd(); ++it) {
 						std::string target = set.ShapeToTarget(it->first);
 						std::string targetDataName = set[i].TargetDataName(target);
-						if (set[i].IsLocalData(targetDataName)) {
+						if (set[i].IsLocalData(targetDataName) && !set[i].IsInheritedData(targetDataName)) {
 							std::string dataFileName = set[i].DataFileName(targetDataName);
 							if (dataFileName.compare(dataFileName.size() - 4, dataFileName.size(), ".bsd") != 0) {
 								// Split target file name to get OSD file name
@@ -2155,6 +2171,13 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 				}
 			}
 
+			if (!missingBaseProjects.empty())
+				wxMessageBox(wxString::Format(_("These base projects of packed variants or add-ons aren't in the pack, so they have to be installed for them: %s"),
+											  wxString::FromUTF8(JoinStrings(std::vector<std::string>(missingBaseProjects.begin(), missingBaseProjects.end()), ", "))),
+							 _("Pack Projects"),
+							 wxOK | wxICON_INFORMATION,
+							 packProjects);
+
 			EndProgress(_("Packing finished."));
 		});
 
@@ -2172,6 +2195,7 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 
 			SliderSetFile projectFile;
 			projectFile.New(mergedFilePath);
+			std::set<std::string> missingBaseProjects;
 
 			wxFFileOutputStream out(fileName);
 			wxZipOutputStream zip(out);
@@ -2181,6 +2205,7 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 					continue;
 
 				SliderSet set = projectSources[setName];
+				PackBaseProject(set, selectedProjects, mergedFile, missingBaseProjects);
 				projectFile.UpdateSet(set);
 
 				// Add input file to archive
@@ -2214,7 +2239,7 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 					for (auto it = set.ShapesBegin(); it != set.ShapesEnd(); ++it) {
 						std::string target = set.ShapeToTarget(it->first);
 						std::string targetDataName = set[i].TargetDataName(target);
-						if (set[i].IsLocalData(targetDataName)) {
+						if (set[i].IsLocalData(targetDataName) && !set[i].IsInheritedData(targetDataName)) {
 							std::string dataFileName = set[i].DataFileName(targetDataName);
 							if (dataFileName.compare(dataFileName.size() - 4, dataFileName.size(), ".bsd") != 0) {
 								// Split target file name to get OSD file name
@@ -2320,6 +2345,13 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 					return;
 				}
 			}
+
+			if (!missingBaseProjects.empty())
+				wxMessageBox(wxString::Format(_("These base projects of packed variants or add-ons aren't in the pack, so they have to be installed for them: %s"),
+											  wxString::FromUTF8(JoinStrings(std::vector<std::string>(missingBaseProjects.begin(), missingBaseProjects.end()), ", "))),
+							 _("Pack Projects"),
+							 wxOK | wxICON_INFORMATION,
+							 packProjects);
 
 			EndProgress(_("Packing finished."));
 		});
@@ -2661,6 +2693,7 @@ bool OutfitStudioFrame::SaveProject() {
 	if (projectNotes)
 		project->activeSet.SetNotes(projectNotes->GetValue().ToUTF8().data());
 
+	// The files don't change here, so other projects that use them aren't looked for
 	std::string error = project->Save(project->mFileName,
 									  project->mOutfitName,
 									  project->mDataDir,
@@ -2672,7 +2705,8 @@ bool OutfitStudioFrame::SaveProject() {
 									  project->bPreventMorphFile,
 									  project->bKeepZappedShapes,
 									  project->mSFMorphPath,
-									  project->mSFMorphTargetShape);
+									  project->mSFMorphTargetShape,
+									  SharedFilesCheck::Skip);
 
 	if (!error.empty()) {
 		wxLogError(error.c_str());
@@ -2686,9 +2720,76 @@ bool OutfitStudioFrame::SaveProject() {
 	return true;
 }
 
+namespace {
+// Data folder of the Save Project As dialog, relative to the "ShapeData" folder
+wxString SaveAsDataDir(wxDialog& dlg) {
+	auto shapeDataFolder = XRCCTRL(dlg, "sssShapeDataFolder", wxDirPickerCtrl);
+	wxString dataDir = shapeDataFolder->GetDirName().GetFullName();
+	if (dataDir.empty())
+		dataDir = shapeDataFolder->GetPath();
+
+	wxFileName relativeFolder(dataDir);
+	if (!dataDir.empty() && !relativeFolder.IsRelative()) {
+		relativeFolder.MakeRelativeTo(wxString::Format("%s/%s", wxString::FromUTF8(ProjectUtil::GetProjectPath()), "ShapeData"));
+		dataDir = relativeFolder.GetFullPath();
+	}
+
+	return dataDir;
+}
+} // namespace
+
+SharedFilesTarget OutfitStudioFrame::SaveAsSharedFilesTarget(wxDialog& dlg, bool hasBase, bool addOn) {
+	SharedFilesTarget target;
+	target.hasBase = hasBase;
+	target.addOn = addOn;
+	target.dataDir = SaveAsDataDir(dlg).ToUTF8();
+
+	wxString nifName = XRCCTRL(dlg, "sssShapeDataFile", wxFilePickerCtrl)->GetFileName().GetFullName();
+	if (!nifName.EndsWith(".nif"))
+		nifName.Append(".nif");
+	target.nifName = nifName.ToUTF8();
+	project->ReplaceForbidden(target.nifName);
+
+	if (addOn) {
+		wxString dataFile = XRCCTRL(dlg, "sssSliderDataFile", wxTextCtrl)->GetValue();
+		if (!dataFile.Lower().EndsWith(".osd"))
+			dataFile.Append(".osd");
+		target.osdName = dataFile.ToUTF8();
+		project->ReplaceForbidden(target.osdName);
+	}
+	else
+		target.osdName = target.nifName.substr(0, target.nifName.find_last_of('.')) + ".osd";
+
+	// The project itself isn't one of the others, like when saving
+	wxFileName setFile = XRCCTRL(dlg, "sssSliderSetFile", wxFilePickerCtrl)->GetFileName();
+	if (setFile.GetExt() != "osp")
+		setFile.SetExt("osp");
+	if (setFile.GetDirs().Index("SliderSets") == wxNOT_FOUND)
+		setFile = wxFileName("SliderSets" + wxString(PathSepStr) + setFile.GetFullName());
+	if (setFile.IsRelative())
+		setFile.MakeAbsolute(wxString::FromUTF8(ProjectUtil::GetProjectPath()));
+	target.setFile = setFile.GetFullPath().ToUTF8();
+	target.setName = XRCCTRL(dlg, "sssName", wxTextCtrl)->GetValue().ToUTF8();
+
+	return target;
+}
+
 bool OutfitStudioFrame::SaveProjectAs() {
 	wxDialog dlg;
 	int result = wxID_CANCEL;
+
+	// Looks for other projects that use the files while the dialog is open
+	std::unique_ptr<SliderSetIndexTask> sharedFilesTask;
+
+	// Base project chosen or cleared in the dialog
+	struct {
+		bool changed = false;
+		std::string file;
+		std::string set;
+		bool addOn = false;
+		std::string baseFolder;
+		std::string baseNif;
+	} baseChoice;
 
 	if (!project->GetWorkNif()->IsValid()) {
 		projectHost.ShowMessage(HostMessageLevel::Error, _("There are no valid shapes loaded!"), _("Error"));
@@ -2813,7 +2914,208 @@ bool OutfitStudioFrame::SaveProjectAs() {
 		else
 			XRCCTRL(dlg, "sssAutoCopyRef", wxCheckBox)->SetValue(project->mCopyRef);
 
+		// The base project changes when saving, not before
+		auto shapeDataFolder = XRCCTRL(dlg, "sssShapeDataFolder", wxDirPickerCtrl);
+		auto shapeDataFile = XRCCTRL(dlg, "sssShapeDataFile", wxFilePickerCtrl);
+		auto sliderDataFile = XRCCTRL(dlg, "sssSliderDataFile", wxTextCtrl);
+		const wxString ownDataFolder = shapeDataFolder->GetPath();
+		const wxString ownDataFile = shapeDataFile->GetPath();
+		sliderDataFile->ChangeValue(wxString::FromUTF8(project->activeSet.IsAddOn() ? project->activeSet.GetSliderDataFile() : outName + ".osd"));
+
+		auto showBaseProject = [&]() {
+			bool hasBase = baseChoice.changed ? !baseChoice.set.empty() : project->activeSet.HasBaseProject();
+			bool addOn = baseChoice.changed ? hasBase && baseChoice.addOn : project->activeSet.IsAddOn();
+			std::string baseName = baseChoice.changed ? baseChoice.set : project->activeSet.GetBaseProjectName();
+
+			wxString baseText;
+			if (hasBase)
+				baseText = wxString::Format(addOn ? _("%s (add-on)") : _("%s (variant)"), wxString::FromUTF8(baseName));
+			XRCCTRL(dlg, "sssBaseProject", wxTextCtrl)->ChangeValue(baseText);
+			XRCCTRL(dlg, "sssBaseProjectClear", wxButton)->Enable(hasBase);
+
+			// An add-on keeps the data folder and NIF file of its base project
+			if (addOn && baseChoice.changed) {
+				shapeDataFolder->SetPath(wxString::FromUTF8(baseChoice.baseFolder));
+				shapeDataFile->SetPath(wxString::FromUTF8(baseChoice.baseNif));
+			}
+			else if (!addOn && project->activeSet.IsAddOn()) {
+				// Without the add-on, the project needs a NIF file of its own
+				shapeDataFolder->SetPath(ownDataFolder);
+				wxString dataFile = sliderDataFile->GetValue();
+				shapeDataFile->SetPath(dataFile.BeforeLast('.') + ".nif");
+			}
+			else if (!addOn) {
+				shapeDataFolder->SetPath(ownDataFolder);
+				shapeDataFile->SetPath(ownDataFile);
+			}
+
+			shapeDataFolder->Enable(!addOn);
+			shapeDataFile->Enable(!addOn);
+			XRCCTRL(dlg, "m_sssSliderDataFile", wxStaticText)->Show(addOn);
+			sliderDataFile->Show(addOn);
+
+			wxSize size = dlg.GetSize();
+			dlg.Layout();
+			dlg.Fit();
+			dlg.SetSize(std::max(size.x, dlg.GetSize().x), dlg.GetSize().y);
+		};
+
+		XRCCTRL(dlg, "sssBaseProjectChoose", wxButton)->Bind(wxEVT_BUTTON, [&](wxCommandEvent&) {
+			wxFileDialog baseDialog(&dlg, _("Select the base project"), wxString::FromUTF8(ProjectUtil::GetProjectPath()) + "/SliderSets", wxEmptyString, "Slider Set Files (*.osp;*.xml)|*.osp;*.xml", wxFD_FILE_MUST_EXIST);
+			if (baseDialog.ShowModal() == wxID_CANCEL)
+				return;
+
+			std::string baseFile{baseDialog.GetPath().ToUTF8()};
+			std::string baseSet = ChooseSliderSetName(baseFile);
+			if (baseSet.empty())
+				return;
+
+			SliderSet base;
+			SliderSetFile baseSetFile(baseFile);
+			if (baseSetFile.GetSet(baseSet, base) != 0)
+				return;
+
+			// An add-on needs the shapes of its base project as they are
+			wxArrayString kinds;
+			kinds.Add(_("Variant, with a NIF file of its own"));
+			if (project->BaseGeometryMatches(baseFile, baseSet))
+				kinds.Add(_("Add-on, which uses the shapes and NIF file of the base project"));
+
+			int kind = kinds.GetCount() > 1 ? 1 : 0;
+			if (!projectHost.ChooseOne(wxString::Format(_("Make this project a variant or add-on of '%s'?\n\nSliders and slider data that equal the base project's are inherited from it then, and only the rest is saved with this project."),
+														wxString::FromUTF8(baseSet)),
+									   _("Base Project"),
+									   kinds,
+									   kind))
+				return;
+
+			baseChoice.changed = true;
+			baseChoice.file = baseFile;
+			baseChoice.set = baseSet;
+			baseChoice.addOn = kind == 1;
+			baseChoice.baseFolder = base.GetDefaultDataFolder();
+			baseChoice.baseNif = base.GetInputFile();
+			showBaseProject();
+		});
+
+		XRCCTRL(dlg, "sssBaseProjectClear", wxButton)->Bind(wxEVT_BUTTON, [&](wxCommandEvent&) {
+			baseChoice.changed = true;
+			baseChoice.set.clear();
+			showBaseProject();
+		});
+
+		// Other projects that use the NIF and .osd file are looked for while the dialog is open, and again
+		// when the files change. The fields are read on a timer, because some of them change without events.
+		auto sharedFilesHint = XRCCTRL(dlg, "sssSharedNifHint", wxStaticText);
+		std::string sharedFilesKey;	  // Files and project the hint was made for
+		std::string pendingFilesKey;  // Files that changed and are looked for once they stay the same
+		wxLongLong pendingSince = 0;
+		bool sharedFilesShown = false;
+
+		// Green when no other project uses the files, orange when some do
+		enum class SharedFilesState { Checking, Unused, Used };
+		auto setSharedFilesHint = [&](const wxString& text, SharedFilesState state) {
+			bool dark = dlg.GetBackgroundColour().GetLuminance() < 0.5;
+			if (state == SharedFilesState::Unused)
+				sharedFilesHint->SetForegroundColour(dark ? wxColour(110, 200, 110) : wxColour(0, 128, 0));
+			else if (state == SharedFilesState::Used)
+				sharedFilesHint->SetForegroundColour(dark ? wxColour(255, 170, 80) : wxColour(196, 98, 0));
+			else
+				sharedFilesHint->SetForegroundColour(dlg.GetForegroundColour());
+
+			// Wrap() does nothing for the width it wrapped at before, even with a new label
+			sharedFilesHint->SetLabel(text);
+			sharedFilesHint->Wrap(-1);
+			sharedFilesHint->Wrap(FromDIP(440));
+			sharedFilesHint->Show(!text.empty());
+
+			wxSize size = dlg.GetSize();
+			dlg.Layout();
+			dlg.Fit();
+			dlg.SetSize(std::max(size.x, dlg.GetSize().x), dlg.GetSize().y);
+		};
+
+		auto listSets = [](const std::vector<const SliderSetIndexEntry*>& sets) {
+			std::vector<std::string> names;
+			for (auto* entry : sets)
+				if (std::find(names.begin(), names.end(), entry->setName) == names.end())
+					names.push_back(entry->setName);
+
+			const size_t maxNames = 5;
+			wxString list = wxString::FromUTF8(JoinStrings(std::vector<std::string>(names.begin(), names.begin() + std::min(names.size(), maxNames)), ", "));
+			if (names.size() > maxNames)
+				list += wxString::Format(_(" and %zu more"), names.size() - maxNames);
+			return list;
+		};
+
+		auto showSharedFiles = [&](const SharedFilesTarget& target) {
+			const SliderSetIndex& index = sharedFilesTask->Index();
+			std::string projectPath = ProjectUtil::GetProjectPath();
+			std::string folderPath = projectPath + PathSepStr + "ShapeData" + PathSepStr + target.dataDir;
+
+			wxString text;
+			if (!target.addOn) {
+				auto nifSets = index.SetsUsingNif(folderPath + PathSepStr + target.nifName, target.setFile, target.setName);
+				if (!nifSets.empty()) {
+					text = wxString::Format(_("Other projects use this NIF file too: %s."), listSets(nifSets));
+					if (!target.hasBase)
+						text += " " + _("If this project only adds sliders to one of them, make it an add-on of that project with Base Project > Choose..., so that it saves only its own slider data.");
+				}
+			}
+
+			auto dataSets = index.SetsUsingDataFile(folderPath + PathSepStr + target.osdName, target.setFile, target.setName);
+			if (!dataSets.empty()) {
+				if (!text.empty())
+					text += "\n\n";
+				text += wxString::Format(_("Other projects have slider data in '%s', which stays in it: %s."), wxString::FromUTF8(target.osdName), listSets(dataSets));
+			}
+
+			if (text.empty())
+				setSharedFilesHint(_("No other project uses these files."), SharedFilesState::Unused);
+			else
+				setSharedFilesHint(text, SharedFilesState::Used);
+		};
+
+		wxTimer sharedFilesTimer(&dlg);
+		dlg.Bind(wxEVT_TIMER, [&](wxTimerEvent&) {
+			SharedFilesTarget target = SaveAsSharedFilesTarget(dlg, baseChoice.changed ? !baseChoice.set.empty() : project->activeSet.HasBaseProject(),
+															   baseChoice.changed ? !baseChoice.set.empty() && baseChoice.addOn : project->activeSet.IsAddOn());
+			std::string filesKey = target.nifName + "|" + target.osdName;
+			std::string key = filesKey + "|" + target.dataDir + "|" + target.setFile + "|" + target.setName + (target.addOn ? "|addon" : "") + (target.hasBase ? "|base" : "");
+
+			if (!sharedFilesTask || filesKey != JoinStrings(sharedFilesTask->FileNames(), "|")) {
+				// Wait until the files stay the same for a moment before looking again
+				if (sharedFilesTask && filesKey != pendingFilesKey) {
+					pendingFilesKey = filesKey;
+					pendingSince = wxGetLocalTimeMillis();
+					return;
+				}
+
+				if (sharedFilesTask && wxGetLocalTimeMillis() - pendingSince < 400)
+					return;
+
+				sharedFilesTask.reset();
+				sharedFilesTask = std::make_unique<SliderSetIndexTask>(ProjectUtil::GetProjectPath(), std::vector<std::string>{target.nifName, target.osdName});
+				sharedFilesShown = false;
+				sharedFilesKey.clear();
+				setSharedFilesHint(_("Looking for other projects that use these files..."), SharedFilesState::Checking);
+			}
+
+			if (sharedFilesTask->IsDone() && (!sharedFilesShown || key != sharedFilesKey)) {
+				showSharedFiles(target);
+				sharedFilesShown = true;
+				sharedFilesKey = key;
+			}
+		});
+
+		showBaseProject();
+
+		sharedFilesTimer.Start(150);
+		wxTimerEvent firstCheck(sharedFilesTimer);
+		dlg.ProcessWindowEvent(firstCheck);
+
 		result = dlg.ShowModal();
+		sharedFilesTimer.Stop();
 	}
 	if (result == wxID_CANCEL)
 		return false;
@@ -2839,20 +3141,10 @@ bool OutfitStudioFrame::SaveProjectAs() {
 		return false;
 	}
 
-	strDataDir = XRCCTRL(dlg, "sssShapeDataFolder", wxDirPickerCtrl)->GetDirName().GetFullName();
+	strDataDir = SaveAsDataDir(dlg);
 	if (strDataDir.empty()) {
-		strDataDir = XRCCTRL(dlg, "sssShapeDataFolder", wxDirPickerCtrl)->GetPath();
-		if (strDataDir.empty()) {
-			wxMessageBox(_("No data folder specified! Please try again."), _("Error"), wxOK | wxICON_ERROR);
-			return false;
-		}
-	}
-
-	wxFileName relativeFolder(strDataDir);
-	if (!relativeFolder.IsRelative()) {
-		wxString dataFolder(wxString::Format("%s/%s", wxString::FromUTF8(ProjectUtil::GetProjectPath()), "ShapeData"));
-		relativeFolder.MakeRelativeTo(dataFolder);
-		strDataDir = relativeFolder.GetFullPath();
+		wxMessageBox(_("No data folder specified! Please try again."), _("Error"), wxOK | wxICON_ERROR);
+		return false;
 	}
 
 	strBaseFile = XRCCTRL(dlg, "sssShapeDataFile", wxFilePickerCtrl)->GetFileName().GetFullName();
@@ -2874,6 +3166,30 @@ bool OutfitStudioFrame::SaveProjectAs() {
 	if (strGameFile.empty()) {
 		wxMessageBox(_("No game file name specified! Please try again."), _("Error"), wxOK | wxICON_ERROR);
 		return false;
+	}
+
+	if (baseChoice.changed) {
+		if (baseChoice.set.empty())
+			project->ClearBaseProject();
+		else {
+			std::string baseError;
+			if (!project->SetBaseProject(baseChoice.file, baseChoice.set, baseChoice.addOn, &baseError)) {
+				wxMessageBox(wxString::FromUTF8(baseError), _("Error"), wxOK | wxICON_ERROR);
+				return false;
+			}
+		}
+	}
+
+	if (project->activeSet.IsAddOn()) {
+		wxString dataFile = XRCCTRL(dlg, "sssSliderDataFile", wxTextCtrl)->GetValue();
+		if (dataFile.length() <= 4 && !dataFile.Lower().EndsWith(".osd"))
+			dataFile = strOutfitName;
+		if (!dataFile.Lower().EndsWith(".osd"))
+			dataFile.Append(".osd");
+
+		std::string dataFileName{dataFile.ToUTF8()};
+		project->ReplaceForbidden(dataFileName);
+		project->SetAddOnDataFile(dataFileName);
 	}
 
 	bool copyRef = XRCCTRL(dlg, "sssAutoCopyRef", wxCheckBox)->GetValue();
@@ -2904,7 +3220,30 @@ bool OutfitStudioFrame::SaveProjectAs() {
 	if (projectNotes)
 		project->activeSet.SetNotes(projectNotes->GetValue().ToUTF8().data());
 
-	std::string error = project->Save(sliderSetFile, strOutfitName, strDataDir, strBaseFile, strGamePath, strGameFile, genWeights, copyRef, preventMorphFile, keepZappedShapes, strSFMorphPath, strSFMorphTargetShape);
+	// Saving doesn't wait for the look for other projects that use the files
+	SharedFilesCheck sharedFilesCheck = SharedFilesCheck::Skip;
+	const SliderSetIndex* sharedFilesIndex = nullptr;
+	if (sharedFilesTask && sharedFilesTask->IsDone()) {
+		sharedFilesCheck = SharedFilesCheck::Index;
+		sharedFilesIndex = &sharedFilesTask->Index();
+	}
+	else if (sharedFilesTask)
+		sharedFilesTask->Cancel();
+
+	std::string error = project->Save(sliderSetFile,
+									  strOutfitName,
+									  strDataDir,
+									  strBaseFile,
+									  strGamePath,
+									  strGameFile,
+									  genWeights,
+									  copyRef,
+									  preventMorphFile,
+									  keepZappedShapes,
+									  strSFMorphPath,
+									  strSFMorphTargetShape,
+									  sharedFilesCheck,
+									  sharedFilesIndex);
 
 	if (error.empty()) {
 		SetPendingChanges(false);
@@ -3011,32 +3350,11 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName,
 	}
 
 	if (clearProject) {
-		NiShape* shape = project->GetBaseShape();
-		if (shape) {
-			std::string shapeName = shape->name.get();
-
-			// The reference template the set names, which deleting and reloading the shape clears. It's saved again.
-			const std::string refProjectFile = project->mRefProjectFile;
-			const std::string refProjectName = project->mRefProjectName;
-
-			// Prevent duplication if valid reference was found
-			project->DeleteShape(shape);
-
-			wxLogMessage("Loading reference shape '%s'...", shapeName);
-			UpdateProgress(50, wxString::Format(_("Loading reference shape '%s'..."), shapeName));
-
-			error = project->LoadReferenceNif(project->activeSet.GetInputFileName(), shapeName, true, true);
-			if (error) {
-				EndProgress();
-				RefreshGUIFromProj();
-				return false;
-			}
-
-			if (!refProjectFile.empty() && project->GetBaseShape()) {
-				project->mRefProjectFile = refProjectFile;
-				project->mRefProjectName = refProjectName;
-				project->SetShapeReferenceSource(shapeName, refProjectFile, refProjectName);
-			}
+		error = project->ReloadReferenceShape();
+		if (error) {
+			EndProgress();
+			RefreshGUIFromProj();
+			return false;
 		}
 
 		project->GetWorkNif()->SetShapeOrder(origShapeOrder);
@@ -4345,6 +4663,7 @@ bool OutfitStudioFrame::ConfirmSliderDataLocalForEdit(const std::vector<NiShape*
 
 	std::vector<std::pair<NiShape*, std::string>> externalData;
 	std::vector<std::string> labels;
+	bool inheritedData = false;
 
 	for (auto* shape : shapes) {
 		if (!shape)
@@ -4354,6 +4673,9 @@ bool OutfitStudioFrame::ConfirmSliderDataLocalForEdit(const std::vector<NiShape*
 		for (const auto& sliderName : sliderNames) {
 			if (sliderName.empty() || !project->SliderDataIsExternal(sliderName, shape))
 				continue;
+
+			if (!project->RenameDisconnectsFromBase(sliderName, shapeName).empty())
+				inheritedData = true;
 
 			externalData.emplace_back(shape, sliderName);
 			std::string label = shapeName + " / " + sliderName;
@@ -4365,7 +4687,9 @@ bool OutfitStudioFrame::ConfirmSliderDataLocalForEdit(const std::vector<NiShape*
 	if (externalData.empty())
 		return true;
 
-	wxString message = _("The slider data you are about to edit is external. Editing it will make the affected slider data local to this project. Continue and make it local?");
+	wxString message = inheritedData ?
+		_("The slider data you are about to edit comes from the base project. Editing it saves a copy with this project, which overrides the base project's data. Continue?") :
+		_("The slider data you are about to edit is external. Editing it will make the affected slider data local to this project. Continue and make it local?");
 	if (!labels.empty()) {
 		message += "\n\n";
 		message += _("Affected slider data:");
@@ -4458,6 +4782,10 @@ void OutfitStudioFrame::UpdateTitle() {
 		name = project->mBaseFile;
 
 	if (!name.empty()) {
+		wxString baseLabel = BaseProjectLabel();
+		if (!baseLabel.empty())
+			name += " [" + baseLabel + "]";
+
 		if (pendingChanges)
 			SetTitle(name + "* - Outfit Studio");
 		else
@@ -4465,6 +4793,83 @@ void OutfitStudioFrame::UpdateTitle() {
 	}
 	else
 		SetTitle("Outfit Studio");
+
+	UpdateProjectNode();
+}
+
+wxString OutfitStudioFrame::BaseProjectLabel() const {
+	const SliderSet& set = project->activeSet;
+	if (!set.HasBaseProject())
+		return wxEmptyString;
+
+	wxString baseName = wxString::FromUTF8(set.GetBaseProjectName());
+	if (set.GetResolveStatus().baseMissing)
+		return wxString::Format(set.IsAddOn() ? _("Add-on of %s, not found") : _("Variant of %s, not found"), baseName);
+
+	return wxString::Format(set.IsAddOn() ? _("Add-on of %s") : _("Variant of %s"), baseName);
+}
+
+void OutfitStudioFrame::UpdateProjectNode() {
+	if (!outfitRoot.IsOk())
+		return;
+
+	const SliderSet& set = project->activeSet;
+	wxString baseLabel = BaseProjectLabel();
+
+	auto shapes = project->GetWorkNif()->GetShapes();
+	wxString text;
+	if (baseLabel.empty() && shapes.size() == 1 && project->IsBaseShape(shapes.front()))
+		text = "Reference Only";
+	else
+		text = wxString::FromUTF8(project->OutfitName());
+
+	if (!baseLabel.empty())
+		text += "  [" + baseLabel + "]";
+
+	outfitShapes->SetItemText(outfitRoot, text);
+
+	if (baseLabel.empty()) {
+		outfitShapes->SetItemBold(outfitRoot, false);
+		outfitShapes->SetItemTextColour(outfitRoot, outfitShapes->GetForegroundColour());
+	}
+	else {
+		wxColour colour;
+		if (set.GetResolveStatus().baseMissing)
+			colour = wxColour(255, 110, 110);
+		else if (set.IsAddOn())
+			colour = wxColour(255, 190, 90);
+		else
+			colour = wxColour(120, 190, 255);
+
+		outfitShapes->SetItemBold(outfitRoot);
+		outfitShapes->SetItemTextColour(outfitRoot, colour);
+	}
+}
+
+void OutfitStudioFrame::OnShapeTooltip(wxTreeEvent& event) {
+	// The tree's own tooltip is replaced only when the next one shows, so OnShapeTreeMotion sets it instead
+	event.Veto();
+}
+
+wxString OutfitStudioFrame::ProjectNodeTooltip() const {
+	const SliderSet& set = project->activeSet;
+	if (!set.HasBaseProject())
+		return wxEmptyString;
+
+	wxString baseName = wxString::FromUTF8(set.GetBaseProjectName());
+	wxString tip = wxString::Format(set.IsAddOn() ? _("Slider add-on of project '%s'") : _("Variant of project '%s'"), baseName);
+
+	if (!set.GetBaseProjectFile().empty())
+		tip += "\n" + wxString::FromUTF8(set.GetBaseProjectFile());
+
+	if (set.GetResolveStatus().baseMissing)
+		tip += "\n\n" + _("The base project wasn't found, so this project is used as it was last saved.");
+	else if (set.IsAddOn())
+		tip += "\n\n" + _("Its shapes and NIF file belong to the base project. Sliders that come from the base project change with it.");
+	else
+		tip += "\n\n" + _("Sliders that come from the base project change with it.");
+
+	return tip;
 }
 
 void OutfitStudioFrame::AddProjectHistory(const std::string& fileName, const std::string& projectName) {
@@ -4570,6 +4975,64 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 
 		ConfigDialogUtil::LoadDialogChoices(OutfitStudioConfig, wiz, "LoadReference", "npTemplateChoice", refTemplates);
 
+		// An add-on or variant picks its base project where a new project picks its reference
+		auto intro2 = XRCCTRL(wiz, "lbNewProj2", wxStaticText);
+		const wxString newProjectIntro2 = intro2->GetLabel();
+
+		wxStaticBox* referenceBox = nullptr;
+		for (auto* child : pg1->GetChildren())
+			if (auto* box = wxDynamicCast(child, wxStaticBox))
+				if (box->GetLabel() == _("Reference"))
+					referenceBox = box;
+
+		auto updateProjectType = [&](wxCommandEvent&) {
+			bool derived = !XRCCTRL(wiz, "npTypeNew", wxRadioButton)->GetValue();
+
+			// Shorter than the label it replaces, so it fits the page as it was sized
+			intro2->SetLabel(derived ? _("Next, enter a display name for the new project.") : newProjectIntro2);
+			intro2->Wrap(FromDIP(380));
+
+			if (referenceBox)
+				referenceBox->SetLabel(derived ? _("Base Project") : _("Reference"));
+
+			auto refIsBlank = XRCCTRL(wiz, "npRefIsBlank", wxRadioButton);
+			if (derived && refIsBlank->GetValue())
+				XRCCTRL(wiz, "npRefIsTemplate", wxRadioButton)->SetValue(true);
+			refIsBlank->Enable(!derived);
+			XRCCTRL(wiz, "lbRefShapeName", wxStaticText)->Enable(!derived);
+			XRCCTRL(wiz, "npRefShapeName", wxChoice)->Enable(!derived);
+
+			for (auto name : {"npWorkFile", "npWorkFilename", "npWorkNone", "npTexAuto", "npTexFile", "npTexFilename"})
+				if (wxWindow* control = wiz.FindWindow(XRCID(name)))
+					control->Enable(!derived);
+
+			pg1->Layout();
+		};
+
+		for (auto name : {"npTypeNew", "npTypeAddOn", "npTypeVariant"})
+			XRCCTRL(wiz, name, wxRadioButton)->Bind(wxEVT_RADIOBUTTON, updateProjectType);
+
+		// The base project has to be a set of a project file
+		wiz.Bind(wxEVT_WIZARD_PAGE_CHANGING, [&](wxWizardEvent& event) {
+			event.Skip();
+			if (!event.GetDirection() || event.GetPage() != pg1 || XRCCTRL(wiz, "npTypeNew", wxRadioButton)->GetValue())
+				return;
+
+			std::string baseFile;
+			std::string baseSet;
+			if (!GetNewProjectBase(wiz, baseFile, baseSet)) {
+				wxMessageBox(_("Please choose a template or a project file (.osp) with a slider set as the base project."), _("Base Project"), wxOK | wxICON_ERROR, &wiz);
+				event.Veto();
+				return;
+			}
+
+			auto outfitNameCtrl = XRCCTRL(wiz, "npOutfitName", wxTextCtrl);
+			if (outfitNameCtrl->GetValue() == "New Outfit") {
+				bool addOn = XRCCTRL(wiz, "npTypeAddOn", wxRadioButton)->GetValue();
+				outfitNameCtrl->SetValue(wxString::FromUTF8(baseSet) + (addOn ? _(" Add-on") : _(" Variant")));
+			}
+		});
+
 		wiz.FitToPage(pg1);
 		wiz.CenterOnParent();
 
@@ -4578,9 +5041,34 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	if (!result)
 		return;
 
-	menuBar->Enable(XRCID("fileSave"), false);
-
 	std::string outfitName{XRCCTRL(wiz, "npOutfitName", wxTextCtrl)->GetValue().ToUTF8()};
+
+	// A variant or add-on starts out as its base project, with everything inherited
+	bool newAddOn = XRCCTRL(wiz, "npTypeAddOn", wxRadioButton)->GetValue();
+	if (newAddOn || XRCCTRL(wiz, "npTypeVariant", wxRadioButton)->GetValue()) {
+		std::string baseFile;
+		std::string baseSet;
+		if (!GetNewProjectBase(wiz, baseFile, baseSet))
+			return;
+
+		if (XRCCTRL(wiz, "npRefIsTemplate", wxRadioButton)->GetValue())
+			ConfigDialogUtil::SetStringFromDialogChoice(OutfitStudioConfig, wiz, "LoadReference", "npTemplateChoice");
+
+		wxLogMessage("Creating %s '%s' of project '%s'...", newAddOn ? "add-on" : "variant", outfitName, baseSet);
+		if (!LoadProject(baseFile, baseSet))
+			return;
+
+		project->MakeDerivedProject(baseFile, baseSet, newAddOn, outfitName);
+		if (projectNotes)
+			projectNotes->SetValue("");
+
+		menuBar->Enable(XRCID("fileSave"), false);
+		SetPendingChanges(true);
+		UpdateTitle();
+		return;
+	}
+
+	menuBar->Enable(XRCID("fileSave"), false);
 
 	wxLogMessage("Creating project '%s'...", outfitName);
 	StartProgress(wxString::Format(_("Creating project '%s'..."), outfitName));
@@ -4685,6 +5173,65 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	UpdateProgress(100, _("Finished"));
 
 	EndProgress();
+}
+
+bool OutfitStudioFrame::ConfirmRenameFromBase(const std::string& sliderName, const std::string& shapeName) {
+	if (!project->activeSet.HasBaseProject())
+		return true;
+
+	wxString baseName = wxString::FromUTF8(project->activeSet.GetBaseProjectName());
+	wxString msg;
+	if (!sliderName.empty()) {
+		if (!project->SliderFromBase(sliderName))
+			return true;
+
+		msg = wxString::Format(_("'%s' comes from base project '%s'. If you rename it, its data is copied into this project and later changes to the base slider won't reach it. '%s' will be hidden in this project.\n\nRename anyway?"),
+							   wxString::FromUTF8(sliderName),
+							   baseName,
+							   wxString::FromUTF8(sliderName));
+	}
+	else {
+		std::set<std::string> sliders;
+		for (auto& key : project->RenameDisconnectsFromBase("", shapeName))
+			sliders.insert(key.sliderName);
+
+		if (sliders.empty())
+			return true;
+
+		msg = wxString::Format(_("Shape '%s' uses slider data from base project '%s' (%zu sliders). If you rename it, that data is copied into this project and later changes to the base won't reach it.\n\nRename anyway?"),
+							   wxString::FromUTF8(shapeName),
+							   baseName,
+							   sliders.size());
+	}
+
+	return wxMessageBox(msg, _("Rename"), wxYES_NO | wxICON_WARNING, this) == wxYES;
+}
+
+bool OutfitStudioFrame::GetNewProjectBase(wxWizard& wiz, std::string& outFile, std::string& outSet) {
+	outFile.clear();
+	outSet.clear();
+
+	if (XRCCTRL(wiz, "npRefIsTemplate", wxRadioButton)->GetValue()) {
+		std::string tmplName{XRCCTRL(wiz, "npTemplateChoice", wxChoice)->GetStringSelection().ToUTF8()};
+		auto tmpl = find_if(refTemplates.begin(), refTemplates.end(), [&tmplName](const RefTemplate& rt) { return rt.GetName() == tmplName; });
+		if (tmpl == refTemplates.end())
+			return false;
+
+		outFile = tmpl->GetSource();
+		if (wxFileName(wxString::FromUTF8(outFile)).IsRelative())
+			outFile = ProjectUtil::GetProjectPath() + PathSepStr + outFile;
+		outSet = tmpl->GetSetName();
+	}
+	else if (XRCCTRL(wiz, "npRefIsSliderset", wxRadioButton)->GetValue()) {
+		wxString fileName = XRCCTRL(wiz, "npSliderSetFile", wxFilePickerCtrl)->GetPath();
+		if (!fileName.Lower().EndsWith(".osp") && !fileName.Lower().EndsWith(".xml"))
+			return false;
+
+		outFile = fileName.ToUTF8().data();
+		outSet = XRCCTRL(wiz, "npSliderSetName", wxChoice)->GetStringSelection().ToUTF8().data();
+	}
+
+	return !outFile.empty() && !outSet.empty() && SliderSetFile(outFile).HasSet(outSet);
 }
 
 void OutfitStudioFrame::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
@@ -5129,9 +5676,6 @@ void OutfitStudioFrame::ClearProject() {
 
 void OutfitStudioFrame::RenameProject(const std::string& projectName) {
 	project->outfitName = projectName;
-	if (outfitRoot.IsOk())
-		outfitShapes->SetItemText(outfitRoot, wxString::FromUTF8(projectName));
-
 	UpdateTitle();
 }
 
@@ -5179,10 +5723,8 @@ void OutfitStudioFrame::RefreshGUIFromProj(bool render, bool stashMasks) {
 
 	auto shapes = project->GetWorkNif()->GetShapes();
 	if (shapes.size() > 0) {
-		if (shapes.size() == 1 && project->IsBaseShape(shapes.front()))
-			outfitRoot = outfitShapes->AppendItem(shapesRoot, "Reference Only");
-		else
-			outfitRoot = outfitShapes->AppendItem(shapesRoot, wxString::FromUTF8(project->OutfitName()));
+		outfitRoot = outfitShapes->AppendItem(shapesRoot, wxEmptyString);
+		UpdateProjectNode();
 	}
 
 	wxTreeItemId item;
@@ -6469,14 +7011,27 @@ void OutfitStudioFrame::OnShapeTreeMotion(wxMouseEvent& event) {
 	if (!outfitShapes || !glView)
 		return;
 
+	const wxPoint mousePos = event.GetPosition();
+	int flags = 0;
+	wxTreeItemId item = outfitShapes->HitTest(mousePos, flags);
+
+	// The project's node explains what it's an add-on or variant of
+	wxString tip;
+	if (item.IsOk() && item == outfitRoot && (flags & wxTREE_HITTEST_ONITEMLABEL) != 0)
+		tip = ProjectNodeTooltip();
+
+	wxString currentTip = outfitShapes->GetToolTipText();
+	if (tip != currentTip) {
+		if (tip.empty())
+			outfitShapes->UnsetToolTip();
+		else
+			outfitShapes->SetToolTip(tip);
+	}
+
 	if (!Config.GetBoolValue("Input/ShapeHoverHighlight")) {
 		glView->ClearHoverHighlight();
 		return;
 	}
-
-	const wxPoint mousePos = event.GetPosition();
-	int flags = 0;
-	wxTreeItemId item = outfitShapes->HitTest(mousePos, flags);
 
 	bool onItemLabelText = false;
 	if ((flags & wxTREE_HITTEST_ONITEMLABEL) != 0 && item.IsOk() && outfitShapes->GetItemParent(item).IsOk()) {
@@ -10222,6 +10777,8 @@ void OutfitStudioFrame::OnMaskAffected(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudioFrame::OnDeleteSlider(wxCommandEvent& WXUNUSED(event)) {
 	wxString prompt = _("Are you sure you wish to delete the selected slider(s)?");
+	if (project->activeSet.HasBaseProject())
+		prompt += "\n\n" + _("Sliders of the base project are only hidden in this project and stay in the base project.");
 	int result = wxMessageBox(prompt, _("Confirm slider delete"), wxYES_NO | wxICON_WARNING, this);
 	if (result != wxYES)
 		return;
@@ -10305,6 +10862,8 @@ void OutfitStudioFrame::ShowSliderProperties(const std::string& sliderName) {
 		wxButton* btnSliderDataLocal = XRCCTRL(dlg, "btnSliderDataLocal", wxButton);
 		wxButton* btnSliderDataExternal = XRCCTRL(dlg, "btnSliderDataExternal", wxButton);
 		wxButton* btnSliderDataFolders = XRCCTRL(dlg, "btnSliderDataFolders", wxButton);
+		wxButton* btnSliderDataRevert = XRCCTRL(dlg, "btnSliderDataRevert", wxButton);
+		btnSliderDataRevert->Show(project->activeSet.HasBaseProject());
 
 		std::vector<SliderDataLocation> sliderDataRows;
 		auto updateSliderDataButtons = [&]() {
@@ -10312,9 +10871,11 @@ void OutfitStudioFrame::ShowSliderProperties(const std::string& sliderName) {
 			size_t selectionCount = SliderDataList::GetSelectedRows(sliderDataList, sliderDataRows, selectedRows);
 			bool allLocal = SliderDataList::AllHaveSource(sliderDataRows, selectedRows, true);
 			bool allExternal = SliderDataList::AllHaveSource(sliderDataRows, selectedRows, false);
+			bool anyInherited = SliderDataList::AnyInherited(sliderDataRows, selectedRows);
 			btnSliderDataLocal->Enable(selectionCount > 0 && allExternal);
 			btnSliderDataExternal->Enable(selectionCount > 0 && allLocal);
-			btnSliderDataFolders->Enable(selectionCount > 0 && allExternal);
+			btnSliderDataFolders->Enable(selectionCount > 0 && allExternal && !anyInherited);
+			btnSliderDataRevert->Enable(SliderDataList::AllOverridden(sliderDataRows, selectedRows));
 		};
 
 		auto refreshSliderData = [&]() {
@@ -10404,6 +10965,15 @@ void OutfitStudioFrame::ShowSliderProperties(const std::string& sliderName) {
 				refreshSliderData();
 			}
 		});
+		btnSliderDataRevert->Bind(wxEVT_BUTTON, [&](wxCommandEvent&) {
+			std::vector<size_t> selectedRows;
+			SliderDataList::GetSelectedRows(sliderDataList, sliderDataRows, selectedRows);
+			if (SliderDataList::RevertToBase(&dlg, project, sliderDataRows, selectedRows)) {
+				SetPendingChanges();
+				ApplySliders();
+				refreshSliderData();
+			}
+		});
 
 		chkZap->Bind(wxEVT_CHECKBOX, [&](wxCommandEvent& event) {
 			bool checked = event.IsChecked();
@@ -10452,7 +11022,7 @@ void OutfitStudioFrame::ShowSliderProperties(const std::string& sliderName) {
 			project->SetSliderDefault(curSlider, hiVal, true);
 
 			std::string newSliderName{edSliderName->GetValue().ToUTF8()};
-			if (sliderName != newSliderName && !project->ValidSlider(newSliderName)) {
+			if (sliderName != newSliderName && !project->ValidSlider(newSliderName) && ConfirmRenameFromBase(sliderName, "")) {
 				project->SetSliderName(curSlider, newSliderName);
 				wxSliderPanel* d = GetSliderPanel(sliderName);
 				sliderPanels.erase(sliderName);
@@ -10970,6 +11540,14 @@ void OutfitStudioFrame::OnRenameShape(wxCommandEvent& WXUNUSED(event)) {
 	if (!ShapeSelectionCheck())
 		return;
 
+	if (project->activeSet.IsAddOn()) {
+		wxMessageBox(_("The shapes of an add-on belong to its base project, so they can't be renamed. Make the add-on a variant with a NIF file of its own first."),
+					 _("Rename Shape"),
+					 wxOK | wxICON_INFORMATION,
+					 this);
+		return;
+	}
+
 	std::string shapeName = activeItem->GetShape()->name.get();
 	std::string newShapeName;
 	do {
@@ -10979,6 +11557,9 @@ void OutfitStudioFrame::OnRenameShape(wxCommandEvent& WXUNUSED(event)) {
 
 		newShapeName = std::move(result);
 	} while (project->IsValidShape(newShapeName));
+
+	if (!ConfirmRenameFromBase("", shapeName))
+		return;
 
 	wxLogMessage("Renaming shape '%s' to '%s'.", shapeName, newShapeName);
 	project->RenameShape(activeItem->GetShape(), newShapeName);

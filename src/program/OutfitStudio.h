@@ -97,6 +97,17 @@ struct ShapeItemState {
 	bool selected = false;
 };
 
+// NIF and .osd file that saving writes, and the project that writes them
+struct SharedFilesTarget {
+	std::string dataDir; // Relative to the "ShapeData" folder
+	std::string nifName;
+	std::string osdName;
+	std::string setFile;
+	std::string setName;
+	bool addOn = false;
+	bool hasBase = false;
+};
+
 class SegmentItemData : public wxTreeItemData {
 public:
 	// partID: a small nonnegative integer uniquely identifying this
@@ -1277,6 +1288,8 @@ public:
 
 	bool SaveProject();
 	bool SaveProjectAs();
+	// Files the Save Project As dialog would write, and the project that writes them
+	SharedFilesTarget SaveAsSharedFilesTarget(wxDialog& dlg, bool hasBase, bool addOn);
 	bool LoadProject(const std::string& fileName,
 					 const std::string& projectName = "",
 					 bool clearProject = true,
@@ -1287,6 +1300,10 @@ public:
 	// more than one. If preferredName is given and present in the file, it is used without
 	// prompting. Returns an empty string on failure (an error is shown) or if cancelled.
 	std::string ChooseSliderSetName(const std::string& fileName, const std::string& preferredName = "");
+	// The project file and set the New Project wizard has as the base project of an add-on or variant.
+	bool GetNewProjectBase(wxWizard& wiz, std::string& outFile, std::string& outSet);
+	// Asks before renaming a slider or shape takes it from the base project. Pass one of the names.
+	bool ConfirmRenameFromBase(const std::string& sliderName, const std::string& shapeName);
 	void CreateSetSliders();
 
 	void UpdateReferenceTemplates();
@@ -1406,6 +1423,10 @@ public:
 	int ConformShapes(std::vector<nifly::NiShape*> shapes, bool silent = false);
 	void SetBaseShape();
 	void UpdateTitle();
+	// "Add-on of <base>" or "Variant of <base>", empty for a project without a base project
+	wxString BaseProjectLabel() const;
+	void UpdateProjectNode();
+	wxString ProjectNodeTooltip() const;
 
 	void CheckBrushBounds() {
 		TweakBrush* brush = glView->GetActiveBrush();
@@ -1657,6 +1678,7 @@ private:
 	void OnShapeContext(wxTreeEvent& event);
 	void OnShapeDrag(wxTreeEvent& event);
 	void OnShapeDrop(wxTreeEvent& event);
+	void OnShapeTooltip(wxTreeEvent& event);
 	void OnCheckTreeSel(wxTreeEvent& event);
 
 	void OnShapeTreeMotion(wxMouseEvent& event);

@@ -1,4 +1,5 @@
 #include "../src/components/MaskOps.h"
+#include "../src/components/SliderSetIndex.h"
 #include "../src/program/BrushStrokeController.h"
 #include "../src/program/OutfitProject.h"
 #include "../src/program/ProjectOperations.h"
@@ -73,6 +74,26 @@ struct TargetGameScope {
 	}
 
 	~TargetGameScope() { Config.SetValue("TargetGame", previous); }
+};
+
+// Points the project path at a folder for the lifetime of a fixture
+struct ProjectPathScope {
+	std::string previousProjectPath;
+	std::string previousAppDir;
+
+	explicit ProjectPathScope(const std::filesystem::path& path) {
+		previousProjectPath = Config["ProjectPath"];
+		previousAppDir = Config["AppDir"];
+		Config.SetValue("ProjectPath", path.u8string());
+		Config.SetValue("AppDir", path.u8string());
+		std::filesystem::create_directories(path / "SliderSets");
+		std::filesystem::create_directories(path / "ShapeData");
+	}
+
+	~ProjectPathScope() {
+		Config.SetValue("ProjectPath", previousProjectPath);
+		Config.SetValue("AppDir", previousAppDir);
+	}
 };
 
 std::string WriteGridNif(const std::filesystem::path& dir, const std::string& fileName, const std::string& shapeName, int n, float z) {
@@ -604,4 +625,344 @@ TEST_CASE("Adaptive refining splits only the chosen edges and keeps the mesh clo
 	f.project.ApplyShapeMeshUndo(f.skirt, noMask, usp.usss[0], true);
 	CHECK(f.skirt->GetNumVertices() == 49);
 	CHECK(f.skirt->GetNumTriangles() == 72);
+}
+
+namespace {
+// The fixture's project, saved as set "A" into a project folder of its own
+struct SavedProjectFixture : ProjectFixture {
+	TempFolder projectFolder;
+	ProjectPathScope projectPath{projectFolder.path};
+
+	std::string Save(const std::string& setName = "A",
+					 const std::string& nifName = "Shared.nif",
+					 SharedFilesCheck check = SharedFilesCheck::Now,
+					 const SliderSetIndex* index = nullptr) {
+		wxFileName setFile(wxString::FromUTF8((projectFolder.path / "SliderSets" / (setName + ".osp")).u8string()));
+		return project.Save(setFile, wxString::FromUTF8(setName), "Shared", wxString::FromUTF8(nifName), "meshes", setName, false, true, false, false, "", "", check, index);
+	}
+
+	std::filesystem::path DataPath(const std::string& fileName) const { return projectFolder.path / "ShapeData" / "Shared" / fileName; }
+
+	// A second project in its own file that uses the shared NIF, with data of its own in the shared .osd
+	void AddOtherProject() {
+		SliderSet other;
+		other.SetName("B");
+		other.SetDataFolder("Shared");
+		other.SetInputFile("Shared.nif");
+		other.AddShapeTarget("Skirt", "Skirt");
+		size_t slider = other.CreateSlider("Flare");
+		other[slider].AddDataFile("Skirt", "SkirtFlare", "Shared.osd" + std::string(PathSepStr) + "SkirtFlare");
+
+		SliderSetFile otherFile;
+		otherFile.New((projectFolder.path / "SliderSets" / "B.osp").u8string());
+		otherFile.UpdateSet(other);
+		REQUIRE(otherFile.Save());
+
+		OSDataFile osd;
+		REQUIRE(osd.Read(DataPath("Shared.osd").u8string()));
+		osd.SetDataDiff("SkirtFlare", TargetDataDiffs{{0, Vector3(1.0f, 0.0f, 0.0f)}});
+		REQUIRE(osd.Write(DataPath("Shared.osd").u8string()));
+	}
+
+	std::set<std::string> OSDDataNames() const {
+		OSDataFile osd;
+		REQUIRE(osd.Read(DataPath("Shared.osd").u8string()));
+		std::set<std::string> names;
+		for (auto& data : osd.GetDataDiffs())
+			names.insert(data.first);
+		return names;
+	}
+};
+} // namespace
+
+TEST_CASE("Saving keeps the slider data of other projects in the same .osd file", "[OutfitProject]") {
+	SavedProjectFixture f;
+	REQUIRE(f.Save().empty());
+	CHECK(f.OSDDataNames() == std::set<std::string>{"BodyGrow"});
+
+	f.AddOtherProject();
+	REQUIRE(f.Save().empty());
+	CHECK(f.OSDDataNames() == std::set<std::string>{"BodyGrow", "SkirtFlare"});
+
+	// Without the other project, its data isn't kept
+	std::filesystem::remove(f.projectFolder.path / "SliderSets" / "B.osp");
+	REQUIRE(f.Save().empty());
+	CHECK(f.OSDDataNames() == std::set<std::string>{"BodyGrow"});
+}
+
+TEST_CASE("Saving asks before a shared NIF file loses shapes that other projects use", "[OutfitProject]") {
+	SavedProjectFixture f;
+	REQUIRE(f.Save().empty());
+	f.AddOtherProject();
+
+	// The unattended host answers no, so nothing is written
+	f.project.DeleteShape(f.skirt);
+	CHECK_FALSE(f.Save().empty());
+
+	NifFile nif;
+	REQUIRE(nif.Load(f.DataPath("Shared.nif")) == 0);
+	CHECK(nif.FindBlockByName<NiShape>("Skirt"));
+
+	// A NIF of its own is fine
+	CHECK(f.Save("A", "Own.nif").empty());
+}
+
+TEST_CASE("Saving without looking for other projects keeps all other data in the .osd file", "[OutfitProject]") {
+	SavedProjectFixture f;
+	REQUIRE(f.Save().empty());
+	f.AddOtherProject();
+	std::filesystem::remove(f.projectFolder.path / "SliderSets" / "B.osp");
+
+	// Nobody uses SkirtFlare any more, but that isn't known without looking
+	REQUIRE(f.Save("A", "Shared.nif", SharedFilesCheck::Skip).empty());
+	CHECK(f.OSDDataNames() == std::set<std::string>{"BodyGrow", "SkirtFlare"});
+
+	REQUIRE(f.Save().empty());
+	CHECK(f.OSDDataNames() == std::set<std::string>{"BodyGrow"});
+
+	// It doesn't ask about shapes of the NIF file either
+	f.AddOtherProject();
+	f.project.DeleteShape(f.skirt);
+	CHECK(f.Save("A", "Shared.nif", SharedFilesCheck::Skip).empty());
+}
+
+TEST_CASE("Saving uses the index loaded before for the same files", "[OutfitProject]") {
+	SavedProjectFixture f;
+	REQUIRE(f.Save().empty());
+	f.AddOtherProject();
+	const std::string projectPath = f.projectFolder.path.u8string();
+
+	SliderSetIndex index(projectPath, {"Shared.nif", "Shared.osd"});
+	REQUIRE(f.Save("A", "Shared.nif", SharedFilesCheck::Index, &index).empty());
+	CHECK(f.OSDDataNames() == std::set<std::string>{"BodyGrow", "SkirtFlare"});
+
+	std::filesystem::remove(f.projectFolder.path / "SliderSets" / "B.osp");
+	SliderSetIndex withoutOther(projectPath, {"Shared.nif", "Shared.osd"});
+	REQUIRE(f.Save("A", "Shared.nif", SharedFilesCheck::Index, &withoutOther).empty());
+	CHECK(f.OSDDataNames() == std::set<std::string>{"BodyGrow"});
+
+	// An index for other files says nothing about these, so all data is kept
+	f.AddOtherProject();
+	std::filesystem::remove(f.projectFolder.path / "SliderSets" / "B.osp");
+	SliderSetIndex otherFiles(projectPath, {"Other.nif", "Other.osd"});
+	REQUIRE(f.Save("A", "Shared.nif", SharedFilesCheck::Index, &otherFiles).empty());
+	CHECK(f.OSDDataNames() == std::set<std::string>{"BodyGrow", "SkirtFlare"});
+}
+
+namespace {
+// A variant or add-on of the saved fixture project "A", which has "Grow" data for the body and the skirt
+struct DerivedProjectFixture : SavedProjectFixture {
+	NonInteractiveHost derivedHost;
+	OutfitProject derived{&derivedHost, false};
+
+	explicit DerivedProjectFixture(bool addOn) {
+		TargetDataDiffs grow;
+		for (uint16_t i = 0; i < skirt->GetNumVertices(); i++)
+			grow[i] = Vector3(0.0f, 0.0f, 0.5f);
+		project.SetSliderFromDiff("Grow", skirt, grow);
+		REQUIRE(Save().empty());
+
+		REQUIRE(derived.CreateFromBase((projectFolder.path / "SliderSets" / "A.osp").u8string(), "A", addOn, addOn ? "A Extra" : "A Variant") == 0);
+	}
+
+	std::string SaveDerived(const std::string& nifName) {
+		wxFileName setFile(wxString::FromUTF8((projectFolder.path / "SliderSets" / "Derived.osp").u8string()));
+		return derived.Save(setFile, derived.mOutfitName, "Shared", wxString::FromUTF8(nifName), "meshes", "Derived", false, true, false, false, "", "");
+	}
+
+	SliderSet LoadSaved(const std::string& setName) {
+		SliderSetFile file((projectFolder.path / "SliderSets" / "Derived.osp").u8string());
+		SliderSet set;
+		REQUIRE(file.GetSet(setName, set, true, "", false) == 0);
+		return set;
+	}
+
+	std::set<std::string> DataNames(const std::string& osdName) const {
+		std::set<std::string> names;
+		OSDataFile osd;
+		if (osd.Read(DataPath(osdName).u8string()))
+			for (auto& data : osd.GetDataDiffs())
+				names.insert(data.first);
+		return names;
+	}
+
+	NiShape* DerivedShape(const std::string& name) { return derived.GetWorkNif()->FindBlockByName<NiShape>(name); }
+};
+
+const DiffInfo* FindDataFile(SliderSet& set, const std::string& sliderName, const std::string& target) {
+	for (auto& df : set[sliderName].dataFiles)
+		if (df.targetName == target)
+			return &df;
+	return nullptr;
+}
+} // namespace
+
+TEST_CASE("Variants only save the slider data they change", "[OutfitProject]") {
+	DerivedProjectFixture f(false);
+	REQUIRE(f.SaveDerived("A Variant.nif").empty());
+
+	SliderSet saved = f.LoadSaved("A Variant");
+	CHECK(saved.GetBaseProjectName() == "A");
+	CHECK_FALSE(saved.GetBaseProjectID().empty());
+	CHECK_FALSE(saved.GetProjectID().empty());
+	CHECK(saved.GetProjectID() != saved.GetBaseProjectID());
+	CHECK(saved["Grow"].bInherited);
+	CHECK(FindDataFile(saved, "Grow", "Skirt")->bInherited);
+	CHECK(f.DataNames("A Variant.osd").empty());
+	CHECK(f.DataNames("Shared.osd") == std::set<std::string>{"BodyGrow", "SkirtGrow"});
+
+	// Editing inherited data makes it an override of the variant's own
+	NiShape* skirt = f.DerivedShape("Skirt");
+	REQUIRE(skirt);
+	f.derived.EnsureSliderDataLocal("Grow", skirt);
+	f.derived.SetSliderFromDiff("Grow", skirt, TargetDataDiffs{{0, Vector3(0.0f, 0.0f, 2.0f)}});
+	REQUIRE(f.SaveDerived("A Variant.nif").empty());
+
+	saved = f.LoadSaved("A Variant");
+	CHECK_FALSE(FindDataFile(saved, "Grow", "Skirt")->bInherited);
+	CHECK(FindDataFile(saved, "Grow", "Body")->bInherited);
+	CHECK(f.DataNames("A Variant.osd") == std::set<std::string>{"SkirtGrow"});
+
+	std::vector<SliderDataLocation> locations;
+	f.derived.GetSliderDataLocations(locations, "Grow");
+	for (auto& location : locations) {
+		CHECK(location.inherited == (location.key.targetName == "Body"));
+		CHECK(location.overridden == (location.key.targetName == "Skirt"));
+	}
+
+	// Reverting brings back the base project's data
+	EditorState editor;
+	ProjectOperations ops{f.derived, editor};
+	std::vector<Vector3> deltas;
+	REQUIRE(ops.GetSliderDeltas(skirt, "Grow", deltas).ok);
+	CHECK(deltas[0].z == Catch::Approx(2.0f));
+
+	SliderDataKey skirtKey{"Grow", "Skirt", "SkirtGrow"};
+	REQUIRE(f.derived.RevertSliderDataToBase(skirtKey));
+	REQUIRE(ops.GetSliderDeltas(skirt, "Grow", deltas).ok);
+	CHECK(deltas[0].z == Catch::Approx(0.5f));
+	CHECK(deltas[5].z == Catch::Approx(0.5f));
+
+	REQUIRE(f.SaveDerived("A Variant.nif").empty());
+	saved = f.LoadSaved("A Variant");
+	CHECK(FindDataFile(saved, "Grow", "Skirt")->bInherited);
+}
+
+TEST_CASE("A variant can't save over the NIF file of its base project", "[OutfitProject]") {
+	DerivedProjectFixture f(false);
+	CHECK_FALSE(f.SaveDerived("Shared.nif").empty());
+	CHECK(f.SaveDerived("A Variant.nif").empty());
+}
+
+TEST_CASE("Variants hide the base sliders they delete or rename", "[OutfitProject]") {
+	DerivedProjectFixture f(false);
+	f.derived.AddEmptySlider("Own");
+	CHECK_FALSE(f.derived.SliderFromBase("Own"));
+	CHECK(f.derived.SliderFromBase("Grow"));
+
+	// Renaming takes the slider's data from the base project
+	CHECK(f.derived.RenameDisconnectsFromBase("Grow", "").size() == 2);
+	CHECK(f.derived.RenameDisconnectsFromBase("", "Skirt").size() == 1);
+	CHECK(f.derived.RenameDisconnectsFromBase("Own", "").empty());
+
+	size_t growIndex = 0;
+	REQUIRE(f.derived.SliderIndexFromName("Grow", growIndex));
+	f.derived.SetSliderName(growIndex, "Lift");
+	CHECK(f.derived.RenameDisconnectsFromBase("Lift", "").empty());
+	REQUIRE(f.SaveDerived("A Variant.nif").empty());
+
+	SliderSet saved = f.LoadSaved("A Variant");
+	CHECK(saved.GetRemovedSliders() == std::vector<std::string>{"Grow"});
+	CHECK_FALSE(saved["Lift"].bInherited);
+	CHECK(f.DataNames("A Variant.osd") == std::set<std::string>{"BodyLift", "SkirtLift"});
+
+	// With the base project merged in, Grow stays left out
+	SliderSetFile file((f.projectFolder.path / "SliderSets" / "Derived.osp").u8string());
+	SliderSet resolved;
+	REQUIRE(file.GetSet("A Variant", resolved) == 0);
+	CHECK_FALSE(resolved.SliderExists("Grow"));
+	CHECK(resolved.SliderExists("Lift"));
+}
+
+TEST_CASE("Add-ons save their own slider data without a NIF file", "[OutfitProject]") {
+	DerivedProjectFixture f(true);
+	auto nifTime = std::filesystem::last_write_time(f.DataPath("Shared.nif"));
+
+	f.derived.AddEmptySlider("Extra");
+	NiShape* skirt = f.DerivedShape("Skirt");
+	REQUIRE(skirt);
+	f.derived.SetSliderFromDiff("Extra", skirt, TargetDataDiffs{{0, Vector3(1.0f, 0.0f, 0.0f)}});
+
+	// The NIF name passed in doesn't matter, an add-on uses the base project's
+	REQUIRE(f.SaveDerived("Ignored.nif").empty());
+	CHECK_FALSE(std::filesystem::exists(f.DataPath("Ignored.nif")));
+	CHECK(std::filesystem::last_write_time(f.DataPath("Shared.nif")) == nifTime);
+	CHECK(f.DataNames("A Extra.osd") == std::set<std::string>{"SkirtExtra"});
+	CHECK(f.DataNames("Shared.osd") == std::set<std::string>{"BodyGrow", "SkirtGrow"});
+
+	SliderSetFile file((f.projectFolder.path / "SliderSets" / "Derived.osp").u8string());
+	CHECK(file.IsAddOn("A Extra"));
+	SliderSet saved = f.LoadSaved("A Extra");
+	CHECK(saved.GetSliderDataFile() == "A Extra.osd");
+	CHECK(saved.GetInputFile() == "Shared.nif");
+	CHECK(saved.GetShapeVertexCount("Skirt") == skirt->GetNumVertices());
+
+	// Changed shapes can't be saved with an add-on, the unattended host doesn't make it a variant
+	f.derived.DeleteShape(skirt);
+	CHECK_FALSE(f.SaveDerived("Ignored.nif").empty());
+}
+
+TEST_CASE("A copy of a project with the same NIF file becomes an add-on of it", "[OutfitProject]") {
+	// Issue #626: the copy only added sliders, but saved everything into the original's .osd file
+	DerivedProjectFixture f(false);
+	std::string baseFile = (f.projectFolder.path / "SliderSets" / "A.osp").u8string();
+
+	NonInteractiveHost copyHost;
+	OutfitProject copy{&copyHost, false};
+	REQUIRE(copy.LoadFromSliderSet(baseFile, "A") == 0);
+	REQUIRE(copy.ReloadReferenceShape() == 0);
+	copy.AddEmptySlider("Extra");
+	NiShape* skirt = copy.GetWorkNif()->FindBlockByName<NiShape>("Skirt");
+	copy.SetSliderFromDiff("Extra", skirt, TargetDataDiffs{{0, Vector3(1.0f, 0.0f, 0.0f)}});
+
+	wxFileName copyFile(wxString::FromUTF8((f.projectFolder.path / "SliderSets" / "Derived.osp").u8string()));
+	REQUIRE(copy.Save(copyFile, "B", "Shared", "Shared.nif", "meshes", "B", false, true, false, false, "", "").empty());
+	CHECK(f.DataNames("Shared.osd") == std::set<std::string>{"BodyGrow", "SkirtGrow", "SkirtExtra"});
+
+	CHECK(copy.BaseGeometryMatches(baseFile, "A"));
+	REQUIRE(copy.SetBaseProject(baseFile, "A", true));
+	CHECK(copy.SliderFromBase("Grow"));
+	CHECK_FALSE(copy.SliderFromBase("Extra"));
+	REQUIRE(copy.Save(copyFile, "B", "Shared", "Shared.nif", "meshes", "B", false, true, false, false, "", "").empty());
+	CHECK(f.DataNames("B.osd") == std::set<std::string>{"SkirtExtra"});
+
+	SliderSetFile savedFile(copyFile.GetFullPath().ToUTF8().data());
+	CHECK(savedFile.IsAddOn("B"));
+	SliderSet saved;
+	REQUIRE(savedFile.GetSet("B", saved) == 0);
+	CHECK(saved.GetResolveStatus().baseFound);
+	CHECK(saved["Grow"].bInherited);
+	CHECK(FindDataFile(saved, "Grow", "Skirt")->bInherited);
+	CHECK_FALSE(FindDataFile(saved, "Extra", "Skirt")->bInherited);
+
+	// The original no longer keeps data for the copy
+	REQUIRE(f.Save().empty());
+	CHECK(f.DataNames("Shared.osd") == std::set<std::string>{"BodyGrow", "SkirtGrow"});
+}
+
+TEST_CASE("Clearing the base project makes an add-on a project of its own", "[OutfitProject]") {
+	DerivedProjectFixture f(true);
+	f.derived.ClearBaseProject();
+	CHECK_FALSE(f.derived.SliderFromBase("Grow"));
+	CHECK(f.derived.mBaseFile == "A Extra.nif");
+
+	REQUIRE(f.SaveDerived(f.derived.mBaseFile.ToUTF8().data()).empty());
+	CHECK(std::filesystem::exists(f.DataPath("A Extra.nif")));
+	CHECK(f.DataNames("A Extra.osd") == std::set<std::string>{"BodyGrow", "SkirtGrow"});
+
+	SliderSetFile file((f.projectFolder.path / "SliderSets" / "Derived.osp").u8string());
+	CHECK_FALSE(file.IsAddOn("A Extra"));
+	SliderSet saved = f.LoadSaved("A Extra");
+	CHECK_FALSE(saved.HasBaseProject());
+	CHECK_FALSE(saved["Grow"].bInherited);
 }

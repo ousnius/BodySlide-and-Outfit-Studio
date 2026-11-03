@@ -252,8 +252,13 @@
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
-						<border>0</border>
-						<object class="unknown" name="dummy" />
+						<flag>wxLEFT|wxRIGHT|wxALIGN_CENTER_VERTICAL</flag>
+						<border>7</border>
+						<object class="wxStaticText" name="lblOutfitBase">
+							<fg>#ffbe5a</fg>
+							<label></label>
+							<hidden>1</hidden>
+						</object>
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
