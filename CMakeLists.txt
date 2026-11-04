@@ -581,6 +581,7 @@ if(BSOS_BUILD_TESTS)
 		src/components/PoseData.cpp
 		src/components/PoseDataJson.cpp
 		src/components/PoseDataYaml.cpp
+		src/components/SliderManager.cpp
 		src/components/SliderPresets.cpp
 		src/components/UndoHistory.cpp
 		src/utils/ProjectUtil.cpp

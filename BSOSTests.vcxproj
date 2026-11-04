@@ -296,6 +296,7 @@
     <ClCompile Include="src\components\PoseData.cpp" />
     <ClCompile Include="src\components\PoseDataJson.cpp" />
     <ClCompile Include="src\components\PoseDataYaml.cpp" />
+    <ClCompile Include="src\components\SliderManager.cpp" />
     <ClCompile Include="src\components\SliderPresets.cpp" />
     <ClCompile Include="src\components\UndoHistory.cpp" />
     <ClCompile Include="src\utils\ProjectUtil.cpp" />

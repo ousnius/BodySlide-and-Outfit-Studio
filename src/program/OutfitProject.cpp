@@ -1952,6 +1952,27 @@ wxArrayString OutfitProject::SliderZapToggles(const size_t index) {
 	return toggles;
 }
 
+bool OutfitProject::SliderToggle(const size_t index) {
+	if (!ValidSlider(index))
+		return false;
+
+	return activeSet[index].bToggle && !activeSet[index].bZap;
+}
+
+float OutfitProject::SliderToggleValue(const size_t index) {
+	if (!ValidSlider(index))
+		return 100.0f;
+
+	return activeSet[index].toggleValue;
+}
+
+std::vector<ToggleTarget> OutfitProject::SliderToggleSliders(const size_t index) {
+	if (!ValidSlider(index))
+		return {};
+
+	return activeSet[index].toggleSliders;
+}
+
 bool OutfitProject::SliderInvert(const size_t index) {
 	if (!ValidSlider(index))
 		return false;
@@ -1994,6 +2015,41 @@ void OutfitProject::SetSliderZapToggles(const size_t index, const wxArrayString&
 		zapToggles.push_back(s.ToUTF8().data());
 
 	SetSliderProperty(activeSet[index], activeSet[index].zapToggles, zapToggles);
+}
+
+void OutfitProject::SetSliderToggle(const size_t index, const bool toggle) {
+	if (!ValidSlider(index))
+		return;
+
+	SetSliderProperty(activeSet[index], activeSet[index].bToggle, toggle);
+}
+
+void OutfitProject::SetSliderToggleValue(const size_t index, const float value) {
+	if (!ValidSlider(index))
+		return;
+
+	SetSliderProperty(activeSet[index], activeSet[index].toggleValue, value);
+}
+
+void OutfitProject::SetSliderToggleSliders(const size_t index, const std::vector<ToggleTarget>& targets) {
+	if (!ValidSlider(index))
+		return;
+
+	// A toggle can't set itself, other toggles or clamps
+	std::vector<ToggleTarget> toggleSliders;
+	for (auto& target : targets) {
+		size_t targetIndex = 0;
+		if (target.slider == activeSet[index].name || !SliderIndexFromName(target.slider, targetIndex) || SliderToggle(targetIndex) || SliderClamp(targetIndex))
+			continue;
+
+		auto existing = std::find_if(toggleSliders.begin(), toggleSliders.end(), [&target](const ToggleTarget& t) { return t.slider == target.slider; });
+		if (existing != toggleSliders.end())
+			existing->value = target.value;
+		else
+			toggleSliders.push_back(target);
+	}
+
+	SetSliderProperty(activeSet[index], activeSet[index].toggleSliders, toggleSliders);
 }
 
 void OutfitProject::SetSliderInvert(const size_t index, const bool inv) {
@@ -2057,6 +2113,18 @@ void OutfitProject::SetSliderName(const size_t index, const std::string& newName
 
 	activeSet.RemoveRemovedSlider(newName);
 	activeSet[index].name = newName;
+
+	// Zaps and toggles keep toggling the slider under its new name
+	for (size_t i = 0; i < activeSet.size(); i++) {
+		SliderData& other = activeSet[i];
+		bool refersToSlider = std::find(other.zapToggles.begin(), other.zapToggles.end(), oldName) != other.zapToggles.end()
+							  || std::any_of(other.toggleSliders.begin(), other.toggleSliders.end(), [&oldName](const ToggleTarget& t) { return t.slider == oldName; });
+		if (!refersToSlider)
+			continue;
+
+		other.RenameToggledSlider(oldName, newName);
+		other.bInherited = false;
+	}
 }
 
 float& OutfitProject::SliderValue(const size_t index) {

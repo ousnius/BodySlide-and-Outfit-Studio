@@ -1,3 +1,4 @@
+#include "../src/components/SliderManager.h"
 #include "../src/components/SliderSet.h"
 #include "../src/components/SliderSetIndex.h"
 #include "../src/components/SliderSetInheritance.h"
@@ -476,4 +477,148 @@ TEST_CASE("The save index loads on a thread of its own", "[SliderSet]") {
 		CHECK(cancelled.Index().Entries().size() <= 1);
 	task.Cancel();
 	CHECK(task.IsDone());
+}
+
+TEST_CASE("Toggles keep their value and the sliders they set", "[SliderSet]") {
+	ProjectFolder folder;
+	SliderSet base = MakeBase();
+
+	auto& pushUp = AddSlider(base, "PushUp");
+	pushUp.bToggle = true;
+	pushUp.toggleValue = 50.0f;
+	pushUp.toggleSliders = {{"Breasts", 30.0f}, {"Butt", 100.0f}};
+	pushUp.AddDataFile("Robe", "RobePushUp", DataFile("Robe.osd", "RobePushUp"));
+
+	// Only sets other sliders, without data of its own
+	auto& curvy = AddSlider(base, "Curvy");
+	curvy.bToggle = true;
+	curvy.toggleSliders = {{"Breasts", 80.0f}};
+
+	// Without other sliders and data yet, as a new toggle that Outfit Studio saves
+	auto& empty = AddSlider(base, "Empty");
+	empty.bToggle = true;
+
+	// A slider without data isn't kept
+	AddSlider(base, "NoData");
+
+	// A zap can't be a toggle
+	base["ZapBelt"].bToggle = true;
+
+	SaveSets(folder.SetFile("Robe.osp"), {base});
+	SliderSet loaded = LoadSet(folder.SetFile("Robe.osp"), "Robe");
+
+	CHECK(SliderNames(loaded) == std::vector<std::string>{"Breasts", "Butt", "ZapBelt", "PushUp", "Curvy", "Empty"});
+	CHECK(loaded["Empty"].bToggle);
+	CHECK(loaded["Empty"].toggleSliders.empty());
+	CHECK(loaded["PushUp"].bToggle);
+	CHECK(loaded["PushUp"].toggleValue == 50.0f);
+	CHECK(loaded["PushUp"].toggleSliders == std::vector<ToggleTarget>{{"Breasts", 30.0f}, {"Butt", 100.0f}});
+	CHECK(loaded["Curvy"].bToggle);
+	CHECK(loaded["Curvy"].toggleValue == 100.0f);
+	CHECK(loaded["Curvy"].dataFiles.empty());
+	CHECK_FALSE(loaded["ZapBelt"].bToggle);
+	CHECK_FALSE(loaded["Breasts"].bToggle);
+
+	SECTION("without the sliders that are deleted") {
+		loaded.DeleteSlider("Breasts");
+		CHECK(loaded["PushUp"].toggleSliders == std::vector<ToggleTarget>{{"Butt", 100.0f}});
+		CHECK(loaded["Curvy"].toggleSliders.empty());
+	}
+
+	SECTION("in variants, without the sliders they removed") {
+		SliderSet variant = MakeVariant();
+		variant.AddRemovedSlider("Butt");
+		variant.DeleteSlider("Butt");
+		SaveSets(folder.SetFile("Robe Variant.osp"), {variant});
+
+		SliderSet loadedVariant = LoadSet(folder.SetFile("Robe Variant.osp"), "Robe Variant");
+		REQUIRE(loadedVariant.SliderExists("PushUp"));
+		REQUIRE(loadedVariant.SliderExists("Curvy"));
+		REQUIRE(loadedVariant.SliderExists("Empty"));
+		CHECK(loadedVariant["PushUp"].bInherited);
+		CHECK(loadedVariant["PushUp"].toggleSliders == std::vector<ToggleTarget>{{"Breasts", 30.0f}});
+		CHECK(loadedVariant["Curvy"].toggleSliders == std::vector<ToggleTarget>{{"Breasts", 80.0f}});
+	}
+}
+
+TEST_CASE("Ticked toggles apply their value and hold the sliders and zaps they set", "[SliderSet]") {
+	auto makeSlider = [](const std::string& name, float value) {
+		Slider s;
+		s.name = name;
+		s.value = value;
+		return s;
+	};
+
+	Slider pushUp = makeSlider("PushUp", 0.0f);
+	pushUp.toggle = true;
+	pushUp.toggleValue = 0.5f;
+	pushUp.toggleSliders = {{"Breasts", 0.3f}, {"ZapBelt", 1.0f}, {"Curvy", 1.0f}, {"Clamp", 1.0f}, {"Missing", 1.0f}};
+
+	// Holds ZapBelt off
+	Slider curvy = makeSlider("Curvy", 0.0f);
+	curvy.toggle = true;
+	curvy.toggleSliders = {{"Breasts", 0.8f}, {"Butt", 0.6f}, {"ZapBelt", 0.0f}};
+
+	Slider zapBelt = makeSlider("ZapBelt", 1.0f);
+	zapBelt.zap = true;
+
+	Slider clamp = makeSlider("Clamp", 0.0f);
+	clamp.clamp = true;
+
+	std::vector<Slider> sliders{makeSlider("Breasts", 0.2f), makeSlider("Butt", 0.4f), zapBelt, pushUp, curvy, clamp};
+	std::vector<int> forcedBy;
+
+	SECTION("unticked toggles are off and leave the other sliders alone") {
+		CHECK(ToggledSliderValues(sliders, &forcedBy) == std::vector<float>{0.2f, 0.4f, 1.0f, 0.0f, 0.0f, 0.0f});
+		CHECK(forcedBy == std::vector<int>{-1, -1, -1, -1, -1, -1});
+	}
+
+	SECTION("a ticked toggle sets sliders and zaps, but not other toggles or clamps") {
+		sliders[2].value = 0.0f;
+		sliders[3].value = 1.0f;
+		CHECK(ToggledSliderValues(sliders, &forcedBy) == std::vector<float>{0.3f, 0.4f, 1.0f, 0.5f, 0.0f, 0.0f});
+		CHECK(forcedBy == std::vector<int>{3, -1, 3, -1, -1, -1});
+	}
+
+	SECTION("the last ticked toggle wins, and can hold a zap off") {
+		sliders[3].value = 1.0f;
+		sliders[4].value = 1.0f;
+		CHECK(ToggledSliderValues(sliders, &forcedBy) == std::vector<float>{0.8f, 0.6f, 0.0f, 0.5f, 1.0f, 0.0f});
+		CHECK(forcedBy == std::vector<int>{4, 4, 4, -1, -1, -1});
+	}
+
+	SECTION("toggles are ticked by any value of presets") {
+		sliders[4].value = 0.25f;
+		CHECK(ToggledSliderValues(sliders) == std::vector<float>{0.8f, 0.6f, 0.0f, 0.0f, 1.0f, 0.0f});
+	}
+}
+
+TEST_CASE("Toggles of the slider manager are on or off", "[SliderSet]") {
+	SliderSet set = MakeBase();
+	auto& pushUp = AddSlider(set, "PushUp");
+	pushUp.bToggle = true;
+	pushUp.toggleValue = 50.0f;
+	pushUp.toggleSliders = {{"Breasts", 30.0f}};
+	pushUp.AddDataFile("Robe", "RobePushUp", DataFile("Robe.osd", "RobePushUp"));
+
+	SliderManager manager;
+	manager.AddSlidersInSet(set);
+	manager.InitializeSliders();
+
+	manager.SetSlider("PushUp", false, 0.7f);
+	CHECK(manager.GetSlider("PushUp", false) == 1.0f);
+	manager.SetSlider("PushUp", true, 0.0f);
+	CHECK(manager.GetSlider("PushUp", true) == 0.0f);
+
+	// Ticking a toggle changes both weights, even at the default value
+	manager.SetChanged("PushUp", false);
+	CHECK(manager.SliderHasChanged("PushUp", true));
+	CHECK(manager.SliderHasChanged("PushUp", false));
+
+	auto& slider = manager.slidersBig[3];
+	REQUIRE(slider.name == "PushUp");
+	CHECK(slider.toggle);
+	CHECK(slider.toggleValue == 0.5f);
+	CHECK(slider.toggleSliders == std::vector<std::pair<std::string, float>>{{"Breasts", 0.3f}});
+	CHECK(ToggledSliderValues(manager.slidersBig)[0] == 0.3f);
 }

@@ -61,9 +61,19 @@ json SliderProperties(OutfitProject& project, size_t index) {
 		{"invert", project.SliderInvert(index)},
 		{"hidden", project.SliderHidden(index)},
 		{"uv", project.SliderUV(index)},
+		{"toggle", project.SliderToggle(index)},
 		{"defaultSmall", project.SliderDefault(index, false)},
 		{"defaultBig", project.SliderDefault(index, true)},
 	};
+
+	if (project.SliderToggle(index)) {
+		json toggleSliders = json::object();
+		for (auto& target : project.SliderToggleSliders(index))
+			toggleSliders[target.slider] = target.value;
+
+		properties["toggleValue"] = project.SliderToggleValue(index);
+		properties["toggleSliders"] = toggleSliders;
+	}
 
 	// Where a variant's or add-on's slider and its data come from
 	if (project.activeSet.HasBaseProject()) {
@@ -113,10 +123,37 @@ McpToolResult SetSliderProperties(OutfitStudioMcp& mcp, const json& args) {
 		return value;
 	};
 
-	if (McpArgs::Has(args, "zap"))
-		project.SetSliderZap(index, McpArgs::Bool(args, "zap", false));
-	if (McpArgs::Has(args, "zapped")) {
-		int value = McpArgs::Bool(args, "zapped", false) ? 100 : 0;
+	if (McpArgs::Has(args, "zap")) {
+		bool zap = McpArgs::Bool(args, "zap", false);
+		project.SetSliderZap(index, zap);
+		if (zap)
+			project.SetSliderToggle(index, false);
+	}
+	if (McpArgs::Has(args, "toggle")) {
+		bool toggle = McpArgs::Bool(args, "toggle", false);
+		if (toggle && project.SliderZap(index))
+			throw McpToolError("A zap can't be a toggle. Pass zap: false as well.");
+		project.SetSliderToggle(index, toggle);
+	}
+	if (McpArgs::Has(args, "toggleValue"))
+		project.SetSliderToggleValue(index, McpArgs::Float(args, "toggleValue", 100.0f));
+	if (McpArgs::Has(args, "toggleSliders")) {
+		std::vector<ToggleTarget> targets;
+		for (auto& value : McpArgs::FloatMap(args, "toggleSliders")) {
+			size_t targetIndex = SliderIndex(project, value.first);
+			if (targetIndex == index || project.SliderToggle(targetIndex) || project.SliderClamp(targetIndex))
+				throw McpToolError("A toggle can't set itself, other toggles or clamps: '" + value.first + "'.");
+
+			ToggleTarget target;
+			target.slider = value.first;
+			target.value = value.second;
+			targets.push_back(std::move(target));
+		}
+		project.SetSliderToggleSliders(index, targets);
+	}
+	if (McpArgs::Has(args, "zapped") || McpArgs::Has(args, "ticked")) {
+		const char* arg = McpArgs::Has(args, "zapped") ? "zapped" : "ticked";
+		int value = McpArgs::Bool(args, arg, false) ? 100 : 0;
 		project.SetSliderDefault(index, value, false);
 		project.SetSliderDefault(index, value, true);
 	}
@@ -482,8 +519,9 @@ void AddSliderFileTools(OutfitStudioMcp& mcp) {
 	McpTool properties;
 	properties.name = "set_slider_properties";
 	properties.description =
-		"Changes a slider like the Slider Properties dialog: name, zap, zap toggles, invert, hidden, UV and the default "
-		"values BodySlide starts at for the small and big body (0 to 100). Only what's given changes.";
+		"Changes a slider like the Slider Properties dialog: name, zap, zap toggles, toggle, invert, hidden, UV and the default "
+		"values BodySlide starts at for the small and big body (0 to 100). A toggle shows as a check box in BodySlide that "
+		"applies the slider at toggleValue and holds toggleSliders (sliders or zaps) at their values while ticked. Only what's given changes.";
 	properties.inputSchema = McpSchema(
 		{
 			{"slider", McpProp("string", "Slider name")},
@@ -494,6 +532,10 @@ void AddSliderFileTools(OutfitStudioMcp& mcp) {
 			{"invert", McpProp("boolean", "BodySlide shows the slider reversed")},
 			{"hidden", McpProp("boolean", "BodySlide hides the slider")},
 			{"uv", McpProp("boolean", "The slider changes UVs instead of positions")},
+			{"toggle", McpProp("boolean", "BodySlide shows the slider as a check box that applies it at toggleValue. Not for zaps.")},
+			{"ticked", McpProp("boolean", "toggle: on by default in BodySlide")},
+			{"toggleValue", McpProp("number", "toggle: percent the slider is applied at while ticked, 100 by default")},
+			{"toggleSliders", McpNumberMap("toggle: other sliders and zaps and the percent they're held at while ticked; a zap above 0 is zapped, at 0 it isn't. Replaces the list; {} clears it.")},
 			{"defaultSmall", McpProp("integer", "Default value for the small body, 0 to 100")},
 			{"defaultBig", McpProp("integer", "Default value for the big body, 0 to 100")},
 		},

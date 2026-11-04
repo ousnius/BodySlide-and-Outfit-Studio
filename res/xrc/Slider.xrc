@@ -150,6 +150,26 @@
 							<hidden>1</hidden>
 						</object>
 					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL|wxALIGN_CENTER</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="lbToggleValue">
+							<label>Value when ticked</label>
+							<wrap>-1</wrap>
+							<hidden>1</hidden>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxTextCtrl" name="edToggleValue">
+							<value translate="0">100</value>
+							<tooltip>Percent that BodySlide applies the slider at while the toggle is ticked.</tooltip>
+							<hidden>1</hidden>
+						</object>
+					</object>
 				</object>
 			</object>
 			<object class="sizeritem">
@@ -201,6 +221,16 @@
 									<checked>0</checked>
 								</object>
 							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALL</flag>
+								<border>5</border>
+								<object class="wxCheckBox" name="chkToggle">
+									<label>Toggle</label>
+									<tooltip>BodySlide shows the slider as a check box. Ticking it applies the slider at the value when ticked and sets the chosen sliders.</tooltip>
+									<checked>0</checked>
+								</object>
+							</object>
 						</object>
 					</object>
 					<object class="sizeritem">
@@ -220,6 +250,25 @@
 						<object class="wxCheckListBox" name="zapToggleList">
 							<style>wxLB_HSCROLL|wxLB_NEEDED_SB</style>
 							<enabled>0</enabled>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL|wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="toggleSliderLabel">
+							<label>Sliders the toggle sets while ticked (zaps are zapped at any value above 0):</label>
+							<wrap>-1</wrap>
+							<hidden>1</hidden>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxALL|wxEXPAND</flag>
+						<border>5</border>
+						<minsize>-1,120</minsize>
+						<object class="wxGrid" name="toggleSliderGrid">
+							<hidden>1</hidden>
 						</object>
 					</object>
 				</object>

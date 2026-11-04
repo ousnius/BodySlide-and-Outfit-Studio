@@ -206,6 +206,7 @@ size_t SliderSet::CloneSlider(const std::string& sliderName, const std::string& 
 	clonedSlider.name = cloneName;
 	clonedSlider.curValue = 0.0f;
 	clonedSlider.zapToggles.clear();
+	clonedSlider.ForgetSliders([&cloneName](const std::string& slider) { return slider == cloneName; });
 	clonedSlider.ClearInherited();
 
 	return sliders.size() - 1;
@@ -213,9 +214,8 @@ size_t SliderSet::CloneSlider(const std::string& sliderName, const std::string& 
 
 void SliderSet::DeleteSlider(const std::string& sliderName) {
 	// Delete toggles from other sliders
-	for (auto& slider : sliders) {
-		slider.zapToggles.erase(std::remove(slider.zapToggles.begin(), slider.zapToggles.end(), sliderName), slider.zapToggles.end());
-	}
+	for (auto& slider : sliders)
+		slider.ForgetSliders([&sliderName](const std::string& toggled) { return toggled == sliderName; });
 
 	// Find and delete slider
 	for (size_t i = 0; i < sliders.size(); i++) {
@@ -243,6 +243,9 @@ size_t SliderSet::CopySlider(SliderData* other) {
 	ms->defBigValue = other->defBigValue;
 	ms->defSmallValue = other->defSmallValue;
 	ms->zapToggles = other->zapToggles;
+	ms->bToggle = other->bToggle;
+	ms->toggleValue = other->toggleValue;
+	ms->toggleSliders = other->toggleSliders;
 	ms->bInherited = other->bInherited;
 	ms->addOnName = other->addOnName;
 	ms->addOnID = other->addOnID;
@@ -780,8 +783,9 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 	}
 
 	for (auto& slider : sliders) {
-		// Generated data is made anew each time the set is loaded
-		if (std::all_of(slider.dataFiles.begin(), slider.dataFiles.end(), [](const DiffInfo& df) { return df.bGenerated; }))
+		// Generated data is made anew each time the set is loaded. Toggles need no data of their own.
+		if (std::all_of(slider.dataFiles.begin(), slider.dataFiles.end(), [](const DiffInfo& df) { return df.bGenerated; })
+			&& (!slider.dataFiles.empty() || !slider.KeptWithoutData()))
 			continue;
 
 		newElement = sliderSetElement->GetDocument()->NewElement("Slider");
@@ -817,6 +821,12 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 		if (slider.bUV)
 			sliderElement->SetAttribute("uv", true);
 
+		bool isToggle = slider.bToggle && !slider.bZap;
+		if (isToggle) {
+			sliderElement->SetAttribute("toggle", true);
+			sliderElement->SetAttribute("togglevalue", slider.toggleValue);
+		}
+
 		if (slider.bInherited && HasBaseProject())
 			sliderElement->SetAttribute("inherited", true);
 
@@ -841,6 +851,15 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 			std::string fileName_bs = ToBackslashes(df.fileName);
 			newText = sliderSetElement->GetDocument()->NewText(fileName_bs.c_str());
 			dataFileElement->InsertEndChild(newText);
+		}
+
+		// The sliders that a toggle sets while ticked
+		if (isToggle) {
+			for (auto& target : slider.toggleSliders) {
+				XMLElement* setsElement = sliderElement->InsertNewChildElement("Sets");
+				setsElement->SetAttribute("slider", target.slider.c_str());
+				setsElement->SetAttribute("value", target.value);
+			}
 		}
 	}
 

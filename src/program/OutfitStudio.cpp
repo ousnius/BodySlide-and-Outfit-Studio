@@ -56,6 +56,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <iterator>
 #include <sstream>
 #include <wx/debugrpt.h>
+#include <wx/grid.h>
 #include <wx/display.h>
 #include <wx/listctrl.h>
 #include <wx/textctrl.h>
@@ -10885,7 +10886,13 @@ void OutfitStudioFrame::ShowSliderProperties(const std::string& sliderName) {
 		wxCheckBox* chkInvert = XRCCTRL(dlg, "chkInvert", wxCheckBox);
 		wxCheckBox* chkZap = XRCCTRL(dlg, "chkZap", wxCheckBox);
 		wxCheckBox* chkUV = XRCCTRL(dlg, "chkUV", wxCheckBox);
+		wxCheckBox* chkToggle = XRCCTRL(dlg, "chkToggle", wxCheckBox);
+		wxStaticText* lbToggleValue = XRCCTRL(dlg, "lbToggleValue", wxStaticText);
+		wxTextCtrl* edToggleValue = XRCCTRL(dlg, "edToggleValue", wxTextCtrl);
+		wxStaticText* zapToggleLabel = XRCCTRL(dlg, "zapToggleLabel", wxStaticText);
 		wxCheckListBox* zapToggleList = XRCCTRL(dlg, "zapToggleList", wxCheckListBox);
+		wxStaticText* toggleSliderLabel = XRCCTRL(dlg, "toggleSliderLabel", wxStaticText);
+		wxGrid* toggleSliderGrid = XRCCTRL(dlg, "toggleSliderGrid", wxGrid);
 		wxListCtrl* sliderDataList = XRCCTRL(dlg, "sliderDataList", wxListCtrl);
 		wxButton* btnSliderDataLocal = XRCCTRL(dlg, "btnSliderDataLocal", wxButton);
 		wxButton* btnSliderDataExternal = XRCCTRL(dlg, "btnSliderDataExternal", wxButton);
@@ -10930,35 +10937,107 @@ void OutfitStudioFrame::ShowSliderProperties(const std::string& sliderName) {
 		if (project->SliderUV(curSlider))
 			chkUV->SetValue(true);
 
-		if (project->SliderZap(curSlider)) {
-			lbValLo->Hide();
-			lbValHi->Hide();
-			edValLo->Hide();
-			edValHi->Hide();
-			cbValZapped->Show();
+		if (!project->mGenWeights)
+			lbValHi->SetLabel(_("Default"));
 
-			chkZap->SetValue(true);
-			zapToggleList->Enable();
+		chkZap->SetValue(project->SliderZap(curSlider));
+		chkToggle->SetValue(project->SliderToggle(curSlider));
+		edToggleValue->SetValue(wxString::Format("%g", project->SliderToggleValue(curSlider)));
 
-			for (size_t i = 0; i < project->SliderCount(); i++)
-				if (i != curSlider && (project->SliderZap(i) || project->SliderHidden(i)))
-					zapToggleList->Append(wxString::FromUTF8(project->GetSliderName(i)));
+		for (size_t i = 0; i < project->SliderCount(); i++)
+			if (i != curSlider && (project->SliderZap(i) || project->SliderHidden(i)))
+				zapToggleList->Append(wxString::FromUTF8(project->GetSliderName(i)));
 
-			for (auto& s : project->SliderZapToggles(curSlider)) {
-				int stringId = zapToggleList->FindString(s, true);
-				if (stringId != wxNOT_FOUND)
-					zapToggleList->Check(stringId);
-			}
+		for (auto& s : project->SliderZapToggles(curSlider)) {
+			int stringId = zapToggleList->FindString(s, true);
+			if (stringId != wxNOT_FOUND)
+				zapToggleList->Check(stringId);
 		}
-		else {
-			cbValZapped->Hide();
 
-			if (!project->mGenWeights) {
-				lbValLo->Hide();
-				edValLo->Hide();
-				lbValHi->SetLabel(_("Default"));
-			}
+		// Sliders and zaps the toggle can set, with whether it sets them and the value
+		enum { ToggleColSet, ToggleColSlider, ToggleColValue };
+		toggleSliderGrid->CreateGrid(0, 3);
+		toggleSliderGrid->SetRowLabelSize(0);
+		toggleSliderGrid->SetColLabelValue(ToggleColSet, _("Set"));
+		toggleSliderGrid->SetColLabelValue(ToggleColSlider, _("Slider"));
+		toggleSliderGrid->SetColLabelValue(ToggleColValue, _("Value"));
+		toggleSliderGrid->EnableDragRowSize(false);
+		toggleSliderGrid->EnableDragGridSize(false);
+
+		auto* setAttr = new wxGridCellAttr();
+		setAttr->SetRenderer(new wxGridCellBoolRenderer());
+		setAttr->SetAlignment(wxALIGN_CENTRE, wxALIGN_CENTRE);
+		setAttr->SetReadOnly();
+		toggleSliderGrid->SetColAttr(ToggleColSet, setAttr);
+
+		auto* nameAttr = new wxGridCellAttr();
+		nameAttr->SetReadOnly();
+		toggleSliderGrid->SetColAttr(ToggleColSlider, nameAttr);
+
+		auto* valueAttr = new wxGridCellAttr();
+		valueAttr->SetAlignment(wxALIGN_RIGHT, wxALIGN_CENTRE);
+		toggleSliderGrid->SetColAttr(ToggleColValue, valueAttr);
+
+		std::vector<ToggleTarget> toggleSliders = project->SliderToggleSliders(curSlider);
+		for (size_t i = 0; i < project->SliderCount(); i++) {
+			if (i == curSlider || project->SliderToggle(i) || project->SliderClamp(i))
+				continue;
+
+			std::string name = project->GetSliderName(i);
+			auto target = std::find_if(toggleSliders.begin(), toggleSliders.end(), [&name](const ToggleTarget& t) { return t.slider == name; });
+
+			int row = toggleSliderGrid->GetNumberRows();
+			toggleSliderGrid->AppendRows(1);
+			toggleSliderGrid->SetCellValue(row, ToggleColSet, target != toggleSliders.end() ? "1" : "");
+			toggleSliderGrid->SetCellValue(row, ToggleColSlider, wxString::FromUTF8(name));
+			toggleSliderGrid->SetCellValue(row, ToggleColValue, wxString::Format("%g", target != toggleSliders.end() ? target->value : 100.0f));
 		}
+
+		toggleSliderGrid->SetColSize(ToggleColSet, dlg.FromDIP(40));
+		toggleSliderGrid->SetColSize(ToggleColSlider, dlg.FromDIP(300));
+		toggleSliderGrid->SetColSize(ToggleColValue, dlg.FromDIP(80));
+
+		// One click ticks a slider, and changing its value ticks it too
+		toggleSliderGrid->Bind(wxEVT_GRID_CELL_LEFT_CLICK, [&](wxGridEvent& event) {
+			if (event.GetCol() != ToggleColSet) {
+				event.Skip();
+				return;
+			}
+
+			int row = event.GetRow();
+			bool set = toggleSliderGrid->GetCellValue(row, ToggleColSet) == "1";
+			toggleSliderGrid->SetCellValue(row, ToggleColSet, set ? "" : "1");
+			toggleSliderGrid->SetGridCursor(row, ToggleColSet);
+		});
+		toggleSliderGrid->Bind(wxEVT_GRID_CELL_CHANGED, [&](wxGridEvent& event) {
+			if (event.GetCol() == ToggleColValue)
+				toggleSliderGrid->SetCellValue(event.GetRow(), ToggleColSet, "1");
+			event.Skip();
+		});
+
+		auto updateSliderMode = [&]() {
+			bool zap = chkZap->IsChecked();
+			bool toggle = chkToggle->IsChecked();
+			bool check = zap || toggle;
+
+			lbValLo->Show(!check && project->mGenWeights);
+			edValLo->Show(!check && project->mGenWeights);
+			lbValHi->Show(!check);
+			edValHi->Show(!check);
+			cbValZapped->SetLabel(toggle ? _("Ticked") : _("Zapped"));
+			cbValZapped->Show(check);
+			lbToggleValue->Show(toggle);
+			edToggleValue->Show(toggle);
+
+			zapToggleLabel->Show(!toggle);
+			zapToggleList->Show(!toggle);
+			zapToggleList->Enable(zap);
+			toggleSliderLabel->Show(toggle);
+			toggleSliderGrid->Show(toggle);
+
+			dlg.Layout();
+		};
+		updateSliderMode();
 
 		if (hiVal > 0 || loVal > 0)
 			cbValZapped->Set3StateValue(wxCheckBoxState::wxCHK_CHECKED);
@@ -11003,23 +11082,25 @@ void OutfitStudioFrame::ShowSliderProperties(const std::string& sliderName) {
 			}
 		});
 
+		// A slider is either a zap or a toggle
 		chkZap->Bind(wxEVT_CHECKBOX, [&](wxCommandEvent& event) {
-			bool checked = event.IsChecked();
-
-			lbValLo->Show(!checked);
-			lbValHi->Show(!checked);
-			edValLo->Show(!checked);
-			edValHi->Show(!checked);
-			cbValZapped->Show(checked);
-			zapToggleList->Enable(checked);
-
-			dlg.Layout();
+			if (event.IsChecked())
+				chkToggle->SetValue(false);
+			updateSliderMode();
+		});
+		chkToggle->Bind(wxEVT_CHECKBOX, [&](wxCommandEvent& event) {
+			if (event.IsChecked())
+				chkZap->SetValue(false);
+			updateSliderMode();
 		});
 
 		XRCCTRL(dlg, "wxID_CANCEL", wxButton)->SetFocus();
 
 		if (dlg.ShowModal() == wxID_OK) {
-			if (chkZap->IsChecked()) {
+			toggleSliderGrid->SaveEditControlValue();
+
+			// Zaps and toggles are on or off by default
+			if (chkZap->IsChecked() || chkToggle->IsChecked()) {
 				if (cbValZapped->IsChecked()) {
 					loVal = 100;
 					hiVal = 100;
@@ -11028,7 +11109,13 @@ void OutfitStudioFrame::ShowSliderProperties(const std::string& sliderName) {
 					loVal = 0;
 					hiVal = 0;
 				}
+			}
+			else {
+				edValLo->GetValue().ToLong(&loVal);
+				edValHi->GetValue().ToLong(&hiVal);
+			}
 
+			if (chkZap->IsChecked()) {
 				wxArrayString zapToggles;
 				wxArrayInt toggled;
 				zapToggleList->GetCheckedItems(toggled);
@@ -11037,9 +11124,29 @@ void OutfitStudioFrame::ShowSliderProperties(const std::string& sliderName) {
 
 				project->SetSliderZapToggles(curSlider, zapToggles);
 			}
-			else {
-				edValLo->GetValue().ToLong(&loVal);
-				edValHi->GetValue().ToLong(&hiVal);
+
+			project->SetSliderToggle(curSlider, chkToggle->IsChecked());
+			if (chkToggle->IsChecked()) {
+				double toggleValue = 100.0;
+				if (edToggleValue->GetValue().ToDouble(&toggleValue))
+					project->SetSliderToggleValue(curSlider, static_cast<float>(toggleValue));
+
+				std::vector<ToggleTarget> targets;
+				for (int row = 0; row < toggleSliderGrid->GetNumberRows(); row++) {
+					if (toggleSliderGrid->GetCellValue(row, ToggleColSet) != "1")
+						continue;
+
+					ToggleTarget target;
+					target.slider = toggleSliderGrid->GetCellValue(row, ToggleColSlider).ToUTF8().data();
+
+					double value = 100.0;
+					if (toggleSliderGrid->GetCellValue(row, ToggleColValue).ToDouble(&value))
+						target.value = static_cast<float>(value);
+
+					targets.push_back(std::move(target));
+				}
+
+				project->SetSliderToggleSliders(curSlider, targets);
 			}
 
 			project->SetSliderZap(curSlider, chkZap->GetValue());

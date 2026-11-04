@@ -10,6 +10,7 @@ See the included LICENSE file
 #include "DiffData.h"
 #include "../utils/StringStuff.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <string>
 #include <vector>
@@ -43,6 +44,14 @@ struct DiffInfo {
 		, fileName(fn) {}
 };
 
+// A slider that a toggle sets while it's ticked, with the value in percent
+struct ToggleTarget {
+	std::string slider;
+	float value = 100.0f;
+
+	bool operator==(const ToggleTarget& other) const { return slider == other.slider && value == other.value; }
+};
+
 class SliderData {
 public:
 	std::string name;
@@ -54,6 +63,9 @@ public:
 	float defSmallValue = 0.0f;
 	float defBigValue = 0.0f;
 	std::vector<std::string> zapToggles;
+	bool bToggle = false;				   // BodySlide shows the slider as a check box that applies it at the toggle value.
+	float toggleValue = 100.0f;			   // Percent that the toggle applies the slider at when ticked
+	std::vector<ToggleTarget> toggleSliders; // Other sliders and zaps that the toggle sets while ticked
 	bool bInherited = false; // The properties above come from the base project.
 
 	// The add-on project that the slider was made for. BodySlide leaves the slider out when the add-on isn't installed.
@@ -137,9 +149,34 @@ public:
 		defSmallValue = other.defSmallValue;
 		defBigValue = other.defBigValue;
 		zapToggles = other.zapToggles;
+		bToggle = other.bToggle;
+		toggleValue = other.toggleValue;
+		toggleSliders = other.toggleSliders;
 		addOnName = other.addOnName;
 		addOnID = other.addOnID;
 	}
+
+	// Drops the zaps and sliders this slider toggles that the predicate says are gone.
+	template<typename IsGone>
+	void ForgetSliders(IsGone isGone) {
+		zapToggles.erase(std::remove_if(zapToggles.begin(), zapToggles.end(), isGone), zapToggles.end());
+		toggleSliders.erase(std::remove_if(toggleSliders.begin(), toggleSliders.end(), [&isGone](const ToggleTarget& t) { return isGone(t.slider); }),
+							toggleSliders.end());
+	}
+
+	// Points the zaps and sliders this slider toggles at the new name of a slider.
+	void RenameToggledSlider(const std::string& oldName, const std::string& newName) {
+		for (auto& toggle : zapToggles)
+			if (toggle == oldName)
+				toggle = newName;
+
+		for (auto& target : toggleSliders)
+			if (target.slider == oldName)
+				target.slider = newName;
+	}
+
+	// Toggles are kept without data of their own, since they can set other sliders and zaps instead
+	bool KeptWithoutData() const { return bToggle && !bZap; }
 
 	bool NeedsAddOn() const { return !addOnName.empty() || !addOnID.empty(); }
 

@@ -184,7 +184,7 @@ void SliderSet::InheritFrom(const SliderSet& base) {
 		newSlider.CopyPropertiesFrom(baseSlider);
 		newSlider.bInherited = true;
 		newSlider.dataFiles = mergeData(baseSlider.name, {}, baseSlider.dataFiles);
-		if (newSlider.dataFiles.empty())
+		if (newSlider.dataFiles.empty() && !newSlider.KeptWithoutData())
 			continue;
 
 		auto insertAt = mergedSliders.end();
@@ -207,13 +207,9 @@ void SliderSet::InheritFrom(const SliderSet& base) {
 		mergedSliders.insert(insertAt, std::move(newSlider));
 	}
 
-	// Zaps can only toggle sliders that are still there
-	for (auto& slider : mergedSliders) {
-		slider.zapToggles.erase(std::remove_if(slider.zapToggles.begin(),
-											   slider.zapToggles.end(),
-											   [&](const std::string& toggle) { return findMerged(toggle) == mergedSliders.end(); }),
-								slider.zapToggles.end());
-	}
+	// Zaps and toggles can only toggle sliders that are still there
+	for (auto& slider : mergedSliders)
+		slider.ForgetSliders([&](const std::string& toggle) { return findMerged(toggle) == mergedSliders.end(); });
 
 	sliders = std::move(mergedSliders);
 	removedSliders = std::move(keptRemovedSliders);

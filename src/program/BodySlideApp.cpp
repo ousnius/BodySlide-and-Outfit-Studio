@@ -1223,8 +1223,10 @@ void BodySlideApp::ActivateOutfit(const std::string& name) {
 		}
 
 		pendingSliderValues.clear();
-		if (changed)
+		if (changed) {
+			UpdateToggledSliders();
 			sliderView->SetPresetChanged(true);
+		}
 	}
 
 	InitPreview();
@@ -1239,6 +1241,7 @@ void BodySlideApp::ActivatePreset(const std::string& presetName, const bool upda
 	wxLogMessage("Applying preset '%s' to sliders.", presetName);
 
 	BodySlideConfig.SetValue("SelectedPreset", presetName);
+	std::vector<bool> zappedBefore = ZappedSliders();
 	sliderManager.InitializeSliders(presetName);
 
 	bool zapChanged = false;
@@ -1264,6 +1267,11 @@ void BodySlideApp::ActivatePreset(const std::string& presetName, const bool upda
 	sliderView->SetPresetChanged(false);
 
 	if (UpdateZapChoices())
+		zapChanged = true;
+
+	// Zaps that toggles hold change the mesh as well
+	UpdateToggledSliders();
+	if (ZappedSliders() != zappedBefore)
 		zapChanged = true;
 
 	if (preview && updatePreview)
@@ -1366,8 +1374,68 @@ void BodySlideApp::RefreshSliders() {
 		sliderView->SetSliderPosition(slider->name.c_str(), slider->value, SLIDER_LO);
 	}
 
+	UpdateToggledSliders();
+
 	if (preview)
 		UpdatePreview();
+}
+
+std::vector<bool> BodySlideApp::ZappedSliders() {
+	std::vector<float> values = ToggledSliderValues(sliderManager.slidersBig);
+	std::vector<bool> zapped(values.size(), false);
+	for (size_t i = 0; i < values.size(); i++)
+		zapped[i] = sliderManager.slidersBig[i].zap && !sliderManager.slidersBig[i].uv && values[i] > 0.0f;
+
+	return zapped;
+}
+
+bool BodySlideApp::ToggleSetsZaps(const wxString& sliderName) {
+	if (projects.empty())
+		return false;
+
+	std::string sstr{sliderName.ToUTF8()};
+	auto& activeSet = GetActiveSet();
+	if (!activeSet.SliderExists(sstr))
+		return false;
+
+	for (auto& target : activeSet[sstr].toggleSliders)
+		if (activeSet.SliderExists(target.slider) && activeSet[target.slider].bZap && !activeSet[target.slider].bUV)
+			return true;
+
+	return false;
+}
+
+void BodySlideApp::UpdateToggledSliders() {
+	if (!sliderView)
+		return;
+
+	std::vector<int> forcedBig;
+	std::vector<int> forcedSmall;
+	std::vector<float> valuesBig = ToggledSliderValues(sliderManager.slidersBig, &forcedBig);
+	std::vector<float> valuesSmall = ToggledSliderValues(sliderManager.slidersSmall, &forcedSmall);
+
+	for (size_t i = 0; i < sliderManager.slidersBig.size(); i++) {
+		auto& sliderBig = sliderManager.slidersBig[i];
+		SliderDisplay* sd = sliderView->GetSliderDisplay(sliderBig.name);
+		if (!sd || sliderBig.toggle)
+			continue;
+
+		int forcedBy = forcedBig[i];
+		if (forcedBy < 0 && i < forcedSmall.size())
+			forcedBy = forcedSmall[i];
+
+		if (forcedBy < 0 && !sd->isForced)
+			continue;
+
+		// Held sliders show the value the toggle sets, and their own value again once it's unticked
+		sd->SetForcedBy(forcedBy >= 0 ? wxString::FromUTF8(sliderManager.slidersBig[forcedBy].name) : wxString());
+		sliderView->SetSliderPosition(sliderBig.name.c_str(), forcedBy >= 0 ? valuesBig[i] : sliderBig.value, SLIDER_HI);
+
+		if (i < sliderManager.slidersSmall.size()) {
+			auto& sliderSmall = sliderManager.slidersSmall[i];
+			sliderView->SetSliderPosition(sliderSmall.name.c_str(), forcedBy >= 0 ? valuesSmall[i] : sliderSmall.value, SLIDER_LO);
+		}
+	}
 }
 
 void BodySlideApp::PopulatePresetList(const std::string& select) {
@@ -1485,7 +1553,7 @@ void BodySlideApp::DisplayActiveSet() {
 		if (regularSlider) {
 			wxString tip;
 			SliderMarker marker = markerOf(activeSet[i], tip);
-			sliderView->AddSliderGUI(activeSet[i].name, activeSet[i].name, "", activeSet[i].bZap, !activeSet.GenWeights(), marker, tip);
+			sliderView->AddSliderGUI(activeSet[i].name, activeSet[i].name, "", activeSet[i].bZap || activeSet[i].bToggle, !activeSet.GenWeights(), marker, tip);
 		}
 	}
 
@@ -1508,7 +1576,7 @@ void BodySlideApp::DisplayActiveSet() {
 
 					wxString tip;
 					SliderMarker marker = markerOf(activeSet[s], tip);
-					sliderView->AddSliderGUI(activeSet[s].name, displayName, categoryName, activeSet[s].bZap, !activeSet.GenWeights(), marker, tip);
+					sliderView->AddSliderGUI(activeSet[s].name, displayName, categoryName, activeSet[s].bZap || activeSet[s].bToggle, !activeSet.GenWeights(), marker, tip);
 				}
 			}
 			iter++;
@@ -1688,8 +1756,11 @@ void BodySlideApp::LaunchOutfitStudio(const wxString& args) {
 
 void BodySlideApp::ApplySliders(
 	const std::string& targetShape, std::vector<Slider>& sliderSet, DiffDataSets& dataSets, std::vector<Vector3>& verts, std::vector<uint16_t>& ZapIdx, std::vector<Vector2>* uvs) {
-	for (auto& slider : sliderSet) {
-		float val = slider.value;
+	std::vector<float> values = ToggledSliderValues(sliderSet);
+
+	for (size_t i = 0; i < sliderSet.size(); i++) {
+		auto& slider = sliderSet[i];
+		float val = values[i];
 		if (slider.zap && !slider.uv) {
 			if (val > 0)
 				for (size_t j = 0; j < slider.linkedDataSets.size(); j++)
@@ -1710,10 +1781,12 @@ void BodySlideApp::ApplySliders(
 		}
 	}
 
-	for (auto& slider : sliderSet)
-		if (slider.clamp && slider.value > 0)
+	for (size_t i = 0; i < sliderSet.size(); i++) {
+		auto& slider = sliderSet[i];
+		if (slider.clamp && values[i] > 0)
 			for (size_t j = 0; j < slider.linkedDataSets.size(); j++)
 				dataSets.ApplyClamp(slider.linkedDataSets[j], targetShape, &verts);
+	}
 }
 
 struct ContinuousRange {
@@ -1955,7 +2028,7 @@ void BodySlideApp::CopySliderValues(bool toHigh) {
 	if (toHigh) {
 		for (size_t i = 0; i < sliderManager.slidersSmall.size(); i++) {
 			Slider* slider = &sliderManager.slidersSmall[i];
-			if (slider->zap || slider->clamp)
+			if (slider->zap || slider->clamp || slider->toggle)
 				continue;
 
 			if (sliderView->GetSliderDisplay(slider->name)) {
@@ -1968,7 +2041,7 @@ void BodySlideApp::CopySliderValues(bool toHigh) {
 	else {
 		for (size_t i = 0; i < sliderManager.slidersBig.size(); i++) {
 			Slider* slider = &sliderManager.slidersBig[i];
-			if (slider->zap || slider->clamp)
+			if (slider->zap || slider->clamp || slider->toggle)
 				continue;
 
 			if (sliderView->GetSliderDisplay(slider->name)) {
@@ -1979,6 +2052,7 @@ void BodySlideApp::CopySliderValues(bool toHigh) {
 		}
 	}
 
+	UpdateToggledSliders();
 	sliderView->SetPresetChanged();
 
 	if (preview)
@@ -1996,7 +2070,7 @@ void BodySlideApp::CopyPreviewWeightToSliders() {
 		Slider* sliderBig = &sliderManager.slidersBig[i];
 		Slider* sliderSmall = &sliderManager.slidersSmall[i];
 
-		if (sliderBig->zap || sliderBig->clamp)
+		if (sliderBig->zap || sliderBig->clamp || sliderBig->toggle)
 			continue;
 
 		// Calculate the interpolated slider value at the current weight
@@ -2013,6 +2087,7 @@ void BodySlideApp::CopyPreviewWeightToSliders() {
 		}
 	}
 
+	UpdateToggledSliders();
 	sliderView->SetPresetChanged();
 	UpdatePreview();
 }
@@ -3671,12 +3746,8 @@ void BodySlideApp::UpdateExternalReferenceMesh(int weight, std::vector<Vector3>*
 		std::vector<Slider> refSlidersSmall;
 		for (size_t si = 0; si < referenceSliderSet.size(); si++) {
 			auto& sd = referenceSliderSet[si];
-			Slider s;
-			s.name = sd.name;
-			s.invert = sd.bInvert;
-			s.zap = sd.bZap;
-			s.clamp = sd.bClamp;
-			s.uv = sd.bUV;
+			Slider s = Slider::FromData(sd);
+			s.linkedDataSets.clear();
 			for (auto& df : sd.dataFiles)
 				if (df.targetName == targetName)
 					s.linkedDataSets.push_back(df.dataName);
@@ -5492,6 +5563,42 @@ int BodySlideApp::BuildListBodies(
 			}
 		}
 
+		// Values of the sliders from the preset or the changed sliders of the UI, then with the toggles applied
+		std::vector<Slider> batchSlidersBig;
+		std::vector<Slider> batchSlidersSmall;
+		batchSlidersBig.reserve(currentSet.size());
+		batchSlidersSmall.reserve(currentSet.size());
+		for (size_t s = 0; s < currentSet.size(); s++) {
+			std::string name = currentSet[s].name;
+			Slider sliderValue = Slider::FromData(currentSet[s]);
+			sliderValue.linkedDataSets.clear();
+
+			sliderValue.value = sliderManager.GetBigPresetValue(activePreset, name, currentSet[s].defBigValue / 100.0f);
+			for (auto& sliderBig : sliderManager.slidersBig) {
+				if (sliderBig.name == name && sliderBig.changed && !sliderBig.clamp && !currentSet[s].bZap) {
+					sliderValue.value = sliderBig.value;
+					break;
+				}
+			}
+			batchSlidersBig.push_back(sliderValue);
+
+			sliderValue.value = 0.0f;
+			if (currentSet.GenWeights()) {
+				sliderValue.value = sliderManager.GetSmallPresetValue(activePreset, name, currentSet[s].defSmallValue / 100.0f);
+				for (auto& sliderSmall : sliderManager.slidersSmall) {
+					if (sliderSmall.name == name && sliderSmall.changed && !sliderSmall.clamp && !currentSet[s].bZap) {
+						sliderValue.value = sliderSmall.value;
+						break;
+					}
+				}
+			}
+			batchSlidersSmall.push_back(std::move(sliderValue));
+		}
+
+		std::vector<int> forcedBig;
+		std::vector<float> valuesBig = ToggledSliderValues(batchSlidersBig, &forcedBig);
+		std::vector<float> valuesSmall = ToggledSliderValues(batchSlidersSmall);
+
 		// Phase 1: Apply sliders and set vertices for all shapes
 		for (auto it = currentSet.ShapesBegin(); it != currentSet.ShapesEnd(); ++it) {
 			auto shape = nifBig.FindBlockByName<NiShape>(it->first);
@@ -5519,23 +5626,9 @@ int BodySlideApp::BuildListBodies(
 				if (dn.empty())
 					continue;
 
-				vbig = sliderManager.GetBigPresetValue(activePreset, name, currentSet[s].defBigValue / 100.0f);
-				for (auto& sliderBig : sliderManager.slidersBig) {
-					if (sliderBig.name == name && sliderBig.changed && !sliderBig.clamp && !currentSet[s].bZap) {
-						vbig = sliderBig.value;
-						break;
-					}
-				}
-
-				if (currentSet.GenWeights()) {
-					vsmall = sliderManager.GetSmallPresetValue(activePreset, name, currentSet[s].defSmallValue / 100.0f);
-					for (auto& sliderSmall : sliderManager.slidersSmall) {
-						if (sliderSmall.name == name && sliderSmall.changed && !sliderSmall.clamp && !currentSet[s].bZap) {
-							vsmall = sliderSmall.value;
-							break;
-						}
-					}
-				}
+				vbig = valuesBig[s];
+				if (currentSet.GenWeights())
+					vsmall = valuesSmall[s];
 
 				if (currentSet[s].bInvert) {
 					vbig = 1.0f - vbig;
@@ -5544,8 +5637,8 @@ int BodySlideApp::BuildListBodies(
 				}
 
 				if (currentSet[s].bZap && !currentSet[s].bUV) {
-					if (!currentSet[s].bHidden) {
-						// Apply stored zap choice for zaps visible to the user
+					// Apply stored zap choice for zaps visible to the user, unless a ticked toggle holds the zap
+					if (!currentSet[s].bHidden && forcedBig[s] < 0) {
 						if (buildSelection.HasZapChoice(currentSet.GetName(), name)) {
 							bool zapChoice = buildSelection.GetZapChoice(currentSet.GetName(), name);
 							vbig = zapChoice ? 1.0f : 0.0f;
@@ -6116,6 +6209,15 @@ bool BodySlideApp::IsUVSlider(const wxString& sliderName) {
 
 	std::string sstr{sliderName.ToUTF8()};
 	return GetActiveSet()[sstr].bUV;
+}
+
+bool BodySlideApp::IsToggleSlider(const wxString& sliderName) {
+	if (projects.empty())
+		return false;
+
+	std::string sstr{sliderName.ToUTF8()};
+	auto& activeSet = GetActiveSet();
+	return activeSet.SliderExists(sstr) && activeSet[sstr].bToggle && !activeSet[sstr].bZap;
 }
 
 std::vector<std::string> BodySlideApp::GetSliderZapToggles(const wxString& sliderName) {
@@ -7132,7 +7234,8 @@ void BodySlideFrame::OnZapCheckChanged(wxCommandEvent& event) {
 	}
 
 	std::string sliderName{sn.ToUTF8()};
-	wxLogMessage("Zap '%s' %s.", sn, event.IsChecked() ? "checked" : "unchecked");
+	bool isToggle = app->IsToggleSlider(sn);
+	wxLogMessage("%s '%s' %s.", isToggle ? "Toggle" : "Zap", sn, event.IsChecked() ? "checked" : "unchecked");
 
 	SliderDisplay* slider = GetSliderDisplay(sliderName);
 	if (slider) {
@@ -7164,10 +7267,25 @@ void BodySlideFrame::OnZapCheckChanged(wxCommandEvent& event) {
 			}
 		}
 
-		app->SetZapChoice(sliderName, checked);
+		if (!isToggle)
+			app->SetZapChoice(sliderName, checked);
 	}
 
 	app->SetSliderChanged(sn, isLo);
+
+	// A toggle applies its slider and the sliders it sets, and zaps or keeps the zaps it sets
+	if (isToggle) {
+		app->UpdateToggledSliders();
+		SetPresetChanged();
+
+		wxBeginBusyCursor();
+		if (app->ToggleSetsZaps(sn))
+			app->RebuildPreviewMeshes();
+		else
+			app->UpdatePreview();
+		wxEndBusyCursor();
+		return;
+	}
 
 	std::vector<std::string> zapToggles = app->GetSliderZapToggles(sn);
 	for (auto& toggle : zapToggles) {
@@ -7185,6 +7303,10 @@ void BodySlideFrame::OnZapCheckChanged(wxCommandEvent& event) {
 				slider->zapCheckLo->SetValue(!slider->zapCheckLo->GetValue());
 		}
 	}
+
+	// Zaps can toggle toggles too
+	if (!zapToggles.empty())
+		app->UpdateToggledSliders();
 
 	SetPresetChanged();
 
@@ -8327,6 +8449,9 @@ bool SliderDisplay::Create(wxScrolledWindow* scrollWindow,
 	wxString displayNameStr = wxString::FromUTF8(display);
 
 	if (isCreated) {
+		// The pooled slider was held by a toggle for another slider before
+		SetForcedBy(wxEmptyString);
+
 		if (lblSliderLo->GetLabel() != displayNameStr)
 			lblSliderLo->SetLabel(displayNameStr);
 
@@ -8457,6 +8582,7 @@ void SliderDisplay::SetMarker(SliderMarker marker, const wxString& tip) {
 	else if (marker == SliderMarker::AutoConformed)
 		colour = wxColour(255, 190, 90);
 
+	markerTip = tip;
 	for (wxWindow* window : std::initializer_list<wxWindow*>{lblSliderLo, lblSliderHi, sliderLo, sliderHi, zapCheckLo, zapCheckHi}) {
 		if (!window)
 			continue;
@@ -8472,6 +8598,42 @@ void SliderDisplay::SetMarker(SliderMarker marker, const wxString& tip) {
 			label->SetForegroundColour(colour);
 			label->Refresh();
 		}
+	}
+}
+
+void SliderDisplay::SetForcedBy(const wxString& toggleName) {
+	bool forced = !toggleName.empty();
+	if (!forced && !isForced)
+		return;
+
+	isForced = forced;
+
+	wxString tip = markerTip;
+	if (forced) {
+		if (!tip.empty())
+			tip += "\n";
+		tip += wxString::Format(_("Set by toggle '%s'."), toggleName);
+	}
+
+	for (wxWindow* window : std::initializer_list<wxWindow*>{sliderLo, sliderHi, sliderReadoutLo, sliderReadoutHi, zapCheckLo, zapCheckHi}) {
+		if (!window)
+			continue;
+
+		window->Enable(!forced);
+		if (tip.empty())
+			window->UnsetToolTip();
+		else
+			window->SetToolTip(tip);
+	}
+
+	for (wxWindow* window : std::initializer_list<wxWindow*>{lblSliderLo, lblSliderHi}) {
+		if (!window)
+			continue;
+
+		if (tip.empty())
+			window->UnsetToolTip();
+		else
+			window->SetToolTip(tip);
 	}
 }
 

@@ -410,6 +410,12 @@ public:
 	void RefreshOutfitList();
 
 	void RefreshSliders();
+	// Shows the sliders that ticked toggles hold at the values they set, and gives them back to the user once unticked
+	void UpdateToggledSliders();
+	// Zaps that zap the mesh, with the toggles applied
+	std::vector<bool> ZappedSliders();
+	// Whether a toggle sets zaps that change the mesh
+	bool ToggleSetsZaps(const wxString& sliderName);
 
 	void ActivateOutfit(const std::string& name);
 	void ActivatePreset(const std::string& presetName, const bool updatePreview = true);
@@ -561,6 +567,7 @@ public:
 
 	float GetSliderValue(const wxString& sliderName, bool isLo);
 	bool IsUVSlider(const wxString& sliderName);
+	bool IsToggleSlider(const wxString& sliderName);
 	std::vector<std::string> GetSliderZapToggles(const wxString& sliderName);
 	void SetSliderValue(const wxString& sliderName, bool isLo, float val);
 	void SetSliderChanged(const wxString& sliderName, bool isLo);
@@ -649,8 +656,10 @@ class SliderDisplay {
 
 public:
 	bool isShown = false;
-	bool isZap = false;
+	bool isZap = false; // Shown as a check box, for zaps and toggles
 	bool oneSize = false;
+	bool isForced = false; // Held at a value by a ticked toggle
+	wxString markerTip;
 
 	std::string sliderName;
 	std::string displayName;
@@ -674,6 +683,8 @@ public:
 	void Show(bool show = true);
 	// Colors the labels and gives the slider a tooltip, which pooled sliders take over otherwise
 	void SetMarker(SliderMarker marker, const wxString& tip);
+	// Holds the slider at the value that the named toggle sets, or gives it back with an empty name
+	void SetForcedBy(const wxString& toggleName);
 };
 
 class SliderDisplayPool {

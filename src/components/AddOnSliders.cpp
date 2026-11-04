@@ -332,15 +332,10 @@ std::vector<std::string> RemoveUninstalledAddOnSliders(SliderSet& set, const Pro
 		set.DeleteSlider(sliderName);
 
 	if (!removedSliders.empty()) {
-		for (size_t i = 0; i < set.size(); i++) {
-			auto& toggles = set[i].zapToggles;
-			toggles.erase(std::remove_if(toggles.begin(),
-										 toggles.end(),
-										 [&removedSliders](const std::string& toggle) {
-											 return std::find(removedSliders.begin(), removedSliders.end(), toggle) != removedSliders.end();
-										 }),
-						  toggles.end());
-		}
+		for (size_t i = 0; i < set.size(); i++)
+			set[i].ForgetSliders([&removedSliders](const std::string& toggle) {
+				return std::find(removedSliders.begin(), removedSliders.end(), toggle) != removedSliders.end();
+			});
 	}
 
 	return missingAddOns;
@@ -841,7 +836,7 @@ void FitBaseAddOnsToVariant(SliderSet& set,
 
 	std::vector<std::string> emptySliders;
 	for (size_t i = 0; i < set.size(); i++)
-		if (!set[i].stackedFrom.empty() && set[i].dataFiles.empty())
+		if (!set[i].stackedFrom.empty() && set[i].dataFiles.empty() && !set[i].KeptWithoutData())
 			emptySliders.push_back(set[i].name);
 
 	for (auto& sliderName : emptySliders)

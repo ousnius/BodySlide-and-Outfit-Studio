@@ -77,6 +77,20 @@ int SliderData::LoadSliderData(XMLElement* element, bool genWeights) {
 			zapToggles.push_back(tokenizer.GetNextToken().ToStdString());
 	}
 
+	// A zap can't also be a toggle
+	bToggle = !bZap && element->BoolAttribute("toggle");
+	toggleValue = element->FloatAttribute("togglevalue", 100.0f);
+	toggleSliders.clear();
+	if (bToggle) {
+		for (XMLElement* setsElement = element->FirstChildElement("Sets"); setsElement; setsElement = setsElement->NextSiblingElement("Sets")) {
+			ToggleTarget target;
+			target.slider = AttributeText(setsElement, "slider");
+			target.value = setsElement->FloatAttribute("value", 100.0f);
+			if (!target.slider.empty() && target.slider != name)
+				toggleSliders.push_back(std::move(target));
+		}
+	}
+
 	DiffInfo tmpDataFile;
 	XMLElement* datafile = element->FirstChildElement(dataFileStr.c_str());
 	while (datafile) {
@@ -104,7 +118,8 @@ int SliderData::LoadSliderData(XMLElement* element, bool genWeights) {
 		datafile = datafile->NextSiblingElement(dataFileStr.c_str());
 		numData++;
 	}
-	if (numData == 0)
+	// Toggles need no data of their own
+	if (numData == 0 && !bToggle)
 		return 1;
 
 	return 0;

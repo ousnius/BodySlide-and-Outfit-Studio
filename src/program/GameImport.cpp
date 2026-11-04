@@ -420,6 +420,10 @@ OpResult Import(OutfitProject& project, const Options& options, Report& outRepor
 							project.SetSliderZapToggles(index, toggles);
 						}
 						project.activeSet[slider.name].bClamp = slider.bClamp;
+						// The sliders that a toggle sets may come later
+						project.activeSet[slider.name].bToggle = slider.bToggle;
+						project.activeSet[slider.name].toggleValue = slider.toggleValue;
+						project.activeSet[slider.name].toggleSliders = slider.toggleSliders;
 						outReport.slidersAdded.push_back(slider.name);
 					}
 

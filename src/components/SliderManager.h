@@ -18,12 +18,23 @@ public:
 	bool zap = false;
 	bool clamp = false;
 	bool uv = false;
+	bool toggle = false;
 	bool changed = false;
 	float defValue = 0.0f;
 	float value = 0.0f;
+	float toggleValue = 1.0f; // Toggle: the value that the slider takes effect at when ticked
 	std::vector<std::string> zapToggles;
+	std::vector<std::pair<std::string, float>> toggleSliders; // Toggle: other sliders and the values they're held at while ticked
 	std::vector<std::string> linkedDataSets;
+
+	// Takes the properties of the slider of a set, with the values of the slider at zero
+	static Slider FromData(const SliderData& data);
 };
+
+// Values that the sliders take effect at. A ticked toggle takes its toggle value and holds the sliders and zaps it sets at their
+// values, where the last ticked toggle wins. A zap held above 0 is zapped, at 0 it isn't. Toggles and clamps can't be set by toggles.
+// Each entry of forcedBy, when given, is the index of the toggle that holds the slider or -1.
+std::vector<float> ToggledSliderValues(const std::vector<Slider>& sliders, std::vector<int>* forcedBy = nullptr);
 
 class SliderManager {
 	int mSliderCount;
@@ -102,6 +113,7 @@ public:
 	void AddUVSlider(const std::string& name, bool invert = false, bool isZap = false, const std::string& dataSetName = "");
 	void SetSliderDefaults(const std::string& sliderName, float bigVal, float smallVal);
 	void SetClampSlider(const std::string& sliderName);
+	void SetToggleSlider(const std::string& sliderName, float toggleValue, const std::vector<ToggleTarget>& toggleSliders);
 	void AddSliderLink(const std::string& sliderName, const std::string& dataSetName);
 
 	float GetSlider(const std::string& sliderName, bool isSmall);

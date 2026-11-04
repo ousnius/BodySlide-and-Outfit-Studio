@@ -472,12 +472,19 @@ public:
 	bool SliderZap(const size_t index);
 	bool SliderUV(const size_t index);
 	wxArrayString SliderZapToggles(const size_t index);
+	bool SliderToggle(const size_t index);
+	float SliderToggleValue(const size_t index);
+	std::vector<ToggleTarget> SliderToggleSliders(const size_t index);
 	bool SliderInvert(const size_t index);
 	bool SliderHidden(const size_t index);
 	bool SliderIndexFromName(const std::string& sliderName, size_t& index);
 
 	void SetSliderZap(const size_t index, const bool zap);
 	void SetSliderZapToggles(const size_t index, const wxArrayString& toggles);
+	void SetSliderToggle(const size_t index, const bool toggle);
+	void SetSliderToggleValue(const size_t index, const float value);
+	// Sliders and zaps that the toggle sets while ticked. Leaves out the toggle itself, other toggles, clamps and sliders that don't exist.
+	void SetSliderToggleSliders(const size_t index, const std::vector<ToggleTarget>& targets);
 	void SetSliderInvert(const size_t index, const bool inv);
 	void SetSliderUV(const size_t index, const bool uv);
 	void SetSliderHidden(const size_t index, const bool hidden);
