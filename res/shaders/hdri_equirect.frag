@@ -55,7 +55,16 @@ void main(void)
 	// Equirectangular mapping: longitude across, latitude down.
 	vec2 sphericalUV = vec2(atan(dir.z, dir.x) / (2.0 * PI) + 0.5, acos(clamp(dir.y, -1.0, 1.0)) / PI);
 
-	vec3 radiance = texture(texDiffuse, sphericalUV).rgb * exposure;
+	// How much of the source one texel of the face covers, which picks the mip to read. Longitude
+	// wraps through the middle of the -X face, where u jumps from 1 back to 0. Left alone, that jump
+	// reads as a footprint the width of the whole image and blurs a line down the seam, so the
+	// derivatives are taken the short way round.
+	vec2 dx = dFdx(sphericalUV);
+	vec2 dy = dFdy(sphericalUV);
+	dx.x -= round(dx.x);
+	dy.x -= round(dy.x);
+
+	vec3 radiance = textureGrad(texDiffuse, sphericalUV, dx, dy).rgb * exposure;
 	vec3 mapped = clamp(tonemap(radiance) / tonemap(vec3(1.0)), 0.0, 1.0);
 
 	color = vec4(pow(mapped, vec3(1.0 / 2.2)), 1.0);

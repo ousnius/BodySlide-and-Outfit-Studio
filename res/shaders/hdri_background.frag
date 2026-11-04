@@ -20,6 +20,8 @@ void main(void)
 	vec3 worldDir = transpose(mat3(matView)) * viewDir;
 
 	// The cube map was tone mapped and encoded when it was generated, the same way a cube map from a
-	// DDS file already is, so what it holds goes straight to the screen.
-	color = vec4(textureLod(texCubemap, worldDir, 0.0).rgb, 1.0);
+	// DDS file already is, so what it holds goes straight to the screen. Its mips are plain
+	// downsamples rather than a roughness blur, so a viewport too small for the full resolution
+	// is free to minify into them.
+	color = vec4(texture(texCubemap, worldDir).rgb, 1.0);
 }

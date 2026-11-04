@@ -2419,7 +2419,7 @@ bool GLSurface::SetHDRiBackground(const std::string& fileName) {
 		return false;
 
 	std::string error;
-	if (!hdri.Load(fileName.empty() ? fileName : Config["AppDir"] + "/res/hdri/" + fileName, error)) {
+	if (!hdri.Load(fileName.empty() ? fileName : Config["AppDir"] + "/res/hdri/" + fileName, error, largestAF)) {
 		wxLogError("Failed to load HDRi '%s': %s", fileName, error);
 
 		// A half-loaded environment would leave the cube map slots it stands in for pointing at

@@ -14,9 +14,10 @@ See the included LICENSE file
 class GLMaterial;
 
 /*
-An HDRi loaded from an equirectangular EXR, projected into a cube map whose mip chain has been
-convolved for roughness. It stands in for the environment the viewport doesn't have: it is drawn as
-the background, and it is what shapes reflect whose own cube map asked to be replaced.
+An HDRi loaded from an equirectangular EXR, projected into two cube maps. One is small and has a mip
+chain convolved for roughness; it is what shapes reflect whose own cube map asked to be replaced.
+The other is as sharp as the source allows and is drawn as the background. Together they stand in
+for the environment the viewport doesn't have.
 
 The whole interface stays available in builds made without OpenEXR support; loading just always
 fails there, so callers need no conditionals of their own.
@@ -30,9 +31,10 @@ public:
 	GLHDRiEnvironment(const GLHDRiEnvironment&) = delete;
 	GLHDRiEnvironment& operator=(const GLHDRiEnvironment&) = delete;
 
-	// Reads the EXR and builds the cube map from it. A failure leaves whatever was loaded before
-	//  alone and puts the reason in outError.
-	bool Load(const std::string& fileName, std::string& outError);
+	// Reads the EXR and builds the cube maps from it. A failure leaves whatever was loaded before
+	//  alone and puts the reason in outError. The anisotropy is what the source is filtered with
+	//  while it is projected; zero or one leaves it off.
+	bool Load(const std::string& fileName, std::string& outError, float anisotropy = 0.0f);
 	void Clear();
 
 	bool IsActive() const { return cubemapID != 0; }
@@ -54,8 +56,14 @@ private:
 	// Equirectangular source, GL_RGBA16F. Only alive between the upload and the cube map being
 	// rendered out of it; the member outlives that so Clear() can still free it if a load fails.
 	GLuint equirectID = 0;
-	// GL_TEXTURE_CUBE_MAP, GL_RGBA16F, with every level rendered rather than generated.
+	// GL_TEXTURE_CUBE_MAP, GL_RGBA16F, with every level rendered rather than generated. What
+	// reflections read, so its size and mip chain are fixed by how blurry each roughness should be.
 	GLuint cubemapID = 0;
+	// GL_TEXTURE_CUBE_MAP, GL_RGB10_A2, what the background is drawn from. Sized to the source rather
+	// than to the reflections, since it is looked at directly and fills the viewport. Its mips are
+	// plain downsamples, for minifying in a small viewport, not a roughness blur.
+	GLuint backgroundID = 0;
+	int backgroundSize = 0;
 	GLuint fbo = 0;
 	// The passes are attribute-less, but core profile still refuses to draw without a bound array.
 	GLuint vao = 0;
@@ -69,8 +77,12 @@ private:
 
 	// Compiles the passes on first use. False means one of them failed, with the log in outError.
 	bool LoadShaders(std::string& outError);
-	// Renders all six faces of every level. The base level projects the equirect, the rest convolve
-	//  the level above them. False means the framebuffer wouldn't take the cube map as a target,
-	//  which leaves it holding nothing anybody should reflect.
-	bool BuildCubemap(float exposure);
+	// Renders all six faces of every level of both cube maps. The reflection cube map's base level
+	//  projects the equirect and the rest convolve the level above them; the background's base
+	//  level projects the equirect and the rest are generated. False means the framebuffer wouldn't
+	//  take a cube map as a target, which leaves it holding nothing anybody should see.
+	bool BuildCubemaps(float exposure);
+	// Projects the equirect onto the base level of all six faces of a cube map. Expects the
+	//  framebuffer and vertex array bound and the full screen pass state in place.
+	bool ProjectEquirect(GLuint cube, int faceSize, float exposure);
 };

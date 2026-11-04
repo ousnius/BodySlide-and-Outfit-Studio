@@ -18,9 +18,15 @@ See the included LICENSE file
 extern ConfigurationManager Config;
 
 namespace {
-// Edge length of a cube map face. An HDRi is a backdrop rather than something anyone inspects up
-// close, and this still leaves a full mip chain for roughness to pick from.
+// Edge length of a face of the reflection cube map. Reflections are small and mostly blurred, and
+// this still leaves a full mip chain for roughness to pick from.
 constexpr int kFaceSize = 256;
+
+// Limits on the edge length of a face of the background cube map. A face spans a quarter of the
+// equirect's width, so a 4K HDRi needs 1024 to keep all of its detail. The ceiling keeps an 8K or
+// larger one from costing more video memory than a backdrop is worth.
+constexpr int kMinBackgroundFaceSize = 256;
+constexpr int kMaxBackgroundFaceSize = 2048;
 
 // Reflections sample no sharper than this, so a generated cube map keeps a trace of blur even at
 // full gloss. A perfect mirror of a low resolution environment reads worse than a slightly soft one.
@@ -31,6 +37,15 @@ constexpr float kMinLod = 0.75f;
 constexpr double kTargetLuminance = 0.25;
 
 constexpr double kPi = 3.14159265358979323846;
+
+// The smallest power of two face that holds as much detail as the source has, within the limits.
+int BackgroundFaceSize(const int equirectWidth) {
+	int size = kMinBackgroundFaceSize;
+	while (size < kMaxBackgroundFaceSize && size * 4 < equirectWidth)
+		size *= 2;
+
+	return size;
+}
 
 // Half to float for the mean the exposure is worked out from. Subnormals are below 1e-4 and
 // infinities and NaNs aren't radiance, so both are read as zero rather than handled.
@@ -145,6 +160,13 @@ void GLHDRiEnvironment::Clear() {
 		cubemapID = 0;
 	}
 
+	if (backgroundID) {
+		glDeleteTextures(1, &backgroundID);
+		backgroundID = 0;
+	}
+
+	backgroundSize = 0;
+
 	if (fbo) {
 		glDeleteFramebuffers(1, &fbo);
 		fbo = 0;
@@ -175,7 +197,7 @@ bool GLHDRiEnvironment::LoadShaders(std::string& outError) {
 	return equirectMat && prefilterMat && backgroundMat;
 }
 
-bool GLHDRiEnvironment::Load(const std::string& fileName, std::string& outError) {
+bool GLHDRiEnvironment::Load(const std::string& fileName, std::string& outError, const float anisotropy) {
 	if (fileName.empty()) {
 		Clear();
 		return true;
@@ -200,11 +222,24 @@ bool GLHDRiEnvironment::Load(const std::string& fileName, std::string& outError)
 	// Longitude wraps around, latitude runs into the poles and must not.
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_HALF_FLOAT, pixels.data());
+
+	// Mipmapped, because a source larger than the faces it is projected into gets minified. One
+	// sample of the full resolution image skips most of the texels a face texel covers, which
+	// turns fine detail into blocks. The poles are squeezed far more across than down, which is
+	// what the anisotropy is for.
+	if (glGenerateMipmap) {
+		glGenerateMipmap(GL_TEXTURE_2D);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	}
+	else {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+	}
+
+	if (anisotropy > 1.0f)
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
 
 	maxLevel = 0;
 	while ((kFaceSize >> maxLevel) > 1)
@@ -230,25 +265,69 @@ bool GLHDRiEnvironment::Load(const std::string& fileName, std::string& outError)
 			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, level, GL_RGBA16F, levelSize, levelSize, 0, GL_RGBA, GL_HALF_FLOAT, nullptr);
 	}
 
+	backgroundSize = BackgroundFaceSize(width);
+
+	glGenTextures(1, &backgroundID);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, backgroundID);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, glGenerateMipmap ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, 0);
+	if (!glGenerateMipmap)
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, 0);
+
+	// What gets stored is already tone mapped into 0 to 1 and encoded for the screen, so 10 bit
+	// fixed point loses nothing a 10 bit framebuffer could show, at half the size of half floats.
+	for (int face = 0; face < 6; face++)
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, 0, GL_RGB10_A2, backgroundSize, backgroundSize, 0, GL_RGBA, GL_UNSIGNED_INT_2_10_10_10_REV, nullptr);
+
 	glGenFramebuffers(1, &fbo);
 	glGenVertexArrays(1, &vao);
 
-	if (!BuildCubemap(exposure)) {
+	if (!BuildCubemaps(exposure)) {
 		outError = "The cube map could not be rendered into.";
 		Clear();
 		return false;
 	}
 
-	// The equirect has served its purpose. Everything downstream reads the cube map, so holding on
+	// The equirect has served its purpose. Everything downstream reads the cube maps, so holding on
 	// to a full resolution RGBA16F copy of the source would cost video memory nothing ever reads.
 	glDeleteTextures(1, &equirectID);
 	equirectID = 0;
 
-	wxLogMessage("Loaded HDRi '%s' (%dx%d) at exposure %.3f.", fileName, width, height, exposure);
+	wxLogMessage("Loaded HDRi '%s' (%dx%d) at exposure %.3f, background faces %dx%d.", fileName, width, height, exposure, backgroundSize, backgroundSize);
 	return true;
 }
 
-bool GLHDRiEnvironment::BuildCubemap(const float exposure) {
+bool GLHDRiEnvironment::ProjectEquirect(const GLuint cube, const int faceSize, const float exposure) {
+	glViewport(0, 0, faceSize, faceSize);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X, cube, 0);
+
+	// Checked once per cube map, before anything is drawn into it. Every face is the same format
+	// and size, so what the driver makes of the first it makes of all of them. Worth asking: were
+	// the framebuffer to be left unusable, the passes would draw into the default one instead and
+	// paint the viewport with the environment while leaving the cube map empty.
+	if (glCheckFramebufferStatus && glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		return false;
+
+	GLShader& equirectShader = equirectMat->GetShader();
+	equirectShader.Begin();
+	equirectShader.SetUniform("exposure", exposure);
+	equirectShader.BindTexture(0, equirectID, "texDiffuse");
+
+	for (int face = 0; face < 6; face++) {
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, cube, 0);
+		equirectShader.SetUniform("cubeFace", face);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+	}
+
+	equirectShader.End();
+	return true;
+}
+
+bool GLHDRiEnvironment::BuildCubemaps(const float exposure) {
 	GLint prevFBO = 0;
 	GLint prevViewport[4] = {0, 0, 0, 0};
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &prevFBO);
@@ -259,29 +338,12 @@ bool GLHDRiEnvironment::BuildCubemap(const float exposure) {
 
 	FullScreenPassState passState;
 
-	glViewport(0, 0, kFaceSize, kFaceSize);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X, cubemapID, 0);
-
-	// Checked once, before anything is drawn. Every attachment below is the same format and differs
-	// only in size, so what the driver makes of the first it makes of all of them. Worth asking:
-	// were the framebuffer to be left unusable, the passes would draw into the default one instead
-	// and paint the viewport with the environment while leaving the cube map empty.
-	const bool complete = !glCheckFramebufferStatus || glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
+	// Reflection cube map. Its base level is the equirect projected onto each face, and every
+	// level below it is rendered out of the one above, so a mip stands for a roughness. The
+	// levels differ from the base only in size, so its completeness stands for theirs.
+	bool complete = ProjectEquirect(cubemapID, kFaceSize, exposure);
 
 	if (complete) {
-		// Base level: the equirect projected onto each face.
-		GLShader& equirectShader = equirectMat->GetShader();
-		equirectShader.Begin();
-		equirectShader.SetUniform("exposure", exposure);
-		equirectShader.BindTexture(0, equirectID, "texDiffuse");
-
-		for (int face = 0; face < 6; face++) {
-			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, cubemapID, 0);
-			equirectShader.SetUniform("cubeFace", face);
-			glDrawArrays(GL_TRIANGLES, 0, 3);
-		}
-		equirectShader.End();
-
 		// Remaining levels: each one convolves the level above it, so the blur accumulates down the
 		// chain instead of every level having to reach all the way back to the sharpest one.
 		GLShader& prefilterShader = prefilterMat->GetShader();
@@ -311,6 +373,20 @@ bool GLHDRiEnvironment::BuildCubemap(const float exposure) {
 		prefilterShader.End();
 	}
 
+	// Background cube map. Only the base level is projected; the levels below are plain
+	// downsamples for when the viewport is too small to show all of it.
+	if (complete)
+		complete = ProjectEquirect(backgroundID, backgroundSize, exposure);
+
+	// Nothing stays attached, so no later pass can find a cube map it reads from bound as its own
+	// target.
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, 0);
+
+	if (complete && glGenerateMipmap) {
+		glBindTexture(GL_TEXTURE_CUBE_MAP, backgroundID);
+		glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+	}
+
 	glBindVertexArray(0);
 	glBindFramebuffer(GL_FRAMEBUFFER, prevFBO);
 	glViewport(prevViewport[0], prevViewport[1], prevViewport[2], prevViewport[3]);
@@ -319,14 +395,14 @@ bool GLHDRiEnvironment::BuildCubemap(const float exposure) {
 }
 
 void GLHDRiEnvironment::RenderBackground(const glm::mat4x4& matProjection, const glm::mat4x4& matView) {
-	if (!cubemapID || !backgroundMat)
+	if (!backgroundID || !backgroundMat)
 		return;
 
 	GLShader& shader = backgroundMat->GetShader();
 	shader.Begin();
 	shader.SetMatrixProjection(matProjection);
 	shader.SetMatrixModelView(matView, glm::mat4x4(1.0f));
-	shader.BindCubemap(4, cubemapID, "texCubemap");
+	shader.BindCubemap(4, backgroundID, "texCubemap");
 
 	// The meshes go on top of this, and each of them sets the depth and cull state it wants for
 	// itself, so what the pass borrows here is given straight back.
