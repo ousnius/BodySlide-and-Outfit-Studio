@@ -40,41 +40,53 @@ const wxGLAttributes& GLSurface::GetGLAttribs() {
 	static wxGLAttributes attribs;
 
 	if (!attribsInitialized) {
-		// 16x AA
-		attribs.PlatformDefaults().DoubleBuffer().RGBA().Depth(24).SampleBuffers(1).Samplers(16).EndList();
+		// 10 bits per channel keeps smooth gradients like an HDRi sky from banding. The 16-bit float
+		// environment would otherwise be cut down to 8 bits in the very last step. It can be turned off
+		// for drivers whose 10-bit formats misbehave.
+		const bool tryTenBit = Config.GetBoolValue("Rendering/TenBitColor", true);
 
-		bool displaySupported = wxGLCanvas::IsDisplaySupported(attribs);
-		if (!displaySupported) {
-			wxLogWarning("OpenGL attributes with 16x AA not supported. Trying out different ones...");
-			attribs.Reset();
+		// Anti-aliasing is never given up for 10-bit color: each sample count tries both depths
+		// before the next lower count is tried.
+		const int sampleCounts[] = {16, 8, 4, 0};
 
-			// 8x AA
-			attribs.PlatformDefaults().DoubleBuffer().RGBA().Depth(24).SampleBuffers(1).Samplers(8).EndList();
-			displaySupported = wxGLCanvas::IsDisplaySupported(attribs);
-		}
+		bool displaySupported = false;
+		for (const int samples : sampleCounts) {
+			for (const bool tenBit : {true, false}) {
+				if (tenBit && !tryTenBit)
+					continue;
 
-		if (!displaySupported) {
-			wxLogWarning("OpenGL attributes with 8x AA not supported. Trying out different ones...");
-			attribs.Reset();
+				attribs.Reset();
+				attribs.PlatformDefaults().DoubleBuffer().RGBA();
+				if (tenBit)
+					attribs.MinRGBA(10, 10, 10, 2);
 
-			// 4x AA
-			attribs.PlatformDefaults().DoubleBuffer().RGBA().Depth(24).SampleBuffers(1).Samplers(4).EndList();
-			displaySupported = wxGLCanvas::IsDisplaySupported(attribs);
-		}
+				attribs.Depth(24).SampleBuffers(samples > 0 ? 1 : 0);
+				if (samples > 0)
+					attribs.Samplers(samples);
 
-		if (!displaySupported) {
-			wxLogWarning("OpenGL attributes with 4x AA not supported. Trying out different ones...");
-			attribs.Reset();
+				attribs.EndList();
 
-			// No AA
-			attribs.PlatformDefaults().DoubleBuffer().RGBA().Depth(24).SampleBuffers(0).EndList();
-			displaySupported = wxGLCanvas::IsDisplaySupported(attribs);
+				const wxString description = wxString::Format("%s color and %s", tenBit ? "10-bit" : "8-bit", samples > 0 ? wxString::Format("%dx AA", samples) : wxString("no AA"));
+
+				displaySupported = wxGLCanvas::IsDisplaySupported(attribs);
+				if (displaySupported) {
+					wxLogMessage("OpenGL attributes with %s are supported.", description);
+					break;
+				}
+
+				// Most drivers offer no 10-bit formats at all, so that alone is nothing to warn about.
+				if (tenBit)
+					wxLogMessage("OpenGL attributes with %s not supported. Trying out different ones...", description);
+				else
+					wxLogWarning("OpenGL attributes with %s not supported. Trying out different ones...", description);
+			}
+
+			if (displaySupported)
+				break;
 		}
 
 		if (!displaySupported)
 			wxLogWarning("No supported OpenGL attributes could be found!");
-		else
-			wxLogMessage("OpenGL attributes are supported.");
 
 		attribsInitialized = true;
 	}
@@ -124,6 +136,19 @@ int GLSurface::Initialize(wxGLCanvas* can, wxGLContext* ctx) {
 	wxLogMessage(wxString::Format("-> Version:  '%s'", wxString(glGetString(GL_VERSION))));
 
 	InitGLExtensions();
+
+	// What the window actually got, which can be less than what was asked for. This is how a
+	// 10-bit request that the driver or display turned down shows up.
+	if (glGetFramebufferAttachmentParameteriv) {
+		GLint red = 0, green = 0, blue = 0, alpha = 0;
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_BACK_LEFT, GL_FRAMEBUFFER_ATTACHMENT_RED_SIZE, &red);
+		glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_BACK_LEFT, GL_FRAMEBUFFER_ATTACHMENT_GREEN_SIZE, &green);
+		glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_BACK_LEFT, GL_FRAMEBUFFER_ATTACHMENT_BLUE_SIZE, &blue);
+		glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_BACK_LEFT, GL_FRAMEBUFFER_ATTACHMENT_ALPHA_SIZE, &alpha);
+		wxLogMessage(wxString::Format("-> Color:    R%d G%d B%d A%d", red, green, blue, alpha));
+	}
+
 	return InitGLSettings();
 }
 
