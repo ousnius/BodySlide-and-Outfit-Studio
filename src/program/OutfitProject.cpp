@@ -3254,6 +3254,7 @@ void OutfitProject::CopyBoneWeights(NiShape* shape,
 	InitConform();
 	morpher.LinkRefDiffData(&dds);
 
+	// Masked vertices of the reference aren't copied from (masked vertices of the shape keep their weights)
 	std::unordered_map<uint16_t, float> refMask;
 	if (Mesh* refMesh = host->GetShapeMesh(baseShapeName))
 		refMask = MaskOps::GetMasked(*refMesh);

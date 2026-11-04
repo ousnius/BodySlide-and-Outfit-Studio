@@ -18,6 +18,15 @@
 			</object>
 			<object class="sizeritem">
 				<option>0</option>
+				<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+				<border>10</border>
+				<object class="wxStaticText" name="copyWeightsMaskDescription">
+					<label>Masked vertices of the selected shapes keep their weights. Masked vertices of the reference aren't copied from.</label>
+					<wrap>550</wrap>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
 				<flag>wxEXPAND|wxALL</flag>
 				<border>5</border>
 				<object class="wxFlexGridSizer">

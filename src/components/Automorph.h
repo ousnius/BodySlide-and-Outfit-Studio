@@ -86,6 +86,7 @@ public:
 	void InsertVertexIndices(const std::string& target, const std::vector<uint16_t>& indices);
 
 	void ClearProximityCache();
+	// maskIndices: vertices of the reference to leave out of the results, e.g. masked ones
 	void BuildProximityCache(const std::string& shapeName, float proximityRadius = 10.0f, const std::set<uint16_t>* maskIndices = nullptr);
 
 	// shapeName = name of the mesh to morph (eg "IronArmor") also known as target name.

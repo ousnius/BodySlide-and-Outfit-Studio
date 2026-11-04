@@ -924,7 +924,9 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 	weights.name = "copy_bone_weights";
 	weights.description =
 		"Copies bone weights from the reference shape to outfit shapes, blending nearby reference vertices. Masked "
-		"vertices keep their weights. Bones that references mark as not to copy (named like \"Don't copy this\", e.g. the "
+		"vertices of the shapes keep their weights. Masked vertices of the reference aren't copied from, so mask a part of "
+		"the reference whose weights mustn't spread to the outfit; a vertex with only masked reference vertices in reach gets "
+		"no weights, like one out of range. Bones that references mark as not to copy (named like \"Don't copy this\", e.g. the "
 		"placeholder of curtain references) are skipped, and so are excludeBones. By default, bones the reference doesn't "
 		"have (physics chains, bones only the outfit has) keep their weights, and parts weighted to one bone stay rigid. A shape "
 		"that a linked SMP physics XML simulates only gets new bones the XML declares: SMP makes every other bone "
