@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "OutfitProject.h"
+#include "../components/AddOnSliders.h"
 #include "../components/ClippingFixer.h"
 #include "../components/MaskOps.h"
 #include "../components/SliderDataFileUtil.h"
@@ -387,18 +388,14 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 
 	// An add-on uses the NIF file of its base project, which it never writes
 	bool addOn = activeSet.IsAddOn();
-	if (addOn && ShapeGeometryHash() != addOnGeometryHash) {
+	if (addOn && AddOnGeometryChanged()) {
 		wxString msg = _("This add-on uses the shapes of its base project, so changes to them can't be saved with it.\n\nSave it as a variant of the base project with a NIF file of its own instead?");
 		if (host->Ask(msg, _("Slider Add-on"), false, HostAnswer::No) != HostAnswer::Yes) {
 			errmsg = _("Saving was cancelled.");
 			return errmsg;
 		}
 
-		// The data of the add-on stays in its .osd file, which is named like the NIF file of a variant
-		std::string dataFile = activeSet.GetSliderDataFile();
-		baseFile = dataFile.empty() ? outfit + ".nif" : dataFile.substr(0, dataFile.find_last_of('.')) + ".nif";
-		activeSet.SetAddOn(false);
-		activeSet.SetSliderDataFile("");
+		baseFile = ConvertAddOnToVariant(outfit);
 		addOn = false;
 	}
 	else if (addOn) {
@@ -1571,7 +1568,50 @@ bool OutfitProject::RevertSliderDataToBase(const SliderDataKey& key, std::string
 	return true;
 }
 
-uint64_t OutfitProject::ShapeGeometryHash() {
+void OutfitProject::RecordAddOnGeometry(bool addOn) {
+	addOnRefShapeName.clear();
+	addOnShapeNames.clear();
+	addOnGeometryHash = 0;
+	addOnRefShapeHash = 0;
+	if (!addOn)
+		return;
+
+	for (auto& shapeName : workNif.GetShapeNames())
+		addOnShapeNames.insert(shapeName);
+
+	// The reference shape counts on its own, since loading another reference replaces it
+	if (baseShape)
+		addOnRefShapeName = baseShape->name.get();
+
+	addOnGeometryHash = ShapeGeometryHash([this](const std::string& shapeName) { return shapeName != addOnRefShapeName; });
+	addOnRefShapeHash = addOnRefShapeName.empty() ? 0 : ShapeGeometryHash([this](const std::string& shapeName) { return shapeName == addOnRefShapeName; });
+}
+
+std::string OutfitProject::ConvertAddOnToVariant(const std::string& projectName) {
+	// The data of the add-on stays in its .osd file, which is named like the NIF file of a variant
+	std::string dataFile = activeSet.GetSliderDataFile();
+	std::string nifFile = dataFile.empty() ? projectName + ".nif" : dataFile.substr(0, dataFile.find_last_of('.')) + ".nif";
+	activeSet.SetAddOn(false);
+	activeSet.SetSliderDataFile("");
+	return nifFile;
+}
+
+bool OutfitProject::AddOnGeometryChanged() {
+	// A reference shape that was loaded since isn't one of the base project's shapes. One of them can become the reference too.
+	std::string loadedRefShapeName;
+	if (baseShape && addOnShapeNames.find(baseShape->name.get()) == addOnShapeNames.end())
+		loadedRefShapeName = baseShape->name.get();
+
+	const std::string refShapeName = baseShape ? baseShape->name.get() : "";
+	auto isOutfitShape = [&](const std::string& shapeName) { return shapeName != addOnRefShapeName && shapeName != loadedRefShapeName; };
+	if (ShapeGeometryHash(isOutfitShape) != addOnGeometryHash)
+		return true;
+
+	return !addOnRefShapeName.empty() && refShapeName == addOnRefShapeName
+		&& ShapeGeometryHash([this](const std::string& shapeName) { return shapeName == addOnRefShapeName; }) != addOnRefShapeHash;
+}
+
+uint64_t OutfitProject::ShapeGeometryHash(const std::function<bool(const std::string&)>& includeShape) {
 	uint64_t hash = 14695981039346656037ull;
 	auto add = [&hash](const void* data, size_t size) {
 		auto bytes = static_cast<const uint8_t*>(data);
@@ -1587,6 +1627,9 @@ uint64_t OutfitProject::ShapeGeometryHash() {
 
 	for (auto* shape : shapes) {
 		std::string shapeName = shape->name.get();
+		if (!includeShape(shapeName))
+			continue;
+
 		addString(shapeName);
 
 		std::vector<Vector3> verts;
@@ -3857,6 +3900,101 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 	return 0;
 }
 
+std::vector<std::string> OutfitProject::LoadReferenceAddOns() {
+	std::vector<std::string> addedSliders;
+	if (!baseShape || mRefProjectFile.empty() || mRefProjectName.empty())
+		return addedSliders;
+
+	const std::string projectPath = ProjectUtil::GetProjectPath();
+	const std::string shapeDataPath = projectPath + PathSepStr + "ShapeData";
+	const std::string shapeName = baseShape->name.get();
+
+	wxFileName refFileName(wxString::FromUTF8(mRefProjectFile));
+	if (refFileName.IsRelative())
+		refFileName.MakeAbsolute(wxString::FromUTF8(projectPath));
+
+	SliderSetFile refFile(refFileName.GetFullPath().ToUTF8().data());
+	SliderSet refSet;
+	if (refFile.fail() || refFile.GetSet(mRefProjectName, refSet) != 0)
+		return addedSliders;
+
+	refSet.SetBaseDataPath(shapeDataPath);
+
+	ProjectCatalog catalog;
+	catalog.Load(projectPath);
+
+	std::vector<std::string> warnings;
+	SetStackResult stack = StackSetAddOns(refSet, catalog, warnings, true);
+
+	// The add-ons of a body variant's base body only fit shapes that have the vertices their data was made for
+	if (!stack.baseAddOns.empty()) {
+		NifFile refNif;
+		std::fstream file;
+		PlatformUtil::OpenFileStream(file, refSet.GetInputFileName(), std::ios::in | std::ios::binary);
+		if (refNif.Load(file) == 0)
+			FitBaseAddOnsToVariant(refSet, refNif, nullptr, stack.baseAddOns, catalog, shapeDataPath, nullptr, false, warnings);
+	}
+
+	for (auto& warning : warnings)
+		wxLogWarning("Reference add-ons: %s", wxString::FromUTF8(warning));
+
+	const std::string refTarget = refSet.ShapeToTarget(shapeName);
+	const std::string target = ShapeToTarget(shapeName);
+
+	DiffDataSets refDiffs;
+	refSet.LoadSetDiffData(refDiffs, shapeName);
+
+	for (size_t i = 0; i < refSet.size(); i++) {
+		const SliderData& refSlider = refSet[i];
+		if (refSlider.stackedFrom.empty() || activeSet.SliderExists(refSlider.name))
+			continue;
+
+		auto refData = std::find_if(refSlider.dataFiles.begin(), refSlider.dataFiles.end(), [&refTarget](const DiffInfo& df) { return df.targetName == refTarget; });
+		if (refData == refSlider.dataFiles.end() || refData->bGenerated)
+			continue;
+
+		TargetDataDiffs* diffs = refDiffs.GetDiffSet(refData->dataName);
+		if (!diffs)
+			continue;
+
+		SliderData slider = refSlider;
+		slider.dataFiles.clear();
+		slider.bInherited = false;
+		slider.stackedFrom.clear();
+		slider.curValue = 0.0f;
+
+		// The slider needs the add-on to be installed
+		slider.addOnName = refSlider.stackedFrom;
+		const ProjectCatalogEntry* addOn = catalog.Find(refSlider.stackedFrom);
+		slider.addOnID = addOn ? addOn->projectID : "";
+
+		// The data stays in the add-on's file, which the reference shape finds in the reference's data folders
+		DiffInfo data = *refData;
+		std::vector<std::string> dataFolders;
+		if (data.bLocal)
+			dataFolders.push_back(refSet.GetDefaultDataFolder());
+		else
+			dataFolders = refSet.GetTargetDataFolders(refTarget);
+
+		data.bLocal = false;
+		data.bInherited = false;
+		data.targetName = target;
+		for (auto& dataFolder : dataFolders)
+			activeSet.AddTargetDataFolder(target, dataFolder);
+
+		slider.dataFiles.push_back(data);
+		activeSet.CopySlider(&slider);
+		baseDiffData.LoadSet(data.dataName, target, *diffs);
+
+		addedSliders.push_back(slider.name);
+	}
+
+	if (!addedSliders.empty())
+		wxLogMessage("Loaded %zu slider(s) of add-ons of the reference: %s", addedSliders.size(), JoinStrings(addedSliders, ", "));
+
+	return addedSliders;
+}
+
 int OutfitProject::LoadFromSliderSet(const std::string& fileName,
 									 const std::string& sliderSetName,
 									 std::vector<std::string>* origShapeOrder,
@@ -3964,7 +4102,7 @@ int OutfitProject::LoadFromSliderSet(const std::string& fileName,
 	}
 
 	// An add-on can't save changes to the shapes of its base project
-	addOnGeometryHash = activeSet.IsAddOn() ? ShapeGeometryHash() : 0;
+	RecordAddOnGeometry(activeSet.IsAddOn());
 
 	host->EndProgress();
 	ReportResolveStatus();
@@ -3998,8 +4136,7 @@ int OutfitProject::ReloadReferenceShape() {
 		SetShapeReferenceSource(shapeName, refProjectFile, refProjectName);
 	}
 
-	if (activeSet.IsAddOn())
-		addOnGeometryHash = ShapeGeometryHash();
+	RecordAddOnGeometry(activeSet.IsAddOn());
 
 	return 0;
 }
@@ -4211,7 +4348,7 @@ bool OutfitProject::SetBaseProject(const std::string& fileName, const std::strin
 		}
 	}
 
-	addOnGeometryHash = addOn ? ShapeGeometryHash() : 0;
+	RecordAddOnGeometry(addOn);
 	return true;
 }
 
@@ -4247,7 +4384,7 @@ void OutfitProject::ClearBaseProject() {
 
 	activeSet.ClearBaseProject();
 	activeSet.SetResolveStatus(SliderSetResolveStatus());
-	addOnGeometryHash = 0;
+	RecordAddOnGeometry(false);
 }
 
 void OutfitProject::MakeDerivedProject(const std::string& fileName, const std::string& sliderSetName, bool addOn, const std::string& projectName) {
@@ -4267,7 +4404,7 @@ void OutfitProject::MakeDerivedProject(const std::string& fileName, const std::s
 	else
 		mBaseFile.clear();
 
-	addOnGeometryHash = addOn ? ShapeGeometryHash() : 0;
+	RecordAddOnGeometry(addOn);
 }
 
 int OutfitProject::AddFromSliderSet(const std::string& fileName,

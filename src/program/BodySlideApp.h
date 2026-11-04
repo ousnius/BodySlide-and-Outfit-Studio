@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
+#include "../components/AddOnSliders.h"
 #include "../components/Anim.h"
 #include "../components/BuildSelection.h"
 #include "../components/ClippingFixer.h"
@@ -63,6 +64,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <cstddef>
 #include <cstdint>
 #include <map>
+#include <mutex>
 #include <memory>
 #include <string>
 #include <thread>
@@ -105,6 +107,7 @@ class BodySlideApp : public wxApp {
 	bool cmdPresetPending = false;
 	bool cmdTri = false;
 	bool cmdQuiet = false; // Command-line builds log instead of asking or showing dialogs, and don't save build choices.
+	bool cmdConformAddOns = false; // Command-line builds conform the add-on sliders of the body to outfits.
 	std::vector<std::string> cmdPreviewNifs;
 	bool cmdPreviewMode = false;
 
@@ -118,6 +121,34 @@ private:
 	SliderSet referenceSliderSet;
 	DiffDataSets referenceDiffData;
 	std::string referenceShapeName;
+
+	/* Add-ons */
+public:
+	// What loading a project did with add-ons
+	struct ProjectAddOns {
+		std::vector<StackedAddOn> stacked;	   // Add-ons whose sliders were added to the project
+		std::vector<StackedAddOn> baseStacked; // Variants: add-ons of the base projects whose sliders were added
+		std::vector<std::string> conformed;	   // Add-ons of the body whose sliders were conformed to it
+		std::string conformBody;			   // The body they belong to
+		std::vector<std::string> missing;	   // Add-ons that sliders were made for, but that aren't installed
+		std::vector<std::string> warnings;
+	};
+
+private:
+	ProjectCatalog projectCatalog;
+	bool conformAddOnSliders = false; // Conform the add-on sliders of the body to outfits that don't have them
+	ProjectAddOns activeAddOns;
+	// Bodies loaded to conform their add-on sliders, by file, set and shape. Null if it has none.
+	std::map<std::string, std::shared_ptr<ConformBody>> conformBodies;
+	std::mutex conformBodiesMutex;
+	// Projects with conformed add-on sliders, so that they aren't conformed again each time they are shown
+	std::map<std::string, std::pair<SliderSet, ProjectAddOns>> conformedSets;
+	// Slider values that the next activated outfit keeps, by name: small and big value
+	std::map<std::string, std::pair<float, float>> pendingSliderValues;
+
+	std::shared_ptr<ConformBody> GetConformBody(const ConformBodyRef& ref, std::vector<std::string>& warnings);
+	// Logs the warnings and the vertex counts of stacked add-ons that don't fit the NIF anymore
+	void LogProjectAddOns(const SliderSet& set, const ProjectAddOns& addOns, nifly::NifFile* nif = nullptr);
 
 	/* Localization */
 	wxLocale* locale = nullptr;
@@ -300,6 +331,19 @@ public:
 
 	int AddProjectSliders(const std::string& projectFile, const std::string& setName);
 
+	// Loads a set of a project file with the sliders of its add-ons, and with 'conform' the conformed add-on sliders of
+	// its body. Returns non-zero if the file or set couldn't be loaded. Safe to call on several threads at once.
+	int LoadProjectSet(const std::string& fileName, const std::string& setName, SliderSet& outSet, bool conform, ProjectAddOns& outAddOns, nifly::NifFile* nif = nullptr);
+	// Adds the sliders of add-ons to a loaded set. 'nif' is the set's NIF file if it's loaded already.
+	void AddProjectAddOns(SliderSet& set, bool conform, ProjectAddOns& outAddOns, nifly::NifFile* nif = nullptr);
+	const ProjectAddOns& GetActiveAddOns() const { return activeAddOns; }
+	const ProjectCatalog& GetProjectCatalog() const { return projectCatalog; }
+	bool GetConformAddOnSliders() const { return conformAddOnSliders; }
+	// Turns conforming of add-on sliders on or off, and loads the outfit again
+	void SetConformAddOnSliders(bool conform);
+	// Loads a NIF file with the external geometry of Starfield NIFs
+	static bool LoadNifFile(const std::string& fileName, nifly::NifFile& nif);
+
 	void InitLanguage();
 
 	void LoadData();
@@ -367,7 +411,7 @@ public:
 
 	void RefreshSliders();
 
-	void ActivateOutfit(const std::string& outfitName);
+	void ActivateOutfit(const std::string& name);
 	void ActivatePreset(const std::string& presetName, const bool updatePreview = true);
 
 	std::vector<std::string> GetConflictingOutfits() {
@@ -547,6 +591,10 @@ static const wxCmdLineEntryDesc g_cmdLineDesc[] = {{wxCMD_LINE_OPTION, "gbuild",
 													wxCMD_LINE_VAL_STRING},
 												   {wxCMD_LINE_SWITCH, "tri", "trimorphs", "enables tri morph output for the specified build"},
 												   {wxCMD_LINE_SWITCH,
+													"conformaddons",
+													"conformaddons",
+													"conforms the sliders of the body's add-ons to outfits that don't have them, for the specified build"},
+												   {wxCMD_LINE_SWITCH,
 													"q",
 													"quiet",
 													"builds without dialogs: conflicting outputs take the saved or first choice without saving it, failures are only logged"},
@@ -589,6 +637,13 @@ public:
 	void Destroy();
 };
 
+// How a slider is marked in the slider list
+enum class SliderMarker {
+	None,
+	AddOn,		  // From an add-on
+	AutoConformed // Conformed from an add-on of the body when loading
+};
+
 class SliderDisplay {
 	bool isCreated = false;
 
@@ -617,6 +672,8 @@ public:
 	bool Create(
 		wxScrolledWindow* scrollWindow, wxSizer* sliderLayout, const std::string& name, const std::string& category, const std::string& display, int minValue, int maxValue, bool pIsZap, bool pOneSize = false);
 	void Show(bool show = true);
+	// Colors the labels and gives the slider a tooltip, which pooled sliders take over otherwise
+	void SetMarker(SliderMarker marker, const wxString& tip);
 };
 
 class SliderDisplayPool {
@@ -642,6 +699,7 @@ public:
 
 	wxChoice* outfitChoice = nullptr;
 	wxStaticText* lblOutfitBase = nullptr;
+	wxStaticText* lblOutfitAddOns = nullptr;
 	wxChoice* presetChoice = nullptr;
 	wxButton* btnFavoriteOutfit = nullptr;
 	wxButton* btnFavoritePreset = nullptr;
@@ -682,7 +740,13 @@ public:
 	void HideSlider(SliderDisplay* slider);
 	void ShowLowColumn(bool show);
 	void AddCategorySliderUI(const std::string& name, const std::vector<std::string>& sliders, bool enabled, bool oneSize);
-	void AddSliderGUI(const std::string& name, const std::string& display, const std::string& categoryName, bool isZap, bool oneSize = false);
+	void AddSliderGUI(const std::string& name,
+					  const std::string& display,
+					  const std::string& categoryName,
+					  bool isZap,
+					  bool oneSize = false,
+					  SliderMarker marker = SliderMarker::None,
+					  const wxString& markerTip = wxEmptyString);
 
 	SliderDisplay* GetSliderDisplay(const std::string& name) {
 		if (sliderDisplays.find(name) != sliderDisplays.end())
@@ -702,6 +766,8 @@ public:
 	void ClearOutfitList();
 	// Shows under the outfit list what the loaded project is an add-on or variant of
 	void ShowOutfitBaseProject(const SliderSet* set);
+	// Shows next to it what add-ons the loaded project has sliders of, and which ones it misses
+	void ShowOutfitAddOns(const BodySlideApp::ProjectAddOns* addOns);
 	void ClearSliderGUI();
 	void SetPresetChanged(bool changed = true);
 
@@ -782,6 +848,7 @@ private:
 	void OnHighToLow(wxCommandEvent& event);
 	void OnLowToHigh(wxCommandEvent& event);
 	void OnBuildBodies(wxCommandEvent& event);
+	void OnConformAddOns(wxCommandEvent& event);
 	void OnBatchBuild(wxCommandEvent& event);
 	void OnBatchBuildContext(wxMouseEvent& event);
 	void OnBatchBuildSelect(wxCommandEvent& event);

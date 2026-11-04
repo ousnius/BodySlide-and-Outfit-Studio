@@ -8,6 +8,7 @@ Conforming copies the body's slider morphs onto the outfit: each outfit vertex t
 1. **Load the body as reference.** `list_reference_templates`, then `load_reference` with `template` (or `file`, `set` and `shape`).
    - Default: the outfit's sliders are replaced by the reference's, zap sliders are kept (`mergeZaps`).
    - `mergeSliders: true` keeps the outfit's sliders and adds the reference's data to them, e.g. to conform another part from a second reference. `appendNewSliders: false` then only fills sliders the project already has.
+   - `loadAddOns: true` also loads the sliders that installed add-on projects of the body add to it. They're saved as needing their add-on, so BodySlide only shows them where it's installed.
    - `analyze_clipping` at sliders 0 should show about what the outfit had on its old body. If not, the reference is the wrong one or has another shape at rest.
 2. **Mask what shouldn't take the body's morphs:** rigid parts (better rigidified after, see below), hanging panels that take a curtain reference, parts that are far from the body and should keep their own data.
 3. **`conform_sliders`.** Options:
@@ -102,12 +103,25 @@ A conversion with large deltas can leave spikes where cloth spans a crease of th
 
 When the body is saved with the outfit (`copyReference`), a slider can move the body too, and only under this outfit: tight fabric pressing into the skin, flesh bulging over an edge or a strap.
 
+For an outfit someone else made, make the slider in an add-on of it (`create_derived_project` `kind: "addOn"`, see "Add-ons and variants" below), so the outfit's project and files stay as they are and BodySlide shows the slider on the original outfit.
+
 **`make_contact_morph`** makes such a slider in one call: the body under the `cover` shapes sinks in by `depth`, smoothly from the edge of the covered area (measured along the body, so it follows the fabric's outline), and swells out by `bulge` just past the edge, less next to thin straps that barely press in. Where the cover tents over the body (a cup over the nipple) the body under it sinks too. The cover and any `follow` shapes move with the body under them. On a micro bikini the defaults (depth 1.3, bulge 0.85) moved the body by up to 0.82, about as much as a hand-tuned morph.
 
 1. Set the slider values the morph is meant for first: a morph made on one body shape (a preset) won't line up with the outfit's edges on a much different one. Save it in that preset, or give it `defaultSmall`/`defaultBig` 100 when it should always be on.
 2. Mask the body where it must not move, e.g. the arms (bodies often weight the sides of the breasts to the upper arm too, so mask by weight values from `get_weights`, not `bone_weighted`).
 3. `make_contact_morph` with `preview: true` to see how much is covered and how far it moves, then without. Tune `depth`, `bulge` and their widths with `replace: true`.
 4. `analyze_clipping` with the slider and the values it's made for (`zeroOthers: false`), and `render_view` before and after. A deep squish can let the body show through a cup that tents over it: `fix_clipping` in combination mode with only this slider, masked and at low strength, or a smaller `depth` (0.6 left a micro bikini's clipping as it was at rest).
+   - **Full cups** cover most of the breast, so the default depth flattens it, and the bulges of both cups' inner edges add up to a ridge down the cleavage. On a lingerie bra, `depth` 0.6, `depthWidth` 2.5, `bulge` 0.4, `bulgeWidth` 1.5 and `smoothing` 8 gave a soft press with a slight swell at the edges, and clipping stayed as it was at rest. Check a large preset too.
 
 To edit the body's morph by hand, `transform_shapes`, `scale_slider_deltas` and `clear_slider_data` take `allowReference: true`; changing the reference keeps the slider values. **Masks give hard edges** there: box masks with a move or inflate leave creases at the mask border that `mask_ops` `smooth` doesn't remove. A morph computed by a script can come in as BSD files (above).
 - Parts that bridge a gap over the body (a band across the cleavage, straps between knots) sit away from the surface. Check them after a conform: they can take uneven morphs and kink, or end up behind a bulge. `set_slider_deltas` with `add: true` moves them by hand.
+
+## Add-ons and variants
+
+`basics` explains add-ons and variants and how to make and save them. For sliders:
+
+- **More sliders for a body:** `create_derived_project` an add-on of the body's project, make the sliders on the body (`new_slider`, `set_slider_edit` with brushes or `transform_shapes`, `import_slider_data` of a morph sculpted elsewhere) and save it with the body's output path and file. BodySlide builds the body with them. Outfits get them where they have them, or roughly conformed with BodySlide's "Conform Add-on Sliders".
+- **Handcrafted outfit sliders for a body add-on's sliders:** `create_derived_project` an add-on of the outfit, `load_reference` the body with `loadAddOns: true`, `mergeSliders: true` and `appendNewSliders: false` (so the outfit keeps its sliders and gets no other new ones; only the add-on's sliders stay shown), `conform_sliders` with those `sliders`, fix them up, and save. They're saved as needing the body add-on, so BodySlide only shows them where it's installed. Leave the outfit's own sliders alone: changing them saves overrides of the base outfit's data.
+- **Explicit support in the outfit itself** (for its own author): `load_reference` with `loadAddOns: true` in the outfit's project, conform, and save it as usual.
+- **Squish sliders and zaps for an existing outfit:** an add-on of the outfit with `make_contact_morph` (above) or a zap slider (above). A squish moves the body only when the outfit saves the body with it (`copyReference`).
+- **Variants** of an outfit take the new sliders of its base outfit's add-ons in BodySlide: as they are where the shape's vertex count still fits, otherwise conformed from the base outfit's shape when "Conform Add-on Sliders" is on, or left out.

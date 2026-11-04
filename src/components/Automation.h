@@ -177,6 +177,7 @@ struct AutomationStep {
 	bool refMergeSliders = true;
 	bool refMergeZaps = true;
 	bool refAppendNewSliders = true;
+	bool refLoadAddOns = false; // LoadReference: also load the sliders of the reference's installed add-ons
 
 	// SetSliderValues params
 	std::vector<std::string> setSliderNames;

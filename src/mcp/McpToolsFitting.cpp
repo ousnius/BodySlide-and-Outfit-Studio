@@ -1287,7 +1287,8 @@ void AddFittingTools(OutfitStudioMcp& mcp) {
 		"of the covered area, and swell out by bulge just past the edge, measured along the body so the shape follows the "
 		"cover's outline without creases. The cover and other follow shapes move with the body under them. Made on the "
 		"shapes as the sliders show them now, so set the preset it's for first. Mask the body where it must not move (e.g. "
-		"the arms with mask_ops bone_weighted). Not in the undo history: an automatic snapshot is taken first.";
+		"the arms with mask_ops bone_weighted). Not in the undo history: an automatic snapshot is taken first. To give an "
+		"existing outfit the slider without editing its project, make it in an add-on of the outfit (create_derived_project).";
 	contact.inputSchema = McpSchema(
 		{
 			{"slider", McpProp("string", "Slider to make, or to make again with replace")},

@@ -1442,7 +1442,7 @@ void ProjectOperations::FillWeightColors(const std::string& bone, const std::vec
 		fillFromBone(baseShape);
 }
 
-OpResult ProjectOperations::LoadReference(const ReferenceSource& source) {
+OpResult ProjectOperations::LoadReference(const ReferenceSource& source, std::vector<std::string>* outAddOnSliders) {
 	if (source.file.empty())
 		return OpResult::Fail("No reference file was given.");
 
@@ -1459,12 +1459,29 @@ OpResult ProjectOperations::LoadReference(const ReferenceSource& source) {
 	if (err)
 		return OpResult::Fail("Loading the reference failed with error " + std::to_string(err) + ".");
 
+	if (source.loadAddOns && ext != "nif") {
+		std::vector<std::string> addOnSliders = LoadReferenceAddOns();
+		if (outAddOnSliders)
+			*outAddOnSliders = std::move(addOnSliders);
+	}
+
 	project.SetTextures();
 
 	OpResult result;
 	result.refresh = RefreshFlags::ShapeList | RefreshFlags::SliderSet | RefreshFlags::SliderValues | RefreshFlags::Meshes | RefreshFlags::Anim
 		| RefreshFlags::PendingChanges;
 	return result;
+}
+
+std::vector<std::string> ProjectOperations::LoadReferenceAddOns() {
+	std::vector<std::string> addOnSliders = project.LoadReferenceAddOns();
+
+	// An add-on of an outfit conforms only the new sliders, the others are its base project's
+	if (!addOnSliders.empty() && project.activeSet.IsAddOn())
+		for (size_t i = 0; i < project.SliderCount(); i++)
+			project.SliderShow(i) = std::find(addOnSliders.begin(), addOnSliders.end(), project.GetSliderName(i)) != addOnSliders.end();
+
+	return addOnSliders;
 }
 
 OpResult ProjectOperations::AddProject(const std::string& file, const std::string& set, bool appendNewSliders) {

@@ -1,3 +1,4 @@
+#include "../src/components/AddOnSliders.h"
 #include "../src/components/MaskOps.h"
 #include "../src/components/SliderSetIndex.h"
 #include "../src/program/BrushStrokeController.h"
@@ -965,4 +966,164 @@ TEST_CASE("Clearing the base project makes an add-on a project of its own", "[Ou
 	SliderSet saved = f.LoadSaved("A Extra");
 	CHECK_FALSE(saved.HasBaseProject());
 	CHECK_FALSE(saved["Grow"].bInherited);
+}
+
+TEST_CASE("BodySlide conforms add-on sliders like Outfit Studio does", "[OutfitProject]") {
+	ProjectFixture f;
+
+	// A morph that differs per vertex, so that the weighting of the nearest vertices matters
+	std::vector<Vector3> bodyVerts;
+	f.project.GetWorkNif()->GetVertsForShape(f.body, bodyVerts);
+	TargetDataDiffs grow;
+	for (uint16_t i = 0; i < bodyVerts.size(); i++)
+		grow[i] = Vector3(0.1f * bodyVerts[i].x, 0.0f, 0.5f + 0.2f * bodyVerts[i].y * bodyVerts[i].y);
+	f.project.SetSliderFromDiff("Grow", f.body, grow);
+
+	REQUIRE(f.ops.ConformSliders({f.skirt}, ConformOptions()).ok);
+	std::vector<Vector3> expected;
+	REQUIRE(f.ops.GetSliderDeltas(f.skirt, "Grow", expected).ok);
+
+	// BodySlide has the body and the outfit in NIF files of their own
+	NifFile bodyNif;
+	NifFile skirtNif;
+	REQUIRE(bodyNif.Load(f.folder.path / "Body.nif") == 0);
+	REQUIRE(skirtNif.Load(f.folder.path / "Skirt.nif") == 0);
+	AnimInfo bodyAnim;
+	AnimInfo skirtAnim;
+	LoadConformAnim(bodyAnim, bodyNif);
+	LoadConformAnim(skirtAnim, skirtNif);
+
+	DiffDataSets bodyDiffs;
+	bodyDiffs.LoadSet("BodyGrow", "Body", grow);
+
+	auto results = ConformShapesData(bodyNif, bodyNif.FindBlockByName<NiShape>("Body"), bodyAnim, bodyDiffs, skirtNif, skirtAnim, {"Skirt"}, {{"Grow", "BodyGrow"}});
+	REQUIRE(results.count("Skirt"));
+	const TargetDataDiffs& conformed = results["Skirt"]["Grow"];
+
+	REQUIRE(expected.size() == f.skirt->GetNumVertices());
+	for (uint16_t i = 0; i < expected.size(); i++) {
+		auto diff = conformed.find(i);
+		Vector3 actual = diff != conformed.end() ? diff->second : Vector3();
+		CHECK(actual.x == Catch::Approx(expected[i].x).margin(1e-5));
+		CHECK(actual.y == Catch::Approx(expected[i].y).margin(1e-5));
+		CHECK(actual.z == Catch::Approx(expected[i].z).margin(1e-5));
+	}
+}
+
+namespace {
+// Saves an add-on "A Extra" of the saved fixture project "A" with an "Extra" slider for the body
+std::string SaveBodyAddOn(SavedProjectFixture& f) {
+	const std::string setsPath = (f.projectFolder.path / "SliderSets" / "A.osp").u8string();
+	SliderSetFile baseFile(setsPath);
+	REQUIRE_FALSE(baseFile.fail());
+	SliderSet base;
+	REQUIRE(baseFile.GetSet("A", base) == 0);
+
+	SliderSet addOn;
+	addOn.SetName("A Extra");
+	addOn.SetProjectID(SliderSet::GenerateProjectID());
+	addOn.SetDataFolder(base.GetDefaultDataFolder());
+	addOn.SetInputFile(base.GetInputFile());
+	addOn.SetOutputPath(base.GetOutputPath());
+	addOn.SetOutputFile(base.GetOutputFile());
+	addOn.SetAddOn(true);
+	addOn.SetSliderDataFile("A Extra.osd");
+	addOn.SetBaseProject("", "A", base.GetProjectID());
+	for (auto shape = base.ShapesBegin(); shape != base.ShapesEnd(); ++shape)
+		addOn.AddShapeTarget(shape->first, shape->second.targetShape);
+	addOn[addOn.CreateSlider("Extra")].AddDataFile("Body", "BodyExtra", "A Extra.osd" + std::string(PathSepStr) + "BodyExtra");
+
+	SliderSetFile file;
+	file.New((f.projectFolder.path / "SliderSets" / "A Extra.osp").u8string());
+	file.UpdateSet(addOn);
+	REQUIRE(file.Save());
+
+	OSDataFile osd;
+	TargetDataDiffs extra;
+	for (uint16_t i = 0; i < f.body->GetNumVertices(); i++)
+		extra[i] = Vector3(0.0f, 0.0f, 2.0f);
+	osd.SetDataDiff("BodyExtra", extra);
+	REQUIRE(osd.Write(f.DataPath("A Extra.osd").u8string()));
+	return addOn.GetProjectID();
+}
+} // namespace
+
+TEST_CASE("Loading a reference can load the sliders of its add-ons", "[OutfitProject]") {
+	SavedProjectFixture f;
+	REQUIRE(f.Save().empty());
+	const std::string addOnID = SaveBodyAddOn(f);
+
+	ReferenceSource source;
+	source.file = (f.projectFolder.path / "SliderSets" / "A.osp").u8string();
+	source.set = "A";
+	source.shape = "Body";
+	source.mergeSliders = true;
+	source.mergeZaps = true;
+	source.loadAddOns = true;
+
+	std::vector<std::string> addOnSliders;
+	REQUIRE(f.ops.LoadReference(source, &addOnSliders).ok);
+	f.host.BuildMeshes();
+	CHECK(addOnSliders == std::vector<std::string>{"Extra"});
+	REQUIRE(f.project.ValidSlider("Extra"));
+	CHECK(f.project.activeSet["Extra"].addOnName == "A Extra");
+	CHECK(f.project.activeSet["Extra"].addOnID == addOnID);
+
+	NiShape* body = f.project.GetBaseShape();
+	REQUIRE(body);
+	std::vector<Vector3> deltas;
+	REQUIRE(f.ops.GetSliderDeltas(body, "Extra", deltas).ok);
+	CHECK(deltas[0].z == Catch::Approx(2.0f));
+
+	// Conformed and saved, the slider still needs its add-on
+	NiShape* skirt = f.project.GetWorkNif()->FindBlockByName<NiShape>("Skirt");
+	REQUIRE(skirt);
+	REQUIRE(f.ops.ConformSliders({skirt}, ConformOptions()).ok);
+	REQUIRE(f.ops.GetSliderDeltas(skirt, "Extra", deltas).ok);
+	CHECK(deltas[0].z == Catch::Approx(2.0f).margin(1e-4));
+
+	REQUIRE(f.Save("B", "B.nif").empty());
+	SliderSetFile savedFile((f.projectFolder.path / "SliderSets" / "B.osp").u8string());
+	SliderSet saved;
+	REQUIRE(savedFile.GetSet("B", saved) == 0);
+	CHECK(saved["Extra"].addOnName == "A Extra");
+	CHECK(saved["Extra"].addOnID == addOnID);
+	CHECK_FALSE(saved["Grow"].NeedsAddOn());
+}
+
+TEST_CASE("An add-on of an outfit can load a reference with add-ons and save", "[OutfitProject]") {
+	DerivedProjectFixture f(true);
+	SaveBodyAddOn(f);
+
+	EditorState editor;
+	ProjectOperations ops{f.derived, editor};
+
+	ReferenceSource source;
+	source.file = (f.projectFolder.path / "SliderSets" / "A.osp").u8string();
+	source.set = "A";
+	source.shape = "Body";
+	source.mergeSliders = true;
+	source.mergeZaps = true;
+	source.appendNewSliders = false;
+	source.loadAddOns = true;
+	REQUIRE(ops.LoadReference(source).ok);
+
+	// Only the add-on slider stays shown, so that conforming leaves the inherited sliders alone
+	REQUIRE(f.derived.ValidSlider("Extra"));
+	CHECK(f.derived.SliderShow("Extra"));
+	CHECK_FALSE(f.derived.SliderShow("Grow"));
+
+	// Loading the reference isn't a change to the base project's shapes
+	REQUIRE(f.SaveDerived("Ignored.nif").empty());
+	SliderSet saved = f.LoadSaved("A Extra");
+	CHECK(saved.IsAddOn());
+	CHECK(saved["Extra"].addOnName == "A Extra");
+
+	// A reference of another body replaces the base project's one, which isn't a change either
+	REQUIRE(f.derived.LoadReferenceNif(WriteGridNif(f.folder.path, "Other.nif", "OtherBody", 8, 0.0f), "OtherBody", true, true) == 0);
+	CHECK(f.SaveDerived("Ignored.nif").empty());
+
+	// Changed outfit shapes still can't be saved with an add-on
+	f.derived.DeleteShape(f.DerivedShape("Skirt"));
+	CHECK_FALSE(f.SaveDerived("Ignored.nif").empty());
 }

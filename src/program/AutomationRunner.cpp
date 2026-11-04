@@ -814,6 +814,7 @@ int AutomationRunner::ExecuteStepLoadReference(const AutomationStep& step) {
 	source.mergeSliders = step.refMergeSliders;
 	source.mergeZaps = step.refMergeZaps;
 	source.appendNewSliders = step.refAppendNewSliders;
+	source.loadAddOns = step.refLoadAddOns;
 
 	OpResult result = ProjectOperations(*project, outfitStudio->editor).LoadReference(source);
 	if (!result.ok) {

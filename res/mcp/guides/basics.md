@@ -1,5 +1,5 @@
 # Working with Outfit Studio
-Ground rules, snapshots and undo, masks, looking at results, posing, bringing meshes in and transforming them, the editing tools, saving, common pitfalls and connecting a client. Read this first.
+Ground rules, snapshots and undo, masks, looking at results, posing, bringing meshes in and transforming them, the editing tools, add-ons and variants of existing projects, saving, common pitfalls and connecting a client. Read this first.
 
 Outfit Studio (OS) shows everything the tools do in its window, and most edits can be undone there. The other guides build on this one:
 
@@ -15,6 +15,7 @@ Outfit Studio (OS) shows everything the tools do in its window, and most edits c
 - **Start with `get_status`, and call it again after any failure or timeout.** It lists the shapes, the reference, the sliders, whether the body is saved with the outfit (`copyReference`) and the name the next save uses (`displayName`).
 - **A busy error is not a bug.** Tools refuse while the user has a dialog open, is painting or plays an animation. Ask the user, or try again later.
 - **Never save over the source project** unless the user asks. `save_project` refuses to replace an existing set without `overwrite: true`. Save conversions under a new `displayName` and `sliderSetFile`. Test saves go to scratch names (e.g. `zz…`), which you delete afterwards.
+- **Add to other people's projects with an add-on, don't edit them.** New sliders or zaps for an existing body or outfit go into an add-on (`create_derived_project`), which leaves the original project and its files as they are (see "Add-ons and variants").
 - **Don't discard the user's work.** `load_project` and `new_project` refuse while there are unsaved changes unless `discardChanges: true`. Ask before passing it.
 - **Units** are NIF units. The skeleton's global axes are +X the character's right, +Y the character's front and +Z up. Slider values run from 0 to 1, which is 0–100% in BodySlide.
 - **Name the shapes.** Tools that take `shapes` use the selected outfit shapes when you give none, which may not be what you expect.
@@ -140,12 +141,39 @@ Converting a whole mod (dozens of pieces) one tool call at a time costs a lot. D
 - **Masks from a measurement** (`mask_ops` `from_analysis`) have no step: split the batch into `run_steps` before and after the `mask_ops` call. Shapes imported by steps aren't selected, so give `mask_ops` the shape names; they're the NIF's shape names, which a script can read from the file beforehand. Steps leave the outfit's masks as they are; `ClearMask` clears them.
 - Try the script on one piece and look at it (`validate_project`, `analyze_clipping`, a render) before running the batch, then check every piece of it, not a sample (see `body-conversion`, "Many outfits at once").
 
+## Add-ons and variants
+
+A project can be based on another one (its base project): it inherits all of the base's sliders and saves only what it adds or changes. The base project and its files stay as they are, so mods can extend a body or an outfit without shipping or replacing its files.
+
+- **Add-ons** use the shapes and the NIF file of their base project and never write them. They add sliders and zaps to a body reference or an outfit:
+  - more shape options for a body (a new breast or belly shape, a muscle slider),
+  - special features of one outfit, like a squish slider where tight cloth presses into the body (`make_contact_morph`, see `conform-sliders`) or a zap that removes a part (a belt, a sleeve),
+  - handcrafted outfit sliders for sliders a body add-on adds (see `conform-sliders`).
+- **Variants** get a NIF file of their own, for changed shapes (a shorter skirt, refit cups, other weights or textures), and keep using the base project's sliders and slider data.
+
+**In BodySlide:**
+- An add-on that keeps its base project's output path and file is **built together with it**: BodySlide doesn't list it separately, and the base project shows the sliders of all its installed add-ons (in blue), so several add-ons combine. An add-on with an output of its own stays a separate outfit.
+- Add-ons of a body are installed or not per user. Outfits only get their sliders when they have them (from an outfit add-on, or explicit support saved with `load_reference` `loadAddOns`) or when the user turns on BodySlide's "Conform Add-on Sliders", which conforms them roughly. Sliders that need an add-on that isn't installed are hidden and left out of builds.
+- A variant of an outfit gets the new sliders of its base outfit's add-ons too, where its shapes still fit them.
+
+**Making one:**
+1. `list_slider_sets` `baseProject` lists the add-ons and variants a project already has (`derived` in the result marks them in other listings). Give new sliders names that neither the project nor its other add-ons use: where two add-ons have a slider of the same name, BodySlide takes the later one as a change to the other instead of a slider of its own.
+2. `create_derived_project` with the base project's `file` and `set`, `kind` `"addOn"` or `"variant"` and a `displayName` of its own. `get_status` shows `baseProject` from then on.
+3. Make the sliders or zaps (`new_slider`, `make_contact_morph`, `set_slider_edit` with brushes or `transform_shapes`, `import_slider_data`). Where the slider moves the body, the base project has to save the body with the outfit (`copyReference` in `get_status`).
+4. `save_project` with a new `sliderSetFile`. Leave the output path and file as they are for an add-on that BodySlide should build with its base. The add-on's slider data goes to its own .osd file in the base's shape data folder.
+5. `build_outfits` with the add-on builds its base project with all installed add-ons (`builtWithBase`), with `tri: true` to see the new sliders in the TRI file.
+
+**What an add-on saves:**
+- New sliders and zaps, and changes to the base project's sliders (their data and properties), which then override the base's.
+- Not the shapes themselves: changed vertices, triangles, UVs or weights make `save_project` refuse; undo them, or save with `asVariant: true` to make it a variant with a NIF file of its own. Shader, texture and partition changes are never saved with an add-on.
+- Deleting a slider of the base project only applies where the add-on is built on its own. Built with its base, BodySlide keeps the slider. Hide it with an override instead (`set_slider_properties` `hidden`).
+
 ## Saving
 
 1. `validate_project` lists what breaks in game rather than in the view: unweighted vertices, too many bones per vertex, triangles without a partition, sliders that move the body under a shape but not the shape, zap sliders that zap nothing, and whether the body is saved with the outfit. Fix the errors and read the warnings.
-2. `save_project` with a new `displayName` and `sliderSetFile`, and `shapeDataFolder`, `outputDataPath` and `outputFileName` as the user wants them. `copyReference` defaults to what the project had: keep the body when the source set had it. `genWeights` builds `_0` and `_1` meshes for Skyrim.
+2. `save_project` with a new `displayName` and `sliderSetFile`, and `shapeDataFolder`, `outputDataPath` and `outputFileName` as the user wants them. An add-on keeps its base project's shape data and normally its output (see "Add-ons and variants"). `copyReference` defaults to what the project had: keep the body when the source set had it. `genWeights` builds `_0` and `_1` meshes for Skyrim.
 3. `export_file` writes NIF, OBJ, FBX, OSD or TRI files when they're asked for: `shapes` exports only those, `headTri` a head TRI file.
-4. `build_outfits` builds the saved set with BodySlide into a scratch folder, never the game: the meshes the user gets, with zaps applied, for a `preset` and with `tri` files. Its result lists each NIF's shapes and vertex counts and BodySlide's errors. `import_file` a built NIF into a new project to look at it. It builds what is saved, so save first.
+4. `build_outfits` builds the saved set with BodySlide into a scratch folder, never the game: the meshes the user gets, with zaps applied, for a `preset` and with `tri` files, and with the sliders of installed add-ons (`conformAddOns` also conforms the body's add-on sliders the outfit lacks). Its result lists each NIF's shapes and vertex counts and BodySlide's errors. `import_file` a built NIF into a new project to look at it. It builds what is saved, so save first.
 
 ## Pitfalls
 

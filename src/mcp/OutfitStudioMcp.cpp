@@ -29,6 +29,8 @@ constexpr const char* Instructions =
 	"File paths can be absolute or relative to the BodySlide folder. Tools that change the project in ways the "
 	"window can't undo take an automatic snapshot first (autoSnapshot in their result); snapshot_restore goes back "
 	"to it and snapshot_diff shows what changed. Before saving, validate_project checks for problems in game. "
+	"To give an existing body or outfit more sliders or zaps (shape options, squish sliders) without replacing or "
+	"editing its project, make an add-on of it with create_derived_project. "
 	"Before a task, read its guide with get_guide: basics (read first), body-conversion, conform-sliders, "
 	"fix-clipping, bone-weights, cross-game, external-models and posing.";
 
@@ -54,7 +56,7 @@ const std::set<std::string> ReadOnlyPreviewTools = {"make_contact_morph"};
 
 // Tools that replace the project or overwrite files, which a snapshot doesn't bring back
 const std::set<std::string> DestructiveTools = {
-	"new_project", "load_project", "save_project", "export_file", "export_slider_data", "save_preset",
+	"new_project", "load_project", "create_derived_project", "save_project", "export_file", "export_slider_data", "save_preset",
 	"save_pose", "mask_file", "snapshot_delete", "snapshot_restore", "write_material", "convert_textures",
 	"build_outfits",
 };

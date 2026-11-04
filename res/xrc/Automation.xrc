@@ -1522,6 +1522,13 @@ The shape is taken from the Target Meshes field above. If it is empty, the proje
 																			<checked>1</checked>
 																		</object>
 																	</object>
+																	<object class="sizeritem">
+																		<object class="wxCheckBox" name="chkRefLoadAddOns">
+																			<label>Load sliders of installed add-ons</label>
+																			<tooltip>Also loads the sliders that installed add-on projects of the reference project add to it. They are saved as needing their add-on, so BodySlide only shows them when it is installed.</tooltip>
+																			<checked>0</checked>
+																		</object>
+																	</object>
 																</object>
 															</object>
 														</object>

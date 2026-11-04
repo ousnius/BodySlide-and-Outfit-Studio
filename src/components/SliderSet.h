@@ -13,6 +13,7 @@ See the included LICENSE file
 #include <algorithm>
 #include <cstddef>
 #include <map>
+#include <memory>
 #include <set>
 #include <string>
 #include <utility>
@@ -47,6 +48,15 @@ struct SliderSetResolveStatus {
 	std::set<std::string> baseSliders;
 	std::map<std::pair<std::string, std::string>, DiffInfo> baseData;
 	std::map<std::string, std::vector<std::string>> baseDataFolders; // By target, the data folders inherited data is in
+};
+
+// Slider data that BodySlide makes when it loads a set instead of reading it from files, by data name
+struct GeneratedSliderData {
+	struct Data {
+		std::string targetName;
+		TargetDataDiffs diffs;
+	};
+	std::map<std::string, Data> data;
 };
 
 struct SliderDataFileResolution {
@@ -94,6 +104,9 @@ class SliderSet {
 	std::vector<std::string> removedSliders; // Sliders of the base project that aren't used
 	std::vector<std::string> unknownElements; // Elements this version doesn't know, as XML text to write them back
 	SliderSetResolveStatus resolveStatus;
+
+	// Data of the sliders' generated data files (DiffInfo::bGenerated), shared by the copies of the set
+	std::shared_ptr<const GeneratedSliderData> generatedData;
 
 	SliderData Empty;
 
@@ -174,6 +187,9 @@ public:
 
 	const SliderSetResolveStatus& GetResolveStatus() const { return resolveStatus; }
 	void SetResolveStatus(const SliderSetResolveStatus& status) { resolveStatus = status; }
+
+	const std::shared_ptr<const GeneratedSliderData>& GetGeneratedData() const { return generatedData; }
+	void SetGeneratedData(std::shared_ptr<const GeneratedSliderData> data) { generatedData = std::move(data); }
 
 	uint32_t GetShapeVertexCount(const std::string& shapeName) const {
 		auto shape = shapeAttributes.find(shapeName);
@@ -530,6 +546,12 @@ public:
 	bool IsAddOn(const std::string& setName);
 	// Name of the set's base project as it was saved, empty for a project without one. Doesn't look the base up.
 	std::string GetSetBaseProjectName(const std::string& setName);
+	// Project ID of the set's base project as it was saved, empty if it has none
+	std::string GetSetBaseProjectID(const std::string& setName);
+	// Project ID of the set, empty if it has none
+	std::string GetSetProjectID(const std::string& setName);
+	// Data folder and source file of the set as they were saved, without what a base project would give it
+	void GetSetSourceFile(const std::string& setName, std::string& outDataFolder, std::string& outSourceFile);
 	// True if the set's source file or one of its slider data names contains one of the lower case names
 	bool SetMentions(const std::string& setName, const std::vector<std::string>& lowerNames);
 	// Name of the set with the project ID, empty if there's none.

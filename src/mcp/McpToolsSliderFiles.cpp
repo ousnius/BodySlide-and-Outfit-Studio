@@ -342,7 +342,9 @@ void AddSliderFileTools(OutfitStudioMcp& mcp) {
 		"Adds a slider. empty: a slider without data, to fill with set_slider_edit and editing tools or "
 		"set_slider_deltas. zap: a zap slider that removes the unmasked vertices of the shapes when it's on, e.g. of the "
 		"reference to hide the body under the outfit (mask_ops covered). "
-		"combined: a slider that moves the shapes the way the current slider values do together.";
+		"combined: a slider that moves the shapes the way the current slider values do together. In an add-on "
+		"(create_derived_project) the slider is saved with the add-on, so a body or outfit gets it without its project "
+		"being edited.";
 	newSlider.inputSchema = McpSchema(
 		{
 			{"name", McpProp("string", "New slider name")},
@@ -431,7 +433,9 @@ void AddSliderFileTools(OutfitStudioMcp& mcp) {
 	deleteSliders.description =
 		"Deletes sliders and their data from the project. notOnReference deletes the morph sliders the reference has no data "
 		"for, e.g. the helper sliders a curtain reference left after loading the body again with mergeSliders. Not in the "
-		"undo history: take a snapshot_save first to go back.";
+		"undo history: take a snapshot_save first to go back. In an add-on, deleting a slider of the base project only "
+		"leaves it out where the add-on is built on its own; BodySlide still shows it where the add-on is built "
+		"together with its base.";
 	deleteSliders.inputSchema = McpSchema({
 		{"sliders", McpStringList("Slider names, or regular expressions with regex")},
 		{"regex", McpProp("boolean", "The names are regular expressions. Default false.")},

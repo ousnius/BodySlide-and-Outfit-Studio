@@ -34,6 +34,7 @@ struct DiffInfo {
 	std::string dataName;	// Alias for the data.
 	std::string targetName; // Shape affected by the data.
 	std::string fileName;	// File name not including path.
+	bool bGenerated = false; // BodySlide: made when loading, from the generated data of the set. Never saved.
 	DiffInfo(bool l = false, const std::string& dn = "", const std::string& tn = "", const std::string& fn = "", bool inherited = false)
 		: bLocal(l)
 		, bInherited(inherited)
@@ -54,6 +55,12 @@ public:
 	float defBigValue = 0.0f;
 	std::vector<std::string> zapToggles;
 	bool bInherited = false; // The properties above come from the base project.
+
+	// The add-on project that the slider was made for. BodySlide leaves the slider out when the add-on isn't installed.
+	std::string addOnName;
+	std::string addOnID; // Project ID of the add-on, empty if it has none
+	bool bAutoConformed = false; // BodySlide: conformed from an add-on of the body when loading. Never saved.
+	std::string stackedFrom;	 // BodySlide: the add-on project that the slider was stacked from when loading. Never saved.
 
 	float curValue = 0.0f;
 	bool bShow = true;
@@ -130,7 +137,11 @@ public:
 		defSmallValue = other.defSmallValue;
 		defBigValue = other.defBigValue;
 		zapToggles = other.zapToggles;
+		addOnName = other.addOnName;
+		addOnID = other.addOnID;
 	}
+
+	bool NeedsAddOn() const { return !addOnName.empty() || !addOnID.empty(); }
 
 	bool HasInheritedData() const {
 		for (auto& df : dataFiles)

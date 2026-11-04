@@ -127,6 +127,8 @@ struct ReferenceSource {
 	bool mergeSliders = false;
 	bool mergeZaps = false;
 	bool appendNewSliders = false;
+	// Slider set files and templates: also load the sliders of the reference project's installed add-ons
+	bool loadAddOns = false;
 };
 
 struct SaveProjectOptions {
@@ -264,7 +266,11 @@ public:
 	// Splits the bones of the selected shapes by whether they take part in weight normalization
 	void GetNormalizeBones(std::vector<std::string>* normBones, std::vector<std::string>* notNormBones);
 
-	OpResult LoadReference(const ReferenceSource& source);
+	// 'outAddOnSliders' gets the sliders loaded from add-ons of the reference with 'loadAddOns'
+	OpResult LoadReference(const ReferenceSource& source, std::vector<std::string>* outAddOnSliders = nullptr);
+	// Loads the sliders of the installed add-ons of the loaded reference project. In an add-on, only they stay
+	// shown, so that conforming leaves the base project's sliders alone. Returns the loaded sliders.
+	std::vector<std::string> LoadReferenceAddOns();
 	// Adds the shapes and sliders of a set of a slider set file to the project
 	OpResult AddProject(const std::string& file, const std::string& set, bool appendNewSliders);
 	OpResult SaveProject(const SaveProjectOptions& options);

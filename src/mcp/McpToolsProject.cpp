@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
+#include "../components/AddOnSliders.h"
 #include "../components/AutomationJson.h"
 #include "../program/AutomationRunner.h"
 #include "../program/OutfitStudio.h"
@@ -266,27 +267,27 @@ McpToolResult BuildOutfits(OutfitStudioMcp& mcp, const json& args) {
 
 	// Sets that don't exist are named here, BodySlide would only say that its filter matched nothing
 	json missing = json::array();
+	json builtWithBase = json::object();
 	if (!outfits.empty()) {
-		std::set<std::string, case_insensitive_compare> known;
-		wxArrayString setFiles;
-		wxString folder = wxString::FromUTF8(ProjectUtil::GetProjectPath() + "/SliderSets");
-		if (wxDir::Exists(folder))
-			wxDir::GetAllFiles(folder, &setFiles, "*.osp");
-		for (auto& file : setFiles) {
-			SliderSetFile setFile(ToUTF8(file));
-			if (setFile.fail())
-				continue;
-			std::vector<std::string> names;
-			setFile.GetSetNames(names);
-			known.insert(names.begin(), names.end());
-		}
+		ProjectCatalog catalog;
+		catalog.Load(ProjectUtil::GetProjectPath());
+		catalog.Finish();
 
+		// BodySlide lists an add-on that writes the output of its base project only as part of that project
 		std::vector<std::string> existing;
+		std::set<std::string, case_insensitive_compare> added;
 		for (auto& name : outfits) {
-			if (known.count(name))
-				existing.push_back(name);
-			else
+			const ProjectCatalogEntry* entry = catalog.Find(name);
+			if (!entry) {
 				missing.push_back(name);
+				continue;
+			}
+
+			std::string root = catalog.StackRoot(entry->setName);
+			if (!StringsEqualInsens(root.c_str(), entry->setName.c_str()))
+				builtWithBase[entry->setName] = root;
+			if (added.insert(root).second)
+				existing.push_back(root);
 		}
 		if (existing.empty())
 			throw McpToolError("There is no slider set named " + missing.dump() + ". list_slider_sets lists them.");
@@ -337,6 +338,8 @@ McpToolResult BuildOutfits(OutfitStudioMcp& mcp, const json& args) {
 		argv.insert(argv.end(), {"--preset", wxString::FromUTF8(preset)});
 	if (McpArgs::Bool(args, "tri", false))
 		argv.push_back("--trimorphs");
+	if (McpArgs::Bool(args, "conformAddOns", false))
+		argv.push_back("--conformaddons");
 
 	std::vector<const wxChar*> argvPtrs;
 	for (auto& arg : argv)
@@ -387,6 +390,8 @@ McpToolResult BuildOutfits(OutfitStudioMcp& mcp, const json& args) {
 	result.data["errors"] = problems["errors"];
 	if (!missing.empty())
 		result.data["missing"] = missing;
+	if (!builtWithBase.empty())
+		result.data["builtWithBase"] = builtWithBase;
 	if (!problems["warnings"].empty())
 		result.data["warnings"] = problems["warnings"];
 	if (files.empty())
@@ -407,7 +412,8 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 		"Overview of the open project: its name (displayName) and where it saves to, whether the reference is saved "
 		"with it, the reference shape, the "
 		"outfit shapes in order, selected shapes, slider count, the slider being edited and whether there are "
-		"unsaved changes. Call it first, and again after anything that failed or timed out.";
+		"unsaved changes. baseProject names the project an add-on or variant is based on (null for others). Call it "
+		"first, and again after anything that failed or timed out.";
 	status.readOnly = true;
 	status.handler = [frame](const json&) { return GetStatus(frame); };
 	mcp.AddTool(std::move(status));
@@ -416,14 +422,18 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 	listSets.name = "list_slider_sets";
 	listSets.description =
 		"Lists slider set files (.osp) in the SliderSets folder with the sets (projects) in each. A slider set "
-		"file can hold several sets. Use filter to search, as there can be thousands.";
+		"file can hold several sets. Use filter to search, as there can be thousands. Sets that are add-ons or "
+		"variants of another project are listed under derived with their kind and base project; baseProject lists "
+		"only those of one project, e.g. to see which add-ons a body or outfit has before making another.";
 	listSets.inputSchema = McpSchema({
 		{"file", McpProp("string", "Only list the sets of this file (absolute, relative to the BodySlide folder, or a name in SliderSets)")},
 		{"filter", McpProp("string", "Only sets or files whose name contains this text, ignoring case")},
+		{"baseProject", McpProp("string", "Only add-ons and variants of the project with this name")},
 	});
 	listSets.readOnly = true;
 	listSets.handler = [](const json& args) {
 		wxString filter = wxString::FromUTF8(McpArgs::String(args, "filter", "")).Lower();
+		const std::string baseOf = McpArgs::String(args, "baseProject", "");
 
 		wxArrayString files;
 		if (McpArgs::Has(args, "file"))
@@ -443,14 +453,28 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 			if (setFile.fail())
 				continue;
 
+			// Add-ons and variants with the project they're based on
+			json derived = json::object();
 			std::vector<std::string> names;
 			setFile.GetSetNames(names);
-			for (auto& name : names)
-				if (fileMatches || wxString::FromUTF8(name).Lower().Contains(filter))
-					sets.push_back(name);
+			for (auto& name : names) {
+				std::string baseName = setFile.GetSetBaseProjectName(name);
+				if (!baseOf.empty() && !StringsEqualInsens(baseName.c_str(), baseOf.c_str()))
+					continue;
 
-			if (!sets.empty())
-				list.push_back({{"file", RelativeToProject(file)}, {"sets", sets}});
+				if (fileMatches || wxString::FromUTF8(name).Lower().Contains(filter)) {
+					sets.push_back(name);
+					if (!baseName.empty())
+						derived[name] = {{"kind", setFile.IsAddOn(name) ? "add-on" : "variant"}, {"baseProject", baseName}};
+				}
+			}
+
+			if (!sets.empty()) {
+				json entry = {{"file", RelativeToProject(file)}, {"sets", sets}};
+				if (!derived.empty())
+					entry["derived"] = derived;
+				list.push_back(entry);
+			}
 		}
 
 		McpToolResult result;
@@ -528,6 +552,60 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 	};
 	mcp.AddTool(std::move(loadProject));
 
+	McpTool createDerived;
+	createDerived.name = "create_derived_project";
+	createDerived.description =
+		"Opens a set of a slider set file as a new add-on or variant of it, replacing the open project. It inherits all "
+		"sliders of the base project and saves only what it adds or changes, so the original project and its files "
+		"stay as they are. An add-on uses the base project's shapes and NIF file and never writes them: use it to "
+		"give a body reference or an outfit more sliders or zaps, e.g. more shape options, a squish slider "
+		"(make_contact_morph) or a zap to remove a part, without replacing or editing the original project. BodySlide "
+		"shows the sliders of all installed add-ons on their base project and builds them together when they write "
+		"the same output file (keep the base's output path and file). A variant gets a NIF file of its own, for "
+		"changed shapes (moved, added or removed shapes, weights, textures), and keeps using the base project's "
+		"sliders. Save it with save_project and a new sliderSetFile. The conform-sliders guide has the workflows.";
+	createDerived.inputSchema = McpSchema(
+		{
+			{"file", McpProp("string", "Slider set file of the base project (absolute, relative to the BodySlide folder, or a name in SliderSets)")},
+			{"set", McpProp("string", "Base project, needed when the file has more than one set")},
+			{"kind", McpProp("string", "\"addOn\" or \"variant\"")},
+			{"displayName", McpProp("string", "Name of the new project. Default the base project's name with \" Add-on\" or \" Variant\".")},
+			{"discardChanges", DiscardChangesProp},
+		},
+		{"file", "kind"});
+	createDerived.handler = [&mcp, frame](const json& args) {
+		std::string path = SliderSetFilePath(McpArgs::String(args, "file"));
+		std::string set = McpArgs::String(args, "set", "");
+		std::string kind = McpArgs::String(args, "kind");
+		if (kind != "addOn" && kind != "variant")
+			throw McpToolError("'kind' must be \"addOn\" or \"variant\".");
+
+		const bool addOn = kind == "addOn";
+
+		std::vector<std::string> sets = SetNames(path);
+		if (set.empty() && sets.size() > 1)
+			throw McpToolError("The file has " + std::to_string(sets.size()) + " sets, pass one as 'set': " + json(sets).dump());
+		if (set.empty() && sets.size() == 1)
+			set = sets.front();
+		if (std::find(sets.begin(), sets.end(), set) == sets.end())
+			throw McpToolError("The file has no set '" + set + "'. It has: " + json(sets).dump());
+
+		std::string displayName = McpArgs::String(args, "displayName", set + (addOn ? " Add-on" : " Variant"));
+		if (displayName.empty())
+			throw McpToolError("'displayName' can't be empty.");
+
+		CheckPendingChanges(frame, args);
+		if (!frame->LoadProject(path, set))
+			throw McpToolError("Loading the base project failed, see 'messages' and 'log'.");
+
+		mcp.Project().MakeDerivedProject(path, set, addOn, displayName);
+		frame->SetPendingChanges(true);
+		frame->UpdateTitle();
+
+		return GetStatus(frame);
+	};
+	mcp.AddTool(std::move(createDerived));
+
 	McpTool loadReference;
 	loadReference.name = "load_reference";
 	loadReference.description =
@@ -543,6 +621,11 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 		{"mergeSliders", McpProp("boolean", "Keep the outfit's sliders and add the reference's data to them. Default false.")},
 		{"mergeZaps", McpProp("boolean", "Keep the outfit's zap sliders. Default true.")},
 		{"appendNewSliders", McpProp("boolean", "Add the reference's sliders that the project doesn't have. Default true; false only fills in data for sliders the project already has.")},
+		{"loadAddOns",
+		 McpProp("boolean",
+				 "Slider set files and templates: also load the sliders that installed add-on projects of the reference add to it. "
+				 "They are marked as needing their add-on, so BodySlide only shows them where it's installed. In an add-on "
+				 "project, only those sliders stay shown so that conform leaves the base project's sliders alone. Default false.")},
 		{"transferZaps",
 		 McpProp("boolean",
 				 "With mergeZaps: give the new reference the zaps the old one had (e.g. BodyZap hiding the body under a "
@@ -556,6 +639,7 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 			{"MergeSliders", McpArgs::Bool(args, "mergeSliders", false)},
 			{"MergeZaps", McpArgs::Bool(args, "mergeZaps", true)},
 			{"AppendNewSliders", McpArgs::Bool(args, "appendNewSliders", true)},
+			{"LoadAddOns", McpArgs::Bool(args, "loadAddOns", false)},
 		};
 
 		if (McpArgs::Has(args, "template")) {
@@ -703,7 +787,11 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 		"Saves the project as a set of a slider set file, with its shape data, for BodySlide to build. Arguments "
 		"that are left out keep the project's current values, which get_status shows; a new project needs at least "
 		"sliderSetFile, displayName and outputFileName. A set that already exists in the file, including the one "
-		"the project was loaded from, is only replaced with overwrite: true.";
+		"the project was loaded from, is only replaced with overwrite: true. An add-on (get_status baseProject) saves "
+		"only its own sliders and slider data to its .osd file and never writes the base project's NIF file, so "
+		"changes to the shapes themselves aren't kept: it refuses when their vertices, triangles, UVs or weights "
+		"changed, unless asVariant turns it into a variant with a NIF file of its own. Shader, texture and partition "
+		"changes are never saved with an add-on.";
 	saveProject.inputSchema = McpSchema({
 		{"displayName", McpProp("string", "Name of the set as BodySlide lists it")},
 		{"sliderSetFile", McpProp("string", "Slider set file, relative to the SliderSets folder, e.g. \"MyOutfit.osp\"")},
@@ -718,6 +806,10 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 				 "copyReference): true when the loaded set had the body, which outfits with body zaps or a visible body "
 				 "need. Conversions should keep it like the original did.")},
 		{"overwrite", McpProp("boolean", "Replace a set of the same name in the slider set file. Default false, which refuses.")},
+		{"asVariant",
+		 McpProp("boolean",
+				 "An add-on whose shapes changed: save it as a variant of the base project instead, with the shapes in a NIF "
+				 "file of its own (shapeDataFile, by default named like the add-on's .osd file). Default false, which refuses.")},
 	});
 	saveProject.handler = [&mcp, frame](const json& args) {
 		OutfitProject& project = mcp.Project();
@@ -752,6 +844,20 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 			if (std::find(sets.begin(), sets.end(), options.displayName) != sets.end())
 				throw McpToolError("The set '" + options.displayName + "' already exists in '" + ToUTF8(setFile.GetFullPath())
 								   + "'. Pass overwrite: true to replace it, or save under another displayName or sliderSetFile.");
+		}
+
+		// An add-on never writes the NIF file of its base project, so changed shapes need a variant
+		if (project.activeSet.IsAddOn() && project.AddOnGeometryChanged()) {
+			if (!McpArgs::Bool(args, "asVariant", false))
+				throw McpToolError(
+					"This add-on uses the shapes of its base project and never writes them, but their vertices, triangles, "
+					"UVs or weights changed. Undo those changes to save it as an add-on, or pass asVariant: true to save it "
+					"as a variant with a NIF file of its own.");
+
+			std::string nifFile = project.ConvertAddOnToVariant(options.displayName);
+			if (!McpArgs::Has(args, "shapeDataFile"))
+				options.shapeDataFile = nifFile;
+			frame->UpdateTitle();
 		}
 
 		// Normals come from the meshes like when saving in the window
@@ -815,7 +921,9 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 		"the low and high weight bodies, the preset's slider values, and TRI files with tri. It builds the saved slider "
 		"sets, so save_project first. Returns the files written with the shapes and vertex counts of each NIF, and "
 		"BodySlide's errors and warnings. import_file a built NIF into a new project to look at it. Without outfits, "
-		"filter or groups it builds the open project's set.";
+		"filter or groups it builds the open project's set. Like in BodySlide, a project is built with the sliders of "
+		"all its installed add-ons, and an add-on that writes its base project's output builds that base project "
+		"(builtWithBase in the result).";
 	build.inputSchema = McpSchema({
 		{"outfits", McpStringList("Slider set names to build. Default: the open project's.")},
 		{"filter", McpProp("string", "Builds every set whose name contains this text, like BodySlide's outfit filter")},
@@ -823,6 +931,10 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 		{"groups", McpStringList("Builds the sets of these groups, narrowed by filter if given")},
 		{"preset", McpProp("string", "Preset name, or a preset XML file optionally followed by '?' and a preset name. Default: BodySlide's last preset.")},
 		{"tri", McpProp("boolean", "Write TRI morph files too. Default false.")},
+		{"conformAddOns",
+		 McpProp("boolean",
+				 "Conform the sliders of the body's add-ons that the outfits don't have onto them, like BodySlide's \"Conform "
+				 "Add-on Sliders\" checkbox. Default false.")},
 		{"targetDir", McpProp("string", "Folder to build into, never the game's data folder. Default: 'BodySlide MCP Build' in the temporary folder.")},
 	});
 	build.handler = [&mcp](const json& args) { return BuildOutfits(mcp, args); };
