@@ -321,6 +321,99 @@ TEST_CASE("BA2 texture archives extract to their source textures", "[Archive][BA
 	RequireExtractsSources(*archive, files, true);
 }
 
+TEST_CASE("BA2 texture archives keep signed and sRGB formats", "[Archive][BA2]") {
+	// Starfield's head normal maps are uncompressed R8G8B8A8_SNORM, its color maps mostly
+	// BC1_UNORM_SRGB. A legacy DDS header can only name the UNORM format, so the rebuilt
+	// header has to name the format itself.
+	struct Texture {
+		const char* name;
+		uint8_t format;
+		uint32_t dataSize; // Of one 4x4 mip
+	};
+	const Texture textures[] = {
+		{"rgba8_snorm.dds", 31, 64},
+		{"r8_snorm.dds", 63, 16},
+		{"rgba8_srgb.dds", 29, 64},
+		{"bgra8_srgb.dds", 91, 64},
+		{"bc1_srgb.dds", 72, 8},
+		{"bc2_srgb.dds", 75, 16},
+		{"bc3_srgb.dds", 78, 16},
+	};
+	const uint16_t size = 4;
+
+	auto append = [](Bytes& data, const auto& value) {
+		auto bytes = reinterpret_cast<const uint8_t*>(&value);
+		data.insert(data.end(), bytes, bytes + sizeof(value));
+	};
+
+	// Version 1 DX10 archive: header, one record with one uncompressed chunk per texture,
+	// the texture data, then the name table
+	const size_t recordsSize = std::size(textures) * (sizeof(BA2TexInfo) + sizeof(BA2TexChunk));
+	uint64_t dataOffset = 24 + recordsSize;
+
+	Bytes data;
+	data.insert(data.end(), {'B', 'T', 'D', 'X'});
+	append(data, uint32_t(1));
+	data.insert(data.end(), {'D', 'X', '1', '0'});
+	append(data, uint32_t(std::size(textures)));
+	uint64_t nameTableOffset = dataOffset;
+	for (auto& texture : textures)
+		nameTableOffset += texture.dataSize;
+	append(data, nameTableOffset);
+
+	for (auto& texture : textures) {
+		BA2TexInfo info{};
+		std::memcpy(info.ext, "dds\0", 4);
+		info.numChunks = 1;
+		info.chunkHeaderSize = sizeof(BA2TexChunk);
+		info.height = size;
+		info.width = size;
+		info.numMips = 1;
+		info.format = texture.format;
+		info.unk16 = 0x800;
+		append(data, info);
+
+		BA2TexChunk chunk{};
+		chunk.offset = dataOffset;
+		chunk.unpackedSize = texture.dataSize;
+		chunk.unk14 = 0xBAADF00D;
+		append(data, chunk);
+		dataOffset += chunk.unpackedSize;
+	}
+
+	for (auto& texture : textures)
+		for (uint32_t i = 0; i < texture.dataSize; i++)
+			data.push_back(static_cast<uint8_t>(i * 7 + texture.format));
+
+	for (auto& texture : textures) {
+		append(data, static_cast<uint16_t>(std::strlen(texture.name)));
+		data.insert(data.end(), texture.name, texture.name + std::strlen(texture.name));
+	}
+
+	auto path = fs::temp_directory_path() / "bsos_archive_test_snorm.ba2";
+	{
+		std::ofstream file(path, std::ios::binary);
+		file.write(reinterpret_cast<const char*>(data.data()), static_cast<std::streamsize>(data.size()));
+	}
+
+	{
+		BSA archive(path.u8string());
+		REQUIRE(archive.open());
+
+		for (auto& texture : textures) {
+			INFO(texture.name);
+			Bytes extracted = Extract(archive, texture.name);
+			auto info = ParseDds(extracted);
+			REQUIRE(info);
+			CHECK(info->format == texture.format);
+			CHECK(info->width == size);
+			CHECK(info->height == size);
+			CHECK(extracted.size() - info->dataOffset == texture.dataSize);
+		}
+	}
+	fs::remove(path);
+}
+
 TEST_CASE("BA2 archives without a name table find files by their hashes", "[Archive][BA2]") {
 	SkipWithoutCorpus();
 

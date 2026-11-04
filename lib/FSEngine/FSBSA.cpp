@@ -659,21 +659,32 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 
 				bool ok = true;
 
+				// A legacy header can't say sRGB or signed, so those variants get a DX10 header
+				// that names the format. Otherwise they'd load like the plain UNORM format.
 				switch (file->tex.header.format) {
 					case DXGI_FORMAT_BC1_TYPELESS:
 					case DXGI_FORMAT_BC1_UNORM:
-					case DXGI_FORMAT_BC1_UNORM_SRGB:
 						ddsHeader.ddspf = DirectX::DDSPF_DXT1;
 						ddsHeader.pitchOrLinearSize /= 2; // 4bpp
 						break;
 
+					case DXGI_FORMAT_BC1_UNORM_SRGB:
+						ddsHeader.ddspf = DirectX::DDSPF_DX10;
+						ddsHeader.pitchOrLinearSize /= 2; // 4bpp
+						ddsHeader10.dxgiFormat = (DXGI_FORMAT)file->tex.header.format;
+						break;
+
 					case DXGI_FORMAT_BC2_TYPELESS:
-					case DXGI_FORMAT_BC2_UNORM:
-					case DXGI_FORMAT_BC2_UNORM_SRGB: ddsHeader.ddspf = DirectX::DDSPF_DXT3; break;
+					case DXGI_FORMAT_BC2_UNORM: ddsHeader.ddspf = DirectX::DDSPF_DXT3; break;
 
 					case DXGI_FORMAT_BC3_TYPELESS:
-					case DXGI_FORMAT_BC3_UNORM:
-					case DXGI_FORMAT_BC3_UNORM_SRGB: ddsHeader.ddspf = DirectX::DDSPF_DXT5; break;
+					case DXGI_FORMAT_BC3_UNORM: ddsHeader.ddspf = DirectX::DDSPF_DXT5; break;
+
+					case DXGI_FORMAT_BC2_UNORM_SRGB:
+					case DXGI_FORMAT_BC3_UNORM_SRGB:
+						ddsHeader.ddspf = DirectX::DDSPF_DX10;
+						ddsHeader10.dxgiFormat = (DXGI_FORMAT)file->tex.header.format;
+						break;
 
 					case DXGI_FORMAT_BC4_TYPELESS:
 					case DXGI_FORMAT_BC4_UNORM:
@@ -706,25 +717,36 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 
 					case DXGI_FORMAT_B8G8R8A8_TYPELESS:
 					case DXGI_FORMAT_B8G8R8A8_UNORM:
-					case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
 						ddsHeader.ddspf = DirectX::DDSPF_A8R8G8B8;
 						ddsHeader.pitchOrLinearSize *= 4; // 32bpp
 						break;
 
 					case DXGI_FORMAT_R8G8B8A8_TYPELESS:
 					case DXGI_FORMAT_R8G8B8A8_UNORM:
-					case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
 					case DXGI_FORMAT_R8G8B8A8_UINT:
-					case DXGI_FORMAT_R8G8B8A8_SNORM:
 					case DXGI_FORMAT_R8G8B8A8_SINT:
 						ddsHeader.ddspf = DirectX::DDSPF_A8B8G8R8;
 						ddsHeader.pitchOrLinearSize *= 4; // 32bpp
 						break;
 
+					// Starfield's uncompressed head color maps are R8G8B8A8_UNORM_SRGB and
+					// their normal maps R8G8B8A8_SNORM
+					case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+					case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+					case DXGI_FORMAT_R8G8B8A8_SNORM:
+						ddsHeader.ddspf = DirectX::DDSPF_DX10;
+						ddsHeader.pitchOrLinearSize *= 4; // 32bpp
+						ddsHeader10.dxgiFormat = (DXGI_FORMAT)file->tex.header.format;
+						break;
+
+					case DXGI_FORMAT_R8_SNORM:
+						ddsHeader.ddspf = DirectX::DDSPF_DX10;
+						ddsHeader10.dxgiFormat = (DXGI_FORMAT)file->tex.header.format;
+						break;
+
 					case DXGI_FORMAT_R8_TYPELESS:
 					case DXGI_FORMAT_R8_UNORM:
 					case DXGI_FORMAT_R8_UINT:
-					case DXGI_FORMAT_R8_SNORM:
 					case DXGI_FORMAT_R8_SINT: ddsHeader.ddspf = DirectX::DDSPF_L8_NVTT1; break;
 
 					case DXGI_FORMAT_B8G8R8X8_UNORM:
