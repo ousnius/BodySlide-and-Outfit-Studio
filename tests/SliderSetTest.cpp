@@ -431,8 +431,15 @@ TEST_CASE("The save index only loads sets that mention the files", "[SliderSet]"
 	CHECK(loaded == std::vector<std::string>{"Hood", "Robe"});
 	CHECK(full.Entries().size() == 4);
 
+	// Slider data is loaded from "ROBE.OSD" as the set names it, which is Robe.osd only where paths ignore case
+#ifdef _WINDOWS
+	const size_t hoodUsesRobeOSD = 1;
+#else
+	const size_t hoodUsesRobeOSD = 0;
+#endif
+
 	CHECK(filtered.DataUsedInFile(robeOSD, "", "") == full.DataUsedInFile(robeOSD, "", ""));
-	CHECK(filtered.DataUsedInFile(robeOSD, "", "").count("HoodBreasts") == 1);
+	CHECK(filtered.DataUsedInFile(robeOSD, "", "").count("HoodBreasts") == hoodUsesRobeOSD);
 	CHECK(filtered.SetsUsingNif(robeNif, "", "").size() == full.SetsUsingNif(robeNif, "", "").size());
 
 	// A name that's escaped in XML can't be looked for in the text, so every set is loaded
@@ -444,8 +451,9 @@ TEST_CASE("The save index only loads sets that mention the files", "[SliderSet]"
 	CHECK_FALSE(filtered.Covers({"Robe.nif", "Hood.osd"}));
 
 	auto dataSets = filtered.SetsUsingDataFile(robeOSD, folder.SetFile("Robe.osp"), "Robe");
-	REQUIRE(dataSets.size() == 1);
-	CHECK(dataSets[0]->setName == "Hood");
+	REQUIRE(dataSets.size() == hoodUsesRobeOSD);
+	if (!dataSets.empty())
+		CHECK(dataSets[0]->setName == "Hood");
 }
 
 TEST_CASE("The save index loads on a thread of its own", "[SliderSet]") {
