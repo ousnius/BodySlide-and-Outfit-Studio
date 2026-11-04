@@ -8,6 +8,7 @@ See the included LICENSE file
 #include "../components/Anim.h"
 #include "../components/Automorph.h"
 #include "../components/ClothData.h"
+#include "../components/ConformOptions.h"
 #include "../components/Mesh.h"
 #include "../components/UndoState.h"
 #include "../files/ObjFile.h"
@@ -43,22 +44,6 @@ enum class SharedFilesCheck {
 	Now,   // Looks through the projects while saving
 	Index, // Uses an index that was loaded for those file names before
 	Skip   // Doesn't look: keeps all other data in the .osd file, and doesn't ask about shapes of the NIF file
-};
-
-struct ConformOptions {
-	float proximityRadius = 10.0f;
-	int maxResults = 10;
-	bool smoothResultDeltas = false;
-	int smoothIterations = 2;
-	float smoothStrength = 0.5f;
-	bool noSqueeze = false;
-	bool solidMode = false;
-	bool axisX = true;
-	bool axisY = true;
-	bool axisZ = true;
-	bool fixClipping = false;
-	float fixClippingStrength = 0.5f;
-	std::vector<std::string> sliderNames; // If empty, conform all non-zap/non-UV sliders
 };
 
 struct SliderDataKey {
@@ -271,6 +256,12 @@ class OutfitProject {
 
 	// Geometry of an add-on's shapes when it was loaded, which come from its base project
 	uint64_t addOnGeometryHash = 0;
+	// The reference shape then and its geometry, which loading another reference replaces
+	std::string addOnRefShapeName;
+	uint64_t addOnRefShapeHash = 0;
+	std::set<std::string> addOnShapeNames; // All shapes then
+	// Remembers the geometry of an add-on's shapes, or forgets it for other projects
+	void RecordAddOnGeometry(bool addOn);
 
 	SFMaterialResolver sfMaterialResolver;
 
@@ -468,7 +459,7 @@ public:
 	// Replaces the project's own data of a slider with the base project's again.
 	bool RevertSliderDataToBase(const SliderDataKey& key, std::string* errorMessage = nullptr);
 	// Shapes, their vertices, triangles, UVs and weights, to tell whether they changed.
-	uint64_t ShapeGeometryHash();
+	uint64_t ShapeGeometryHash(const std::function<bool(const std::string&)>& includeShape);
 	bool SetSliderDataLocal(const SliderDataKey& key, std::string* errorMessage = nullptr);
 	bool SetSliderDataLocal(const size_t sliderIndex, const size_t dataIndex, std::string* errorMessage = nullptr);
 	bool SetSliderDataExternal(const size_t sliderIndex, const size_t dataIndex, const std::vector<std::string>& dataFolders, std::string* errorMessage = nullptr);
@@ -628,6 +619,10 @@ public:
 	int LoadReference(
 		const std::string& fileName, const std::string& setName, const std::string& shapeName = "", bool mergeSliders = false, bool mergeZaps = false, bool appendNewSliders = true);
 
+	// Adds the sliders of the installed add-ons of the reference project to the reference shape, marked as needing
+	// their add-on. Returns the names of the added sliders.
+	std::vector<std::string> LoadReferenceAddOns();
+
 	// shapeDataPath is the ShapeData folder the set's files are in, the program's own by default
 	int LoadFromSliderSet(const std::string& fileName,
 						  const std::string& setName,
@@ -645,6 +640,11 @@ public:
 	bool SetBaseProject(const std::string& fileName, const std::string& setName, bool addOn, std::string* errorMessage = nullptr);
 	// Makes a variant or add-on a project of its own again, with all of its sliders and data.
 	void ClearBaseProject();
+	// True if shapes of an add-on's base project changed since it was loaded, which it can't save
+	bool AddOnGeometryChanged();
+	// Turns an add-on into a variant of its base project, which saves its shapes to a NIF file of its own.
+	// Returns the name of that NIF file, named like the add-on's .osd file (or 'projectName' without one).
+	std::string ConvertAddOnToVariant(const std::string& projectName);
 	// The .osd file an add-on saves its own slider data to.
 	void SetAddOnDataFile(const std::string& fileName);
 	// Whether the project has the shapes of the other project, which an add-on of it needs.

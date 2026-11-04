@@ -329,6 +329,7 @@ set(BSOS_COMMON_SOURCES
 	lib/SOIL2/image_helper.c
 	lib/SOIL2/SOIL2.c
 	lib/TinyXML-2/tinyxml2.cpp
+	src/components/AddOnSliders.cpp
 	src/components/Anim.cpp
 	src/components/Automorph.cpp
 	src/components/ClippingFixer.cpp
@@ -512,6 +513,7 @@ if(BSOS_BUILD_TESTS)
 	enable_testing()
 
 	add_executable(BSOSTests
+		tests/AddOnSlidersTest.cpp
 		tests/AnimTest.cpp
 		tests/ClothDataTest.cpp
 		tests/ArchiveIndexTest.cpp
@@ -553,6 +555,7 @@ if(BSOS_BUILD_TESTS)
 		src/components/PoseMath.cpp
 		src/components/SurfaceFit.cpp
 		src/components/TextureConvert.cpp
+		src/components/AddOnSliders.cpp
 		src/components/Anim.cpp
 		src/components/Automorph.cpp
 		src/components/DiffData.cpp

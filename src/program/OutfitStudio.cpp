@@ -2512,6 +2512,7 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 
 		XRCCTRL(*settings, "cbPreviewAlwaysDetached", wxCheckBox)->Hide();
 		XRCCTRL(*settings, "cbPreviewOnLeft", wxCheckBox)->Hide();
+		XRCCTRL(*settings, "cbConformAddOnSliders", wxCheckBox)->Hide();
 
 		wxChoice* choiceSingleInstanceBehavior = XRCCTRL(*settings, "choiceSingleInstanceBehavior", wxChoice);
 		choiceSingleInstanceBehavior->SetSelection(OutfitStudioConfig.GetIntValue("SingleInstanceBehavior", 0));
@@ -3468,6 +3469,20 @@ void OutfitStudioFrame::createSliderGUI(const std::string& name, wxScrolledWindo
 
 			if (!sliderPanel->IsShown())
 				sliderPanel->Show();
+
+			// Sliders for an add-on are only shown in BodySlide where it's installed
+			const SliderData& sliderData = project->activeSet[name];
+			if (sliderData.NeedsAddOn()) {
+				sliderPanel->sliderName->SetToolTip(
+					wxString::Format(_("Made for add-on '%s'. BodySlide only shows the slider where the add-on is installed."),
+									 wxString::FromUTF8(sliderData.addOnName.empty() ? sliderData.addOnID : sliderData.addOnName)));
+				sliderPanel->sliderName->SetForegroundColour(wxColour(120, 190, 255));
+			}
+			else {
+				sliderPanel->sliderName->UnsetToolTip();
+				sliderPanel->sliderName->SetForegroundColour(wxColour(255, 255, 255));
+			}
+			sliderPanel->sliderName->Refresh();
 
 			sliderPanels[name] = sliderPanel;
 			ShowSliderEffect(name);
@@ -4974,6 +4989,7 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 		XRCCTRL(wiz, "npTexFilename", wxFilePickerCtrl)->Bind(wxEVT_FILEPICKER_CHANGED, &OutfitStudioFrame::OnLoadOutfitFP_Texture, this);
 
 		ConfigDialogUtil::LoadDialogChoices(OutfitStudioConfig, wiz, "LoadReference", "npTemplateChoice", refTemplates);
+		ConfigDialogUtil::LoadDialogCheckBox(OutfitStudioConfig, wiz, "LoadReference", "npLoadAddOns");
 
 		// An add-on or variant picks its base project where a new project picks its reference
 		auto intro2 = XRCCTRL(wiz, "lbNewProj2", wxStaticText);
@@ -5002,7 +5018,7 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 			XRCCTRL(wiz, "lbRefShapeName", wxStaticText)->Enable(!derived);
 			XRCCTRL(wiz, "npRefShapeName", wxChoice)->Enable(!derived);
 
-			for (auto name : {"npWorkFile", "npWorkFilename", "npWorkNone", "npTexAuto", "npTexFile", "npTexFilename"})
+			for (auto name : {"npWorkFile", "npWorkFilename", "npWorkNone", "npTexAuto", "npTexFile", "npTexFilename", "npLoadAddOns"})
 				if (wxWindow* control = wiz.FindWindow(XRCID(name)))
 					control->Enable(!derived);
 
@@ -5128,6 +5144,11 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 		RefreshGUIFromProj();
 		return;
 	}
+
+	bool loadAddOns = ConfigDialogUtil::SetBoolFromDialogCheckbox(OutfitStudioConfig, wiz, "LoadReference", "npLoadAddOns");
+	bool refFromNif = XRCCTRL(wiz, "npRefIsSliderset", wxRadioButton)->GetValue() && XRCCTRL(wiz, "npSliderSetFile", wxFilePickerCtrl)->GetPath().Lower().EndsWith(".nif");
+	if (loadAddOns && !refFromNif && XRCCTRL(wiz, "npTypeNew", wxRadioButton)->GetValue())
+		ProjectOperations(*project, editor).LoadReferenceAddOns();
 
 	UpdateProgress(40, _("Loading outfit..."));
 
@@ -5300,6 +5321,7 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 		ConfigDialogUtil::LoadDialogCheckBox(OutfitStudioConfig, dlg, "LoadReference", "chkMergeSliders");
 		ConfigDialogUtil::LoadDialogCheckBox(OutfitStudioConfig, dlg, "LoadReference", "chkMergeZaps");
 		ConfigDialogUtil::LoadDialogCheckBox(OutfitStudioConfig, dlg, "LoadReference", "chkAppendNewSliders");
+		ConfigDialogUtil::LoadDialogCheckBox(OutfitStudioConfig, dlg, "LoadReference", "npLoadAddOns");
 
 		dlg.Fit();
 		result = dlg.ShowModal();
@@ -5363,6 +5385,12 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 		RefreshGUIFromProj();
 		return;
 	}
+
+	bool loadAddOns = ConfigDialogUtil::SetBoolFromDialogCheckbox(OutfitStudioConfig, dlg, "LoadReference", "npLoadAddOns");
+	bool refFromSet = XRCCTRL(dlg, "npRefIsTemplate", wxRadioButton)->GetValue()
+		|| (XRCCTRL(dlg, "npRefIsSliderset", wxRadioButton)->GetValue() && !XRCCTRL(dlg, "npSliderSetFile", wxFilePickerCtrl)->GetPath().Lower().EndsWith(".nif"));
+	if (loadAddOns && refFromSet)
+		ProjectOperations(*project, editor).LoadReferenceAddOns();
 
 	project->SetTextures(project->GetBaseShape());
 

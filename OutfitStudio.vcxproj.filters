@@ -757,6 +757,12 @@
     <ClInclude Include="src\components\MaskTransfer.h">
       <Filter>Components</Filter>
     </ClInclude>
+    <ClInclude Include="src\components\AddOnSliders.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\ConformOptions.h">
+      <Filter>Components</Filter>
+    </ClInclude>
     <ClInclude Include="src\components\Automorph.h">
       <Filter>Components</Filter>
     </ClInclude>
@@ -2233,6 +2239,9 @@
       <Filter>Components</Filter>
     </ClCompile>
     <ClCompile Include="src\components\ClothData.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\AddOnSliders.cpp">
       <Filter>Components</Filter>
     </ClCompile>
     <ClCompile Include="src\components\Automorph.cpp">

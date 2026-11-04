@@ -109,6 +109,7 @@ wxBEGIN_EVENT_TABLE(BodySlideFrame, wxFrame)
 	EVT_BUTTON(XRCID("btnDeleteProject"), BodySlideFrame::OnDeleteProject)
 	EVT_BUTTON(XRCID("btnDeletePreset"), BodySlideFrame::OnDeletePreset)
 	EVT_CHECKBOX(XRCID("cbIsOutfitChoice"), BodySlideFrame::OnOutfitChoiceSelect)
+	EVT_CHECKBOX(XRCID("cbConformAddOns"), BodySlideFrame::OnConformAddOns)
 
 	EVT_BUTTON(XRCID("btnPreview"), BodySlideFrame::OnPreview)
 	EVT_BUTTON(XRCID("btnHighToLow"), BodySlideFrame::OnHighToLow)
@@ -200,6 +201,8 @@ bool BodySlideApp::OnInit() {
 	wxLogMessage("Executable directory: %s", wxString::FromUTF8(dataDir));
 	if (!SetDefaultConfig())
 		return false;
+
+	conformAddOnSliders = BodySlideConfig.GetBoolValue("ConformAddOnSliders");
 
 	LoadFavorites();
 
@@ -386,6 +389,7 @@ bool BodySlideApp::OnCmdLineParsed(wxCmdLineParser& parser) {
 
 	cmdTri = parser.Found("tri");
 	cmdQuiet = parser.Found("q");
+	cmdConformAddOns = parser.Found("conformaddons");
 
 	wxString previewFiles;
 	if (parser.Found("preview", &previewFiles)) {
@@ -474,6 +478,7 @@ void BodySlideApp::LoadData() {
 	GameUtil::InitArchives();
 
 	std::string activeOutfit = BodySlideConfig["SelectedOutfit"];
+	projectCatalog.IsStackedAddOn(activeOutfit, &activeOutfit);
 	if (!activeOutfit.empty() && !OutfitExists(activeOutfit)) {
 		wxLogMessage("Previously selected outfit '%s' no longer exists, clearing.", activeOutfit);
 		activeOutfit.clear();
@@ -653,34 +658,62 @@ void BodySlideApp::CharHook(wxKeyEvent& event) {
 
 int BodySlideApp::CreateSetSliders(const std::string& outfit) {
 	wxLogMessage("Creating sliders...");
-	if (outfitNameSource.find(outfit) == outfitNameSource.end())
+	auto source = outfitNameSource.find(outfit);
+	if (source == outfitNameSource.end())
 		return 1;
 
-	SliderSetFile sliderDoc;
-	sliderDoc.Open(outfitNameSource[outfit]);
-	if (!sliderDoc.fail()) {
-		projects.clear();
-		projects.push_back(std::make_unique<ProjectData>());
-		auto& activeSet = GetActiveSet();
-		activeSet.Clear();
-		sliderManager.ClearSliders();
-		if (!sliderDoc.GetSet(outfit, activeSet)) {
+	projects.clear();
+	projects.push_back(std::make_unique<ProjectData>());
+	auto& activeSet = GetActiveSet();
+	activeSet.Clear();
+	sliderManager.ClearSliders();
+
+	int error = 0;
+	auto conformed = conformAddOnSliders ? conformedSets.find(outfit) : conformedSets.end();
+	if (conformed != conformedSets.end()) {
+		activeSet = conformed->second.first;
+		activeAddOns = conformed->second.second;
+	}
+	else {
+		std::unique_ptr<wxBusyCursor> busy;
+		if (conformAddOnSliders) {
+			busy = std::make_unique<wxBusyCursor>();
+
+			// Conforming uses the skinning of the shapes, which needs the skeleton
+			EnsurePreviewSkeleton();
+		}
+
+		error = LoadProjectSet(source->second, outfit, activeSet, conformAddOnSliders, activeAddOns);
+		if (!error) {
 			LogBaseProjectStatus(activeSet);
-			activeSet.SetBaseDataPath(ProjectUtil::GetProjectPath() + PathSepStr + "ShapeData");
-			sliderManager.AddSlidersInSet(activeSet);
-			DisplayActiveSet();
-			return 0;
+			LogProjectAddOns(activeSet, activeAddOns);
+
+			if (conformAddOnSliders)
+				conformedSets[outfit] = {activeSet, activeAddOns};
 		}
 	}
 
-	if (sliderView)
-		sliderView->ShowOutfitBaseProject(nullptr);
+	if (!error) {
+		sliderManager.AddSlidersInSet(activeSet);
+		DisplayActiveSet();
+		return 0;
+	}
 
-	return sliderDoc.fail() ? 2 : 3;
+	activeAddOns = ProjectAddOns();
+	if (sliderView) {
+		sliderView->ShowOutfitBaseProject(nullptr);
+		sliderView->ShowOutfitAddOns(nullptr);
+	}
+
+	return error;
 }
 
 int BodySlideApp::AddProjectSliders(const std::string& projectFile, const std::string& setName) {
 	wxLogMessage("Adding project sliders from '%s' set '%s'...", projectFile, setName);
+
+	// Preview mode doesn't load the outfit list, which the add-ons are found in
+	if (projectCatalog.Entries().empty())
+		projectCatalog.Load(ProjectUtil::GetProjectPath());
 
 	if (projects.empty()) {
 		// First project: clear shared data managers
@@ -691,23 +724,179 @@ int BodySlideApp::AddProjectSliders(const std::string& projectFile, const std::s
 
 	auto pp = std::make_unique<ProjectData>();
 
-	SliderSetFile sliderDoc;
-	sliderDoc.Open(projectFile);
-	if (sliderDoc.fail())
-		return 2;
+	if (conformAddOnSliders)
+		EnsurePreviewSkeleton();
 
-	if (sliderDoc.GetSet(setName, pp->sliderSet))
-		return 3;
+	ProjectAddOns addOns;
+	int error = LoadProjectSet(projectFile, setName, pp->sliderSet, conformAddOnSliders, addOns);
+	if (error)
+		return error;
 
 	LogBaseProjectStatus(pp->sliderSet);
-	pp->sliderSet.SetBaseDataPath(ProjectUtil::GetProjectPath() + PathSepStr + "ShapeData");
+	LogProjectAddOns(pp->sliderSet, addOns);
 	pp->setName = setName;
+
+	// What's shown for the add-ons is of the first project, like the rest of the window
+	if (projects.empty())
+		activeAddOns = addOns;
 
 	// Add sliders from this set (additive)
 	sliderManager.AddSlidersInSet(pp->sliderSet);
 
 	projects.push_back(std::move(pp));
 	return 0;
+}
+
+bool BodySlideApp::LoadNifFile(const std::string& fileName, NifFile& nif) {
+	std::fstream file;
+	PlatformUtil::OpenFileStream(file, fileName, std::ios::in | std::ios::binary);
+	if (nif.Load(file))
+		return false;
+
+	if (nif.GetHeader().GetVersion().IsSF())
+		for (const auto& meshPath : GameDataStream::LoadExternalGeometry(nif, Config["GameDataPath"], fileName))
+			wxLogWarning("Unable to locate external mesh data '%s' of nif file: %s", meshPath, fileName);
+
+	return true;
+}
+
+int BodySlideApp::LoadProjectSet(const std::string& fileName, const std::string& setName, SliderSet& outSet, bool conform, ProjectAddOns& outAddOns, NifFile* nif) {
+	SliderSetFile sliderDoc(fileName);
+	if (sliderDoc.fail())
+		return 2;
+
+	if (sliderDoc.GetSet(setName, outSet))
+		return 3;
+
+	outSet.SetBaseDataPath(ProjectUtil::GetProjectPath() + PathSepStr + "ShapeData");
+	AddProjectAddOns(outSet, conform, outAddOns, nif);
+	return 0;
+}
+
+void BodySlideApp::AddProjectAddOns(SliderSet& set, bool conform, ProjectAddOns& outAddOns, NifFile* nif) {
+	outAddOns = ProjectAddOns();
+
+	SetStackResult stack = StackSetAddOns(set, projectCatalog, outAddOns.warnings);
+	outAddOns.stacked = std::move(stack.addOns);
+	outAddOns.baseStacked = stack.baseAddOns;
+	outAddOns.missing = std::move(stack.missingAddOns);
+
+	if (stack.baseAddOns.empty() && !conform)
+		return;
+
+	// Fitting and conforming need the shapes
+	NifFile ownNif;
+	if (!nif) {
+		if (!LoadNifFile(set.GetInputFileName(), ownNif)) {
+			outAddOns.warnings.push_back(wxString::Format(_("The NIF file couldn't be loaded to fit add-on sliders to it: %s"), wxString::FromUTF8(set.GetInputFileName())).ToUTF8().data());
+			return;
+		}
+
+		nif = &ownNif;
+	}
+
+	AnimInfo anim;
+	if (conform)
+		LoadConformAnim(anim, *nif);
+
+	const std::string baseDataPath = ProjectUtil::GetProjectPath() + PathSepStr + "ShapeData";
+	auto loadNif = [](const std::string& fileName, NifFile& loadInto) { return LoadNifFile(fileName, loadInto); };
+
+	if (!stack.baseAddOns.empty())
+		FitBaseAddOnsToVariant(set, *nif, conform ? &anim : nullptr, stack.baseAddOns, projectCatalog, baseDataPath, loadNif, conform, outAddOns.warnings);
+
+	if (!conform)
+		return;
+
+	ConformBodyRef bodyRef = FindConformBody(set, projectCatalog, ProjectUtil::GetProjectPath());
+	if (!bodyRef.Found())
+		return;
+
+	std::shared_ptr<ConformBody> body = GetConformBody(bodyRef, outAddOns.warnings);
+	if (!body)
+		return;
+
+	outAddOns.conformBody = bodyRef.setName;
+	outAddOns.conformed = ConformAddOnSliders(set, *nif, anim, *body);
+}
+
+std::shared_ptr<ConformBody> BodySlideApp::GetConformBody(const ConformBodyRef& ref, std::vector<std::string>& warnings) {
+	std::string key = ref.fileName + "|" + ref.setName + "|" + ref.shapeName;
+
+	// Outfits of the same body wait for it to be loaded once
+	std::lock_guard<std::mutex> lock(conformBodiesMutex);
+	auto loaded = conformBodies.find(key);
+	if (loaded != conformBodies.end())
+		return loaded->second;
+
+	wxLogMessage("Loading body '%s' to conform its add-on sliders...", ref.setName);
+
+	auto body = std::make_shared<ConformBody>();
+	const std::string baseDataPath = ProjectUtil::GetProjectPath() + PathSepStr + "ShapeData";
+	auto loadNif = [](const std::string& fileName, NifFile& loadInto) { return LoadNifFile(fileName, loadInto); };
+	if (!body->Load(ref, projectCatalog, baseDataPath, loadNif, warnings))
+		body.reset();
+
+	conformBodies[key] = body;
+	return body;
+}
+
+void BodySlideApp::LogProjectAddOns(const SliderSet& set, const ProjectAddOns& addOns, NifFile* nif) {
+	if (!nif) {
+		for (auto& warning : addOns.warnings)
+			wxLogWarning("Project '%s': %s", set.GetName(), wxString::FromUTF8(warning));
+
+		std::vector<std::string> stackedNames;
+		for (auto* list : {&addOns.stacked, &addOns.baseStacked})
+			for (auto& addOn : *list)
+				stackedNames.push_back(addOn.setName);
+		if (!stackedNames.empty())
+			wxLogMessage("Project '%s': added the sliders of add-ons: %s", set.GetName(), wxString::FromUTF8(JoinStrings(stackedNames, ", ")));
+
+		if (!addOns.missing.empty())
+			wxLogMessage("Project '%s' has sliders for add-ons that aren't installed, which are left out: %s", set.GetName(), wxString::FromUTF8(JoinStrings(addOns.missing, ", ")));
+
+		if (!addOns.conformed.empty())
+			wxLogMessage("Project '%s': conformed the sliders of add-ons of '%s': %s",
+						 set.GetName(),
+						 wxString::FromUTF8(addOns.conformBody),
+						 wxString::FromUTF8(JoinStrings(addOns.conformed, ", ")));
+		return;
+	}
+
+	for (auto& addOn : addOns.stacked) {
+		for (auto& vertexCount : addOn.vertexCounts) {
+			auto shape = nif->FindBlockByName<NiShape>(vertexCount.first);
+			if (shape && vertexCount.second > 0 && vertexCount.second != shape->GetNumVertices())
+				wxLogWarning("Add-on '%s': its slider data of shape '%s' was made for %u vertices, but the shape has %u now.",
+							 addOn.setName,
+							 vertexCount.first,
+							 vertexCount.second,
+							 static_cast<uint32_t>(shape->GetNumVertices()));
+		}
+	}
+}
+
+void BodySlideApp::SetConformAddOnSliders(bool conform) {
+	if (conformAddOnSliders == conform)
+		return;
+
+	conformAddOnSliders = conform;
+	conformedSets.clear();
+
+	if (!HasActiveProject() || multiProjectMode)
+		return;
+
+	// The sliders keep the values they were changed to
+	pendingSliderValues.clear();
+	for (size_t i = 0; i < sliderManager.slidersBig.size() && i < sliderManager.slidersSmall.size(); i++) {
+		auto& big = sliderManager.slidersBig[i];
+		auto& small = sliderManager.slidersSmall[i];
+		if (big.changed || small.changed)
+			pendingSliderValues[big.name] = {small.value, big.value};
+	}
+
+	ActivateOutfit(BodySlideConfig["SelectedOutfit"]);
 }
 
 std::string BodySlideApp::GetOutputDataPath() const {
@@ -873,6 +1062,12 @@ int BodySlideApp::LoadSliderSets() {
 	outfitHasZaps.clear();
 	outfitBaseProjects.clear();
 	outFileCount.clear();
+	projectCatalog.Clear();
+	conformedSets.clear();
+	{
+		std::lock_guard<std::mutex> lock(conformBodiesMutex);
+		conformBodies.clear();
+	}
 
 	wxArrayString files;
 	wxDir::GetAllFiles(wxString::FromUTF8(ProjectUtil::GetProjectPath()) + "/SliderSets", &files, "*.osp");
@@ -902,6 +1097,7 @@ int BodySlideApp::LoadSliderSets() {
 			if (outfitNameSource.find(o) != outfitNameSource.end())
 				continue;
 
+			projectCatalog.Add(sliderDoc, o);
 			outfitNameSource[o] = fileName;
 			outfitNameOrder.push_back(o);
 
@@ -933,6 +1129,26 @@ int BodySlideApp::LoadSliderSets() {
 		}
 	}
 
+	// Add-ons that build the same file as their base project are built with it, so they aren't outfits of their own
+	projectCatalog.Finish();
+	for (auto& entry : projectCatalog.Entries()) {
+		if (!entry.stackable)
+			continue;
+
+		const std::string& o = entry.setName;
+		outfitNameSource.erase(o);
+		outfitNameOrder.erase(std::remove(outfitNameOrder.begin(), outfitNameOrder.end(), o), outfitNameOrder.end());
+		outfitHasZaps.erase(std::remove(outfitHasZaps.begin(), outfitHasZaps.end(), o), outfitHasZaps.end());
+		outfitBaseProjects.erase(o);
+
+		auto outFile = outFileCount.find(entry.outputFilePath);
+		if (outFile != outFileCount.end()) {
+			outFile->second.erase(std::remove(outFile->second.begin(), outFile->second.end(), o), outFile->second.end());
+			if (outFile->second.empty())
+				outFileCount.erase(outFile);
+		}
+	}
+
 	ungroupedOutfits.clear();
 	for (auto& o : outfitNameSource) {
 		std::vector<std::string> groups;
@@ -943,7 +1159,8 @@ int BodySlideApp::LoadSliderSets() {
 
 	bool favoritesChanged = false;
 	for (auto it = favoriteOutfits.begin(); it != favoriteOutfits.end();) {
-		if (OutfitExists(*it))
+		// Add-ons built with their base project stay favorites, they're listed again once they build a file of their own
+		if (OutfitExists(*it) || projectCatalog.IsStackedAddOn(*it))
 			++it;
 		else {
 			favoriteOutfitSet.erase(*it);
@@ -958,7 +1175,11 @@ int BodySlideApp::LoadSliderSets() {
 	return 0;
 }
 
-void BodySlideApp::ActivateOutfit(const std::string& outfitName) {
+void BodySlideApp::ActivateOutfit(const std::string& name) {
+	// An add-on that is built with its base project shows as part of it
+	std::string outfitName = name;
+	projectCatalog.IsStackedAddOn(name, &outfitName);
+
 	wxLogMessage("Activating set '%s'...", outfitName);
 
 	BodySlideConfig.SetValue("SelectedOutfit", outfitName);
@@ -983,6 +1204,28 @@ void BodySlideApp::ActivateOutfit(const std::string& outfitName) {
 	PopulateOutfitList(outfitName);
 
 	ActivatePreset(activePreset, false);
+
+	// Sliders that were changed before the outfit was loaded again keep their values
+	if (!pendingSliderValues.empty()) {
+		bool changed = false;
+		for (auto& value : pendingSliderValues) {
+			auto& sliders = sliderManager.slidersBig;
+			if (std::none_of(sliders.begin(), sliders.end(), [&value](const Slider& s) { return s.name == value.first; }))
+				continue;
+
+			sliderManager.SetSlider(value.first, true, value.second.first);
+			sliderManager.SetSlider(value.first, false, value.second.second);
+			sliderManager.SetChanged(value.first, true);
+			sliderManager.SetChanged(value.first, false);
+			sliderView->SetSliderPosition(value.first.c_str(), value.second.first, SLIDER_LO);
+			sliderView->SetSliderPosition(value.first.c_str(), value.second.second, SLIDER_HI);
+			changed = true;
+		}
+
+		pendingSliderValues.clear();
+		if (changed)
+			sliderView->SetPresetChanged(true);
+	}
 
 	InitPreview();
 
@@ -1029,25 +1272,14 @@ void BodySlideApp::ActivatePreset(const std::string& presetName, const bool upda
 
 std::vector<std::string> BodySlideApp::GetDerivedProjects(const std::string& outfitName) {
 	std::vector<std::string> derived;
-	auto outfit = outfitNameSource.find(outfitName);
-	if (outfit == outfitNameSource.end())
+	const ProjectCatalogEntry* project = projectCatalog.Find(outfitName);
+	if (!project)
 		return derived;
 
-	SliderSetFile sliderDoc(outfit->second);
-	SliderSet set;
-	std::string projectID;
-	if (!sliderDoc.fail() && sliderDoc.GetSet(outfitName, set, true, "", false) == 0)
-		projectID = set.GetProjectID();
-
-	SliderSetIndex index(ProjectUtil::GetProjectPath());
-	for (auto& entry : index.Entries()) {
-		if (!entry.set.HasBaseProject())
-			continue;
-
-		bool sameID = !projectID.empty() && entry.set.GetBaseProjectID() == projectID;
-		if (sameID || (entry.set.GetBaseProjectID().empty() && entry.set.GetBaseProjectName() == outfitName))
+	auto& entries = projectCatalog.Entries();
+	for (auto& entry : entries)
+		if (entry.baseIndex != ProjectCatalog::npos && &entries[entry.baseIndex] == project)
 			derived.push_back(entry.setName);
-	}
 
 	return derived;
 }
@@ -1182,6 +1414,30 @@ void BodySlideApp::DisplayActiveSet() {
 
 	auto& activeSet = GetActiveSet();
 	sliderView->ShowOutfitBaseProject(&activeSet);
+	sliderView->ShowOutfitAddOns(&activeAddOns);
+
+	// Sliders of add-ons are marked, conformed ones the most
+	auto markerOf = [](const SliderData& slider, wxString& tip) {
+		if (slider.bAutoConformed) {
+			tip = wxString::Format(_("Conformed automatically from add-on '%s'. The result can be rough. An add-on of this outfit with handcrafted sliders takes its place."),
+								   wxString::FromUTF8(slider.stackedFrom));
+			return SliderMarker::AutoConformed;
+		}
+
+		if (!slider.stackedFrom.empty()) {
+			tip = wxString::Format(_("From add-on '%s'."), wxString::FromUTF8(slider.stackedFrom));
+			if (slider.NeedsAddOn() && slider.addOnName != slider.stackedFrom)
+				tip += "\n" + wxString::Format(_("Made for add-on '%s'."), wxString::FromUTF8(slider.addOnName));
+			return SliderMarker::AddOn;
+		}
+
+		if (slider.NeedsAddOn()) {
+			tip = wxString::Format(_("Made for add-on '%s'."), wxString::FromUTF8(slider.addOnName.empty() ? slider.addOnID : slider.addOnName));
+			return SliderMarker::AddOn;
+		}
+
+		return SliderMarker::None;
+	};
 
 	if (activeSet.GenWeights())
 		sliderView->ShowLowColumn(true);
@@ -1226,8 +1482,11 @@ void BodySlideApp::DisplayActiveSet() {
 		}
 
 		// Not in a category
-		if (regularSlider)
-			sliderView->AddSliderGUI(activeSet[i].name, activeSet[i].name, "", activeSet[i].bZap, !activeSet.GenWeights());
+		if (regularSlider) {
+			wxString tip;
+			SliderMarker marker = markerOf(activeSet[i], tip);
+			sliderView->AddSliderGUI(activeSet[i].name, activeSet[i].name, "", activeSet[i].bZap, !activeSet.GenWeights(), marker, tip);
+		}
 	}
 
 	// Create category UI
@@ -1247,7 +1506,9 @@ void BodySlideApp::DisplayActiveSet() {
 					if (displayName.empty())
 						displayName = activeSet[s].name;
 
-					sliderView->AddSliderGUI(activeSet[s].name, displayName, categoryName, activeSet[s].bZap, !activeSet.GenWeights());
+					wxString tip;
+					SliderMarker marker = markerOf(activeSet[s], tip);
+					sliderView->AddSliderGUI(activeSet[s].name, displayName, categoryName, activeSet[s].bZap, !activeSet.GenWeights(), marker, tip);
 				}
 			}
 			iter++;
@@ -2356,6 +2617,11 @@ bool BodySlideApp::LoadExternalReference(const SliderSet& sliderSet) {
 	}
 
 	referenceSliderSet.SetBaseDataPath(ProjectUtil::GetProjectPath() + PathSepStr + "ShapeData");
+
+	// The reference body follows the sliders of its add-ons too
+	ProjectAddOns referenceAddOns;
+	AddProjectAddOns(referenceSliderSet, false, referenceAddOns);
+	LogProjectAddOns(referenceSliderSet, referenceAddOns);
 
 	// Load diff data for the reference shape
 	referenceDiffData.Clear();
@@ -3525,6 +3791,7 @@ bool BodySlideApp::SetDefaultConfig() {
 	BodySlideConfig.SetDefaultValue("SelectedOutfit", "");
 	BodySlideConfig.SetDefaultValue("SelectedPreset", "");
 	BodySlideConfig.SetDefaultBoolValue("BuildMorphs", false);
+	BodySlideConfig.SetDefaultBoolValue("ConformAddOnSliders", false);
 	BodySlideConfig.SetDefaultBoolValue("RegexFilterOutfits", false);
 	Config.SetDefaultValue("Input/SliderMinimum", 0);
 	Config.SetDefaultValue("Input/SliderMaximum", 100);
@@ -4345,6 +4612,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 	}
 
 	LogBaseProjectStatus(activeSet, &nifBig);
+	LogProjectAddOns(activeSet, activeAddOns, &nifBig);
 
 	if (activeSet.GenWeights())
 		nifSmall.CopyFrom(nifBig);
@@ -5087,6 +5355,10 @@ int BodySlideApp::BuildListBodies(
 		return outputDirectoryExists(dir);
 	};
 
+	// Conforming uses the skinning of the shapes, which needs the skeleton. It's loaded here and not on the threads.
+	if (conformAddOnSliders)
+		EnsurePreviewSkeleton();
+
 	auto buildOutfit = [&](const std::string& outfit) {
 		int processedCount = ++count;
 		wxString progMsg = wxString::Format(_("Processing '%s' (%d of %d)..."), wxString::FromUTF8(outfit), processedCount, (int)outfitList.size());
@@ -5154,7 +5426,12 @@ int BodySlideApp::BuildListBodies(
 			return;
 		}
 
+		ProjectAddOns addOns;
+		AddProjectAddOns(currentSet, conformAddOnSliders, addOns, &nifBig);
+
 		LogBaseProjectStatus(currentSet, &nifBig);
+		LogProjectAddOns(currentSet, addOns);
+		LogProjectAddOns(currentSet, addOns, &nifBig);
 
 		if (currentSet.GenWeights())
 			nifSmall.CopyFrom(nifBig);
@@ -5627,7 +5904,15 @@ std::vector<std::string> BodySlideApp::GetCmdLineBuildOutfits(std::map<std::stri
 		selected.insert(matches.begin(), matches.end());
 	}
 
-	for (auto& outfitName : cmdBuildOutfits) {
+	for (auto& cmdOutfitName : cmdBuildOutfits) {
+		// An add-on that is built with its base project builds that
+		std::string outfitName = cmdOutfitName;
+		std::string stackBase;
+		if (projectCatalog.IsStackedAddOn(outfitName, &stackBase)) {
+			wxLogMessage("Command-line build: '%s' is an add-on of '%s' and is built with it.", outfitName, stackBase);
+			outfitName = stackBase;
+		}
+
 		auto sourceIt = outfitNameSource.find(outfitName);
 		if (sourceIt == outfitNameSource.end()) {
 			wxLogError("Outfit '%s' from the command line doesn't exist.", outfitName);
@@ -5711,7 +5996,11 @@ void BodySlideApp::CommandLineBuild() {
 		}
 	}
 
+	// Only with the option, so that tools calling BodySlide get the same output whatever the settings are
+	bool conformAddOns = conformAddOnSliders;
+	conformAddOnSliders = cmdConformAddOns;
 	int ret = BuildListBodies(outfits, failedOutfits, false, cmdTri, false, cmdTargetDir);
+	conformAddOnSliders = conformAddOns;
 
 	if (presetOverride)
 		BodySlideConfig.SetValue("SelectedPreset", preset);
@@ -5951,6 +6240,10 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize& size)
 
 	outfitChoice = (wxChoice*)FindWindowByName("outfitChoice", this);
 	lblOutfitBase = (wxStaticText*)FindWindowByName("lblOutfitBase", this);
+	lblOutfitAddOns = (wxStaticText*)FindWindowByName("lblOutfitAddOns", this);
+
+	if (auto cbConformAddOns = XRCCTRL(*this, "cbConformAddOns", wxCheckBox))
+		cbConformAddOns->SetValue(app->GetConformAddOnSliders());
 	presetChoice = (wxChoice*)FindWindowByName("presetChoice", this);
 	btnFavoriteOutfit = (wxButton*)FindWindowByName("btnFavoriteOutfit", this);
 	btnFavoritePreset = (wxButton*)FindWindowByName("btnFavoritePreset", this);
@@ -6141,7 +6434,8 @@ void BodySlideFrame::AddCategorySliderUI(const std::string& name, const std::vec
 	sliderCategories[cat->categoryName] = cat;
 }
 
-void BodySlideFrame::AddSliderGUI(const std::string& name, const std::string& display, const std::string& category, bool isZap, bool oneSize) {
+void BodySlideFrame::AddSliderGUI(
+	const std::string& name, const std::string& display, const std::string& category, bool isZap, bool oneSize, SliderMarker marker, const wxString& markerTip) {
 	SliderDisplay* sd = sliderPool.GetNext();
 	if (!sd)
 		return;
@@ -6151,6 +6445,8 @@ void BodySlideFrame::AddSliderGUI(const std::string& name, const std::string& di
 
 	if (!sd->Create(sliderScroll, sliderLayout, name, display, category, minValue, maxValue, isZap, oneSize))
 		return;
+
+	sd->SetMarker(marker, markerTip);
 
 	sd->zapCheckLo->Bind(wxEVT_CHECKBOX, &BodySlideFrame::OnZapCheckChanged, this);
 	sd->sliderLo->Bind(wxEVT_ERASE_BACKGROUND, &BodySlideFrame::OnEraseBackground, this);
@@ -6180,6 +6476,7 @@ void BodySlideFrame::ClearOutfitList() {
 		outfitChoice->Clear();
 
 	ShowOutfitBaseProject(nullptr);
+	ShowOutfitAddOns(nullptr);
 	UpdateFavoriteButtons();
 }
 
@@ -6255,6 +6552,65 @@ void BodySlideFrame::ShowOutfitBaseProject(const SliderSet* set) {
 		lblOutfitBase->SetForegroundColour(colour);
 
 	lblOutfitBase->Show(show);
+	Layout();
+}
+
+void BodySlideFrame::ShowOutfitAddOns(const BodySlideApp::ProjectAddOns* addOns) {
+	if (!lblOutfitAddOns)
+		return;
+
+	wxString text;
+	wxString tip;
+	wxColour colour(120, 190, 255);
+	if (addOns) {
+		std::vector<std::string> stacked;
+		for (auto* list : {&addOns->stacked, &addOns->baseStacked})
+			for (auto& addOn : *list)
+				if (std::find(stacked.begin(), stacked.end(), addOn.setName) == stacked.end())
+					stacked.push_back(addOn.setName);
+
+		auto listNames = [](const std::vector<std::string>& names) {
+			wxString list;
+			for (auto& name : names)
+				list += "\n  " + wxString::FromUTF8(name);
+			return list;
+		};
+
+		const size_t count = stacked.size() + addOns->conformed.size();
+		if (count > 0)
+			text = wxString::Format(wxPLURAL("+%zu add-on", "+%zu add-ons", count), count);
+
+		if (!stacked.empty())
+			tip += _("Sliders from add-ons:") + listNames(stacked);
+
+		if (!addOns->conformed.empty()) {
+			if (!tip.empty())
+				tip += "\n\n";
+			tip += wxString::Format(_("Conformed automatically from add-ons of '%s':"), wxString::FromUTF8(addOns->conformBody)) + listNames(addOns->conformed);
+			colour = wxColour(255, 190, 90);
+		}
+
+		if (!addOns->missing.empty()) {
+			if (!tip.empty())
+				tip += "\n\n";
+			tip += _("Not installed, so their sliders are left out:") + listNames(addOns->missing);
+
+			wxString missingText = wxString::Format(wxPLURAL("%zu add-on not installed", "%zu add-ons not installed", addOns->missing.size()), addOns->missing.size());
+			text = text.empty() ? missingText : text + ", " + missingText;
+			colour = wxColour(255, 110, 110);
+		}
+	}
+
+	bool show = !text.empty();
+	if (show == lblOutfitAddOns->IsShown() && text == lblOutfitAddOns->GetLabel() && tip == lblOutfitAddOns->GetToolTipText())
+		return;
+
+	lblOutfitAddOns->SetLabel(text);
+	lblOutfitAddOns->SetToolTip(tip);
+	if (show)
+		lblOutfitAddOns->SetForegroundColour(colour);
+
+	lblOutfitAddOns->Show(show);
 	Layout();
 }
 
@@ -7389,6 +7745,10 @@ void BodySlideFrame::UpdatePreviewButtonLabel() {
 		btn->SetLabel(previewVisible ? _("Hide Preview") : _("Show Preview"));
 }
 
+void BodySlideFrame::OnConformAddOns(wxCommandEvent& event) {
+	app->SetConformAddOnSliders(event.IsChecked());
+}
+
 void BodySlideFrame::OnBuildBodies(wxCommandEvent& WXUNUSED(event)) {
 	if (OutfitIsEmpty())
 		return;
@@ -7690,6 +8050,9 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		wxCheckBox* cbPreviewOnLeft = XRCCTRL(*settings, "cbPreviewOnLeft", wxCheckBox);
 		cbPreviewOnLeft->SetValue(BodySlideConfig.GetBoolValue("BodySlideFrame.previewOnLeft", false));
 
+		wxCheckBox* cbConformAddOnSliders = XRCCTRL(*settings, "cbConformAddOnSliders", wxCheckBox);
+		cbConformAddOnSliders->SetValue(BodySlideConfig.GetBoolValue("ConformAddOnSliders", false));
+
 		// Hide the single instance setting (only relevant for Outfit Studio)
 		XRCCTRL(*settings, "lbSingleInstanceBehavior", wxStaticText)->Hide();
 		XRCCTRL(*settings, "choiceSingleInstanceBehavior", wxChoice)->Hide();
@@ -7720,6 +8083,7 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			BodySlideConfig.SetBoolValue("BodySlideFrame.previewAlwaysDetached", cbPreviewAlwaysDetached->IsChecked());
 			BodySlideConfig.SetBoolValue("BodySlideFrame.previewOnLeft", cbPreviewOnLeft->IsChecked());
 			SetPreviewOnLeft(cbPreviewOnLeft->IsChecked());
+			BodySlideConfig.SetBoolValue("ConformAddOnSliders", cbConformAddOnSliders->IsChecked());
 
 			// Only feeds a uniform, so the meshes and their textures stay as they are
 			app->ApplyComplexMaterialSetting();
@@ -8084,6 +8448,31 @@ bool SliderDisplay::Create(wxScrolledWindow* scrollWindow,
 	Show(false);
 	isCreated = true;
 	return true;
+}
+
+void SliderDisplay::SetMarker(SliderMarker marker, const wxString& tip) {
+	wxColour colour(200, 200, 200);
+	if (marker == SliderMarker::AddOn)
+		colour = wxColour(120, 190, 255);
+	else if (marker == SliderMarker::AutoConformed)
+		colour = wxColour(255, 190, 90);
+
+	for (wxWindow* window : std::initializer_list<wxWindow*>{lblSliderLo, lblSliderHi, sliderLo, sliderHi, zapCheckLo, zapCheckHi}) {
+		if (!window)
+			continue;
+
+		if (tip.empty())
+			window->UnsetToolTip();
+		else
+			window->SetToolTip(tip);
+	}
+
+	for (wxStaticText* label : {lblSliderLo, lblSliderHi}) {
+		if (label && label->GetForegroundColour() != colour) {
+			label->SetForegroundColour(colour);
+			label->Refresh();
+		}
+	}
 }
 
 void SliderDisplay::Show(bool show) {

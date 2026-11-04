@@ -323,8 +323,11 @@ std::vector<AutomationStepInfo> BuildStepTypes() {
 	add(AutomationStepType::ClearProject, "ClearProject", wxTRANSLATE("Project"), wxTRANSLATE("Project: Clear Project"), "pageClearProject");
 	add(AutomationStepType::ClearReference, "ClearReference", wxTRANSLATE("Project"), wxTRANSLATE("Project: Clear Reference"), "pageClearReference");
 
-	add(AutomationStepType::LoadReference, "LoadReference", wxTRANSLATE("Project"), wxTRANSLATE("Project: Load Reference"), "pageLoadReference",
-		ProjectSourceFields(nullptr, nullptr, nullptr, "chkRefLoadAll", "chkRefMergeSliders", "chkRefMergeZaps", "chkRefAppendNewSliders"));
+	add(AutomationStepType::LoadReference, "LoadReference", wxTRANSLATE("Project"), wxTRANSLATE("Project: Load Reference"), "pageLoadReference", [] {
+		auto fields = ProjectSourceFields(nullptr, nullptr, nullptr, "chkRefLoadAll", "chkRefMergeSliders", "chkRefMergeZaps", "chkRefAppendNewSliders");
+		fields.push_back(FieldBool("LoadAddOns", &Step::refLoadAddOns, false, "chkRefLoadAddOns"));
+		return fields;
+	}());
 
 	add(AutomationStepType::MakeConversionRef, "MakeConversionRef", wxTRANSLATE("Project"), wxTRANSLATE("Project: Make Conversion Reference"), "pageMakeConversionRef",
 		{

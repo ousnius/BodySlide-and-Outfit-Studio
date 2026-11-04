@@ -68,6 +68,8 @@ int SliderData::LoadSliderData(XMLElement* element, bool genWeights) {
 		bClamp = false;
 
 	bInherited = element->BoolAttribute("inherited");
+	addOnName = AttributeText(element, "addon");
+	addOnID = AttributeText(element, "addonid");
 
 	if (bZap) {
 		wxStringTokenizer tokenizer(element->Attribute("zaptoggles"), ";");

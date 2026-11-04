@@ -193,6 +193,16 @@
 								<value translate="0">0</value>
 							</object>
 						</object>
+						<object class="sizeritem">
+							<option>0</option>
+							<flag>wxALL</flag>
+							<border>5</border>
+							<object class="wxCheckBox" name="npLoadAddOns">
+								<label>Load sliders of installed add-ons of the reference</label>
+								<tooltip>Also loads the sliders that add-on projects of the reference project add to it. Sliders conformed from them are saved as needing their add-on, so BodySlide only shows them when it is installed.</tooltip>
+								<checked>0</checked>
+							</object>
+						</object>
 					</object>
 				</object>
 			</object>
@@ -929,6 +939,16 @@
 						<object class="wxRadioButton" name="npRefIsBlank">
 							<label>Clear Reference</label>
 							<value translate="0">0</value>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="npLoadAddOns">
+							<label>Load sliders of installed add-ons of the reference</label>
+							<tooltip>Also loads the sliders that add-on projects of the reference project add to it. Sliders conformed from them are saved as needing their add-on, so BodySlide only shows them when it is installed.</tooltip>
+							<checked>0</checked>
 						</object>
 					</object>
 				</object>
