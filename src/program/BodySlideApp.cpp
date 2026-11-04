@@ -4946,6 +4946,9 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 			PlatformUtil::OpenFileStream(fileSmall, custName.ToUTF8().data(), std::ios::out | std::ios::binary);
 		}
 
+		// Saving writes the real block sizes into the header last, which only reaches the file once it's closed
+		fileSmall.close();
+
 		wxString custEnd;
 		if (custName.EndsWith("_0.nif", &custEnd))
 			custName = custEnd + "_1.nif";
@@ -4980,6 +4983,9 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 
 		PlatformUtil::OpenFileStream(fileBig, custName.ToUTF8().data(), std::ios::out | std::ios::binary);
 	}
+
+	// The file is complete before the message below waits for the user
+	fileBig.close();
 
 	wxString msg = _("Successfully processed the following files:\n");
 	if (!savedLow.IsEmpty())
