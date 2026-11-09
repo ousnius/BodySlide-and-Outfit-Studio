@@ -612,12 +612,12 @@ Result Fit(const std::vector<Template>& templates, const std::vector<Vector3>& t
 			// The body's size by trying sizes against how well both ways match: a least squares scale from closest
 			// points shrinks, since closest points crowd together, and one way alone shrinks to nothing
 			if (moveWhole && options.scaleBody) {
-				for (float step : {1.1f, 1.03f, 1.01f}) {
-					const float startScale = bone->poseScale;
-					float best = startScale;
+				for (float scaleStep : {1.1f, 1.03f, 1.01f}) {
+					const float scaleBefore = bone->poseScale;
+					float best = scaleBefore;
 					double bestError = matchError(matches, false);
-					for (float factor : {1.0f / step, step}) {
-						bone->poseScale = startScale * factor;
+					for (float factor : {1.0f / scaleStep, scaleStep}) {
+						bone->poseScale = scaleBefore * factor;
 						bone->UpdatePoseTransform();
 						double error = matchError(matches, false);
 						if (error < bestError) {
