@@ -64,6 +64,50 @@ std::vector<std::string> SetNames(const std::string& path) {
 	return names;
 }
 
+// The otherBaseProjects argument of create_derived_project and save_project
+nlohmann::json OtherBaseProjectsProp() {
+	return {{"type", "array"},
+			{"items",
+			 {{"type", "object"},
+			  {"properties",
+			   {{"file", McpProp("string", "Slider set file (absolute, relative to the BodySlide folder, or a name in SliderSets)")},
+				{"set", McpProp("string", "Set of the file, needed when it has more than one")}}},
+			  {"required", {"file"}}}},
+			{"description",
+			 "Add-ons only: other projects of the same body that the add-on fits as well, saved as further <BaseProject> "
+			 "entries, e.g. the copy of a body in RefTemplates (\"RefTemplates\\\\UBE 2.0\\\\UBE SE 2.0 Release Body.osp\") or a "
+			 "reference project with other shape names. Outfits made with any of them get the add-on's sliders; for a "
+			 "project with other shapes than the base project, they're conformed to it. An exact copy of the base project "
+			 "(same set name, shapes and NIF file) counts without being listed. [] removes them all."}};
+}
+
+std::vector<std::pair<std::string, std::string>> OtherBaseProjectsArg(const json& args) {
+	const json& list = args.at("otherBaseProjects");
+	if (!list.is_array())
+		throw McpToolError("'otherBaseProjects' must be an array of {file, set}.");
+
+	std::vector<std::pair<std::string, std::string>> bases;
+	for (auto& item : list) {
+		if (!item.is_object() || !item.contains("file") || !item["file"].is_string())
+			throw McpToolError("Each entry of 'otherBaseProjects' needs a 'file'.");
+
+		std::string path = SliderSetFilePath(item["file"].get<std::string>());
+		std::string set = item.contains("set") && item["set"].is_string() ? item["set"].get<std::string>() : "";
+
+		std::vector<std::string> sets = SetNames(path);
+		if (set.empty() && sets.size() == 1)
+			set = sets.front();
+		if (set.empty())
+			throw McpToolError("'" + item["file"].get<std::string>() + "' has " + std::to_string(sets.size()) + " sets, pass one as 'set': " + json(sets).dump());
+		if (std::find(sets.begin(), sets.end(), set) == sets.end())
+			throw McpToolError("'" + item["file"].get<std::string>() + "' has no set '" + set + "'. It has: " + json(sets).dump());
+
+		bases.emplace_back(path, set);
+	}
+
+	return bases;
+}
+
 // Unsaved changes are only thrown away when the agent says so
 void CheckPendingChanges(OutfitStudioFrame* frame, const json& args) {
 	if (!frame->HasPendingChanges())
@@ -187,6 +231,11 @@ McpToolResult GetStatus(OutfitStudioFrame* frame) {
 		};
 		if (set.IsAddOn())
 			data["baseProject"]["sliderDataFile"] = set.GetSliderDataFile();
+
+		json otherBases = json::array();
+		for (auto& otherBase : set.GetOtherBaseProjects())
+			otherBases.push_back({{"projectName", otherBase.name}, {"projectFile", otherBase.file}, {"projectID", otherBase.id}});
+		data["baseProject"]["otherBaseProjects"] = otherBases;
 	}
 	else
 		data["baseProject"] = nullptr;
@@ -570,6 +619,7 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 			{"set", McpProp("string", "Base project, needed when the file has more than one set")},
 			{"kind", McpProp("string", "\"addOn\" or \"variant\"")},
 			{"displayName", McpProp("string", "Name of the new project. Default the base project's name with \" Add-on\" or \" Variant\".")},
+			{"otherBaseProjects", OtherBaseProjectsProp()},
 			{"discardChanges", DiscardChangesProp},
 		},
 		{"file", "kind"});
@@ -594,11 +644,22 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 		if (displayName.empty())
 			throw McpToolError("'displayName' can't be empty.");
 
+		std::vector<std::pair<std::string, std::string>> otherBases;
+		if (McpArgs::Has(args, "otherBaseProjects")) {
+			if (!addOn)
+				throw McpToolError("Only add-ons can have 'otherBaseProjects'.");
+			otherBases = OtherBaseProjectsArg(args);
+		}
+
 		CheckPendingChanges(frame, args);
 		if (!frame->LoadProject(path, set))
 			throw McpToolError("Loading the base project failed, see 'messages' and 'log'.");
 
 		mcp.Project().MakeDerivedProject(path, set, addOn, displayName);
+
+		std::string baseError;
+		if (!otherBases.empty() && !mcp.Project().SetOtherBaseProjects(otherBases, &baseError))
+			throw McpToolError(baseError);
 		frame->SetPendingChanges(true);
 		frame->UpdateTitle();
 
@@ -810,6 +871,7 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 		 McpProp("boolean",
 				 "An add-on whose shapes changed: save it as a variant of the base project instead, with the shapes in a NIF "
 				 "file of its own (shapeDataFile, by default named like the add-on's .osd file). Default false, which refuses.")},
+		{"otherBaseProjects", OtherBaseProjectsProp()},
 	});
 	saveProject.handler = [&mcp, frame](const json& args) {
 		OutfitProject& project = mcp.Project();
@@ -844,6 +906,12 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 			if (std::find(sets.begin(), sets.end(), options.displayName) != sets.end())
 				throw McpToolError("The set '" + options.displayName + "' already exists in '" + ToUTF8(setFile.GetFullPath())
 								   + "'. Pass overwrite: true to replace it, or save under another displayName or sliderSetFile.");
+		}
+
+		if (McpArgs::Has(args, "otherBaseProjects")) {
+			std::string baseError;
+			if (!project.SetOtherBaseProjects(OtherBaseProjectsArg(args), &baseError))
+				throw McpToolError(baseError);
 		}
 
 		// An add-on never writes the NIF file of its base project, so changed shapes need a variant

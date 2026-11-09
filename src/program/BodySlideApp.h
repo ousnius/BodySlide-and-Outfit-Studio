@@ -335,7 +335,7 @@ public:
 	// its body. Returns non-zero if the file or set couldn't be loaded. Safe to call on several threads at once.
 	int LoadProjectSet(const std::string& fileName, const std::string& setName, SliderSet& outSet, bool conform, ProjectAddOns& outAddOns, nifly::NifFile* nif = nullptr);
 	// Adds the sliders of add-ons to a loaded set. 'nif' is the set's NIF file if it's loaded already.
-	void AddProjectAddOns(SliderSet& set, bool conform, ProjectAddOns& outAddOns, nifly::NifFile* nif = nullptr);
+	void AddProjectAddOns(SliderSet& set, bool conform, ProjectAddOns& outAddOns, nifly::NifFile* nif = nullptr, const std::string& setFile = "");
 	const ProjectAddOns& GetActiveAddOns() const { return activeAddOns; }
 	const ProjectCatalog& GetProjectCatalog() const { return projectCatalog; }
 	bool GetConformAddOnSliders() const { return conformAddOnSliders; }

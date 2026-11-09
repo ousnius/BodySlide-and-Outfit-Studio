@@ -769,14 +769,14 @@ int BodySlideApp::LoadProjectSet(const std::string& fileName, const std::string&
 		return 3;
 
 	outSet.SetBaseDataPath(ProjectUtil::GetProjectPath() + PathSepStr + "ShapeData");
-	AddProjectAddOns(outSet, conform, outAddOns, nif);
+	AddProjectAddOns(outSet, conform, outAddOns, nif, fileName);
 	return 0;
 }
 
-void BodySlideApp::AddProjectAddOns(SliderSet& set, bool conform, ProjectAddOns& outAddOns, NifFile* nif) {
+void BodySlideApp::AddProjectAddOns(SliderSet& set, bool conform, ProjectAddOns& outAddOns, NifFile* nif, const std::string& setFile) {
 	outAddOns = ProjectAddOns();
 
-	SetStackResult stack = StackSetAddOns(set, projectCatalog, outAddOns.warnings);
+	SetStackResult stack = StackSetAddOns(set, projectCatalog, outAddOns.warnings, false, setFile);
 	outAddOns.stacked = std::move(stack.addOns);
 	outAddOns.baseStacked = stack.baseAddOns;
 	outAddOns.missing = std::move(stack.missingAddOns);
@@ -1063,6 +1063,7 @@ int BodySlideApp::LoadSliderSets() {
 	outfitBaseProjects.clear();
 	outFileCount.clear();
 	projectCatalog.Clear();
+	projectCatalog.SetProjectPath(ProjectUtil::GetProjectPath()); // The relative files of base projects are in it
 	conformedSets.clear();
 	{
 		std::lock_guard<std::mutex> lock(conformBodiesMutex);
@@ -2695,7 +2696,7 @@ bool BodySlideApp::LoadExternalReference(const SliderSet& sliderSet) {
 
 	// The reference body follows the sliders of its add-ons too
 	ProjectAddOns referenceAddOns;
-	AddProjectAddOns(referenceSliderSet, false, referenceAddOns);
+	AddProjectAddOns(referenceSliderSet, false, referenceAddOns, nullptr, projectFilePath);
 	LogProjectAddOns(referenceSliderSet, referenceAddOns);
 
 	// Load diff data for the reference shape

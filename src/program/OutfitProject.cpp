@@ -485,6 +485,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 
 	if (activeSet.HasBaseProject()) {
 		outSet.SetBaseProject(activeSet.GetBaseProjectFile(), activeSet.GetBaseProjectName(), activeSet.GetBaseProjectID());
+		outSet.SetOtherBaseProjects(activeSet.GetOtherBaseProjects());
 		outSet.SetAddOn(addOn);
 		if (addOn)
 			outSet.SetSliderDataFile(activeSet.GetSliderDataFile());
@@ -3992,15 +3993,35 @@ std::vector<std::string> OutfitProject::LoadReferenceAddOns() {
 	catalog.Load(projectPath);
 
 	std::vector<std::string> warnings;
-	SetStackResult stack = StackSetAddOns(refSet, catalog, warnings, true);
+	const std::string refFilePath = refFileName.GetFullPath().ToUTF8().data();
+	SetStackResult stack = StackSetAddOns(refSet, catalog, warnings, true, refFilePath);
 
-	// The add-ons of a body variant's base body only fit shapes that have the vertices their data was made for
 	if (!stack.baseAddOns.empty()) {
 		NifFile refNif;
 		std::fstream file;
 		PlatformUtil::OpenFileStream(file, refSet.GetInputFileName(), std::ios::in | std::ios::binary);
-		if (refNif.Load(file) == 0)
-			FitBaseAddOnsToVariant(refSet, refNif, nullptr, stack.baseAddOns, catalog, shapeDataPath, nullptr, false, warnings);
+		if (refNif.Load(file) == 0) {
+			std::vector<StackedAddOn> variantBaseAddOns;
+			std::vector<StackedAddOn> otherBaseAddOns;
+			for (auto& addOn : stack.baseAddOns)
+				(addOn.otherBase ? otherBaseAddOns : variantBaseAddOns).push_back(addOn);
+
+			// The add-ons of a body variant's base body only fit shapes that have the vertices their data was made for
+			if (!variantBaseAddOns.empty())
+				FitBaseAddOnsToVariant(refSet, refNif, nullptr, variantBaseAddOns, catalog, shapeDataPath, nullptr, false, warnings);
+
+			// Add-ons made for another project of the body are conformed to the reference
+			if (!otherBaseAddOns.empty()) {
+				AnimInfo refAnim;
+				LoadConformAnim(refAnim, refNif);
+				auto loadNif = [](const std::string& fileName, NifFile& loadInto) {
+					std::fstream nifFile;
+					PlatformUtil::OpenFileStream(nifFile, fileName, std::ios::in | std::ios::binary);
+					return loadInto.Load(nifFile) == 0;
+				};
+				FitBaseAddOnsToVariant(refSet, refNif, &refAnim, otherBaseAddOns, catalog, shapeDataPath, loadNif, true, warnings);
+			}
+		}
 	}
 
 	for (auto& warning : warnings)
@@ -4018,7 +4039,7 @@ std::vector<std::string> OutfitProject::LoadReferenceAddOns() {
 			continue;
 
 		auto refData = std::find_if(refSlider.dataFiles.begin(), refSlider.dataFiles.end(), [&refTarget](const DiffInfo& df) { return df.targetName == refTarget; });
-		if (refData == refSlider.dataFiles.end() || refData->bGenerated)
+		if (refData == refSlider.dataFiles.end())
 			continue;
 
 		TargetDataDiffs* diffs = refDiffs.GetDiffSet(refData->dataName);
@@ -4036,19 +4057,25 @@ std::vector<std::string> OutfitProject::LoadReferenceAddOns() {
 		const ProjectCatalogEntry* addOn = catalog.Find(refSlider.stackedFrom);
 		slider.addOnID = addOn ? addOn->projectID : "";
 
-		// The data stays in the add-on's file, which the reference shape finds in the reference's data folders
 		DiffInfo data = *refData;
-		std::vector<std::string> dataFolders;
-		if (data.bLocal)
-			dataFolders.push_back(refSet.GetDefaultDataFolder());
-		else
-			dataFolders = refSet.GetTargetDataFolders(refTarget);
+		if (data.bGenerated) {
+			// Data conformed from the add-on's base project has no file, it becomes the project's own
+			data = DiffInfo(true, data.dataName, target);
+		}
+		else {
+			// The data stays in the add-on's file, which the reference shape finds in the reference's data folders
+			std::vector<std::string> dataFolders;
+			if (data.bLocal)
+				dataFolders.push_back(refSet.GetDefaultDataFolder());
+			else
+				dataFolders = refSet.GetTargetDataFolders(refTarget);
 
-		data.bLocal = false;
-		data.bInherited = false;
-		data.targetName = target;
-		for (auto& dataFolder : dataFolders)
-			activeSet.AddTargetDataFolder(target, dataFolder);
+			data.bLocal = false;
+			data.bInherited = false;
+			data.targetName = target;
+			for (auto& dataFolder : dataFolders)
+				activeSet.AddTargetDataFolder(target, dataFolder);
+		}
 
 		slider.dataFiles.push_back(data);
 		activeSet.CopySlider(&slider);
@@ -4375,7 +4402,12 @@ bool OutfitProject::SetBaseProject(const std::string& fileName, const std::strin
 			if (dataFile.bInherited)
 				inheritedDataNames[std::make_pair(activeSet[i].name, dataFile.targetName)] = dataFile.dataName;
 
+	// Other base projects are other projects of the same body, which another base project doesn't have
+	const bool sameBase = StringsEqualInsens(activeSet.GetBaseProjectName().c_str(), sliderSetName.c_str()) && activeSet.GetBaseProjectID() == base.GetProjectID();
+	std::vector<BaseProjectRef> otherBases = sameBase ? activeSet.GetOtherBaseProjects() : std::vector<BaseProjectRef>();
+
 	activeSet.SetBaseProject(ProjectRelativeFile(fileName), sliderSetName, base.GetProjectID());
+	activeSet.SetOtherBaseProjects(otherBases);
 	activeSet.SetRemovedSliders(removedSliders);
 
 	// The project's own data goes into an .osd file of the add-on's own
@@ -4417,6 +4449,36 @@ bool OutfitProject::SetBaseProject(const std::string& fileName, const std::strin
 	}
 
 	RecordAddOnGeometry(addOn);
+	return true;
+}
+
+bool OutfitProject::SetOtherBaseProjects(const std::vector<std::pair<std::string, std::string>>& fileAndSetNames, std::string* errorMessage) {
+	auto fail = [errorMessage](const std::string& message) {
+		if (errorMessage)
+			*errorMessage = message;
+		return false;
+	};
+
+	if (!activeSet.IsAddOn())
+		return fail("Only add-ons can have other base projects.");
+
+	std::vector<BaseProjectRef> otherBases;
+	for (auto& fileAndSet : fileAndSetNames) {
+		wxFileName baseFileName(wxString::FromUTF8(fileAndSet.first));
+		if (baseFileName.IsRelative())
+			baseFileName.MakeAbsolute(wxString::FromUTF8(ProjectUtil::GetProjectPath()));
+
+		SliderSetFile file(baseFileName.GetFullPath().ToUTF8().data());
+		if (file.fail() || !file.HasSet(fileAndSet.second))
+			return fail("The base project '" + fileAndSet.second + "' wasn't found in '" + fileAndSet.first + "'.");
+
+		if (wxString::FromUTF8(fileAndSet.second) == mOutfitName && baseFileName.SameAs(mFileName))
+			return fail("A project can't be its own base project.");
+
+		otherBases.push_back({ProjectRelativeFile(baseFileName.GetFullPath().ToUTF8().data()), fileAndSet.second, file.GetSetProjectID(fileAndSet.second)});
+	}
+
+	activeSet.SetOtherBaseProjects(otherBases);
 	return true;
 }
 

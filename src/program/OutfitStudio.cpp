@@ -81,10 +81,19 @@ void PackBaseProject(SliderSet& set, const std::set<std::string>& packedProjects
 	if (!set.HasBaseProject())
 		return;
 
+	const std::string packedFile = "SliderSets" + std::string(PathSepStr) + mergedFile;
 	if (packedProjects.find(set.GetBaseProjectName()) != packedProjects.end())
-		set.SetBaseProject("SliderSets" + std::string(PathSepStr) + mergedFile, set.GetBaseProjectName(), set.GetBaseProjectID());
+		set.SetBaseProject(packedFile, set.GetBaseProjectName(), set.GetBaseProjectID());
 	else
 		missingBaseProjects.insert(set.GetBaseProjectName());
+
+	// Other base projects are optional, the ones that are packed too are in the merged file. An entry with the base
+	// project's name is a copy of it in another file, e.g. in RefTemplates, which keeps its path.
+	std::vector<BaseProjectRef> otherBases = set.GetOtherBaseProjects();
+	for (auto& otherBase : otherBases)
+		if (otherBase.name != set.GetBaseProjectName() && packedProjects.find(otherBase.name) != packedProjects.end())
+			otherBase.file = packedFile;
+	set.SetOtherBaseProjects(otherBases);
 }
 
 // The playback timer only backs OnAnimIdle up for stretches where no idle events

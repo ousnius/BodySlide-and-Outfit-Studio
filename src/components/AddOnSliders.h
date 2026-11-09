@@ -15,6 +15,7 @@ See the included LICENSE file
 #include <functional>
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -29,6 +30,8 @@ struct ProjectCatalogEntry {
 	std::string dataFolder; // Add-ons save the data folder and NIF of their base project
 	std::string sourceFile;
 	std::string outputFilePath; // Output path and file
+	std::map<std::string, std::string> shapeTargets; // Target of each shape, by shape name
+	std::vector<BaseProjectRef> otherBases;			 // Further base projects of an add-on, which it fits as well
 
 	// Index of the entry of the base project, or npos if it isn't installed
 	size_t baseIndex = static_cast<size_t>(-1);
@@ -37,11 +40,23 @@ struct ProjectCatalogEntry {
 	bool stackable = false;
 };
 
+// An add-on that fits a set
+struct MatchedAddOn {
+	const ProjectCatalogEntry* entry = nullptr;
+	// The set is another project of the body than the add-on's first base project, which its data was made for.
+	// Its new sliders are fitted to the set's shapes.
+	bool otherBase = false;
+};
+
 // The projects of a project path, the way BodySlide lists them: the first set of a name counts.
 class ProjectCatalog {
 	std::vector<ProjectCatalogEntry> entries;
 	std::map<std::string, size_t, case_insensitive_compare> byName;
 	std::map<std::string, size_t> byID;
+	std::string projectPath; // Relative project files are in it
+
+	// Add-ons of the projects and of their add-ons, by index in the order they were added
+	std::vector<size_t> CollectAddOns(std::set<size_t> parents, bool stackableOnly) const;
 
 public:
 	static constexpr size_t npos = static_cast<size_t>(-1);
@@ -54,7 +69,21 @@ public:
 	// Links the add-ons and variants to their base projects, once all files are added
 	void Finish();
 
+	const std::string& ProjectPath() const { return projectPath; }
+	void SetProjectPath(const std::string& path) { projectPath = path; }
+
 	const std::vector<ProjectCatalogEntry>& Entries() const { return entries; }
+
+	// True if the project files are the same file, with relative paths in the project path
+	bool SameProjectFile(const std::string& fileName1, const std::string& fileName2) const;
+	// True if the set has the shapes and NIF file of the project, so that the project's slider data fits it as it is
+	static bool SameGeometry(const ProjectCatalogEntry& project, const SliderSet& set);
+
+	// Add-ons that fit the set, which was loaded from 'setFile' (the file BodySlide lists the set from if empty):
+	// - of the project if BodySlide lists the set, or the set is an exact copy of the project of its name
+	// - that list the set as one of their base projects
+	// and the add-ons of those. With 'stackableOnly', only the ones that BodySlide builds together with the project.
+	std::vector<MatchedAddOn> AddOnsOfSet(const SliderSet& set, const std::string& setFile, bool stackableOnly) const;
 
 	// The project with the name if its ID fits, or else the one with the ID, which finds a renamed project
 	const ProjectCatalogEntry* Find(const std::string& name, const std::string& id = "") const;
@@ -76,12 +105,14 @@ struct StackedAddOn {
 	std::string projectID;
 	std::string fileName;
 	std::map<std::string, uint32_t> vertexCounts; // By shape, the vertex count its data was made for, 0 if unknown
+	bool otherBase = false;						  // Stacked onto another project of the body than its first base project
 };
 
 // Adds the sliders and slider data of the stackable add-ons of the set to it, in their order.
 // Their changes to sliders the set has replace those, but sliders they leave out stay.
-// 'name'/'id' are the project whose add-ons are stacked, the set's own if empty. With 'newSlidersOnly', only
-// sliders the set doesn't have are added, for the add-ons of a variant's base project.
+// 'name'/'id' are the project whose add-ons are stacked. If empty, the add-ons that fit the set are stacked
+// (ProjectCatalog::AddOnsOfSet with 'setFile'). With 'newSlidersOnly', only sliders the set doesn't have are added,
+// for the add-ons of a variant's base project. Add-ons of another project of the body add new sliders only, too.
 // Warnings get what went wrong.
 std::vector<StackedAddOn> StackAddOns(SliderSet& set,
 									   const ProjectCatalog& catalog,
@@ -89,18 +120,22 @@ std::vector<StackedAddOn> StackAddOns(SliderSet& set,
 									   const std::string& name = "",
 									   const std::string& id = "",
 									   bool stackableOnly = true,
-									   bool newSlidersOnly = false);
+									   bool newSlidersOnly = false,
+									   const std::string& setFile = "");
 
 // What stacking the add-ons of a set gave
 struct SetStackResult {
-	std::vector<StackedAddOn> addOns;	  // Of the set
-	std::vector<StackedAddOn> baseAddOns; // Of the base projects of a variant, which FitBaseAddOnsToVariant fits to its shapes
+	std::vector<StackedAddOn> addOns; // Of the set
+	// Of the base projects of a variant, and add-ons made for another project of the body than the set.
+	// FitBaseAddOnsToVariant fits them to the set's shapes.
+	std::vector<StackedAddOn> baseAddOns;
 	std::vector<std::string> missingAddOns; // That sliders of the set need, but aren't installed
 };
 
 // Stacks the add-ons of the set and, for a variant, the add-ons of its base projects (new sliders only), and removes
-// the sliders whose add-on isn't installed. With 'allAddOns', also add-ons that build another output file.
-SetStackResult StackSetAddOns(SliderSet& set, const ProjectCatalog& catalog, std::vector<std::string>& warnings, bool allAddOns = false);
+// the sliders whose add-on isn't installed. With 'allAddOns', also add-ons that build another output file, and
+// add-ons that list the set as another base project. 'setFile' is the file the set was loaded from.
+SetStackResult StackSetAddOns(SliderSet& set, const ProjectCatalog& catalog, std::vector<std::string>& warnings, bool allAddOns = false, const std::string& setFile = "");
 
 // Removes the sliders that need an add-on that isn't installed. Returns the names of those add-ons.
 std::vector<std::string> RemoveUninstalledAddOnSliders(SliderSet& set, const ProjectCatalog& catalog);
@@ -117,7 +152,9 @@ struct ConformBodyRef {
 };
 
 // Finds the body that the outfit was conformed to: from its reference info, or else from a shape whose
-// data is in the ShapeData folder of a body project with add-ons, for a shape of that body.
+// data is in the ShapeData folder of a body project with add-ons, for a shape of that body. A reference in another
+// file than the one BodySlide lists the project from (e.g. RefTemplates) is the body if add-ons fit it
+// (ProjectCatalog::AddOnsOfSet).
 // None for the body itself and for projects that it is the base of.
 ConformBodyRef FindConformBody(const SliderSet& outfit, const ProjectCatalog& catalog, const std::string& projectPath);
 
@@ -154,6 +191,9 @@ public:
 
 // For a variant with the stacked add-ons of its base project: the data of their sliders for shapes whose vertex count
 // isn't the one the data was made for is conformed from the base project's shape with 'conform', and else left out.
+// Add-ons stacked onto another project of the body (StackedAddOn::otherBase) are fitted to all its shapes that
+// aren't the base project's own: conformed from the base project's shape of the same target, or else its reference
+// shape, and their data for targets the set doesn't have is removed.
 // Sliders without data are removed then. 'anim' is the skinning of the variant's NIF, only needed with 'conform'.
 void FitBaseAddOnsToVariant(SliderSet& set,
 							nifly::NifFile& nif,

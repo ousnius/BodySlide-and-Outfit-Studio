@@ -52,6 +52,9 @@ bool ProjectCatalog::Add(SliderSetFile& file, const std::string& setName) {
 	entry.addOn = file.IsAddOn(setName);
 	file.GetSetSourceFile(setName, entry.dataFolder, entry.sourceFile);
 	file.GetSetOutputFilePath(setName, entry.outputFilePath);
+	entry.shapeTargets = file.GetSetShapeTargets(setName);
+	if (entry.addOn)
+		entry.otherBases = file.GetSetOtherBaseProjects(setName);
 
 	size_t index = entries.size();
 	byName[setName] = index;
@@ -62,8 +65,9 @@ bool ProjectCatalog::Add(SliderSetFile& file, const std::string& setName) {
 	return true;
 }
 
-void ProjectCatalog::Load(const std::string& projectPath) {
+void ProjectCatalog::Load(const std::string& inProjectPath) {
 	Clear();
+	projectPath = inProjectPath;
 
 	wxString sliderSetsPath = wxString::FromUTF8(projectPath + PathSepStr + "SliderSets");
 	if (!wxDir::Exists(sliderSetsPath))
@@ -141,8 +145,6 @@ bool ProjectCatalog::IsInstalled(const std::string& name, const std::string& id)
 }
 
 std::vector<const ProjectCatalogEntry*> ProjectCatalog::AddOnsOf(const std::string& name, const std::string& id, bool stackableOnly) const {
-	std::vector<size_t> found;
-
 	// The project of the name, since copies of a project file can share its ID. The ID finds a renamed one.
 	const ProjectCatalogEntry* root = Find(name);
 	if (!root && !id.empty())
@@ -150,7 +152,102 @@ std::vector<const ProjectCatalogEntry*> ProjectCatalog::AddOnsOf(const std::stri
 	if (!root)
 		return {};
 
-	std::set<size_t> parents{static_cast<size_t>(root - entries.data())};
+	std::vector<const ProjectCatalogEntry*> addOns;
+	for (size_t i : CollectAddOns({static_cast<size_t>(root - entries.data())}, stackableOnly))
+		addOns.push_back(&entries[i]);
+
+	return addOns;
+}
+
+bool ProjectCatalog::SameProjectFile(const std::string& fileName1, const std::string& fileName2) const {
+	auto fullPath = [this](const std::string& fileName) {
+		std::filesystem::path path = std::filesystem::u8path(ToOSSlashes(fileName));
+		if (path.is_relative() && !projectPath.empty())
+			path = std::filesystem::u8path(projectPath) / path;
+		return path.lexically_normal();
+	};
+
+	std::filesystem::path path1 = fullPath(fileName1);
+	std::filesystem::path path2 = fullPath(fileName2);
+	return SliderSetIndex::SameFile(path1.u8string(), path2.u8string()) || SamePathText(path1.u8string(), path2.u8string());
+}
+
+bool ProjectCatalog::SameGeometry(const ProjectCatalogEntry& project, const SliderSet& set) {
+	if (!SamePathText(project.dataFolder, set.GetDefaultDataFolder()) || !SamePathText(project.sourceFile, set.GetInputFile()))
+		return false;
+
+	size_t shapeCount = 0;
+	for (auto shape = set.ShapesBegin(); shape != set.ShapesEnd(); ++shape, shapeCount++) {
+		auto projectShape = project.shapeTargets.find(shape->first);
+		if (projectShape == project.shapeTargets.end() || projectShape->second != shape->second.targetShape)
+			return false;
+	}
+
+	return shapeCount == project.shapeTargets.size();
+}
+
+std::vector<MatchedAddOn> ProjectCatalog::AddOnsOfSet(const SliderSet& set, const std::string& setFile, bool stackableOnly) const {
+	std::vector<MatchedAddOn> matched;
+	auto addFound = [&](const std::vector<size_t>& found, bool otherBase) {
+		for (size_t i : found)
+			if (std::none_of(matched.begin(), matched.end(), [&](const MatchedAddOn& m) { return m.entry == &entries[i]; }))
+				matched.push_back({&entries[i], otherBase});
+	};
+
+	auto compatibleIDs = [](const std::string& id1, const std::string& id2) { return id1.empty() || id2.empty() || id1 == id2; };
+
+	// The project BodySlide lists by the set's name, since copies of a project file can share its ID
+	const ProjectCatalogEntry* listed = Find(set.GetName());
+	if (!listed && !set.GetProjectID().empty())
+		listed = Find("", set.GetProjectID());
+
+	const bool isListed = listed && (setFile.empty() || SameProjectFile(listed->fileName, setFile));
+
+	// A copy of the project in another file, e.g. in RefTemplates, has its add-ons as well
+	const bool isCopy = !isListed && listed && StringsEqualInsens(listed->setName.c_str(), set.GetName().c_str())
+						&& compatibleIDs(listed->projectID, set.GetProjectID()) && SameGeometry(*listed, set);
+
+	if (isListed || isCopy)
+		addFound(CollectAddOns({static_cast<size_t>(listed - entries.data())}, stackableOnly), false);
+
+	// Add-ons are only built with their first base project
+	if (stackableOnly)
+		return matched;
+
+	const std::string& fileName = setFile.empty() && listed ? listed->fileName : setFile;
+	auto listsSet = [&](const BaseProjectRef& base) {
+		bool sameName = StringsEqualInsens(base.name.c_str(), set.GetName().c_str());
+		bool sameID = !base.id.empty() && base.id == set.GetProjectID();
+		if (!sameName && !sameID)
+			return false;
+		if (!compatibleIDs(base.id, set.GetProjectID()))
+			return false;
+
+		return base.file.empty() || fileName.empty() || SameProjectFile(base.file, fileName);
+	};
+
+	for (size_t i = 0; i < entries.size(); i++) {
+		auto& entry = entries[i];
+		if (!entry.addOn || entry.baseIndex == npos || entry.otherBases.empty())
+			continue;
+		if (std::none_of(entry.otherBases.begin(), entry.otherBases.end(), listsSet))
+			continue;
+
+		// The add-on's data was made for its first base project
+		bool otherBase = !SameGeometry(entries[entry.baseIndex], set);
+
+		std::vector<size_t> found{i};
+		for (size_t addOnOfAddOn : CollectAddOns({i}, false))
+			found.push_back(addOnOfAddOn);
+		addFound(found, otherBase);
+	}
+
+	return matched;
+}
+
+std::vector<size_t> ProjectCatalog::CollectAddOns(std::set<size_t> parents, bool stackableOnly) const {
+	std::vector<size_t> found;
+
 	for (size_t depth = 0; depth < MaxStackDepth; depth++) {
 		std::set<size_t> next;
 		for (size_t i = 0; i < entries.size(); i++) {
@@ -178,12 +275,7 @@ std::vector<const ProjectCatalogEntry*> ProjectCatalog::AddOnsOf(const std::stri
 	}
 
 	std::sort(found.begin(), found.end());
-
-	std::vector<const ProjectCatalogEntry*> addOns;
-	for (size_t i : found)
-		addOns.push_back(&entries[i]);
-
-	return addOns;
+	return found;
 }
 
 bool ProjectCatalog::IsStackedAddOn(const std::string& name, std::string* outBase) const {
@@ -214,15 +306,26 @@ std::vector<StackedAddOn> StackAddOns(SliderSet& set,
 									   const std::string& name,
 									   const std::string& id,
 									   bool stackableOnly,
-									   bool newSlidersOnly) {
+									   bool newSlidersOnly,
+									   const std::string& setFile) {
 	std::vector<StackedAddOn> stacked;
 
-	const std::string& rootName = name.empty() ? set.GetName() : name;
-	const std::string& rootID = name.empty() ? set.GetProjectID() : id;
+	std::vector<MatchedAddOn> addOns;
+	if (!name.empty()) {
+		for (auto* addOn : catalog.AddOnsOf(name, id, stackableOnly))
+			addOns.push_back({addOn, false});
+	}
+	else
+		addOns = catalog.AddOnsOfSet(set, setFile, stackableOnly);
 
 	std::map<std::string, std::unique_ptr<SliderSetFile>> files;
 
-	for (auto* addOn : catalog.AddOnsOf(rootName, rootID, stackableOnly)) {
+	for (auto& match : addOns) {
+		const ProjectCatalogEntry* addOn = match.entry;
+
+		// Another project of the body keeps its own sliders, the add-on's changes to them are for its base project
+		const bool onlyNewSliders = newSlidersOnly || match.otherBase;
+
 		auto& file = files[addOn->fileName];
 		if (!file)
 			file = std::make_unique<SliderSetFile>(addOn->fileName);
@@ -252,12 +355,13 @@ std::vector<StackedAddOn> StackAddOns(SliderSet& set,
 		info.setName = addOn->setName;
 		info.projectID = addOn->projectID;
 		info.fileName = addOn->fileName;
+		info.otherBase = match.otherBase;
 		for (auto shape = resolved.ShapesBegin(); shape != resolved.ShapesEnd(); ++shape)
 			info.vertexCounts[shape->first] = shape->second.vertexCount;
 
 		for (size_t i = 0; i < resolved.size(); i++) {
 			const SliderData& slider = resolved[i];
-			if (newSlidersOnly && set.SliderExists(slider.name))
+			if (onlyNewSliders && set.SliderExists(slider.name))
 				continue;
 
 			std::vector<DiffInfo> ownData;
@@ -389,11 +493,26 @@ ConformBodyRef FindConformBody(const SliderSet& outfit, const ProjectCatalog& ca
 		if (refFile.is_relative())
 			refFile = std::filesystem::u8path(projectPath) / refFile;
 
-		if (reference && !SliderSetIndex::SameFile(reference->fileName, refFile.u8string())) {
+		if (!reference || !SliderSetIndex::SameFile(reference->fileName, refFile.u8string())) {
 			SliderSetFile file(refFile.u8string());
 			if (!file.fail() && file.HasSet(outfit.GetReferenceProjectName())) {
-				// Not the set BodySlide lists, so its add-ons can't be found
-				return {};
+				// Not the set BodySlide lists, but a copy of it or another project of the body (e.g. in RefTemplates)
+				// can have add-ons too
+				SliderSet refSet;
+				if (file.GetSet(outfit.GetReferenceProjectName(), refSet, true, "", false) != 0)
+					return {};
+				if (outfit.GetName() == refSet.GetName() || (outfit.HasBaseProject() && outfit.GetBaseProjectName() == refSet.GetName()))
+					return {};
+				if (catalog.AddOnsOfSet(refSet, refFile.u8string(), false).empty())
+					return {};
+
+				ConformBodyRef ref;
+				ref.fileName = refFile.u8string();
+				ref.setName = refSet.GetName();
+				ref.projectID = refSet.GetProjectID();
+				ref.shapeName = outfit.GetReferenceShapeName();
+				ref.fromReferenceInfo = true;
+				return ref;
 			}
 		}
 
@@ -476,7 +595,7 @@ bool ConformBody::Load(const ConformBodyRef& bodyRef,
 
 	// All add-ons of the body, even ones that build elsewhere, add sliders to its shapes. A body variant
 	// gets the add-on sliders of its base body as well.
-	SetStackResult stack = StackSetAddOns(bodySet, catalog, warnings, true);
+	SetStackResult stack = StackSetAddOns(bodySet, catalog, warnings, true, bodyRef.fileName);
 
 	targetName = bodySet.ShapeToTarget(bodyRef.shapeName);
 	if (targetName.empty())
@@ -546,9 +665,15 @@ bool ConformBody::Load(const ConformBodyRef& bodyRef,
 	return true;
 }
 
-SetStackResult StackSetAddOns(SliderSet& set, const ProjectCatalog& catalog, std::vector<std::string>& warnings, bool allAddOns) {
+SetStackResult StackSetAddOns(SliderSet& set, const ProjectCatalog& catalog, std::vector<std::string>& warnings, bool allAddOns, const std::string& setFile) {
 	SetStackResult result;
-	result.addOns = StackAddOns(set, catalog, warnings, "", "", !allAddOns);
+	for (auto& addOn : StackAddOns(set, catalog, warnings, "", "", !allAddOns, false, setFile)) {
+		// Add-ons of another project of the body are fitted to the set's shapes like those of a variant's base project
+		if (addOn.otherBase)
+			result.baseAddOns.push_back(std::move(addOn));
+		else
+			result.addOns.push_back(std::move(addOn));
+	}
 
 	// A variant has the sliders of its base projects' add-ons too, which are fit to its shapes later
 	if (set.HasBaseProject() && !set.IsAddOn()) {
@@ -738,20 +863,57 @@ void FitBaseAddOnsToVariant(SliderSet& set,
 		for (auto& df : set[i].dataFiles)
 			dataNames.insert(df.dataName);
 
+	std::set<std::string> setTargets;
+	for (auto shape = set.ShapesBegin(); shape != set.ShapesEnd(); ++shape)
+		setTargets.insert(shape->second.targetShape);
+
 	for (auto& addOn : baseAddOns) {
+		const ProjectCatalogEntry* addOnEntry = catalog.Find(addOn.setName, addOn.projectID);
+		const ProjectCatalogEntry* baseEntry = addOnEntry && addOnEntry->baseIndex != ProjectCatalog::npos ? &catalog.Entries()[addOnEntry->baseIndex] : nullptr;
+
 		std::vector<std::string> mismatchedShapes;
-		for (auto& vertexCount : addOn.vertexCounts) {
-			NiShape* shape = nif.FindBlockByName<NiShape>(vertexCount.first);
-			if (shape && vertexCount.second > 0 && vertexCount.second != shape->GetNumVertices())
-				mismatchedShapes.push_back(vertexCount.first);
+		if (addOn.otherBase) {
+			// Data for shapes of the base project that the set doesn't have is of no use
+			for (size_t i = 0; i < set.size(); i++) {
+				SliderData& slider = set[i];
+				if (slider.stackedFrom != addOn.setName)
+					continue;
+
+				slider.dataFiles.erase(std::remove_if(slider.dataFiles.begin(),
+													  slider.dataFiles.end(),
+													  [&setTargets](const DiffInfo& df) { return setTargets.find(df.targetName) == setTargets.end(); }),
+									   slider.dataFiles.end());
+			}
+
+			// Only shapes that are the base project's, with the target and vertices its data was made for, take it as it is
+			for (auto shape = set.ShapesBegin(); shape != set.ShapesEnd(); ++shape) {
+				NiShape* nifShape = nif.FindBlockByName<NiShape>(shape->first);
+				if (!nifShape)
+					continue;
+
+				auto vertexCount = addOn.vertexCounts.find(shape->first);
+				bool baseShape = false;
+				if (baseEntry && vertexCount != addOn.vertexCounts.end() && vertexCount->second == nifShape->GetNumVertices()) {
+					auto baseTarget = baseEntry->shapeTargets.find(shape->first);
+					baseShape = baseTarget != baseEntry->shapeTargets.end() && baseTarget->second == shape->second.targetShape;
+				}
+
+				if (!baseShape)
+					mismatchedShapes.push_back(shape->first);
+			}
+		}
+		else {
+			for (auto& vertexCount : addOn.vertexCounts) {
+				NiShape* shape = nif.FindBlockByName<NiShape>(vertexCount.first);
+				if (shape && vertexCount.second > 0 && vertexCount.second != shape->GetNumVertices())
+					mismatchedShapes.push_back(vertexCount.first);
+			}
 		}
 
 		if (mismatchedShapes.empty())
 			continue;
 
 		// The base project with its add-ons stacked has the data the shapes are conformed from
-		const ProjectCatalogEntry* addOnEntry = catalog.Find(addOn.setName, addOn.projectID);
-		const ProjectCatalogEntry* baseEntry = addOnEntry && addOnEntry->baseIndex != ProjectCatalog::npos ? &catalog.Entries()[addOnEntry->baseIndex] : nullptr;
 
 		SliderSet baseSet;
 		DiffDataSets baseDiffs;
@@ -764,8 +926,6 @@ void FitBaseAddOnsToVariant(SliderSet& set,
 			if (canConform) {
 				baseSet.SetBaseDataPath(baseDataPath);
 				StackAddOns(baseSet, catalog, warnings, baseEntry->setName, baseEntry->projectID);
-				for (auto& shapeName : mismatchedShapes)
-					baseSet.LoadSetDiffData(baseDiffs, shapeName);
 				canConform = loadNif(baseSet.GetInputFileName(), baseNif);
 			}
 
@@ -773,10 +933,42 @@ void FitBaseAddOnsToVariant(SliderSet& set,
 				LoadConformAnim(baseAnim, baseNif);
 		}
 
+		// The shape of the base project that a shape is conformed from: the one of the name for a variant. For another
+		// project of the body, the one of the same target, or else the base project's reference shape or its biggest one.
+		auto baseShapeOf = [&](const std::string& shapeName, const std::string& target) -> std::string {
+			if (!addOn.otherBase)
+				return shapeName;
+
+			std::string shape = baseSet.TargetToShape(target);
+			if (!shape.empty())
+				return shape;
+
+			const std::string& refShapeName = baseSet.GetReferenceShapeName();
+			if (!refShapeName.empty() && !baseSet.ShapeToTarget(refShapeName).empty() && baseNif.FindBlockByName<NiShape>(refShapeName))
+				return refShapeName;
+
+			uint32_t mostVertices = 0;
+			for (auto baseShape = baseSet.ShapesBegin(); baseShape != baseSet.ShapesEnd(); ++baseShape) {
+				NiShape* nifShape = baseNif.FindBlockByName<NiShape>(baseShape->first);
+				if (nifShape && nifShape->GetNumVertices() > mostVertices) {
+					mostVertices = nifShape->GetNumVertices();
+					shape = baseShape->first;
+				}
+			}
+
+			return shape;
+		};
+
+		std::set<std::string> loadedBaseShapes;
+
 		for (auto& shapeName : mismatchedShapes) {
 			const std::string target = set.ShapeToTarget(shapeName);
-			NiShape* refShape = canConform ? baseNif.FindBlockByName<NiShape>(shapeName) : nullptr;
-			const std::string refTarget = baseSet.ShapeToTarget(shapeName);
+			const std::string refShapeName = canConform ? baseShapeOf(shapeName, target) : shapeName;
+			NiShape* refShape = canConform && !refShapeName.empty() ? baseNif.FindBlockByName<NiShape>(refShapeName) : nullptr;
+			const std::string refTarget = baseSet.ShapeToTarget(refShapeName);
+
+			if (refShape && loadedBaseShapes.insert(refShapeName).second)
+				baseSet.LoadSetDiffData(baseDiffs, refShapeName);
 
 			std::vector<std::pair<std::string, std::string>> sliderData;
 			for (size_t i = 0; i < set.size(); i++) {
@@ -795,10 +987,16 @@ void FitBaseAddOnsToVariant(SliderSet& set,
 			}
 
 			if (!refShape) {
-				AddWarning(warnings,
-						   wxString::Format(_("Shape '%s' has another vertex count than add-on '%s' was made for, so its sliders leave it out."),
-											wxString::FromUTF8(shapeName),
-											wxString::FromUTF8(addOn.setName)));
+				if (addOn.otherBase)
+					AddWarning(warnings,
+							   wxString::Format(_("Shape '%s' isn't one that add-on '%s' was made for, so its sliders leave it out."),
+												wxString::FromUTF8(shapeName),
+												wxString::FromUTF8(addOn.setName)));
+				else
+					AddWarning(warnings,
+							   wxString::Format(_("Shape '%s' has another vertex count than add-on '%s' was made for, so its sliders leave it out."),
+												wxString::FromUTF8(shapeName),
+												wxString::FromUTF8(addOn.setName)));
 				continue;
 			}
 

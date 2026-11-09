@@ -1,5 +1,6 @@
 #include "../src/components/AddOnSliders.h"
 #include "../src/components/SliderSet.h"
+#include "../src/components/SliderSetIndex.h"
 #include "../src/utils/StringStuff.h"
 
 #include <catch2/catch_approx.hpp>
@@ -37,6 +38,10 @@ struct ProjectFolder {
 
 	std::string Path() const { return path.u8string(); }
 	std::string SetFile(const std::string& fileName) const { return (path / "SliderSets" / fileName).u8string(); }
+	std::string RefTemplateFile(const std::string& fileName) const {
+		std::filesystem::create_directories(path / "RefTemplates");
+		return (path / "RefTemplates" / fileName).u8string();
+	}
 	std::string ShapeDataPath() const { return (path / "ShapeData").u8string(); }
 	std::filesystem::path DataFolder(const std::string& folder) const {
 		auto dataFolder = path / "ShapeData" / folder;
@@ -480,5 +485,211 @@ TEST_CASE("Add-on sliders of the body are conformed to outfits that don't have t
 	REQUIRE(extraDiffs);
 	CHECK(extraDiffs->size() == nif.FindBlockByName<NiShape>("Dress")->GetNumVertices());
 	for (auto& diff : *extraDiffs)
+		CHECK(diff.second.z == Catch::Approx(2.0f).margin(1e-4));
+}
+
+TEST_CASE("Add-ons save and load all their base projects", "[AddOnSliders]") {
+	ProjectFolder folder;
+	const std::string refBody = "RefTemplates" + std::string(PathSepStr) + "Body.osp";
+	const std::string refOther = "RefTemplates" + std::string(PathSepStr) + "Body Ref.osp";
+
+	SliderSet body = MakeSet("Body", "Body", "Body.nif", {"BodyShape"});
+	SliderSet addOn = MakeAddOn("Body Extra", body, "");
+	CHECK(addOn.AddOtherBaseProject({refBody, "Body", ""}));
+	CHECK(addOn.AddOtherBaseProject({refOther, "Body Ref", "5a9b3c1e-2f4d-4e6a-8b7c-0d1e2f3a4b5c"}));
+
+	// The first base project and entries already listed aren't added again, in any case and with either slash
+	CHECK_FALSE(addOn.AddOtherBaseProject({"", "Body", ""}));
+	CHECK_FALSE(addOn.AddOtherBaseProject({"RefTemplates/Body.osp", "body", ""}));
+	CHECK(addOn.GetOtherBaseProjects().size() == 2);
+	SaveSets(folder.SetFile("Body.osp"), {body, addOn});
+
+	SliderSetFile file(folder.SetFile("Body.osp"));
+	CHECK(file.GetSetBaseProjectName("Body Extra") == "Body");
+	auto saved = file.GetSetOtherBaseProjects("Body Extra");
+	REQUIRE(saved.size() == 2);
+	CHECK(saved[0].name == "Body");
+	CHECK(saved[0].file == refBody);
+	CHECK(saved[1].name == "Body Ref");
+	CHECK(saved[1].id == "5a9b3c1e-2f4d-4e6a-8b7c-0d1e2f3a4b5c");
+
+	// Loading with the base project merged in and saving again keeps them
+	SliderSet loaded = LoadSet(folder.SetFile("Body.osp"), "Body Extra");
+	CHECK(loaded.GetBaseProjectName() == "Body");
+	REQUIRE(loaded.GetOtherBaseProjects().size() == 2);
+	CHECK(loaded.GetOtherBaseProjects()[1].file == refOther);
+
+	SaveSets(folder.SetFile("Again.osp"), {loaded});
+	SliderSetFile again(folder.SetFile("Again.osp"));
+	CHECK(again.GetSetOtherBaseProjects("Body Extra").size() == 2);
+
+	loaded.ClearBaseProject();
+	CHECK(loaded.GetOtherBaseProjects().empty());
+}
+
+TEST_CASE("Add-ons fit exact copies of their base project in other files", "[AddOnSliders]") {
+	ProjectFolder folder;
+	auto bodyFolder = folder.DataFolder("Body");
+	folder.DataFolder("Dress");
+
+	WriteGridNif(bodyFolder, "Body.nif", "BodyShape", 10, 0.0f);
+	WriteOSD(bodyFolder / "Body.osd", "BodyShape", {{"BodyShapeBreasts", Lift(121, 1.0f)}});
+	WriteOSD(bodyFolder / "Body Extra.osd", "BodyShape", {{"BodyShapeExtra", Lift(121, 2.0f)}});
+	std::string dressNif = WriteGridNif(folder.DataFolder("Dress"), "Dress.nif", "Dress", 6, 0.5f);
+
+	SliderSet body = MakeSet("Body", "Body", "Body.nif", {"BodyShape"});
+	AddSlider(body, "Breasts").AddDataFile("BodyShape", "BodyShapeBreasts", DataFile("Body.osd", "BodyShapeBreasts"));
+	SliderSet bodyExtra = MakeAddOn("Body Extra", body, "");
+	AddSlider(bodyExtra, "Extra").AddDataFile("BodyShape", "BodyShapeExtra", DataFile("Body Extra.osd", "BodyShapeExtra"));
+	SaveSets(folder.SetFile("Body.osp"), {body, bodyExtra});
+
+	// A copy of the body in RefTemplates, which the add-on doesn't list, and a set of its name with other shapes
+	SaveSets(folder.RefTemplateFile("Body.osp"), {body});
+	SliderSet otherBody = MakeSet("Body", "Other", "Other.nif", {"OtherShape"});
+	SaveSets(folder.RefTemplateFile("Other.osp"), {otherBody});
+
+	ProjectCatalog catalog = LoadCatalog(folder);
+
+	SliderSet copy = LoadSet(folder.RefTemplateFile("Body.osp"), "Body", folder.ShapeDataPath());
+	auto matched = catalog.AddOnsOfSet(copy, folder.RefTemplateFile("Body.osp"), false);
+	REQUIRE(matched.size() == 1);
+	CHECK(matched[0].entry->setName == "Body Extra");
+	CHECK_FALSE(matched[0].otherBase);
+
+	SliderSet other = LoadSet(folder.RefTemplateFile("Other.osp"), "Body", folder.ShapeDataPath());
+	CHECK(catalog.AddOnsOfSet(other, folder.RefTemplateFile("Other.osp"), false).empty());
+
+	// Outfits made with the copy conform the add-on's sliders from it
+	SliderSet dress = MakeSet("Dress", "Dress", "Dress.nif", {"Dress"});
+	dress.SetReferenceInfo("RefTemplates" + std::string(PathSepStr) + "Body.osp", "Body", "BodyShape");
+	dress.SetBaseDataPath(folder.ShapeDataPath());
+
+	ConformBodyRef ref = FindConformBody(dress, catalog, folder.Path());
+	REQUIRE(ref.Found());
+	CHECK(SliderSetIndex::SameFile(ref.fileName, folder.RefTemplateFile("Body.osp")));
+	CHECK(ref.setName == "Body");
+	CHECK(ref.fromReferenceInfo);
+
+	ConformBody conformBody;
+	std::vector<std::string> warnings;
+	REQUIRE(conformBody.Load(ref, catalog, folder.ShapeDataPath(), LoadNif, warnings));
+	CHECK(conformBody.addOnNames == std::vector<std::string>{"Body Extra"});
+
+	NifFile nif;
+	REQUIRE(LoadNif(dressNif, nif));
+	AnimInfo anim;
+	LoadConformAnim(anim, nif);
+	CHECK(ConformAddOnSliders(dress, nif, anim, conformBody) == std::vector<std::string>{"Body Extra"});
+	CHECK(dress.SliderExists("Extra"));
+
+	// Not for a set of the body's name with other shapes
+	SliderSet hat = MakeSet("Hat", "Hat", "Hat.nif", {"Hat"});
+	hat.SetReferenceInfo("RefTemplates" + std::string(PathSepStr) + "Other.osp", "Body", "OtherShape");
+	CHECK_FALSE(FindConformBody(hat, catalog, folder.Path()).Found());
+}
+
+TEST_CASE("Add-ons fit other projects of the body that they list as base projects", "[AddOnSliders]") {
+	ProjectFolder folder;
+	auto bodyFolder = folder.DataFolder("Body");
+	auto refFolder = folder.DataFolder("BodyRef");
+
+	WriteGridNif(bodyFolder, "Body.nif", "BodyShape", 10, 0.0f);
+	WriteOSD(bodyFolder / "Body.osd", "BodyShape", {{"BodyShapeBreasts", Lift(121, 1.0f)}});
+	WriteOSD(bodyFolder / "Body Extra.osd", "BodyShape", {{"BodyShapeExtra", Lift(121, 2.0f)}, {"BodyShapeBreastsMore", Lift(121, 5.0f)}});
+	std::string refNifFile = WriteGridNif(refFolder, "BodyRef.nif", "RefShape", 8, 0.0f);
+	WriteOSD(refFolder / "BodyRef.osd", "RefShape", {{"RefShapeBreasts", Lift(81, 1.0f)}});
+	std::string dressNif = WriteGridNif(folder.DataFolder("Dress"), "Dress.nif", "Dress", 6, 0.5f);
+
+	SliderSet body = MakeSet("Body", "Body", "Body.nif", {"BodyShape"});
+	body.SetProjectID(SliderSet::GenerateProjectID());
+	AddSlider(body, "Breasts").AddDataFile("BodyShape", "BodyShapeBreasts", DataFile("Body.osd", "BodyShapeBreasts"));
+
+	// The add-on adds a slider and changes one of the body
+	const std::string refFile = "RefTemplates" + std::string(PathSepStr) + "Body Ref.osp";
+	SliderSet bodyExtra = MakeAddOn("Body Extra", body, body.GetProjectID());
+	bodyExtra.AddOtherBaseProject({refFile, "Body Ref", ""});
+	AddSlider(bodyExtra, "Extra").AddDataFile("BodyShape", "BodyShapeExtra", DataFile("Body Extra.osd", "BodyShapeExtra"));
+	AddSlider(bodyExtra, "Breasts").AddDataFile("BodyShape", "BodyShapeBreastsMore", DataFile("Body Extra.osd", "BodyShapeBreastsMore"));
+	SaveSets(folder.SetFile("Body.osp"), {body, bodyExtra});
+
+	SliderSet bodyRef = MakeSet("Body Ref", "BodyRef", "BodyRef.nif", {"RefShape"});
+	AddSlider(bodyRef, "Breasts").AddDataFile("RefShape", "RefShapeBreasts", DataFile("BodyRef.osd", "RefShapeBreasts"));
+	SaveSets(folder.RefTemplateFile("Body Ref.osp"), {bodyRef});
+
+	ProjectCatalog catalog = LoadCatalog(folder);
+
+	// BodySlide still builds the add-on with its first base project only
+	CHECK(catalog.IsStackedAddOn("Body Extra"));
+	CHECK(catalog.AddOnsOf("Body", body.GetProjectID(), true).size() == 1);
+
+	SliderSet refSet = LoadSet(folder.RefTemplateFile("Body Ref.osp"), "Body Ref", folder.ShapeDataPath());
+	CHECK(catalog.AddOnsOfSet(refSet, folder.RefTemplateFile("Body Ref.osp"), true).empty());
+	auto matched = catalog.AddOnsOfSet(refSet, folder.RefTemplateFile("Body Ref.osp"), false);
+	REQUIRE(matched.size() == 1);
+	CHECK(matched[0].otherBase);
+
+	// BodySlide adds the sets one by one: the relative file of the other base project is in the project path
+	ProjectCatalog added;
+	added.SetProjectPath(folder.Path());
+	SliderSetFile bodyFile(folder.SetFile("Body.osp"));
+	added.Add(bodyFile, "Body");
+	added.Add(bodyFile, "Body Extra");
+	added.Finish();
+	CHECK(added.AddOnsOfSet(refSet, folder.RefTemplateFile("Body Ref.osp"), false).size() == 1);
+
+	// Only its new sliders, which are fitted to the reference's shape
+	std::vector<std::string> warnings;
+	SetStackResult stack = StackSetAddOns(refSet, catalog, warnings, true, folder.RefTemplateFile("Body Ref.osp"));
+	CHECK(stack.addOns.empty());
+	REQUIRE(stack.baseAddOns.size() == 1);
+	CHECK(stack.baseAddOns[0].otherBase);
+	CHECK(SliderNames(refSet) == std::vector<std::string>{"Breasts", "Extra"});
+	CHECK(refSet["Breasts"].TargetDataName("RefShape") == "RefShapeBreasts");
+
+	NifFile refNif;
+	REQUIRE(LoadNif(refNifFile, refNif));
+	AnimInfo refAnim;
+	LoadConformAnim(refAnim, refNif);
+	FitBaseAddOnsToVariant(refSet, refNif, &refAnim, stack.baseAddOns, catalog, folder.ShapeDataPath(), LoadNif, true, warnings);
+
+	SliderData& extra = refSet["Extra"];
+	REQUIRE(extra.dataFiles.size() == 1);
+	CHECK(extra.dataFiles[0].targetName == "RefShape");
+	CHECK(extra.dataFiles[0].bGenerated);
+	CHECK(extra.bAutoConformed);
+
+	DiffDataSets diffs;
+	refSet.LoadSetDiffData(diffs, "RefShape");
+	TargetDataDiffs* extraDiffs = diffs.GetDiffSet(extra.dataFiles[0].dataName);
+	REQUIRE(extraDiffs);
+	CHECK(extraDiffs->size() == 81);
+	for (auto& diff : *extraDiffs)
+		CHECK(diff.second.z == Catch::Approx(2.0f).margin(1e-4));
+
+	// An outfit made with the reference conforms the add-on's sliders from it
+	SliderSet dress = MakeSet("Dress", "Dress", "Dress.nif", {"Dress"});
+	dress.SetReferenceInfo(refFile, "Body Ref", "RefShape");
+	dress.SetBaseDataPath(folder.ShapeDataPath());
+
+	ConformBodyRef ref = FindConformBody(dress, catalog, folder.Path());
+	REQUIRE(ref.Found());
+	CHECK(ref.setName == "Body Ref");
+
+	ConformBody conformBody;
+	REQUIRE(conformBody.Load(ref, catalog, folder.ShapeDataPath(), LoadNif, warnings));
+	REQUIRE(conformBody.sliders.size() == 1);
+	CHECK(conformBody.sliders[0].slider.name == "Extra");
+
+	NifFile nif;
+	REQUIRE(LoadNif(dressNif, nif));
+	AnimInfo anim;
+	LoadConformAnim(anim, nif);
+	CHECK(ConformAddOnSliders(dress, nif, anim, conformBody) == std::vector<std::string>{"Body Extra"});
+
+	DiffDataSets dressDiffs;
+	dress.LoadSetDiffData(dressDiffs);
+	TargetDataDiffs* dressExtra = dressDiffs.GetDiffSet(dress["Extra"].dataFiles.at(0).dataName);
+	REQUIRE(dressExtra);
+	for (auto& diff : *dressExtra)
 		CHECK(diff.second.z == Catch::Approx(2.0f).margin(1e-4));
 }

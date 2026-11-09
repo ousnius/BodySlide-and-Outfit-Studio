@@ -654,6 +654,9 @@ public:
 	// Makes the project a variant or add-on of another one. Its sliders and data that equal the base project's
 	// become inherited, the base project's sliders it doesn't have are left out.
 	bool SetBaseProject(const std::string& fileName, const std::string& setName, bool addOn, std::string* errorMessage = nullptr);
+	// Replaces the other base projects of an add-on: other projects of the same body that it fits as well, e.g. a copy
+	// of the body in RefTemplates. Each is a slider set file and set name, which must exist.
+	bool SetOtherBaseProjects(const std::vector<std::pair<std::string, std::string>>& fileAndSetNames, std::string* errorMessage = nullptr);
 	// Makes a variant or add-on a project of its own again, with all of its sliders and data.
 	void ClearBaseProject();
 	// True if shapes of an add-on's base project changed since it was loaded, which it can't save

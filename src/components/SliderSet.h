@@ -34,6 +34,15 @@ public:
 	uint32_t vertexCount = 0; // Add-ons: vertices of the base project's shape that their data was made for, 0 if unknown.
 };
 
+// A <BaseProject> entry of a variant or add-on
+struct BaseProjectRef {
+	std::string file; // OSP file path relative to project dir, only a hint
+	std::string name; // Slider set name, which identifies the base project
+	std::string id;	  // GUID of the base project, if it has one
+
+	bool operator==(const BaseProjectRef& other) const;
+};
+
 // What came of loading the base projects of a slider set.
 struct SliderSetResolveStatus {
 	bool baseFound = false;	   // The base project was found and merged in.
@@ -99,6 +108,7 @@ class SliderSet {
 	std::string baseProjectFile;			 // OSP file path relative to project dir, only a hint
 	std::string baseProjectName;			 // Slider set name, which identifies the base project
 	std::string baseProjectID;				 // GUID of the base project, if it has one
+	std::vector<BaseProjectRef> otherBaseProjects; // Add-ons: other projects of the same body that the add-on fits too
 	bool addOn = false;						 // Uses the shapes and NIF file of the base project, saved as <SliderSetAddOn>
 	std::string sliderDataFile;				 // Add-ons: .osd file name of their own data in the data folder
 	std::vector<std::string> removedSliders; // Sliders of the base project that aren't used
@@ -163,6 +173,13 @@ public:
 	}
 	// Turns a variant or add-on into a normal project. Its inherited sliders and data become its own.
 	void ClearBaseProject();
+
+	// Further <BaseProject> entries after the first one: other projects of the body that an add-on fits as well, e.g. a
+	// copy of the body in RefTemplates. The first base project alone gives an add-on its shapes and data.
+	const std::vector<BaseProjectRef>& GetOtherBaseProjects() const { return otherBaseProjects; }
+	void SetOtherBaseProjects(const std::vector<BaseProjectRef>& projects);
+	// Adds another base project, unless it's the first one or already listed. Returns false then.
+	bool AddOtherBaseProject(const BaseProjectRef& project);
 
 	bool IsAddOn() const { return addOn; }
 	void SetAddOn(bool inAddOn) { addOn = inAddOn; }
@@ -537,6 +554,8 @@ public:
 	bool HasSet(const std::string& querySetName);
 
 	void SetShapes(const std::string& set, std::vector<std::string>& outShapeNames);
+	// The target of each shape of the set, by shape name
+	std::map<std::string, std::string> GetSetShapeTargets(const std::string& set);
 
 	// Gets a single slider set from the XML document based on the name.
 	// With 'resolveBase', the sliders of a variant's or add-on's base project are merged in. Otherwise the set
@@ -548,6 +567,8 @@ public:
 	std::string GetSetBaseProjectName(const std::string& setName);
 	// Project ID of the set's base project as it was saved, empty if it has none
 	std::string GetSetBaseProjectID(const std::string& setName);
+	// The <BaseProject> entries of the set after the first one, as they were saved
+	std::vector<BaseProjectRef> GetSetOtherBaseProjects(const std::string& setName);
 	// Project ID of the set, empty if it has none
 	std::string GetSetProjectID(const std::string& setName);
 	// Data folder and source file of the set as they were saved, without what a base project would give it

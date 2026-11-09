@@ -276,10 +276,36 @@ std::string SliderSet::GenerateProjectID() {
 	return id;
 }
 
+bool BaseProjectRef::operator==(const BaseProjectRef& other) const {
+	return StringsEqualInsens(name.c_str(), other.name.c_str()) && StringsEqualInsens(ToOSSlashes(file).c_str(), ToOSSlashes(other.file).c_str()) && id == other.id;
+}
+
+void SliderSet::SetOtherBaseProjects(const std::vector<BaseProjectRef>& projects) {
+	otherBaseProjects.clear();
+	for (auto& project : projects)
+		AddOtherBaseProject(project);
+}
+
+bool SliderSet::AddOtherBaseProject(const BaseProjectRef& project) {
+	if (project.name.empty())
+		return false;
+
+	BaseProjectRef entry = project;
+	entry.file = ToOSSlashes(entry.file);
+	if (entry == BaseProjectRef{baseProjectFile, baseProjectName, baseProjectID})
+		return false;
+	if (std::find(otherBaseProjects.begin(), otherBaseProjects.end(), entry) != otherBaseProjects.end())
+		return false;
+
+	otherBaseProjects.push_back(std::move(entry));
+	return true;
+}
+
 void SliderSet::ClearBaseProject() {
 	baseProjectFile.clear();
 	baseProjectName.clear();
 	baseProjectID.clear();
+	otherBaseProjects.clear();
 	addOn = false;
 	sliderDataFile.clear();
 	removedSliders.clear();
@@ -451,6 +477,10 @@ int SliderSet::LoadSliderSet(XMLElement* element, bool appendNewSliders, const s
 		baseProjectFile = tmpElement ? ToOSSlashes(AttributeText(tmpElement, "ProjectFile")) : "";
 		baseProjectName = tmpElement ? AttributeText(tmpElement, "ProjectName") : "";
 		baseProjectID = tmpElement ? AttributeText(tmpElement, "ProjectID") : "";
+
+		otherBaseProjects.clear();
+		for (tmpElement = tmpElement ? tmpElement->NextSiblingElement("BaseProject") : nullptr; tmpElement; tmpElement = tmpElement->NextSiblingElement("BaseProject"))
+			AddOtherBaseProject({ToOSSlashes(AttributeText(tmpElement, "ProjectFile")), AttributeText(tmpElement, "ProjectName"), AttributeText(tmpElement, "ProjectID")});
 
 		tmpElement = element->FirstChildElement("SliderDataFile");
 		sliderDataFile = tmpElement ? ElementText(tmpElement) : "";
@@ -700,14 +730,21 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 	}
 
 	if (HasBaseProject()) {
-		XMLElement* baseElement = sliderSetElement->InsertNewChildElement("BaseProject");
-		if (!baseProjectFile.empty()) {
-			std::string projectFile_bs = ToBackslashes(baseProjectFile);
-			baseElement->SetAttribute("ProjectFile", projectFile_bs.c_str());
-		}
-		baseElement->SetAttribute("ProjectName", baseProjectName.c_str());
-		if (!baseProjectID.empty())
-			baseElement->SetAttribute("ProjectID", baseProjectID.c_str());
+		auto writeBase = [&](const BaseProjectRef& base) {
+			XMLElement* baseElement = sliderSetElement->InsertNewChildElement("BaseProject");
+			if (!base.file.empty()) {
+				std::string projectFile_bs = ToBackslashes(base.file);
+				baseElement->SetAttribute("ProjectFile", projectFile_bs.c_str());
+			}
+			baseElement->SetAttribute("ProjectName", base.name.c_str());
+			if (!base.id.empty())
+				baseElement->SetAttribute("ProjectID", base.id.c_str());
+		};
+
+		// Older versions only read the first one
+		writeBase({baseProjectFile, baseProjectName, baseProjectID});
+		for (auto& otherBase : otherBaseProjects)
+			writeBase(otherBase);
 	}
 
 	XMLElement* newElement = sliderSetElement->GetDocument()->NewElement("DataFolder");
@@ -1041,6 +1078,23 @@ void SliderSetFile::SetShapes(const std::string& set, std::vector<std::string>& 
 	}
 }
 
+std::map<std::string, std::string> SliderSetFile::GetSetShapeTargets(const std::string& set) {
+	std::map<std::string, std::string> targets;
+	if (!HasSet(set))
+		return targets;
+
+	for (XMLElement* shapeElement = setsInFile[set]->FirstChildElement("Shape"); shapeElement; shapeElement = shapeElement->NextSiblingElement("Shape")) {
+		std::string shapeName = ElementText(shapeElement);
+		if (shapeName.empty())
+			continue;
+
+		std::string target = AttributeText(shapeElement, "target");
+		targets[shapeName] = target.empty() ? shapeName : target;
+	}
+
+	return targets;
+}
+
 int SliderSetFile::GetSet(const std::string& setName, SliderSet& outSliderSet, bool appendNewSliders, const std::string& onlyShapeName, bool resolveBase) {
 	XMLElement* setPtr;
 	if (!HasSet(setName))
@@ -1104,6 +1158,22 @@ std::string SliderSetFile::GetSetBaseProjectID(const std::string& setName) {
 
 	XMLElement* baseElement = setIt->second->FirstChildElement("BaseProject");
 	return baseElement ? AttributeText(baseElement, "ProjectID") : "";
+}
+
+std::vector<BaseProjectRef> SliderSetFile::GetSetOtherBaseProjects(const std::string& setName) {
+	std::vector<BaseProjectRef> bases;
+	auto setIt = setsInFile.find(setName);
+	if (setIt == setsInFile.end())
+		return bases;
+
+	XMLElement* baseElement = setIt->second->FirstChildElement("BaseProject");
+	for (baseElement = baseElement ? baseElement->NextSiblingElement("BaseProject") : nullptr; baseElement; baseElement = baseElement->NextSiblingElement("BaseProject")) {
+		std::string name = AttributeText(baseElement, "ProjectName");
+		if (!name.empty())
+			bases.push_back({ToOSSlashes(AttributeText(baseElement, "ProjectFile")), name, AttributeText(baseElement, "ProjectID")});
+	}
+
+	return bases;
 }
 
 std::string SliderSetFile::GetSetProjectID(const std::string& setName) {
