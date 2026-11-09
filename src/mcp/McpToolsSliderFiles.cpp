@@ -75,6 +75,9 @@ json SliderProperties(OutfitProject& project, size_t index) {
 		properties["toggleSliders"] = toggleSliders;
 	}
 
+	if (project.activeSet.IsAddOn())
+		properties["noAutoConform"] = project.SliderNoAutoConform(index);
+
 	// Where a variant's or add-on's slider and its data come from
 	if (project.activeSet.HasBaseProject()) {
 		std::string name = project.GetSliderName(index);
@@ -171,6 +174,12 @@ McpToolResult SetSliderProperties(OutfitStudioMcp& mcp, const json& args) {
 		project.SetSliderHidden(index, McpArgs::Bool(args, "hidden", false));
 	if (McpArgs::Has(args, "uv"))
 		project.SetSliderUV(index, McpArgs::Bool(args, "uv", false));
+	if (McpArgs::Has(args, "noAutoConform")) {
+		bool noAutoConform = McpArgs::Bool(args, "noAutoConform", false);
+		if (noAutoConform && !project.activeSet.IsAddOn())
+			throw McpToolError("Only sliders of add-ons are conformed to outfits automatically.");
+		project.SetSliderNoAutoConform(index, noAutoConform);
+	}
 	if (McpArgs::Has(args, "defaultSmall"))
 		project.SetSliderDefault(index, percent("defaultSmall"), false);
 	if (McpArgs::Has(args, "defaultBig"))
@@ -519,7 +528,7 @@ void AddSliderFileTools(OutfitStudioMcp& mcp) {
 	McpTool properties;
 	properties.name = "set_slider_properties";
 	properties.description =
-		"Changes a slider like the Slider Properties dialog: name, zap, zap toggles, toggle, invert, hidden, UV and the default "
+		"Changes a slider like the Slider Properties dialog: name, zap, zap toggles, toggle, invert, hidden, UV, no auto-conform and the default "
 		"values BodySlide starts at for the small and big body (0 to 100). A toggle shows as a check box in BodySlide that "
 		"applies the slider at toggleValue and holds toggleSliders (sliders or zaps) at their values while ticked. Only what's given changes.";
 	properties.inputSchema = McpSchema(
@@ -536,6 +545,7 @@ void AddSliderFileTools(OutfitStudioMcp& mcp) {
 			{"ticked", McpProp("boolean", "toggle: on by default in BodySlide")},
 			{"toggleValue", McpProp("number", "toggle: percent the slider is applied at while ticked, 100 by default")},
 			{"toggleSliders", McpNumberMap("toggle: other sliders and zaps and the percent they're held at while ticked; a zap above 0 is zapped, at 0 it isn't. Replaces the list; {} clears it.")},
+			{"noAutoConform", McpProp("boolean", "Add-ons of a body: BodySlide doesn't conform the slider to outfits of the body. It still works on the body and its variants.")},
 			{"defaultSmall", McpProp("integer", "Default value for the small body, 0 to 100")},
 			{"defaultBig", McpProp("integer", "Default value for the big body, 0 to 100")},
 		},

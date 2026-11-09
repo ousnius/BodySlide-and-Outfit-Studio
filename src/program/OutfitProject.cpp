@@ -1989,6 +1989,13 @@ bool OutfitProject::SliderUV(const size_t index) {
 	return activeSet[index].bUV;
 }
 
+bool OutfitProject::SliderNoAutoConform(const size_t index) {
+	if (!ValidSlider(index))
+		return false;
+
+	return activeSet[index].bNoAutoConform;
+}
+
 wxArrayString OutfitProject::SliderZapToggles(const size_t index) {
 	wxArrayString toggles;
 	if (ValidSlider(index))
@@ -2110,6 +2117,13 @@ void OutfitProject::SetSliderUV(const size_t index, const bool uv) {
 		return;
 
 	SetSliderProperty(activeSet[index], activeSet[index].bUV, uv);
+}
+
+void OutfitProject::SetSliderNoAutoConform(const size_t index, const bool noAutoConform) {
+	if (!ValidSlider(index))
+		return;
+
+	SetSliderProperty(activeSet[index], activeSet[index].bNoAutoConform, noAutoConform);
 }
 
 void OutfitProject::SetSliderHidden(const size_t index, const bool hidden) {
@@ -4096,6 +4110,9 @@ std::vector<std::string> OutfitProject::LoadReferenceAddOns() {
 		slider.bInherited = false;
 		slider.stackedFrom.clear();
 		slider.curValue = 0.0f;
+
+		// Keeping the slider off outfits is up to the body's add-on, not the outfit
+		slider.bNoAutoConform = false;
 
 		// The slider needs the add-on to be installed
 		slider.addOnName = refSlider.stackedFrom;

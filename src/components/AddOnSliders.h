@@ -179,7 +179,8 @@ public:
 	ConformBody(const ConformBody&) = delete;
 	ConformBody& operator=(const ConformBody&) = delete;
 
-	// Loads the body and the add-on sliders of the reference shape. 'loadNif' loads a NIF file, false if it fails.
+	// Loads the body and the add-on sliders of the reference shape, without those the add-on keeps off outfits
+	// (SliderData::bNoAutoConform). 'loadNif' loads a NIF file, false if it fails.
 	bool Load(const ConformBodyRef& bodyRef,
 			  const ProjectCatalog& catalog,
 			  const std::string& baseDataPath,

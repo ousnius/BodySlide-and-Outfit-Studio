@@ -10896,6 +10896,7 @@ void OutfitStudioFrame::ShowSliderProperties(const std::string& sliderName) {
 		wxCheckBox* chkZap = XRCCTRL(dlg, "chkZap", wxCheckBox);
 		wxCheckBox* chkUV = XRCCTRL(dlg, "chkUV", wxCheckBox);
 		wxCheckBox* chkToggle = XRCCTRL(dlg, "chkToggle", wxCheckBox);
+		wxCheckBox* chkNoAutoConform = XRCCTRL(dlg, "chkNoAutoConform", wxCheckBox);
 		wxStaticText* lbToggleValue = XRCCTRL(dlg, "lbToggleValue", wxStaticText);
 		wxTextCtrl* edToggleValue = XRCCTRL(dlg, "edToggleValue", wxTextCtrl);
 		wxStaticText* zapToggleLabel = XRCCTRL(dlg, "zapToggleLabel", wxStaticText);
@@ -10951,6 +10952,11 @@ void OutfitStudioFrame::ShowSliderProperties(const std::string& sliderName) {
 
 		chkZap->SetValue(project->SliderZap(curSlider));
 		chkToggle->SetValue(project->SliderToggle(curSlider));
+
+		// BodySlide only conforms sliders of add-ons to outfits
+		chkNoAutoConform->SetValue(project->SliderNoAutoConform(curSlider));
+		chkNoAutoConform->Show(project->activeSet.IsAddOn());
+
 		edToggleValue->SetValue(wxString::Format("%g", project->SliderToggleValue(curSlider)));
 
 		for (size_t i = 0; i < project->SliderCount(); i++)
@@ -11162,6 +11168,8 @@ void OutfitStudioFrame::ShowSliderProperties(const std::string& sliderName) {
 			project->SetSliderInvert(curSlider, chkInvert->GetValue());
 			project->SetSliderHidden(curSlider, chkHidden->GetValue());
 			project->SetSliderUV(curSlider, chkUV->GetValue());
+			if (project->activeSet.IsAddOn())
+				project->SetSliderNoAutoConform(curSlider, chkNoAutoConform->GetValue());
 			project->SetSliderDefault(curSlider, loVal, false);
 			project->SetSliderDefault(curSlider, hiVal, true);
 

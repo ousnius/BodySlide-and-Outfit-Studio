@@ -488,6 +488,59 @@ TEST_CASE("Add-on sliders of the body are conformed to outfits that don't have t
 		CHECK(diff.second.z == Catch::Approx(2.0f).margin(1e-4));
 }
 
+TEST_CASE("Add-on sliders kept off outfits stay on the body but aren't conformed", "[AddOnSliders]") {
+	ProjectFolder folder;
+	auto bodyFolder = folder.DataFolder("Body");
+	auto dressFolder = folder.DataFolder("Dress");
+
+	WriteGridNif(bodyFolder, "Body.nif", "BodyShape", 10, 0.0f);
+	WriteOSD(bodyFolder / "Body Extra.osd", "BodyShape", {{"BodyShapeExtra", Lift(121, 2.0f)}, {"BodyShapeBodyOnly", Lift(121, 3.0f)}});
+	std::string dressNif = WriteGridNif(dressFolder, "Dress.nif", "Dress", 6, 0.5f);
+
+	SliderSet body = MakeSet("Body", "Body", "Body.nif", {"BodyShape"});
+	body.SetProjectID(SliderSet::GenerateProjectID());
+
+	SliderSet bodyExtra = MakeAddOn("Body Extra", body, body.GetProjectID());
+	AddSlider(bodyExtra, "Extra").AddDataFile("BodyShape", "BodyShapeExtra", DataFile("Body Extra.osd", "BodyShapeExtra"));
+	auto& bodyOnly = AddSlider(bodyExtra, "Body Only");
+	bodyOnly.bNoAutoConform = true;
+	bodyOnly.AddDataFile("BodyShape", "BodyShapeBodyOnly", DataFile("Body Extra.osd", "BodyShapeBodyOnly"));
+	SaveSets(folder.SetFile("Body.osp"), {body, bodyExtra});
+
+	CHECK(LoadSet(folder.SetFile("Body.osp"), "Body Extra")["Body Only"].bNoAutoConform);
+	CHECK_FALSE(LoadSet(folder.SetFile("Body.osp"), "Body Extra")["Extra"].bNoAutoConform);
+
+	ProjectCatalog catalog = LoadCatalog(folder);
+
+	// The body still has the slider with its data
+	SliderSet stackedBody = LoadSet(folder.SetFile("Body.osp"), "Body", folder.ShapeDataPath());
+	std::vector<std::string> warnings;
+	StackSetAddOns(stackedBody, catalog, warnings, true, folder.SetFile("Body.osp"));
+	REQUIRE(stackedBody.SliderExists("Body Only"));
+	CHECK(stackedBody["Body Only"].bNoAutoConform);
+	CHECK(FindData(stackedBody, "Body Only", "BodyShape"));
+
+	SliderSet dress = MakeSet("Dress", "Dress", "Dress.nif", {"Dress"});
+	dress.SetReferenceInfo("SliderSets" + std::string(PathSepStr) + "Body.osp", "Body", "BodyShape");
+	dress.SetBaseDataPath(folder.ShapeDataPath());
+
+	ConformBodyRef ref = FindConformBody(dress, catalog, folder.Path());
+	REQUIRE(ref.Found());
+
+	ConformBody conformBody;
+	REQUIRE(conformBody.Load(ref, catalog, folder.ShapeDataPath(), LoadNif, warnings));
+	REQUIRE(conformBody.sliders.size() == 1);
+	CHECK(conformBody.sliders[0].slider.name == "Extra");
+
+	NifFile nif;
+	REQUIRE(LoadNif(dressNif, nif));
+	AnimInfo anim;
+	LoadConformAnim(anim, nif);
+
+	CHECK(ConformAddOnSliders(dress, nif, anim, conformBody) == std::vector<std::string>{"Body Extra"});
+	CHECK(SliderNames(dress) == std::vector<std::string>{"Extra"});
+}
+
 TEST_CASE("Add-ons save and load all their base projects", "[AddOnSliders]") {
 	ProjectFolder folder;
 	const std::string refBody = "RefTemplates" + std::string(PathSepStr) + "Body.osp";

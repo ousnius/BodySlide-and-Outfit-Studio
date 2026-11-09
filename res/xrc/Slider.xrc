@@ -231,6 +231,16 @@
 									<checked>0</checked>
 								</object>
 							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALL</flag>
+								<border>5</border>
+								<object class="wxCheckBox" name="chkNoAutoConform">
+									<label>No Auto-Conform</label>
+									<tooltip>BodySlide doesn't conform this add-on slider to outfits of the body. The slider still works on the body and its variants.</tooltip>
+									<checked>0</checked>
+								</object>
+							</object>
 						</object>
 					</object>
 					<object class="sizeritem">

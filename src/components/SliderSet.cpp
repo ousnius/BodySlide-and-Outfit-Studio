@@ -249,6 +249,7 @@ size_t SliderSet::CopySlider(SliderData* other) {
 	ms->bInherited = other->bInherited;
 	ms->addOnName = other->addOnName;
 	ms->addOnID = other->addOnID;
+	ms->bNoAutoConform = other->bNoAutoConform;
 	ms->bAutoConformed = other->bAutoConformed;
 	ms->stackedFrom = other->stackedFrom;
 	ms->dataFiles = other->dataFiles;
@@ -871,6 +872,8 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 			sliderElement->SetAttribute("addon", slider.addOnName.c_str());
 		if (!slider.addOnID.empty())
 			sliderElement->SetAttribute("addonid", slider.addOnID.c_str());
+		if (slider.bNoAutoConform)
+			sliderElement->SetAttribute("noautoconform", true);
 
 		for (auto& df : slider.dataFiles) {
 			if (df.bGenerated)

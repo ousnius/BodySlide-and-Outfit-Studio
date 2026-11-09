@@ -488,6 +488,7 @@ public:
 	std::vector<ToggleTarget> SliderToggleSliders(const size_t index);
 	bool SliderInvert(const size_t index);
 	bool SliderHidden(const size_t index);
+	bool SliderNoAutoConform(const size_t index);
 	bool SliderIndexFromName(const std::string& sliderName, size_t& index);
 
 	void SetSliderZap(const size_t index, const bool zap);
@@ -499,6 +500,8 @@ public:
 	void SetSliderInvert(const size_t index, const bool inv);
 	void SetSliderUV(const size_t index, const bool uv);
 	void SetSliderHidden(const size_t index, const bool hidden);
+	// Add-ons of a body: BodySlide doesn't conform the slider to outfits of the body
+	void SetSliderNoAutoConform(const size_t index, const bool noAutoConform);
 	void SetSliderDefault(const size_t index, const int val, const bool isHi);
 	void SetSliderName(const size_t index, const std::string& newName);
 

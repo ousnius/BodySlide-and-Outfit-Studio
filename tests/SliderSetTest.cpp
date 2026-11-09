@@ -10,6 +10,8 @@
 #include <chrono>
 #include <cstring>
 #include <filesystem>
+#include <fstream>
+#include <iterator>
 #include <random>
 #include <string>
 #include <thread>
@@ -539,6 +541,39 @@ TEST_CASE("Toggles keep their value and the sliders they set", "[SliderSet]") {
 		CHECK(loadedVariant["PushUp"].toggleSliders == std::vector<ToggleTarget>{{"Breasts", 30.0f}});
 		CHECK(loadedVariant["Curvy"].toggleSliders == std::vector<ToggleTarget>{{"Breasts", 80.0f}});
 	}
+}
+
+TEST_CASE("Sliders kept off outfits are saved, copied and inherited", "[SliderSet]") {
+	ProjectFolder folder;
+	SliderSet base = MakeBase();
+	base["Butt"].bNoAutoConform = true;
+	SaveSets(folder.SetFile("Robe.osp"), {base});
+
+	// Only the slider with the flag has the attribute
+	std::ifstream file(std::filesystem::u8path(folder.SetFile("Robe.osp")));
+	std::string text((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	size_t first = text.find("noautoconform=\"true\"");
+	CHECK(first != std::string::npos);
+	CHECK(text.find("noautoconform", first + 1) == std::string::npos);
+
+	SliderSet loaded = LoadSet(folder.SetFile("Robe.osp"), "Robe");
+	CHECK(loaded["Butt"].bNoAutoConform);
+	CHECK_FALSE(loaded["Breasts"].bNoAutoConform);
+
+	SliderSet copy;
+	copy.CopySlider(&loaded["Butt"]);
+	CHECK(copy["Butt"].bNoAutoConform);
+
+	SliderData properties;
+	properties.CopyPropertiesFrom(loaded["Butt"]);
+	CHECK(properties.bNoAutoConform);
+
+	// A variant gets the flag of the base project's slider
+	SaveSets(folder.SetFile("Robe Variant.osp"), {MakeVariant()});
+	SliderSet variant = LoadSet(folder.SetFile("Robe Variant.osp"), "Robe Variant");
+	REQUIRE(variant.SliderExists("Butt"));
+	CHECK(variant["Butt"].bInherited);
+	CHECK(variant["Butt"].bNoAutoConform);
 }
 
 TEST_CASE("Ticked toggles apply their value and hold the sliders and zaps they set", "[SliderSet]") {

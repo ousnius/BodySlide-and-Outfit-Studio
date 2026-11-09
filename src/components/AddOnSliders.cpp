@@ -632,6 +632,10 @@ bool ConformBody::Load(const ConformBodyRef& bodyRef,
 		if (slider.stackedFrom.empty() || slider.bZap || slider.bUV)
 			continue;
 
+		// The add-on only wants the slider on the body
+		if (slider.bNoAutoConform)
+			continue;
+
 		std::string refDataName;
 		for (auto& df : slider.dataFiles)
 			if (df.targetName == targetName)
