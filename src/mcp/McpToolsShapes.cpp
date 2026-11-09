@@ -1610,7 +1610,10 @@ void AddShapeTools(OutfitStudioMcp& mcp) {
 	setReference.name = "set_reference_shape";
 	setReference.description =
 		"Makes a shape of the project the reference shape that conforming, weight copies and clipping fixes use, or "
-		"with unset: true makes the reference an ordinary outfit shape.";
+		"with unset: true makes the reference an ordinary outfit shape. A body loaded as reference keeps its target and "
+		"its slider data linked to the body's data folder, so BodySlide still finds the body and its add-ons, and setting "
+		"it as reference again brings back its reference info. Switching the reference for a weight copy and back is "
+		"safe.";
 	setReference.inputSchema = McpSchema({
 		{"shape", McpProp("string", "New reference shape")},
 		{"unset", McpProp("boolean", "Turn the current reference into an outfit shape instead. Default false.")},

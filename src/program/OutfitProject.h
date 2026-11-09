@@ -251,6 +251,8 @@ class OutfitProject {
 							const bool hasDiff,
 							const std::string& osdFileName,
 							const std::string& prevOSDFileName);
+	// After saving, the project goes on with the saved set's data folder and the places its slider data was saved to.
+	void AdoptSavedDataLocations(const SliderSet& savedSet);
 	// Asks before saving removes shapes from a NIF file that other projects use as their source file.
 	bool ConfirmSharedNifShapes(const SliderSetIndex& index, const std::string& nifFilePath, const std::string& setFile, const std::string& setName, bool copyRef);
 

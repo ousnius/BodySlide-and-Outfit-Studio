@@ -1091,6 +1091,241 @@ TEST_CASE("Loading a reference can load the sliders of its add-ons", "[OutfitPro
 	CHECK_FALSE(saved["Grow"].NeedsAddOn());
 }
 
+TEST_CASE("The reference keeps its data folders when it's unset and set again", "[OutfitProject]") {
+	SavedProjectFixture f;
+	REQUIRE(f.Save().empty());
+
+	// Bodies like CBBE have a target that isn't the shape's name, which unsetting the reference renames, and data
+	// names can be other than the target and slider name
+	const auto bodyCase = GENERATE(std::make_pair(std::string("Body"), std::string("BodyGrow")),
+								   std::make_pair(std::string("BaseShape"), std::string("BaseShapeGrow")),
+								   std::make_pair(std::string("BaseShape"), std::string("BodyGrowth")));
+	const std::string bodyTarget = bodyCase.first;
+	const std::string bodyData = bodyCase.second;
+	if (bodyTarget != "Body") {
+		SliderSet body;
+		body.SetName("A");
+		body.SetDataFolder("Shared");
+		body.SetInputFile("Shared.nif");
+		body.AddShapeTarget("Body", bodyTarget);
+		body[body.CreateSlider("Grow")].AddDataFile(bodyTarget, bodyData, "Shared.osd" + std::string(PathSepStr) + bodyData);
+
+		SliderSetFile bodyFile;
+		bodyFile.New((f.projectFolder.path / "SliderSets" / "A.osp").u8string());
+		bodyFile.UpdateSet(body);
+		REQUIRE(bodyFile.Save());
+
+		OSDataFile osd;
+		REQUIRE(osd.Read(f.DataPath("Shared.osd").u8string()));
+		auto* grow = osd.GetDataDiff("BodyGrow");
+		REQUIRE((grow && *grow));
+		const TargetDataDiffs growDiffs = **grow;
+		osd.SetDataDiff(bodyData, growDiffs);
+		REQUIRE(osd.Write(f.DataPath("Shared.osd").u8string()));
+	}
+
+	// An outfit in a data folder of its own, saved without a reference
+	const std::string outfitFile = (f.projectFolder.path / "SliderSets" / "B.osp").u8string();
+	auto saveOutfit = [&](OutfitProject& project, bool copyRef) {
+		return project.Save(wxFileName(wxString::FromUTF8(outfitFile)), "B", "Outfit", "B.nif", "meshes", "B", false, copyRef, false, false, "", "");
+	};
+	f.project.DeleteShape(f.body);
+	REQUIRE(saveOutfit(f.project, false).empty());
+
+	// The body loaded as reference has its data in the body's folder
+	NonInteractiveHost host;
+	OutfitProject outfit{&host, false};
+	REQUIRE(outfit.LoadFromSliderSet(outfitFile, "B") == 0);
+	REQUIRE(outfit.LoadReference((f.projectFolder.path / "SliderSets" / "A.osp").u8string(), "A", "Body", false, false, true) == 0);
+	NiShape* body = outfit.GetBaseShape();
+	REQUIRE(body);
+
+	auto checkSaved = [&]() {
+		SliderSetFile file(outfitFile);
+		SliderSet saved;
+		REQUIRE(file.GetSet("B", saved) == 0);
+
+		// Add-ons of the body know the shape by the body's target
+		CHECK(saved.ShapeToTarget("Body") == bodyTarget);
+		std::vector<std::string> folders = saved.GetShapeDataFolders("Body");
+		CHECK(std::find(folders.begin(), folders.end(), "Shared") != folders.end());
+
+		const std::string dataName = saved["Grow"].TargetDataName(saved.ShapeToTarget("Body"));
+		const DiffInfo* data = saved["Grow"].GetDataFile(dataName);
+		REQUIRE(data);
+		CHECK_FALSE(data->bLocal);
+
+		saved.SetBaseDataPath((f.projectFolder.path / "ShapeData").u8string());
+		DiffDataSets diffs;
+		saved.LoadSetDiffData(diffs, "Body");
+		TargetDataDiffs* grow = diffs.GetDiffSet(dataName);
+		REQUIRE(grow);
+		CHECK((*grow)[0].z == Catch::Approx(1.0f));
+		return saved;
+	};
+
+	REQUIRE(saveOutfit(outfit, true).empty());
+	checkSaved();
+
+	EditorState editor;
+	ProjectOperations ops{outfit, editor};
+	auto checkMorph = [&]() {
+		std::vector<Vector3> deltas;
+		REQUIRE(ops.GetSliderDeltas(body, "Grow", deltas).ok);
+		REQUIRE(!deltas.empty());
+		CHECK(deltas[0].z == Catch::Approx(1.0f));
+	};
+
+	// Unset, the body is a shape of the outfit that still has the body's data
+	outfit.SetBaseShape(nullptr);
+	checkMorph();
+	REQUIRE(saveOutfit(outfit, true).empty());
+	CHECK(checkSaved().GetReferenceProjectName().empty());
+
+	// Set again, it is the body's reference shape again, with none of its data left as outfit data
+	outfit.SetBaseShape(body);
+	checkMorph();
+	CHECK(outfit.morpher.GetResultDiffSize(bodyTarget, "Grow") == 0);
+	REQUIRE(saveOutfit(outfit, true).empty());
+	SliderSet saved = checkSaved();
+	CHECK(saved.GetReferenceProjectName() == "A");
+	CHECK(saved.GetReferenceShapeName() == "Body");
+
+	// Another shape as reference for a while, as for weight copies
+	outfit.SetBaseShape(outfit.GetWorkNif()->FindBlockByName<NiShape>("Skirt"));
+	outfit.SetBaseShape(body);
+	REQUIRE(saveOutfit(outfit, true).empty());
+	CHECK(checkSaved().GetReferenceProjectName() == "A");
+
+	// The saved outfit loads with the body's data
+	NonInteractiveHost loadedHost;
+	OutfitProject loaded{&loadedHost, false};
+	REQUIRE(loaded.LoadFromSliderSet(outfitFile, "B") == 0);
+	REQUIRE(loaded.ReloadReferenceShape() == 0);
+	REQUIRE(loaded.GetBaseShape());
+	CHECK(loaded.GetReferenceProjectName() == "A");
+	const std::string loadedData = loaded.activeSet["Grow"].TargetDataName(loaded.ShapeToTarget("Body"));
+	TargetDataDiffs* loadedGrow = loaded.baseDiffData.GetDiffSet(loadedData);
+	REQUIRE(loadedGrow);
+	CHECK((*loadedGrow)[0].z == Catch::Approx(1.0f));
+}
+
+namespace {
+// The data of a slider for a shape of a saved set, as BodySlide finds it
+std::unique_ptr<TargetDataDiffs> SavedSliderData(SavedProjectFixture& f, const std::string& setName, const std::string& sliderName, const std::string& shapeName) {
+	SliderSetFile file((f.projectFolder.path / "SliderSets" / (setName + ".osp")).u8string());
+	SliderSet saved;
+	REQUIRE(file.GetSet(setName, saved) == 0);
+	REQUIRE(saved.SliderExists(sliderName));
+	saved.SetBaseDataPath((f.projectFolder.path / "ShapeData").u8string());
+
+	DiffDataSets diffs;
+	saved.LoadSetDiffData(diffs, shapeName);
+	TargetDataDiffs* data = diffs.GetDiffSet(saved[sliderName].TargetDataName(saved.ShapeToTarget(shapeName)));
+	return data ? std::make_unique<TargetDataDiffs>(*data) : nullptr;
+}
+
+TargetDataDiffs SkirtDiff(SavedProjectFixture& f, float z) {
+	TargetDataDiffs diff;
+	for (uint16_t i = 0; i < f.skirt->GetNumVertices(); i++)
+		diff[i] = Vector3(0.0f, 0.0f, z);
+	return diff;
+}
+} // namespace
+
+TEST_CASE("After saving as another project, saving again writes the new project's files", "[OutfitProject]") {
+	SavedProjectFixture f;
+	f.project.SetSliderFromDiff("Grow", f.skirt, SkirtDiff(f, 0.5f));
+	REQUIRE(f.Save().empty());
+
+	// Another data folder, or another NIF and .osd file in the same one
+	const std::string dataFolder = GENERATE(std::string("Other"), std::string("Shared"));
+	auto saveAs = [&]() {
+		wxFileName setFile(wxString::FromUTF8((f.projectFolder.path / "SliderSets" / "C.osp").u8string()));
+		return f.project.Save(setFile, "C", wxString::FromUTF8(dataFolder), "Other.nif", "meshes", "C", false, true, false, false, "", "");
+	};
+	REQUIRE(saveAs().empty());
+
+	f.project.SetSliderFromDiff("Grow", f.skirt, SkirtDiff(f, 0.75f));
+	REQUIRE(saveAs().empty());
+
+	auto skirt = SavedSliderData(f, "C", "Grow", "Skirt");
+	REQUIRE(skirt);
+	CHECK((*skirt)[0].z == Catch::Approx(0.75f));
+	auto body = SavedSliderData(f, "C", "Grow", "Body");
+	REQUIRE(body);
+	CHECK((*body)[0].z == Catch::Approx(1.0f));
+
+	// The first project keeps what it had
+	auto firstSkirt = SavedSliderData(f, "A", "Grow", "Skirt");
+	REQUIRE(firstSkirt);
+	CHECK((*firstSkirt)[0].z == Catch::Approx(0.5f));
+}
+
+TEST_CASE("After saving into another data folder, a body loaded as reference keeps its own folder", "[OutfitProject]") {
+	SavedProjectFixture f;
+	REQUIRE(f.Save().empty());
+
+	// The same project, without the body, saved as an outfit in a folder of its own
+	const std::string outfitFile = (f.projectFolder.path / "SliderSets" / "B.osp").u8string();
+	auto saveOutfit = [&](bool copyRef) {
+		return f.project.Save(wxFileName(wxString::FromUTF8(outfitFile)), "B", "Outfit", "B.nif", "meshes", "B", false, copyRef, false, false, "", "");
+	};
+	f.project.DeleteShape(f.body);
+	REQUIRE(saveOutfit(false).empty());
+
+	REQUIRE(f.project.LoadReference((f.projectFolder.path / "SliderSets" / "A.osp").u8string(), "A", "Body", false, false, true) == 0);
+	CHECK(f.project.activeSet.GetDefaultDataFolder() == "Outfit");
+
+	auto checkSaved = [&]() {
+		SliderSetFile file(outfitFile);
+		SliderSet saved;
+		REQUIRE(file.GetSet("B", saved) == 0);
+		std::vector<std::string> folders = saved.GetShapeDataFolders("Body");
+		CHECK(std::find(folders.begin(), folders.end(), "Shared") != folders.end());
+		const DiffInfo* data = saved["Grow"].GetDataFile(saved["Grow"].TargetDataName("Body"));
+		REQUIRE(data);
+		CHECK_FALSE(data->bLocal);
+
+		auto body = SavedSliderData(f, "B", "Grow", "Body");
+		REQUIRE(body);
+		CHECK((*body)[0].z == Catch::Approx(1.0f));
+	};
+
+	REQUIRE(saveOutfit(true).empty());
+	checkSaved();
+
+	// As an outfit shape, the body's data is still the body's
+	f.project.SetBaseShape(nullptr);
+	REQUIRE(saveOutfit(true).empty());
+	checkSaved();
+}
+
+TEST_CASE("A reference that isn't saved into another data folder keeps finding its data", "[OutfitProject]") {
+	SavedProjectFixture f;
+	REQUIRE(f.Save().empty());
+
+	// The body of the same folder as reference, so its data has no folder of its own
+	REQUIRE(f.project.LoadReference((f.projectFolder.path / "SliderSets" / "A.osp").u8string(), "A", "Body", false, false, true) == 0);
+
+	const std::string outfitFile = (f.projectFolder.path / "SliderSets" / "B.osp").u8string();
+	auto saveOutfit = [&](bool copyRef) {
+		return f.project.Save(wxFileName(wxString::FromUTF8(outfitFile)), "B", "Outfit", "B.nif", "meshes", "B", false, copyRef, false, false, "", "");
+	};
+	REQUIRE(saveOutfit(false).empty());
+	REQUIRE(saveOutfit(true).empty());
+
+	SliderSetFile file(outfitFile);
+	SliderSet saved;
+	REQUIRE(file.GetSet("B", saved) == 0);
+	std::vector<std::string> folders = saved.GetShapeDataFolders("Body");
+	CHECK(std::find(folders.begin(), folders.end(), "Shared") != folders.end());
+
+	auto body = SavedSliderData(f, "B", "Grow", "Body");
+	REQUIRE(body);
+	CHECK((*body)[0].z == Catch::Approx(1.0f));
+}
+
 TEST_CASE("An add-on of an outfit can load a reference with add-ons and save", "[OutfitProject]") {
 	DerivedProjectFixture f(true);
 	SaveBodyAddOn(f);

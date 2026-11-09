@@ -663,6 +663,8 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 	if (activeSet.HasBaseProject())
 		activeSet.SetRemovedSliders(outSet.GetRemovedSliders());
 
+	AdoptSavedDataLocations(outSet);
+
 	UpdateProgress(70, _("Saving NIF file..."));
 
 	std::string saveFileName = saveDataPath + PathSepStr + baseFile;
@@ -904,6 +906,38 @@ bool OutfitProject::KeepSliderDataLink(const DiffInfo* dataFile,
 	return activeSet.ResolveSliderDataFile(*dataFile).resolved;
 }
 
+void OutfitProject::AdoptSavedDataLocations(const SliderSet& savedSet) {
+	// Shapes that weren't saved, like the reference without its copy, keep their data folders. Those of shapes loaded
+	// from a set always name the folder of their external data, so it's still found from the new data folder.
+	for (auto shape = savedSet.ShapesBegin(); shape != savedSet.ShapesEnd(); ++shape)
+		if (activeSet.ShapeToTarget(shape->first) == shape->second.targetShape && !shape->second.targetShape.empty())
+			activeSet.SetTargetDataFolders(shape->second.targetShape, shape->second.dataFolders);
+
+	// The saved entries say where the data is now, e.g. in the project's own .osd file under its new name
+	for (size_t i = 0; i < activeSet.size(); i++) {
+		SliderData& slider = activeSet[i];
+		const SliderData* savedSlider = nullptr;
+		for (size_t s = 0; s < savedSet.size() && !savedSlider; s++)
+			if (savedSet[s].name == slider.name)
+				savedSlider = &savedSet[s];
+		if (!savedSlider)
+			continue;
+
+		for (auto& dataFile : slider.dataFiles) {
+			for (auto& savedFile : savedSlider->dataFiles) {
+				if (savedFile.targetName == dataFile.targetName && savedFile.dataName == dataFile.dataName) {
+					dataFile.fileName = savedFile.fileName;
+					dataFile.bLocal = savedFile.bLocal;
+					dataFile.bInherited = savedFile.bInherited;
+					break;
+				}
+			}
+		}
+	}
+
+	activeSet.SetDataFolder(savedSet.GetDefaultDataFolder());
+}
+
 bool OutfitProject::ShapeSliderDataIsLocalOnly(const std::string& shapeName) {
 	std::string target = ShapeToTarget(shapeName);
 	for (size_t i = 0; i < activeSet.size(); i++) {
@@ -944,16 +978,28 @@ void OutfitProject::SetBaseShape(NiShape* shape, const bool moveData) {
 				std::string shapeName = baseShape->name.get();
 				std::string srcTarget = ShapeToTarget(shapeName);
 
+				// Data in another data folder, like a body's, is found by the names in its file, and add-ons of the body
+				// know the shape by its target. The shape keeps both, and with them its data folders.
+				const bool keepTarget = activeSet.TargetHasExternalData(srcTarget);
+				const std::string newTarget = keepTarget ? srcTarget : shapeName;
+
 				for (size_t i = 0; i < activeSet.size(); i++) {
 					auto& sd = activeSet[i];
 					std::string srcTargetData = sd.TargetDataName(srcTarget);
 
+					// The outfit data keeps the reference's data name, like loading the project names it
+					if (keepTarget && !srcTargetData.empty() && srcTargetData != newTarget + sd.name)
+						morpher.SetResultDataName(newTarget, sd.name, srcTargetData);
+
 					auto diff = baseDiffData.GetDiffSet(srcTargetData);
 					if (diff)
-						morpher.SetResultDiff(shapeName, sd.name, *diff);
+						morpher.SetResultDiff(newTarget, sd.name, *diff);
+
+					baseDiffData.ClearSet(srcTargetData);
+					if (keepTarget)
+						continue;
 
 					activeSet[i].RenameTarget(srcTarget, shapeName, sd.name);
-					baseDiffData.ClearSet(srcTargetData);
 
 					// The data is now the shape's under its new name, which a link into the reference's file can't find
 					std::string targetData = sd.TargetDataName(shapeName);
@@ -964,14 +1010,15 @@ void OutfitProject::SetBaseShape(NiShape* shape, const bool moveData) {
 					}
 				}
 
-				activeSet.AddShapeTarget(shapeName, shapeName);
-				activeSet.Retarget(srcTarget, shapeName);
+				activeSet.AddShapeTarget(shapeName, newTarget);
+				if (!keepTarget)
+					activeSet.Retarget(srcTarget, shapeName);
 			}
 
 			// Copy data from regular shape to base shape
 			if (shape) {
 				std::string shapeName = shape->name.get();
-				std::string target = ShapeToTarget(shapeName);
+				std::string target = SliderDataTargetForShape(shape);
 
 				for (size_t i = 0; i < activeSet.size(); i++) {
 					std::string sliderName = activeSet[i].name;
@@ -982,13 +1029,11 @@ void OutfitProject::SetBaseShape(NiShape* shape, const bool moveData) {
 					}
 
 					std::unordered_map<uint16_t, Vector3> diff;
-					morpher.GetRawResultDiff(shapeName, sliderName, diff);
+					morpher.GetRawResultDiff(target, sliderName, diff);
 					morpher.ClearResultSet(targetData);
 
-					baseDiffData.LoadSet(targetData, shapeName, diff);
+					baseDiffData.LoadSet(targetData, target, diff);
 				}
-
-				activeSet.AddShapeTarget(shapeName, shapeName);
 			}
 		}
 	}
