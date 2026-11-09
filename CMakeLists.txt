@@ -337,6 +337,7 @@ set(BSOS_COMMON_SOURCES
 	src/components/MeshAnalysis.cpp
 	src/components/MeshDeform.cpp
 	src/components/MeshRefine.cpp
+	src/components/PhysicsChains.cpp
 	src/components/PoseFit.cpp
 	src/components/PoseMath.cpp
 	src/components/SurfaceFit.cpp
@@ -440,6 +441,7 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/mcp/McpToolsFitting.cpp
 	src/mcp/McpToolsGames.cpp
 	src/mcp/McpToolsGuides.cpp
+	src/mcp/McpToolsPhysics.cpp
 	src/mcp/McpToolsProject.cpp
 	src/mcp/McpToolsMeasure.cpp
 	src/mcp/McpToolsQuality.cpp
@@ -528,6 +530,7 @@ if(BSOS_BUILD_TESTS)
 		tests/MeshDeformTest.cpp
 		tests/MeshRefineTest.cpp
 		tests/OutfitProjectTest.cpp
+		tests/PhysicsChainsTest.cpp
 		tests/PhysicsXmlFileTest.cpp
 		tests/PoseDataJsonTest.cpp
 		tests/PoseFitTest.cpp
@@ -551,6 +554,7 @@ if(BSOS_BUILD_TESTS)
 		src/components/MeshAnalysis.cpp
 		src/components/MeshDeform.cpp
 		src/components/MeshRefine.cpp
+		src/components/PhysicsChains.cpp
 		src/components/PoseFit.cpp
 		src/components/PoseMath.cpp
 		src/components/SurfaceFit.cpp

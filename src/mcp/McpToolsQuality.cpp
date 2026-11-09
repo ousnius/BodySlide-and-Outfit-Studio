@@ -2449,6 +2449,14 @@ McpToolResult McpMaskFromMetric(OutfitStudioMcp& mcp, const json& args) {
 	return result;
 }
 
+size_t McpApplyWeights(OutfitStudioMcp& mcp, NiShape* shape, const std::map<std::string, std::unordered_map<uint16_t, float>>& newWeights) {
+	return ApplyWeights(mcp, shape, newWeights);
+}
+
+int McpInfluenceLimit() {
+	return DefaultInfluenceLimit();
+}
+
 void AddQualityTools(OutfitStudioMcp& mcp) {
 	McpTool parts;
 	parts.name = "list_mesh_parts";

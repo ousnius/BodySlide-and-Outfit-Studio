@@ -32,7 +32,7 @@ constexpr const char* Instructions =
 	"To give an existing body or outfit more sliders or zaps (shape options, squish sliders) without replacing or "
 	"editing its project, make an add-on of it with create_derived_project. "
 	"Before a task, read its guide with get_guide: basics (read first), body-conversion, conform-sliders, "
-	"fix-clipping, bone-weights, cross-game, external-models and posing.";
+	"fix-clipping, bone-weights, cross-game, external-models, posing and physics-chains.";
 
 // Tools that change the project in ways the window's undo can't take back. An automatic snapshot is taken
 // before each, so an agent can always go back.
@@ -48,17 +48,17 @@ const std::set<std::string> AutoSnapshotTools = {
 	"edit_bone", "delete_bones", "set_bone_transforms", "transfer_weights", "remove_skinning",
 	"apply_pose_to_mesh", "fix_bad_bones", "new_slider", "clone_slider", "negate_sliders", "clear_slider_data",
 	"delete_sliders", "set_slider_properties", "import_slider_data", "physics_data", "transfer_zaps", "auto_fix_clipping", "import_from_game",
-	"fit_to_body", "make_contact_morph",
+	"fit_to_body", "make_contact_morph", "make_physics_chains",
 };
 
 // Tools of AutoSnapshotTools whose preview: true only measures, which needs no snapshot
-const std::set<std::string> ReadOnlyPreviewTools = {"make_contact_morph"};
+const std::set<std::string> ReadOnlyPreviewTools = {"make_contact_morph", "make_physics_chains"};
 
 // Tools that replace the project or overwrite files, which a snapshot doesn't bring back
 const std::set<std::string> DestructiveTools = {
 	"new_project", "load_project", "create_derived_project", "save_project", "export_file", "export_slider_data", "save_preset",
 	"save_pose", "mask_file", "snapshot_delete", "snapshot_restore", "write_material", "convert_textures",
-	"build_outfits",
+	"build_outfits", "write_physics_xml",
 };
 
 const char* LevelName(HostMessageLevel level) {
@@ -107,6 +107,7 @@ OutfitStudioMcp::OutfitStudioMcp(OutfitStudioFrame* inFrame)
 	AddFittingTools(*this);
 	AddTextureTools(*this);
 	AddGameTools(*this);
+	AddPhysicsTools(*this);
 	AddGuideTools(*this);
 }
 

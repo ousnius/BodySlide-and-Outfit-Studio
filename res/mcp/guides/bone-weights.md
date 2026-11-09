@@ -107,7 +107,7 @@ Physics mods move extra bones of the body (breasts, butt, belly, thighs) or clot
   - Body bounce bones (from other physics mods, e.g. CBPC) go on a collider only when the XML declares them.
   - The tools only check the structure. Ask the user to judge physics in game.
 - **Fallout 4 cloth** is Havok cloth data (HKX) in the NIF: `physics_data` lists, imports and exports it. It's made for its mesh, so a mesh with changed vertices may need its cloth data rebuilt in other tools; tell the user.
-- No tool runs the window's physics preview. Ask the user to check physics in the window or in game.
+- `simulate_physics` runs the simulation without the window and flags bones that explode, sag, stretch or don't settle back; `physics-chains` has the details. It checks only the mechanics: ask the user to judge physics in the window or in game.
 
 ## Main skeleton bones
 

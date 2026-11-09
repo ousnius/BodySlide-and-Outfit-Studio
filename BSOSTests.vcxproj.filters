@@ -155,6 +155,9 @@
     <ClCompile Include="tests\MaterialFileTest.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
+    <ClCompile Include="tests\PhysicsChainsTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
     <ClCompile Include="tests\PhysicsXmlFileTest.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
