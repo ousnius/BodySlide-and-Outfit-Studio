@@ -9,6 +9,7 @@ Outfit Studio (OS) shows everything the tools do in its window, and most edits c
 - `bone-weights`: copying and fixing bone weights, skirts and dresses, physics bones, each game's skeleton.
 - `cross-game`: an outfit from one game to another, e.g. Fallout 4 to Skyrim, with shaders, materials and textures.
 - `posing`: posing the skeleton, matching a reference picture, natural stances, hands and fingers.
+- `physics-chains`: SMP physics for hair, braids, ribbons and hanging jewelry: bone chains from the mesh or by hand, their weights, the physics XML and its settings, colliders, variants and wigs, a simulation check.
 
 ## Ground rules
 

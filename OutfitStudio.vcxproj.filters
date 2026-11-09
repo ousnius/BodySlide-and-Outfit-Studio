@@ -784,6 +784,9 @@
     <ClInclude Include="src\components\MeshRefine.h">
       <Filter>Components</Filter>
     </ClInclude>
+    <ClInclude Include="src\components\PhysicsChains.h">
+      <Filter>Components</Filter>
+    </ClInclude>
     <ClInclude Include="src\components\PoseMath.h">
       <Filter>Components</Filter>
     </ClInclude>
@@ -2259,6 +2262,9 @@
     <ClCompile Include="src\components\MeshRefine.cpp">
       <Filter>Components</Filter>
     </ClCompile>
+    <ClCompile Include="src\components\PhysicsChains.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
     <ClCompile Include="src\components\PoseMath.cpp">
       <Filter>Components</Filter>
     </ClCompile>
@@ -2614,6 +2620,9 @@
       <Filter>MCP</Filter>
     </ClCompile>
     <ClCompile Include="src\mcp\McpToolsQuality.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsPhysics.cpp">
       <Filter>MCP</Filter>
     </ClCompile>
     <ClCompile Include="src\mcp\McpSnapshots.cpp">

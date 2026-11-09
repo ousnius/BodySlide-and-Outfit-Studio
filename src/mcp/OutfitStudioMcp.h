@@ -127,6 +127,7 @@ void AddMeasureTools(OutfitStudioMcp& mcp);
 void AddFittingTools(OutfitStudioMcp& mcp);
 void AddTextureTools(OutfitStudioMcp& mcp);
 void AddGameTools(OutfitStudioMcp& mcp);
+void AddPhysicsTools(OutfitStudioMcp& mcp);
 void AddGuideTools(OutfitStudioMcp& mcp);
 
 struct AutomationStep;
@@ -284,6 +285,14 @@ private:
 	std::vector<std::pair<std::string, std::unordered_map<int, float>>> saved;
 	OutfitStudioMcp& mcp;
 };
+
+// Records new weights of a shape as one undo step and applies them, like the weight brush. newWeights holds the
+// new weight of vertices by bone, 0 removes it. Bones the shape doesn't have yet are added to it. Returns the
+// number of changed vertex weights.
+size_t McpApplyWeights(OutfitStudioMcp& mcp, nifly::NiShape* shape, const std::map<std::string, std::unordered_map<uint16_t, float>>& newWeights);
+
+// Most bones per vertex the target game takes (4, Starfield 8)
+int McpInfluenceLimit();
 
 class Mesh;
 

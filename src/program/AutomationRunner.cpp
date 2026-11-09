@@ -750,6 +750,7 @@ void AutomationRunner::ResetAndClearProject() {
 		project->DeleteShape(shape);
 	project->GetWorkAnim()->Clear();
 	project->GetWorkNif()->Clear();
+	project->ClearLoadedFileData();
 	outfitStudio->ResetProject();
 	SyncProject();
 }
@@ -2496,6 +2497,9 @@ int AutomationRunner::ExecuteStepSetExtraData(const AutomationStep& step) {
 		wxLogError("Automation: SetExtraData - extra data name is empty.");
 		return 1;
 	}
+	// A physics link set or deleted on the root by hand is the one the output gets, not one of the loaded files
+	if (step.targetMeshes.empty() && ToLower(name) == "hdt skinned mesh physics object")
+		project->ForgetCollectedPhysicsLinks();
 
 	if (!IsSupportedAutomationExtraDataType(type)) {
 		wxLogError("Automation: SetExtraData - unsupported extra data block type '%s'.", type.c_str());
@@ -2616,6 +2620,9 @@ int AutomationRunner::ExecuteStepDeleteExtraData(const AutomationStep& step) {
 		wxLogError("Automation: DeleteExtraData - extra data name is empty.");
 		return 1;
 	}
+	// A physics link set or deleted on the root by hand is the one the output gets, not one of the loaded files
+	if (step.targetMeshes.empty() && ToLower(name) == "hdt skinned mesh physics object")
+		project->ForgetCollectedPhysicsLinks();
 
 	std::vector<NiAVObject*> targets;
 	if (step.targetMeshes.empty()) {

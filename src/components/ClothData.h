@@ -54,6 +54,13 @@ public:
 				 const std::vector<nifly::NiShape*>& shapes,
 				 const SkeletonBones& isSkeletonBone = {});
 
+	// Forgets all blocks, e.g. when the project is cleared for a new one
+	void Clear() {
+		blocks.clear();
+		shapeSources.clear();
+		manualSources.clear();
+	}
+
 	// Standalone HKX import that is only written to the output on request
 	void AddManual(const std::string& source, std::unique_ptr<nifly::BSClothExtraData> block);
 

@@ -409,6 +409,15 @@ public:
 	// parsed go to outMissing.
 	std::vector<std::pair<std::string, PhysicsXmlFile>> ReadPhysicsXmls(const std::string& shapeName, std::vector<std::string>* outMissing = nullptr);
 	const ClothData::Blocks& GetClothData() const { return clothData.GetBlocks(); }
+	// Forgets the cloth data and physics links collected from the files loaded so far, so a project cleared for a
+	// new one doesn't write them into its output
+	void ClearLoadedFileData() {
+		clothData.Clear();
+		rootPhysicsData.clear();
+	}
+	// Forgets the physics links collected from loaded files, so the one the work NIF's root has now (set or deleted
+	// by hand) is what the output gets
+	void ForgetCollectedPhysicsLinks() { rootPhysicsData.clear(); }
 	void AddClothData(const std::string& source, std::unique_ptr<nifly::BSClothExtraData> block) { clothData.AddManual(source, std::move(block)); }
 
 	nifly::NiShape* GetBaseShape() { return baseShape; }

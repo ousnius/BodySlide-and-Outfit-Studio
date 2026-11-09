@@ -90,10 +90,20 @@ json CustomBoneStep(const char* type, const json& args) {
 		McpArgs::Wrong("name", "a bone name");
 	Vector3 translation = VectorArg(args, "translation");
 	Vector3 rotation = VectorArg(args, "rotation");
+	const std::string parentName = McpArgs::String(args, "parent", "");
+	// A position in the skeleton's space (e.g. a point on the mesh) is turned into one relative to the parent, whose
+	// rotation it otherwise depends on
+	if (McpArgs::Has(args, "globalPosition")) {
+		if (McpArgs::Has(args, "translation"))
+			McpArgs::Wrong("globalPosition", "either globalPosition or translation, not both");
+		translation = VectorArg(args, "globalPosition");
+		if (AnimBone* parent = parentName.empty() ? nullptr : AnimSkeleton::getInstance().GetBonePtr(parentName))
+			translation = parent->xformToGlobal.InverseTransform().ApplyTransform(translation);
+	}
 	return {
 		{"type", type},
 		{"BoneName", name},
-		{"ParentBone", McpArgs::String(args, "parent", "")},
+		{"ParentBone", parentName},
 		{"TransX", translation.x},
 		{"TransY", translation.y},
 		{"TransZ", translation.z},
@@ -104,6 +114,10 @@ json CustomBoneStep(const char* type, const json& args) {
 }
 
 const json TranslationProp = McpProp("array", "Position [x, y, z] relative to the parent bone. Default [0, 0, 0].");
+const json GlobalPositionProp = McpProp("array",
+										 "Position [x, y, z] in the skeleton's space, like globalPosition of list_skeleton_bones, instead of "
+										 "translation: e.g. a point on the mesh where a physics joint goes. In the skeleton's units, which are "
+										 "the mesh's except for Starfield (meters).");
 const json RotationProp = McpProp("array", "Rotation to the parent as a rotation vector [x, y, z]: the axis times the angle in radians, as the dialog takes it. Default [0, 0, 0].");
 
 } // namespace
@@ -204,6 +218,7 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 			{"name", McpProp("string", "New bone name")},
 			{"parent", McpProp("string", "Parent bone. Default: none, the root.")},
 			{"translation", TranslationProp},
+			{"globalPosition", GlobalPositionProp},
 			{"rotation", RotationProp},
 		},
 		{"name"});
@@ -228,6 +243,7 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 			{"name", McpProp("string", "Custom bone")},
 			{"parent", McpProp("string", "Parent bone. Default: none, the root.")},
 			{"translation", TranslationProp},
+			{"globalPosition", GlobalPositionProp},
 			{"rotation", RotationProp},
 		},
 		{"name"});
