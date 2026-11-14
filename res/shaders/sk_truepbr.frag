@@ -171,13 +171,14 @@ void main(void)
 
 			imageBasedLight(outDiffuse, outSpecular);
 
-			// Emissive
-			if (bEmissive)
+			// Emissive. Under True PBR a shape is emissive exactly when it has an emissive map in slot 2,
+			// whatever its own emit flag says.
+			if (bPBREmissive)
 			{
 				emissive += prop.emissiveColor * prop.emissiveMultiple;
 
 				// Emissive map
-				if (bPBREmissive && bShowTexture)
+				if (bShowTexture)
 				{
 					vec3 emissiveMap = texture(texEmissive, uv).rgb;
 					emissive *= bEmissiveSRGB ? emissiveMap : srgbToLinear(emissiveMap);

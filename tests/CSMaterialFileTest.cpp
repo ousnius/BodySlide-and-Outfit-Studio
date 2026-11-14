@@ -122,6 +122,14 @@ TEST_CASE("Files that aren't version 1 materials are refused", "[CSMaterial]") {
 	CSMaterial material;
 	CHECK(ReadText(R"({"Version": 1.0, "DiffuseTexture": "", "RootMaterialPath": "", "Alpha": 128, "PBRFuzzRoughness": -5})", material));
 	CHECK(ReadText(R"({"Version": 1, "DiffuseTexture": "A\\B.DDS", "EmittanceColor": "#A0b0C0"})", material));
+
+	// Saved by an editor that puts a byte order mark in front
+	CHECK(ReadText("\xEF\xBB\xBF{\"Version\": 1, \"TwoSided\": true}", material));
+	CHECK(material.twoSided == true);
+
+	// A file that fails part way leaves nothing of what was read before
+	CHECK_FALSE(ReadText(R"({"Version": 1, "Alpha": 0.5, "TwoSided": "yes"})", material));
+	CHECK(material == CSMaterial());
 }
 
 TEST_CASE("The rules between keys of the format are checked", "[CSMaterial]") {

@@ -173,6 +173,9 @@ struct CSMaterial {
 	// "#rrggbb" for a color and back. ParseColor returns false for anything else.
 	static std::string FormatColor(const nifly::Vector3& color);
 	static bool ParseColor(const std::string& text, nifly::Vector3& color);
+
+private:
+	bool ReadJson(const nlohmann::json& json, std::string* error);
 };
 
 // Finds and reads Community Shaders materials, root materials included

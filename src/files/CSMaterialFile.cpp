@@ -255,8 +255,18 @@ nlohmann::json CSMaterial::GetKey(const std::string& name) const {
 }
 
 bool CSMaterial::FromJson(const nlohmann::json& json, std::string* error) {
-	*this = CSMaterial();
+	// All or nothing: a file that fails leaves an empty material, not the keys read before the failure
+	CSMaterial read;
+	if (!read.ReadJson(json, error)) {
+		*this = CSMaterial();
+		return false;
+	}
 
+	*this = std::move(read);
+	return true;
+}
+
+bool CSMaterial::ReadJson(const nlohmann::json& json, std::string* error) {
 	if (!json.is_object()) {
 		SetError(error, "A material file has to be a JSON object.");
 		return false;
