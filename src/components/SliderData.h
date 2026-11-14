@@ -71,7 +71,7 @@ public:
 	// The add-on project that the slider was made for. BodySlide leaves the slider out when the add-on isn't installed.
 	std::string addOnName;
 	std::string addOnID; // Project ID of the add-on, empty if it has none
-	bool bNoAutoConform = false; // Add-ons of a body: BodySlide doesn't conform the slider to outfits of the body.
+	bool bNoAutoConform = false; // Add-ons of a body: BodySlide doesn't conform the slider to outfits of the body, only the body's shapes in them get it.
 	bool bAutoConformed = false; // BodySlide: conformed from an add-on of the body when loading. Never saved.
 	std::string stackedFrom;	 // BodySlide: the add-on project that the slider was stacked from when loading. Never saved.
 

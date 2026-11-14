@@ -138,7 +138,7 @@ private:
 	ProjectCatalog projectCatalog;
 	bool conformAddOnSliders = false; // Conform the add-on sliders of the body to outfits that don't have them
 	ProjectAddOns activeAddOns;
-	// Bodies loaded to conform their add-on sliders, by file, set and shape. Null if it has none.
+	// Bodies loaded for their add-on sliders, by file, set and shape, and whether they are conformed. Null if it has none.
 	std::map<std::string, std::shared_ptr<ConformBody>> conformBodies;
 	std::mutex conformBodiesMutex;
 	// Projects with conformed add-on sliders, so that they aren't conformed again each time they are shown
@@ -146,7 +146,7 @@ private:
 	// Slider values that the next activated outfit keeps, by name: small and big value
 	std::map<std::string, std::pair<float, float>> pendingSliderValues;
 
-	std::shared_ptr<ConformBody> GetConformBody(const ConformBodyRef& ref, std::vector<std::string>& warnings);
+	std::shared_ptr<ConformBody> GetConformBody(const ConformBodyRef& ref, bool conform, std::vector<std::string>& warnings);
 	// Logs the warnings and the vertex counts of stacked add-ons that don't fit the NIF anymore
 	void LogProjectAddOns(const SliderSet& set, const ProjectAddOns& addOns, nifly::NifFile* nif = nullptr);
 

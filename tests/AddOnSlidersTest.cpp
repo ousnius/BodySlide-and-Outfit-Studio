@@ -133,33 +133,47 @@ ProjectCatalog LoadCatalog(const ProjectFolder& folder) {
 	return catalog;
 }
 
-// Flat grid in the XY plane at height z, (n + 1) x (n + 1) vertices spanning 0 to 10
-std::string WriteGridNif(const std::filesystem::path& dir, const std::string& fileName, const std::string& shapeName, int n, float z) {
-	std::vector<Vector3> verts;
-	std::vector<Triangle> tris;
-	std::vector<Vector2> uvs;
-	for (int y = 0; y <= n; y++) {
-		for (int x = 0; x <= n; x++) {
-			verts.emplace_back(x * 10.0f / n, y * 10.0f / n, z);
-			uvs.emplace_back(static_cast<float>(x) / n, static_cast<float>(y) / n);
-		}
-	}
+// Flat grid shape in the XY plane at height z, (n + 1) x (n + 1) vertices spanning 0 to 10
+struct Grid {
+	std::string shapeName;
+	int n = 1;
+	float z = 0.0f;
+};
 
-	for (int y = 0; y < n; y++) {
-		for (int x = 0; x < n; x++) {
-			uint16_t i = static_cast<uint16_t>(y * (n + 1) + x);
-			tris.emplace_back(i, static_cast<uint16_t>(i + 1), static_cast<uint16_t>(i + n + 1));
-			tris.emplace_back(static_cast<uint16_t>(i + 1), static_cast<uint16_t>(i + n + 2), static_cast<uint16_t>(i + n + 1));
-		}
-	}
-
+std::string WriteGridsNif(const std::filesystem::path& dir, const std::string& fileName, const std::vector<Grid>& grids) {
 	NifFile nif;
 	nif.Create(nifly::NiVersion::getSSE());
-	nif.CreateShapeFromData(shapeName, &verts, &tris, &uvs);
+
+	for (auto& grid : grids) {
+		const int n = grid.n;
+		std::vector<Vector3> verts;
+		std::vector<Triangle> tris;
+		std::vector<Vector2> uvs;
+		for (int y = 0; y <= n; y++) {
+			for (int x = 0; x <= n; x++) {
+				verts.emplace_back(x * 10.0f / n, y * 10.0f / n, grid.z);
+				uvs.emplace_back(static_cast<float>(x) / n, static_cast<float>(y) / n);
+			}
+		}
+
+		for (int y = 0; y < n; y++) {
+			for (int x = 0; x < n; x++) {
+				uint16_t i = static_cast<uint16_t>(y * (n + 1) + x);
+				tris.emplace_back(i, static_cast<uint16_t>(i + 1), static_cast<uint16_t>(i + n + 1));
+				tris.emplace_back(static_cast<uint16_t>(i + 1), static_cast<uint16_t>(i + n + 2), static_cast<uint16_t>(i + n + 1));
+			}
+		}
+
+		nif.CreateShapeFromData(grid.shapeName, &verts, &tris, &uvs);
+	}
 
 	auto path = dir / fileName;
 	REQUIRE(nif.Save(path) == 0);
 	return path.u8string();
+}
+
+std::string WriteGridNif(const std::filesystem::path& dir, const std::string& fileName, const std::string& shapeName, int n, float z) {
+	return WriteGridsNif(dir, fileName, {{shapeName, n, z}});
 }
 
 // Writes data sets of the same target to an .osd file
@@ -488,14 +502,13 @@ TEST_CASE("Add-on sliders of the body are conformed to outfits that don't have t
 		CHECK(diff.second.z == Catch::Approx(2.0f).margin(1e-4));
 }
 
-TEST_CASE("Add-on sliders kept off outfits stay on the body but aren't conformed", "[AddOnSliders]") {
+TEST_CASE("Add-on sliders kept off outfits only go onto the body's shapes in them", "[AddOnSliders]") {
 	ProjectFolder folder;
 	auto bodyFolder = folder.DataFolder("Body");
 	auto dressFolder = folder.DataFolder("Dress");
 
 	WriteGridNif(bodyFolder, "Body.nif", "BodyShape", 10, 0.0f);
 	WriteOSD(bodyFolder / "Body Extra.osd", "BodyShape", {{"BodyShapeExtra", Lift(121, 2.0f)}, {"BodyShapeBodyOnly", Lift(121, 3.0f)}});
-	std::string dressNif = WriteGridNif(dressFolder, "Dress.nif", "Dress", 6, 0.5f);
 
 	SliderSet body = MakeSet("Body", "Body", "Body.nif", {"BodyShape"});
 	body.SetProjectID(SliderSet::GenerateProjectID());
@@ -520,25 +533,80 @@ TEST_CASE("Add-on sliders kept off outfits stay on the body but aren't conformed
 	CHECK(stackedBody["Body Only"].bNoAutoConform);
 	CHECK(FindData(stackedBody, "Body Only", "BodyShape"));
 
-	SliderSet dress = MakeSet("Dress", "Dress", "Dress.nif", {"Dress"});
-	dress.SetReferenceInfo("SliderSets" + std::string(PathSepStr) + "Body.osp", "Body", "BodyShape");
-	dress.SetBaseDataPath(folder.ShapeDataPath());
+	auto makeOutfit = [&](const std::string& name, const std::vector<std::string>& shapes) {
+		SliderSet outfit = MakeSet(name, "Dress", name + ".nif", shapes);
+		outfit.SetReferenceInfo("SliderSets" + std::string(PathSepStr) + "Body.osp", "Body", "BodyShape");
+		outfit.SetBaseDataPath(folder.ShapeDataPath());
+		return outfit;
+	};
 
-	ConformBodyRef ref = FindConformBody(dress, catalog, folder.Path());
-	REQUIRE(ref.Found());
+	auto loadBody = [&](const SliderSet& outfit, ConformBody& conformBody, bool conform) {
+		ConformBodyRef ref = FindConformBody(outfit, catalog, folder.Path());
+		REQUIRE(ref.Found());
+		REQUIRE(conformBody.Load(ref, catalog, folder.ShapeDataPath(), LoadNif, warnings, conform));
+	};
 
-	ConformBody conformBody;
-	REQUIRE(conformBody.Load(ref, catalog, folder.ShapeDataPath(), LoadNif, warnings));
-	REQUIRE(conformBody.sliders.size() == 1);
-	CHECK(conformBody.sliders[0].slider.name == "Extra");
+	SECTION("An outfit without the body's shape doesn't get the slider") {
+		std::string dressNif = WriteGridNif(dressFolder, "Dress.nif", "Dress", 6, 0.5f);
+		SliderSet dress = makeOutfit("Dress", {"Dress"});
 
-	NifFile nif;
-	REQUIRE(LoadNif(dressNif, nif));
-	AnimInfo anim;
-	LoadConformAnim(anim, nif);
+		ConformBody conformBody;
+		loadBody(dress, conformBody, true);
+		REQUIRE(conformBody.sliders.size() == 2);
 
-	CHECK(ConformAddOnSliders(dress, nif, anim, conformBody) == std::vector<std::string>{"Body Extra"});
-	CHECK(SliderNames(dress) == std::vector<std::string>{"Extra"});
+		NifFile nif;
+		REQUIRE(LoadNif(dressNif, nif));
+		AnimInfo anim;
+		LoadConformAnim(anim, nif);
+
+		CHECK(ConformAddOnSliders(dress, nif, anim, conformBody) == std::vector<std::string>{"Body Extra"});
+		CHECK(SliderNames(dress) == std::vector<std::string>{"Extra"});
+	}
+
+	SECTION("The body's shape in an outfit gets the body's data, other shapes don't move") {
+		std::string suitNif = WriteGridsNif(dressFolder, "Suit.nif", {{"Dress", 6, 0.5f}, {"BodyShape", 10, 0.0f}});
+		SliderSet suit = makeOutfit("Suit", {"Dress", "BodyShape"});
+
+		NifFile nif;
+		REQUIRE(LoadNif(suitNif, nif));
+
+		SECTION("with conforming") {
+			ConformBody conformBody;
+			loadBody(suit, conformBody, true);
+
+			AnimInfo anim;
+			LoadConformAnim(anim, nif);
+
+			CHECK(ConformAddOnSliders(suit, nif, anim, conformBody) == std::vector<std::string>{"Body Extra"});
+			CHECK(SliderNames(suit) == std::vector<std::string>{"Extra", "Body Only"});
+			CHECK(FindData(suit, "Extra", "Dress"));
+		}
+
+		SECTION("without conforming") {
+			ConformBody conformBody;
+			loadBody(suit, conformBody, false);
+			REQUIRE(conformBody.sliders.size() == 1);
+
+			// Nothing is conformed, so the skinning isn't needed
+			CHECK(ConformAddOnSliders(suit, nif, AnimInfo(), conformBody).empty());
+			CHECK(SliderNames(suit) == std::vector<std::string>{"Body Only"});
+		}
+
+		SliderData& slider = suit["Body Only"];
+		CHECK_FALSE(slider.bAutoConformed);
+		CHECK(slider.stackedFrom == "Body Extra");
+		CHECK_FALSE(FindData(suit, "Body Only", "Dress"));
+
+		const DiffInfo* df = FindData(suit, "Body Only", "BodyShape");
+		REQUIRE(df);
+		DiffDataSets diffs;
+		suit.LoadSetDiffData(diffs);
+		TargetDataDiffs* data = diffs.GetDiffSet(df->dataName);
+		REQUIRE(data);
+		CHECK(data->size() == 121);
+		for (auto& diff : *data)
+			CHECK(diff.second.z == Catch::Approx(3.0f));
+	}
 }
 
 TEST_CASE("Add-ons save and load all their base projects", "[AddOnSliders]") {

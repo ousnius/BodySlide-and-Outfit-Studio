@@ -179,13 +179,16 @@ public:
 	ConformBody(const ConformBody&) = delete;
 	ConformBody& operator=(const ConformBody&) = delete;
 
-	// Loads the body and the add-on sliders of the reference shape, without those the add-on keeps off outfits
-	// (SliderData::bNoAutoConform). 'loadNif' loads a NIF file, false if it fails.
+	// Loads the body and the add-on sliders of the reference shape. Without 'conform', only those that the add-on keeps
+	// off outfits (SliderData::bNoAutoConform) are loaded, which need no conforming, and the shapes of a body variant
+	// that its base body's add-ons don't fit leave their sliders out (FitBaseAddOnsToVariant).
+	// 'loadNif' loads a NIF file, false if it fails.
 	bool Load(const ConformBodyRef& bodyRef,
 			  const ProjectCatalog& catalog,
 			  const std::string& baseDataPath,
 			  const std::function<bool(const std::string&, nifly::NifFile&)>& loadNif,
-			  std::vector<std::string>& warnings);
+			  std::vector<std::string>& warnings,
+			  bool conform = true);
 
 	nifly::NiShape* RefShape() { return nif.FindBlockByName<nifly::NiShape>(ref.shapeName); }
 };
@@ -212,7 +215,9 @@ void LoadConformAnim(AnimInfo& anim, nifly::NifFile& nif);
 
 // Conforms the add-on sliders of the body that the set doesn't have to the set's shapes, like Conform in
 // Outfit Studio. A shape with the reference shape's target and vertex count gets the reference data as it is.
-// The sliders are added to the set with generated data and marked as conformed automatically.
+// The sliders are added to the set with generated data and marked as conformed automatically. Sliders that the add-on
+// keeps off outfits (SliderData::bNoAutoConform) only go onto those shapes, aren't marked and are left out if the set
+// has none. 'setAnim' isn't used for a body loaded without conforming.
 // Returns the names of the add-ons that sliders were conformed from.
 std::vector<std::string> ConformAddOnSliders(SliderSet& set, nifly::NifFile& setNif, const AnimInfo& setAnim, ConformBody& body, const ConformOptions& options = ConformOptions());
 

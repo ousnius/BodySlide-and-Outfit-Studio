@@ -545,7 +545,7 @@ void AddSliderFileTools(OutfitStudioMcp& mcp) {
 			{"ticked", McpProp("boolean", "toggle: on by default in BodySlide")},
 			{"toggleValue", McpProp("number", "toggle: percent the slider is applied at while ticked, 100 by default")},
 			{"toggleSliders", McpNumberMap("toggle: other sliders and zaps and the percent they're held at while ticked; a zap above 0 is zapped, at 0 it isn't. Replaces the list; {} clears it.")},
-			{"noAutoConform", McpProp("boolean", "Add-ons of a body: BodySlide doesn't conform the slider to outfits of the body. It still works on the body and its variants.")},
+			{"noAutoConform", McpProp("boolean", "Add-ons of a body: BodySlide doesn't conform the slider to outfits of the body. It still works on the body and its variants, and on the body's shapes in outfits (same target and vertex count), even with Conform Add-on Sliders off; other shapes of outfits don't move.")},
 			{"defaultSmall", McpProp("integer", "Default value for the small body, 0 to 100")},
 			{"defaultBig", McpProp("integer", "Default value for the big body, 0 to 100")},
 		},

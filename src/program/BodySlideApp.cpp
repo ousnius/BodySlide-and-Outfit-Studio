@@ -781,7 +781,13 @@ void BodySlideApp::AddProjectAddOns(SliderSet& set, bool conform, ProjectAddOns&
 	outAddOns.baseStacked = stack.baseAddOns;
 	outAddOns.missing = std::move(stack.missingAddOns);
 
-	if (stack.baseAddOns.empty() && !conform)
+	// Add-on sliders of the body that it keeps off outfits go onto its shapes in them, even without conforming
+	ConformBodyRef bodyRef = FindConformBody(set, projectCatalog, ProjectUtil::GetProjectPath());
+	std::shared_ptr<ConformBody> body;
+	if (bodyRef.Found())
+		body = GetConformBody(bodyRef, conform, outAddOns.warnings);
+
+	if (stack.baseAddOns.empty() && !body)
 		return;
 
 	// Fitting and conforming need the shapes
@@ -805,14 +811,6 @@ void BodySlideApp::AddProjectAddOns(SliderSet& set, bool conform, ProjectAddOns&
 	if (!stack.baseAddOns.empty())
 		FitBaseAddOnsToVariant(set, *nif, conform ? &anim : nullptr, stack.baseAddOns, projectCatalog, baseDataPath, loadNif, conform, outAddOns.warnings);
 
-	if (!conform)
-		return;
-
-	ConformBodyRef bodyRef = FindConformBody(set, projectCatalog, ProjectUtil::GetProjectPath());
-	if (!bodyRef.Found())
-		return;
-
-	std::shared_ptr<ConformBody> body = GetConformBody(bodyRef, outAddOns.warnings);
 	if (!body)
 		return;
 
@@ -820,8 +818,8 @@ void BodySlideApp::AddProjectAddOns(SliderSet& set, bool conform, ProjectAddOns&
 	outAddOns.conformed = ConformAddOnSliders(set, *nif, anim, *body);
 }
 
-std::shared_ptr<ConformBody> BodySlideApp::GetConformBody(const ConformBodyRef& ref, std::vector<std::string>& warnings) {
-	std::string key = ref.fileName + "|" + ref.setName + "|" + ref.shapeName;
+std::shared_ptr<ConformBody> BodySlideApp::GetConformBody(const ConformBodyRef& ref, bool conform, std::vector<std::string>& warnings) {
+	std::string key = ref.fileName + "|" + ref.setName + "|" + ref.shapeName + (conform ? "" : "|noconform");
 
 	// Outfits of the same body wait for it to be loaded once
 	std::lock_guard<std::mutex> lock(conformBodiesMutex);
@@ -829,12 +827,12 @@ std::shared_ptr<ConformBody> BodySlideApp::GetConformBody(const ConformBodyRef& 
 	if (loaded != conformBodies.end())
 		return loaded->second;
 
-	wxLogMessage("Loading body '%s' to conform its add-on sliders...", ref.setName);
+	wxLogMessage("Loading body '%s' for its add-on sliders...", ref.setName);
 
 	auto body = std::make_shared<ConformBody>();
 	const std::string baseDataPath = ProjectUtil::GetProjectPath() + PathSepStr + "ShapeData";
 	auto loadNif = [](const std::string& fileName, NifFile& loadInto) { return LoadNifFile(fileName, loadInto); };
-	if (!body->Load(ref, projectCatalog, baseDataPath, loadNif, warnings))
+	if (!body->Load(ref, projectCatalog, baseDataPath, loadNif, warnings, conform))
 		body.reset();
 
 	conformBodies[key] = body;

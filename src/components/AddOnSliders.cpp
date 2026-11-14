@@ -578,7 +578,8 @@ bool ConformBody::Load(const ConformBodyRef& bodyRef,
 					   const ProjectCatalog& catalog,
 					   const std::string& baseDataPath,
 					   const std::function<bool(const std::string&, nifly::NifFile&)>& loadNif,
-					   std::vector<std::string>& warnings) {
+					   std::vector<std::string>& warnings,
+					   bool conform) {
 	ref = bodyRef;
 	sliders.clear();
 	addOnNames.clear();
@@ -603,7 +604,7 @@ bool ConformBody::Load(const ConformBodyRef& bodyRef,
 
 	auto hasAddOnSliders = [&]() {
 		for (size_t i = 0; i < bodySet.size(); i++)
-			if (!bodySet[i].stackedFrom.empty())
+			if (!bodySet[i].stackedFrom.empty() && (conform || bodySet[i].bNoAutoConform))
 				return true;
 		return false;
 	};
@@ -621,19 +622,20 @@ bool ConformBody::Load(const ConformBodyRef& bodyRef,
 		return false;
 	}
 
-	LoadConformAnim(anim, nif);
+	if (conform)
+		LoadConformAnim(anim, nif);
 
 	// The edited shapes of a body variant get the sliders conformed from the base body first
 	if (!stack.baseAddOns.empty())
-		FitBaseAddOnsToVariant(bodySet, nif, &anim, stack.baseAddOns, catalog, baseDataPath, loadNif, true, warnings);
+		FitBaseAddOnsToVariant(bodySet, nif, conform ? &anim : nullptr, stack.baseAddOns, catalog, baseDataPath, loadNif, conform, warnings);
 
 	for (size_t i = 0; i < bodySet.size(); i++) {
 		const SliderData& slider = bodySet[i];
 		if (slider.stackedFrom.empty() || slider.bZap || slider.bUV)
 			continue;
 
-		// The add-on only wants the slider on the body
-		if (slider.bNoAutoConform)
+		// Without conforming, only the sliders that the add-on keeps off outfits are needed
+		if (!conform && !slider.bNoAutoConform)
 			continue;
 
 		std::string refDataName;
@@ -768,8 +770,10 @@ std::vector<std::string> ConformAddOnSliders(SliderSet& set, nifly::NifFile& set
 		if (set.SliderExists(slider.slider.name) || !refDiffs.GetDiffSet(slider.refDataName))
 			continue;
 
+		// The add-on only wants the slider on the body, which outfits may have a shape of
 		conformSliders.push_back(&slider);
-		sliderData.emplace_back(slider.slider.name, slider.refDataName);
+		if (!slider.slider.bNoAutoConform)
+			sliderData.emplace_back(slider.slider.name, slider.refDataName);
 	}
 
 	if (conformSliders.empty())
@@ -818,7 +822,7 @@ std::vector<std::string> ConformAddOnSliders(SliderSet& set, nifly::NifFile& set
 		SliderData newSlider = slider->slider;
 		newSlider.dataFiles.clear();
 		newSlider.bInherited = false;
-		newSlider.bAutoConformed = true;
+		newSlider.bAutoConformed = !slider->slider.bNoAutoConform;
 		newSlider.stackedFrom = slider->addOnName;
 
 		auto addData = [&](const std::string& targetName, const TargetDataDiffs& diffs) {
@@ -842,7 +846,7 @@ std::vector<std::string> ConformAddOnSliders(SliderSet& set, nifly::NifFile& set
 			continue;
 
 		set.CopySlider(&newSlider);
-		if (std::find(usedAddOns.begin(), usedAddOns.end(), slider->addOnName) == usedAddOns.end())
+		if (newSlider.bAutoConformed && std::find(usedAddOns.begin(), usedAddOns.end(), slider->addOnName) == usedAddOns.end())
 			usedAddOns.push_back(slider->addOnName);
 	}
 
