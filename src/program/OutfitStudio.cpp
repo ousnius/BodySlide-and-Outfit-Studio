@@ -6027,7 +6027,7 @@ void OutfitStudioFrame::MeshFromProj(NiShape* shape, const bool reloadTextures) 
 	if (extInitialized) {
 		MaterialFile matFile;
 		bool hasMatFile = project->GetShapeMaterialFile(shape, matFile);
-		glView->SetMeshTextures(shape->name.get(), project->GetShapeTextures(shape), hasMatFile, matFile, reloadTextures, project->GetShapeSFMaterial(shape));
+		glView->SetMeshTextures(shape->name.get(), project->GetShapeTextures(shape), hasMatFile, matFile, reloadTextures, project->GetShapeSFMaterial(shape), project->GetShapeCSMaterial(shape));
 	}
 
 	UpdateMeshFromSet(shape);
@@ -12763,7 +12763,7 @@ void OutfitStudioFrame::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
 
 			MaterialFile matFile;
 			bool hasMatFile = project->GetShapeMaterialFile(shape, matFile);
-			glView->SetMeshTextures(newName, project->GetShapeTextures(shape), hasMatFile, matFile, false, project->GetShapeSFMaterial(shape));
+			glView->SetMeshTextures(newName, project->GetShapeTextures(shape), hasMatFile, matFile, false, project->GetShapeSFMaterial(shape), project->GetShapeCSMaterial(shape));
 
 			subitem = outfitShapes->AppendItem(outfitRoot, wxString::FromUTF8(newName));
 			outfitShapes->SetItemState(subitem, 0);
@@ -16299,7 +16299,8 @@ void wxGLPanel::SetMeshTextures(const std::string& shapeName,
 								const bool hasMatFile,
 								const MaterialFile& matFile,
 								const bool reloadTextures,
-								const std::shared_ptr<const SFLayeredMaterial>& sfMaterial) {
+								const std::shared_ptr<const SFLayeredMaterial>& sfMaterial,
+								const std::shared_ptr<const CSMaterial>& csMaterial) {
 	Mesh* m = gls.GetMesh(shapeName);
 	if (!m)
 		return;
@@ -16316,6 +16317,10 @@ void wxGLPanel::SetMeshTextures(const std::string& shapeName,
 
 	m->sfLayered = false;
 	m->sfRenderData.reset();
+
+	// Before the shaders are picked, since it is the material that asks for True PBR
+	if (targetGame == SKYRIM || targetGame == SKYRIMSE || targetGame == SKYRIMVR)
+		m->UpdateFromCSMaterial(csMaterial);
 
 	std::string vShader = Config["AppDir"] + "/res/shaders/default.vert";
 	std::string fShader = Config["AppDir"] + "/res/shaders/default.frag";

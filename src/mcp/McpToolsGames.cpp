@@ -5,17 +5,20 @@ See the included LICENSE file
 
 #include "OutfitStudioMcp.h"
 #include "McpSnapshots.h"
+#include "../files/CSMaterialFile.h"
 #include "../files/MaterialFile.h"
 #include "../files/GameDataStream.h"
 #include "../program/GameImport.h"
 #include "../program/OutfitStudio.h"
 #include "../utils/ConfigurationManager.h"
+#include "../utils/PlatformUtil.h"
 
 #include <wx/filename.h>
 #include <wx/log.h>
 
 #include <algorithm>
 #include <cmath>
+#include <fstream>
 #include <set>
 #include <type_traits>
 #include <variant>
@@ -596,6 +599,8 @@ std::string MaterialFileArg(const json& args, const char* name) {
 	return file;
 }
 
+McpToolResult WriteCSMaterial(OutfitStudioMcp& mcp, const json& args, const std::string& file);
+
 McpToolResult WriteMaterial(OutfitStudioMcp& mcp, const json& args) {
 	OutfitProject& project = mcp.Project();
 	NifFile& nif = *project.GetWorkNif();
@@ -603,12 +608,15 @@ McpToolResult WriteMaterial(OutfitStudioMcp& mcp, const json& args) {
 
 	const std::string file = McpFilePath(McpArgs::String(args, "file"));
 	const wxString ext = wxFileName(wxString::FromUTF8(file)).GetExt().Lower();
-	if (ext != "bgsm" && ext != "bgem")
-		throw McpToolError("The file has to end in .bgsm (lighting material) or .bgem (effect material).");
+	if (ext != "bgsm" && ext != "bgem" && ext != "csm")
+		throw McpToolError("The file has to end in .bgsm (lighting material), .bgem (effect material) or .csm (Skyrim Community Shaders material).");
 	McpCheckOverwrite(file, args);
 
 	if (McpArgs::Has(args, "base") && McpArgs::Has(args, "shape"))
 		throw McpToolError("Pass either 'base' or 'shape' to start from, not both.");
+
+	if (ext == "csm")
+		return WriteCSMaterial(mcp, args, file);
 
 	json notes = json::array();
 	json source;
@@ -708,6 +716,302 @@ McpToolResult WriteMaterial(OutfitStudioMcp& mcp, const json& args) {
 	if (!source.is_null())
 		result.data["source"] = source;
 	result.data["material"] = MaterialJson(written);
+	if (!assigned.empty())
+		result.data["assignedTo"] = assigned;
+	if (!notes.empty())
+		result.data["notes"] = notes;
+	return result;
+}
+
+bool IsCSMaterialFile(const std::string& path) {
+	return CSMaterialResolver::IsMaterialPath(path);
+}
+
+// Opens Community Shaders materials by their data folder relative path ("materials/....csm"): in the
+// data folder the file at hand lives in, then in dataFolders, then the way the game data is searched -
+// the game's data folders and then the archives
+CSMaterialResolver::Loader CSMaterialLoader(const json& args, const std::string& file) {
+	std::vector<std::string> folders;
+
+	std::string path = file;
+	std::replace(path.begin(), path.end(), '\\', '/');
+	std::string lower = path;
+	std::transform(lower.begin(), lower.end(), lower.begin(), [](char c) { return c >= 'A' && c <= 'Z' ? static_cast<char>(c - 'A' + 'a') : c; });
+	const size_t index = lower.rfind("/materials/");
+	if (index != std::string::npos)
+		folders.push_back(path.substr(0, index + 1));
+
+	for (std::string folder : DataFolders(args)) {
+		std::replace(folder.begin(), folder.end(), '\\', '/');
+		if (!folder.empty() && folder.back() != '/')
+			folder += '/';
+		folders.push_back(folder);
+	}
+
+	CSMaterialResolver::Loader gameData = CSMaterialResolver::GameDataLoader();
+	return [folders, gameData](const std::string& relPath) -> std::unique_ptr<std::istream> {
+		for (auto& folder : folders)
+			if (auto stream = GameDataStream::OpenLoose(folder + relPath))
+				return stream;
+
+		return gameData(relPath);
+	};
+}
+
+// A Community Shaders material read for read_material and write_material: the keys of the file itself,
+// and what they come to merged with the chain of root materials
+struct CSMaterialRead {
+	std::string file; // Where it was found, or "archive:" and the path inside the archives
+	CSMaterial own;
+	CSMaterial merged;
+	std::vector<std::string> chain;
+	bool valid = false;
+	std::string error;
+};
+
+// Merges a material with its roots, without changing "read.own"
+void ResolveCSMaterialChain(CSMaterialRead& read, const CSMaterialResolver::Loader& load) {
+	read.merged = read.own;
+	read.chain.clear();
+	read.valid = false;
+	read.error.clear();
+
+	if (!read.own.Validate(&read.error))
+		return;
+
+	const std::string root = read.own.rootMaterialPath.value_or(std::string());
+	if (!root.empty()) {
+		CSMaterial rootMaterial;
+		if (!CSMaterialResolver::Resolve(root, load, rootMaterial, &read.error, &read.chain))
+			return;
+
+		read.merged.MergeOver(rootMaterial);
+		if (!read.merged.Validate(&read.error))
+			return;
+	}
+
+	read.valid = true;
+}
+
+// A material file, or a material path as a shader names it, found in dataFolders, the game data or its archives
+CSMaterialRead ReadCSMaterialArg(const json& args, const char* name) {
+	const std::string path = McpArgs::String(args, name);
+	CSMaterialRead read;
+
+	std::unique_ptr<std::istream> stream;
+	std::string file = McpFilePath(path);
+	if (wxFileName::FileExists(wxString::FromUTF8(file)))
+		stream = GameDataStream::OpenLoose(file);
+	else {
+		file = GameImport::FindMaterialFile(path, DataFolders(args));
+		if (!file.empty())
+			stream = GameDataStream::OpenLoose(file);
+		else {
+			const std::string relPath = CSMaterialResolver::NormalizePath(path);
+			const std::string loose = GameDataStream::FindAssetPath(relPath);
+			if ((stream = GameDataStream::OpenLoose(loose)))
+				file = loose;
+			else if ((stream = GameDataStream::OpenArchive(relPath)))
+				file = "archive:" + relPath;
+		}
+	}
+
+	if (!stream)
+		throw McpToolError("There is no material file '" + path + "'.");
+
+	read.file = file;
+	std::string error;
+	if (!read.own.Read(*stream, &error))
+		throw McpToolError("'" + file + "' couldn't be read as a Community Shaders material: " + error);
+
+	ResolveCSMaterialChain(read, CSMaterialLoader(args, file));
+	return read;
+}
+
+json CSMaterialJson(const CSMaterialRead& read) {
+	json data = {{"type", "CSM"}, {"file", read.file}, {"keys", json(read.own.ToJson())}, {"valid", read.valid}};
+	if (!read.chain.empty())
+		data["rootChain"] = read.chain;
+	if (read.valid && !read.chain.empty())
+		data["merged"] = json(read.merged.ToJson());
+	if (!read.valid)
+		data["error"] = read.error;
+	return data;
+}
+
+// A material that sets what a Skyrim shape's shader has, for a shape that has no material yet: its texture set and
+// the shader values a material can hold. Never True PBR, which a shader can't ask for on its own.
+CSMaterial CSMaterialFromShader(NifFile& nif, NiShape* shape) {
+	CSMaterial mat;
+
+	auto* lighting = dynamic_cast<BSLightingShaderProperty*>(nif.GetShader(shape));
+	if (!lighting)
+		throw McpToolError("The shape '" + shape->name.get() + "' has no lighting shader to make a material from.");
+
+	for (const auto& key : CSMaterial::Keys()) {
+		if (key.kind != CSMaterial::KeyKind::Texture)
+			continue;
+
+		std::string texture;
+		nif.GetTextureSlot(shape, texture, key.slot);
+		std::replace(texture.begin(), texture.end(), '\\', '/');
+		std::string lower = texture;
+		std::transform(lower.begin(), lower.end(), lower.begin(), [](char c) { return c >= 'A' && c <= 'Z' ? static_cast<char>(c - 'A' + 'a') : c; });
+		if (lower.rfind("textures/", 0) == 0)
+			texture = texture.substr(9);
+		if (!texture.empty())
+			mat.SetKey(key.name, texture);
+	}
+
+	const uint32_t f1 = lighting->shaderFlags1;
+	const uint32_t f2 = lighting->shaderFlags2;
+	mat.tileU = (lighting->textureClampMode & 2) != 0;
+	mat.tileV = (lighting->textureClampMode & 1) != 0;
+	mat.uOffset = lighting->uvOffset.u;
+	mat.vOffset = lighting->uvOffset.v;
+	mat.uScale = lighting->uvScale.u;
+	mat.vScale = lighting->uvScale.v;
+	mat.alpha = lighting->alpha;
+	mat.twoSided = (f2 & SLSF2_DOUBLE_SIDED) != 0;
+	mat.decal = (f1 & SLSF1_DECAL) != 0;
+	mat.dynamicDecal = (f1 & SLSF1_DYNAMIC_DECAL) != 0;
+	mat.modelSpaceNormals = (f1 & SLSF1_MODEL_SPACE_NORMALS) != 0;
+	mat.vertexColors = (f2 & SLSF2_VERTEX_COLORS) != 0;
+	mat.castShadows = (f1 & SLSF1_CAST_SHADOWS) != 0;
+	mat.receiveShadows = (f1 & SLSF1_RECEIVE_SHADOWS) != 0;
+	mat.zBufferTest = (f1 & SLSF1_ZBUFFER_TEST) != 0;
+	mat.zBufferWrite = (f2 & SLSF2_ZBUFFER_WRITE) != 0;
+	mat.externalEmittance = (f1 & SLSF1_EXTERNAL_EMITTANCE) != 0;
+
+	const Color4 emissive = lighting->GetEmissiveColor();
+	mat.emittanceColor = Vector3(emissive.r, emissive.g, emissive.b);
+	mat.emittanceMult = std::max(0.0f, lighting->GetEmissiveMultiple());
+	return mat;
+}
+
+McpToolResult WriteCSMaterial(OutfitStudioMcp& mcp, const json& args, const std::string& file) {
+	OutfitProject& project = mcp.Project();
+	NifFile& nif = *project.GetWorkNif();
+	const NiVersion& gameVersion = nif.GetHeader().GetVersion();
+
+	if (McpArgs::Has(args, "version") && McpArgs::Int(args, "version", 1) != CSMaterial::SupportedVersion)
+		throw McpToolError("Community Shaders materials only have version 1.");
+
+	json notes = json::array();
+	json source;
+	CSMaterial mat;
+
+	if (McpArgs::Has(args, "base")) {
+		CSMaterialRead base = ReadCSMaterialArg(args, "base");
+		mat = base.own;
+		source = {{"base", base.file}};
+	}
+	else if (McpArgs::Has(args, "shape")) {
+		NiShape* shape = mcp.Shape(McpArgs::String(args, "shape"));
+		if (auto loaded = project.GetShapeCSMaterial(shape)) {
+			// The material as the shape renders it, which takes the place of the chain it came from
+			mat = *loaded;
+			mat.rootMaterialPath.reset();
+			source = {{"shape", shape->name.get()}, {"from", "material file"}, {"materialPath", nif.GetShader(shape)->name.get()}};
+		}
+		else {
+			mat = CSMaterialFromShader(nif, shape);
+			source = {{"shape", shape->name.get()}, {"from", "shader"}};
+		}
+	}
+
+	if (const json* properties = McpArgs::Find(args, "properties")) {
+		if (!properties->is_object())
+			throw McpToolError("Argument 'properties' has to be an object of material keys.");
+
+		for (auto& [name, value] : properties->items()) {
+			if (name == "$schema") {
+				if (value.is_null())
+					mat.schema.reset();
+				else if (value.is_string())
+					mat.schema = value.get<std::string>();
+				else
+					throw McpToolError("$schema has to be text.");
+				continue;
+			}
+
+			std::string error;
+			if (!mat.SetKey(name, value, &error))
+				throw McpToolError(error + " Keys are named as in the format, e.g. \"PBREnabled\", \"RmaosTexture\", \"PBRSpecularLevel\".");
+		}
+	}
+
+	// Checked before anything is written, so that only a material Community Shaders would take is
+	CSMaterialRead read;
+	read.file = file;
+	read.own = mat;
+	ResolveCSMaterialChain(read, CSMaterialLoader(args, file));
+	if (!read.valid) {
+		if (read.error.find("wasn't found") != std::string::npos)
+			notes.push_back("The root material isn't there yet: " + read.error);
+		else
+			throw McpToolError("The material would be invalid, and Community Shaders would ignore it: " + read.error);
+	}
+
+	std::vector<NiShape*> assign;
+	if (McpArgs::Has(args, "assignToShapes"))
+		assign = mcp.Shapes(args, "assignToShapes", true);
+	const std::string materialPath = ShaderMaterialPath(file);
+	if (!assign.empty()) {
+		if (!gameVersion.IsSK() && !gameVersion.IsSSE())
+			throw McpToolError("Only Skyrim shapes use Community Shaders materials; this project is " + GameImport::GameName(gameVersion) + ".");
+		if (materialPath.empty())
+			throw McpToolError("Shapes name their material from the Materials folder on; write the file into a Materials folder (e.g. Data/Materials/MyOutfit/a.csm) to assign it.");
+		for (NiShape* shape : assign)
+			if (!dynamic_cast<BSLightingShaderProperty*>(nif.GetShader(shape)))
+				throw McpToolError("The shape '" + shape->name.get() + "' has no lighting shader to name the material.");
+	}
+
+	wxFileName::Mkdir(wxFileName(wxString::FromUTF8(file)).GetPath(), wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+	{
+		std::fstream output;
+		PlatformUtil::OpenFileStream(output, file, std::ios::out | std::ios::binary | std::ios::trunc);
+		if (!output || !mat.Write(output))
+			throw McpToolError("'" + file + "' couldn't be written.");
+	}
+
+	// Read back, so the result shows what the file holds
+	CSMaterialRead written;
+	written.file = file;
+	{
+		auto stream = GameDataStream::OpenLoose(file);
+		std::string error;
+		if (!stream || !written.own.Read(*stream, &error))
+			throw McpToolError("'" + file + "' was written but couldn't be read back. " + error);
+	}
+	ResolveCSMaterialChain(written, CSMaterialLoader(args, file));
+
+	McpToolResult result;
+	json assigned = json::array();
+	if (!assign.empty()) {
+		result.data["autoSnapshot"] = mcp.Snapshots().SaveAutomatic(mcp, "write_material");
+
+		OutfitStudioFrame* frame = mcp.GetFrame();
+		for (NiShape* shape : assign) {
+			nif.GetShader(shape)->name.get() = materialPath;
+			project.SetTextures(shape);
+			frame->MeshFromProj(shape, true);
+			assigned.push_back(shape->name.get());
+
+			if (!project.GetShapeCSMaterial(shape))
+				notes.push_back("The window shows '" + shape->name.get() + "' with its material once the file is in the game's Data folder (" + Config["GameDataPath"] +
+								") or an extra data folder (asset_folders), and the material is valid with the shape's textures (the log says why it was ignored).");
+		}
+		frame->SetPendingChanges();
+		frame->glView->Render();
+	}
+
+	result.data["file"] = file;
+	if (!materialPath.empty())
+		result.data["materialPath"] = materialPath;
+	if (!source.is_null())
+		result.data["source"] = source;
+	result.data["material"] = CSMaterialJson(written);
 	if (!assigned.empty())
 		result.data["assignedTo"] = assigned;
 	if (!notes.empty())
@@ -852,15 +1156,24 @@ void AddGameTools(OutfitStudioMcp& mcp) {
 	readMaterial.name = "read_material";
 	readMaterial.description =
 		"Reads a Fallout 4 or 76 material file (BGSM or BGEM) and returns all properties its type and version store, "
-		"with texture paths in 'textures', named as write_material takes them.";
+		"with texture paths in 'textures', named as write_material takes them. Also reads a Skyrim Community Shaders "
+		"material (.csm, the JSON file True PBR 2.0 keeps its values in): 'keys' are what the file itself sets, "
+		"'merged' what that comes to over its chain of root materials ('rootChain'), and 'valid' whether Community "
+		"Shaders would use it, with the reason in 'error' when not. Keys a material leaves out keep the NIF's value.";
 	readMaterial.inputSchema = McpSchema(
 		{
-			{"path", McpProp("string", "Material file, or a material path as a shader names it (e.g. Materials\\\\Outfit\\\\a.bgsm) with dataFolders")},
+			{"path", McpProp("string", "Material file, or a material path as a shader names it (e.g. Materials\\\\Outfit\\\\a.bgsm) with dataFolders. A .csm path is also looked up in the game's data folders and archives.")},
 			{"dataFolders", McpStringList("Data folders to find a material path in")},
 		},
 		{"path"});
 	readMaterial.readOnly = true;
 	readMaterial.handler = [](const json& args) {
+		if (IsCSMaterialFile(McpArgs::String(args, "path"))) {
+			McpToolResult result;
+			result.data = CSMaterialJson(ReadCSMaterialArg(args, "path"));
+			return result;
+		}
+
 		std::string file = MaterialFileArg(args, "path");
 		MaterialFile mat(file);
 		if (mat.Failed())
@@ -881,16 +1194,23 @@ void AddGameTools(OutfitStudioMcp& mcp) {
 		"('shape': its loaded material file, else its shader, e.g. a Skyrim shape for a conversion to Fallout 4). "
 		"'properties' changes values on top, named as read_material returns them. The result shows the file as "
 		"written and notes on what didn't carry over. 'assignToShapes' then names the material in those shapes' "
-		"shaders (Fallout 4 and 76 projects; the file has to be in a Materials folder).";
+		"shaders (Fallout 4 and 76 projects; the file has to be in a Materials folder). "
+		"A .csm file is a Skyrim Community Shaders material instead, the way True PBR 2.0 is set up: it starts "
+		"from {\"Version\": 1}, a 'base' .csm (its own keys, RootMaterialPath included), or a 'shape' (the material "
+		"it renders with, else its texture set and shader values - never PBR, which a shader can't ask for). "
+		"'properties' then sets keys of the format by their names, e.g. {\"PBREnabled\": true, \"RmaosTexture\": "
+		"\"MyOutfit/suit_rmaos.dds\", \"PBRSpecularLevel\": 0.04}; null removes a key, which then keeps the root "
+		"material's or the NIF's value. A material Community Shaders would ignore (a value out of range, features "
+		"that exclude each other) isn't written. 'assignToShapes' works in Skyrim projects.";
 	writeMaterial.inputSchema = McpSchema(
 		{
-			{"file", McpProp("string", "Material file to write, ending in .bgsm or .bgem, e.g. \"D:/Mods/MyOutfit/Materials/MyOutfit/suit.bgsm\"")},
+			{"file", McpProp("string", "Material file to write, ending in .bgsm, .bgem or .csm, e.g. \"D:/Mods/MyOutfit/Materials/MyOutfit/suit.bgsm\"")},
 			{"base", McpProp("string", "Material file to start from, or a material path as a shader names it with dataFolders")},
 			{"dataFolders", McpStringList("Data folders to find the base material path in")},
 			{"shape", McpProp("string", "Shape of the project to start from")},
 			{"version",
 			 {{"type", "integer"},
-			  {"description", "File version: 2 for Fallout 4, 20 to 22 for Fallout 76. Default: the base's, else 22 in a Fallout 76 project, else 2."}}},
+			  {"description", "File version: 2 for Fallout 4, 20 to 22 for Fallout 76. Default: the base's, else 22 in a Fallout 76 project, else 2. A .csm is always version 1."}}},
 			{"properties",
 			 {{"type", "object"},
 			  {"description",
@@ -899,7 +1219,9 @@ void AddGameTools(OutfitStudioMcp& mcp) {
 			   "\"standard\", \"additive\", \"multiplicative\"), and \"textures\": {name: path relative to the "
 			   "textures folder}, e.g. {\"diffuse\": \"MyOutfit/suit_d.dds\"}. BGSM textures: diffuse, normal, "
 			   "smoothSpec, greyscale, glow, wrinkles, envmap, innerLayer, displacement (version 2), specular, "
-			   "lighting, flow (Fallout 76). BGEM: base, grayscale, envmap, normal, envmapMask."}}},
+			   "lighting, flow (Fallout 76). BGEM: base, grayscale, envmap, normal, envmapMask. For a .csm: key name "
+			   "to value as the format has them (texture paths relative to the textures folder, colors as \"#rrggbb\"), "
+			   "or null to remove the key."}}},
 			{"assignToShapes", McpStringList("Shapes whose shader then names this material")},
 			{"overwrite", McpProp("boolean", "Replace an existing file")},
 		},

@@ -93,6 +93,10 @@ class PreviewPanel : public wxPanel {
 	std::unordered_map<std::string, GLMaterial*> shapeMaterials;
 	// Starfield layered materials by shape, kept so a mesh rebuilt from the NIF gets the same one back
 	std::unordered_map<std::string, std::shared_ptr<const SFLayeredMaterial>> shapeSFMaterials;
+	// The Fallout 4 material files and Skyrim Community Shaders materials of the shapes that have one,
+	// for the same reason: a rebuilt mesh starts from the NIF's values and needs them put over it again
+	std::unordered_map<std::string, MaterialFile> shapeMaterialFiles;
+	std::unordered_map<std::string, std::shared_ptr<const CSMaterial>> shapeCSMaterials;
 	std::string baseDataPath;
 
 	SFMaterialResolver sfMaterialResolver;
@@ -294,8 +298,12 @@ public:
 			m->material = mat;
 			shapeMaterials[shapeName] = mat;
 
-			if (hasMatFile)
+			if (hasMatFile) {
 				m->UpdateFromMaterialFile(matFile);
+				shapeMaterialFiles[shapeName] = matFile;
+			}
+			else
+				shapeMaterialFiles.erase(shapeName);
 
 			gls.UpdateShaders(m);
 		}

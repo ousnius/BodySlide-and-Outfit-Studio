@@ -6,6 +6,7 @@ See the included LICENSE file
 #pragma once
 
 #include "../utils/AABBTree.h"
+#include "../files/CSMaterialFile.h"
 #include "../files/MaterialFile.h"
 #include "../files/SFLayeredMaterial.h"
 #include "NifFile.hpp"
@@ -118,6 +119,7 @@ struct UndoStateShapeDelete {
 	std::vector<std::string> textures;
 	std::optional<MaterialFile> materialFile;
 	std::shared_ptr<const SFLayeredMaterial> sfMaterial;
+	std::shared_ptr<const CSMaterial> csMaterial;
 	std::vector<std::string> physicsFiles;
 	std::vector<std::string> clothSources;
 	// Reference info captured when wasBaseShape, restored on undo

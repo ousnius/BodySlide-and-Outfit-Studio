@@ -5,6 +5,7 @@ See the included LICENSE file
 
 #pragma once
 
+#include "../files/CSMaterialFile.h"
 #include "../files/MaterialFile.h"
 #include "../files/SFLayeredMaterial.h"
 #include "../render/GLExtensions.h"
@@ -89,6 +90,10 @@ public:
 		float subsurfaceRolloff = 0.3f;
 		float fresnelPower = 5.0f;
 		float paletteScale = 0.0f;
+		// True PBR, from a Community Shaders material: the reflectance of the surface where it isn't
+		// metal (scales the alpha of the RMAOS map) and the scale of its roughness (the red channel)
+		float pbrSpecularLevel = 0.04f;
+		float pbrRoughnessScale = 1.0f;
 	};
 
 	typedef std::unordered_map<int, std::vector<int>> WeldVertsType;
@@ -177,12 +182,16 @@ public:
 	// its green channel and metalness in its blue one, rather than the greyscale reflection mask
 	// vanilla puts there. Decided once from the texture itself, see ResourceLoader.
 	bool complexMaterial = false;
-	// True when the shape is a Community Shaders "True PBR" material, which it says by setting Shader
-	// Flags 2 bit 23 - the bit NifSkope shows as "Unused 01". Its texture slots hold different maps
-	// than vanilla's: slot 5 an RMAOS map rather than an environment mask, slot 2 an emissive color
-	// rather than a glow map, and slot 4 nothing at all. Such a shape is rendered through its own pair
-	// of shader files, so this is separate from a Complex Material and the two never both apply.
+	// True when the shape is a Community Shaders "True PBR" material, which it says through the
+	// Community Shaders material (.csm) its shader is named after, with PBREnabled set. Its texture
+	// slots hold different maps than vanilla's: slot 5 an RMAOS map rather than an environment mask,
+	// slot 2 an emissive color rather than a glow map, and slot 4 nothing at all. Such a shape is
+	// rendered through its own pair of shader files, so this is separate from a Complex Material and
+	// the two never both apply.
 	bool pbr = false;
+	// The Community Shaders material the shape uses, merged with its root materials, or null. Holds the
+	// True PBR values the viewport doesn't render as well as those it does.
+	std::shared_ptr<const CSMaterial> csMaterial;
 	// True when the shape is rendered through a Starfield layered material, see GLSurface::AssignSFMaterial.
 	// Its texture slots follow the material rather than any fixed layout, so the slot 4 and 5 meanings
 	// of the other games never apply to it, and everything the shader needs to know about the
@@ -255,13 +264,16 @@ public:
 	void UpdateBuffers();
 	void QueueUpdate(const UpdateType& type);
 	void UpdateFromMaterialFile(const MaterialFile& matFile);
+	// Puts what a Community Shaders material sets over the NIF's values, True PBR included. Null
+	// leaves the NIF's values, without True PBR.
+	void UpdateFromCSMaterial(const std::shared_ptr<const CSMaterial>& csMat);
 	// Whether prop.tintColor is worth multiplying the albedo by. A black tint can only ever render the
 	// shape as nothing, which is never what a shape means to say: Fallout 4 skin NIFs leave the shader
 	// property's tint at black because the game supplies the actor's own skin tint at runtime.
 	bool HasTintColor() const;
 	// Whether the shape has something to reflect, which is what puts texture slots 4 and 5 in play.
 	// Environment mapping is one way to ask for it; being a True PBR shape is the other, and those say
-	// so with their own flag while leaving environment mapping switched off, and so does every Starfield
+	// so in their material while leaving environment mapping switched off, and so does every Starfield
 	// layered material, which is lit the same way.
 	bool WantsEnvironment() const { return cubemap || pbr || sfLayered; }
 	bool HasAlphaBlend();

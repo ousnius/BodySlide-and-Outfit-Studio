@@ -406,6 +406,7 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/files/SFMaterialGraph.cpp
 	src/files/SFLayeredMaterial.cpp
 	src/files/SFMaterialResolver.cpp
+	src/files/CSMaterialFile.cpp
 	src/files/SFResourceHash.cpp
 	src/files/SFMorphFile.cpp
 	src/ui/wxBrushSettingsPopup.cpp
@@ -463,6 +464,7 @@ set(BSOS_BODYSLIDE_SOURCES
 	src/files/SFMaterialGraph.cpp
 	src/files/SFLayeredMaterial.cpp
 	src/files/SFMaterialResolver.cpp
+	src/files/CSMaterialFile.cpp
 	src/files/SFResourceHash.cpp
 	src/files/SFMorphFile.cpp
 	src/files/wxDDSImage.cpp
@@ -523,6 +525,7 @@ if(BSOS_BUILD_TESTS)
 		tests/ArchiveTest.cpp
 		tests/HkxFileTest.cpp
 		tests/MaterialFileTest.cpp
+		tests/CSMaterialFileTest.cpp
 		tests/MainThreadDispatcherTest.cpp
 		tests/MaskTransferTest.cpp
 		tests/McpProtocolTest.cpp
@@ -597,6 +600,7 @@ if(BSOS_BUILD_TESTS)
 		src/files/SFMaterialGraph.cpp
 		src/files/SFLayeredMaterial.cpp
 		src/files/SFMaterialResolver.cpp
+		src/files/CSMaterialFile.cpp
 		src/files/SFMorphFile.cpp
 		src/files/SFResourceHash.cpp
 		src/utils/AABBTree.cpp

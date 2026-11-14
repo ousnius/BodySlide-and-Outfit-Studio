@@ -63,6 +63,9 @@
     <ClInclude Include="src\files\SFMaterialResolver.h">
       <Filter>Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\files\CSMaterialFile.h">
+      <Filter>Files</Filter>
+    </ClInclude>
     <ClInclude Include="src\utils\ConfigurationManager.h">
       <Filter>Utilities</Filter>
     </ClInclude>
@@ -120,6 +123,9 @@
       <Filter>Tests</Filter>
     </ClCompile>
     <ClCompile Include="tests\SFMaterialFileTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\CSMaterialFileTest.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
     <ClCompile Include="tests\SFResourceHashTest.cpp">
@@ -219,6 +225,9 @@
       <Filter>Files</Filter>
     </ClCompile>
     <ClCompile Include="src\files\SFMaterialResolver.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\files\CSMaterialFile.cpp">
       <Filter>Files</Filter>
     </ClCompile>
     <ClCompile Include="src\utils\ConfigurationManager.cpp">

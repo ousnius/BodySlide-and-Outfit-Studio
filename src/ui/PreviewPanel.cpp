@@ -603,8 +603,19 @@ void PreviewPanel::RefreshMeshFromNif(const std::vector<NifFile*>& nifs) {
 			auto iter = shapeMaterials.find(shapeListName);
 			if (sfIter != shapeSFMaterials.end())
 				SetShapeSFMaterial(shapeListName, sfIter->second);
-			else if (iter != shapeMaterials.end())
+			else if (iter != shapeMaterials.end()) {
 				m->material = iter->second;
+
+				auto matIter = shapeMaterialFiles.find(shapeListName);
+				if (matIter != shapeMaterialFiles.end())
+					m->UpdateFromMaterialFile(matIter->second);
+
+				auto csIter = shapeCSMaterials.find(shapeListName);
+				if (csIter != shapeCSMaterials.end())
+					m->UpdateFromCSMaterial(csIter->second);
+
+				gls.UpdateShaders(m);
+			}
 			else
 				AddNifShapeTextures(nif, shapeListName);
 
@@ -626,6 +637,7 @@ std::string PreviewPanel::AssetPath(const std::string& relPath) const {
 void PreviewPanel::AddNifShapeTextures(NifFile* fromNif, const std::string& shapeName) {
 	bool hasMat = false;
 	bool hasSFMat = false;
+	bool hasCSMat = false;
 	std::string matFile;
 
 	const uint8_t MAX_TEXTURE_PATHS = 10;
@@ -649,8 +661,16 @@ void PreviewPanel::AddNifShapeTextures(NifFile* fromNif, const std::string& shap
 					hasSFMat = true;
 				}
 			}
+			else if (fromNif->GetHeader().GetVersion().IsSK() || fromNif->GetHeader().GetVersion().IsSSE()) {
+				// A Skyrim shader is named after a Community Shaders material, when it is one, which
+				// goes over the texture set the NIF has rather than replacing it
+				matFile = shader->name.get();
+				hasCSMat = CSMaterialResolver::IsMaterialPath(matFile);
+			}
 		}
 	}
+
+	shapeCSMaterials.erase(shapeName);
 
 	MaterialFile mat(MaterialFile::BGSM);
 	if (hasMat) {
@@ -731,6 +751,18 @@ void PreviewPanel::AddNifShapeTextures(NifFile* fromNif, const std::string& shap
 			fromNif->GetTextureSlot(shape, texFiles[i], i);
 	}
 
+	std::shared_ptr<const CSMaterial> csMaterial;
+	if (hasCSMat) {
+		std::string error;
+		csMaterial = CSMaterialResolver::ResolveForShape(matFile, CSMaterialResolver::GameDataLoader(baseDataPath), texFiles, &error);
+		if (csMaterial) {
+			wxLogMessage("Shape '%s' uses the Community Shaders material '%s'%s.", shapeName, matFile, csMaterial->IsPBR() ? " (True PBR)" : "");
+			shapeCSMaterials[shapeName] = csMaterial;
+		}
+		else
+			wxLogWarning("Ignoring the Community Shaders material of shape '%s': %s", shapeName, error);
+	}
+
 	for (int i = 0; i < MAX_TEXTURE_PATHS; i++) {
 		if (!texFiles[i].empty()) {
 			texFiles[i] = std::regex_replace(texFiles[i], std::regex("\\\\+"), "/");
@@ -771,8 +803,12 @@ void PreviewPanel::AddNifShapeTextures(NifFile* fromNif, const std::string& shap
 	}
 	else {
 		// A True PBR shape reads its texture slots differently enough from every other Skyrim shape
-		// that it gets its own pair rather than another branch inside the shared one.
+		// that it gets its own pair rather than another branch inside the shared one. It is the
+		// material that asks for True PBR, so that goes on the mesh before the shaders are picked.
 		Mesh* m = gls.GetMesh(shapeName);
+		if (m)
+			m->UpdateFromCSMaterial(csMaterial);
+
 		if (m && m->pbr && gls.IsPBREnabled()) {
 			vShader = Config["AppDir"] + "/res/shaders/sk_truepbr.vert";
 			fShader = Config["AppDir"] + "/res/shaders/sk_truepbr.frag";
@@ -1302,6 +1338,8 @@ void PreviewPanel::Cleanup() {
 	gls.Cleanup();
 	shapeMaterials.clear();
 	shapeSFMaterials.clear();
+	shapeMaterialFiles.clear();
+	shapeCSMaterials.clear();
 	gls.RenderOneFrame();
 }
 

@@ -1,0 +1,73 @@
+{
+  "$schema": "<TBD>",
+  "Version": 1,
+  "RootMaterialPath": "",
+
+  "DiffuseTexture": "pbr/example/material.dds",
+  "NormalTexture": "pbr/example/material_n.dds",
+  "GlowTexture": "pbr/example/material_g.dds",
+  "DisplacementTexture": "pbr/example/material_p.dds",
+  "RmaosTexture": "pbr/example/material_rmaos.dds",
+  "Features0Texture": "pbr/example/material_s.dds",
+  "Features1Texture": "pbr/example/material_f.dds",
+
+  "TileU": true,
+  "TileV": true,
+  "UOffset": 0.0,
+  "VOffset": 0.0,
+  "UScale": 1.0,
+  "VScale": 1.0,
+  "Alpha": 1.0,
+
+  "TwoSided": false,
+  "Decal": false,
+  "DynamicDecal": false,
+  "ModelSpaceNormals": false,
+  "VertexColors": false,
+  "CastShadows": true,
+  "ReceiveShadows": true,
+  "ZBufferTest": true,
+  "ZBufferWrite": true,
+
+  "ExternalEmittance": false,
+  "EmittanceColor": "#ffffff",
+  "EmittanceMult": 1.0,
+
+  "PBREnabled": true,
+  "PBRDisplacementTextureScale": 1.0,
+  "PBRSpecularLevel": 0.04,
+  "PBRRoughnessScale": 1.0,
+
+  "PBRSubsurfaceEnabled": true,
+  "PBRSubsurfaceColor": "#e68066",
+  "PBRSubsurfaceOpacity": 0.3,
+
+  "PBRThinSurfaceEnabled": false,
+  "PBRThinSurfaceSubsurfaceBalance": 0.75,
+  "PBRThinSurfaceSpecularWeight": 0.5,
+  "PBRThinSurfaceBackSpecularWeight": 0.5,
+  "PBRThinSurfaceBackRoughnessScale": 1.0,
+
+  "PBRTwoLayerEnabled": false,
+  "PBRTwoLayerColoredCoat": false,
+  "PBRTwoLayerInterlayerParallax": false,
+  "PBRTwoLayerCoatNormal": false,
+  "PBRTwoLayerCoatColor": "#ffffff",
+  "PBRTwoLayerCoatStrength": 1.0,
+  "PBRTwoLayerCoatRoughness": 1.0,
+  "PBRTwoLayerCoatSpecularLevel": 0.04,
+
+  "PBRFuzzEnabled": true,
+  "PBRFuzzColor": "#e6d9cc",
+  "PBRFuzzWeight": 0.6,
+  "PBRFuzzRoughness": -1.0,
+  "PBRFuzzRoughnessTexture": false,
+
+  "PBRGlintEnabled": false,
+  "PBRGlintScreenSpaceScale": 1.5,
+  "PBRGlintLogMicrofacetDensity": 40.0,
+  "PBRGlintMicrofacetRoughness": 0.015,
+  "PBRGlintDensityRandomization": 2.0,
+
+  "PBRHairMarschner": false
+}

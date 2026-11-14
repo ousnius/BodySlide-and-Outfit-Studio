@@ -324,6 +324,7 @@ std::unique_ptr<OutfitProject::Snapshot> OutfitProject::CaptureSnapshot() {
 	snapshot->shapeTextures = shapeTextures;
 	snapshot->shapeMaterialFiles = shapeMaterialFiles;
 	snapshot->shapeSFMaterials = shapeSFMaterials;
+	snapshot->shapeCSMaterials = shapeCSMaterials;
 	snapshot->shapePhysicsFiles = shapePhysicsFiles;
 	snapshot->clothSources = clothData.GetAllShapeSources();
 	return snapshot;
@@ -348,6 +349,7 @@ void OutfitProject::RestoreSnapshot(const Snapshot& snapshot) {
 	shapeTextures = snapshot.shapeTextures;
 	shapeMaterialFiles = snapshot.shapeMaterialFiles;
 	shapeSFMaterials = snapshot.shapeSFMaterials;
+	shapeCSMaterials = snapshot.shapeCSMaterials;
 	shapePhysicsFiles = snapshot.shapePhysicsFiles;
 	clothData.SetAllShapeSources(snapshot.clothSources);
 }
@@ -2984,6 +2986,14 @@ std::shared_ptr<const SFLayeredMaterial> OutfitProject::GetShapeSFMaterial(NiSha
 	return nullptr;
 }
 
+std::shared_ptr<const CSMaterial> OutfitProject::GetShapeCSMaterial(NiShape* shape) {
+	auto material = shapeCSMaterials.find(shape->name.get());
+	if (material != shapeCSMaterials.end())
+		return material->second;
+
+	return nullptr;
+}
+
 void OutfitProject::SetTextures() {
 	for (auto& s : workNif.GetShapes())
 		SetTextures(s);
@@ -3006,6 +3016,7 @@ void OutfitProject::SetTextures(NiShape* shape, const std::vector<std::string>& 
 		std::string texturesDir = Config["GameDataPath"];
 		bool hasMat = false;
 		bool hasSFMat = false;
+		bool hasCSMat = false;
 		std::string matFile;
 
 		const uint8_t MAX_TEXTURE_PATHS = 10;
@@ -3026,10 +3037,17 @@ void OutfitProject::SetTextures(NiShape* shape, const std::vector<std::string>& 
 					hasSFMat = true;
 				}
 			}
+			else if (workNif.GetHeader().GetVersion().IsSK() || workNif.GetHeader().GetVersion().IsSSE()) {
+				// A Skyrim shader is named after a Community Shaders material, when it is one, which
+				// goes over the texture set the NIF has rather than replacing it
+				matFile = shader->name.get();
+				hasCSMat = CSMaterialResolver::IsMaterialPath(matFile);
+			}
 		}
 
 		shapeMaterialFiles.erase(shapeName);
 		shapeSFMaterials.erase(shapeName);
+		shapeCSMaterials.erase(shapeName);
 
 		MaterialFile mat(MaterialFile::BGSM);
 		if (hasMat) {
@@ -3091,6 +3109,17 @@ void OutfitProject::SetTextures(NiShape* shape, const std::vector<std::string>& 
 		else if (shader) {
 			for (int i = 0; i < MAX_TEXTURE_PATHS; i++)
 				workNif.GetTextureSlot(shape, texFiles[i], i);
+		}
+
+		if (hasCSMat) {
+			std::string error;
+			auto csMat = CSMaterialResolver::ResolveForShape(matFile, CSMaterialResolver::GameDataLoader(), texFiles, &error);
+			if (csMat) {
+				wxLogMessage("Shape '%s' uses the Community Shaders material '%s'%s.", shapeName, matFile, csMat->IsPBR() ? " (True PBR)" : "");
+				shapeCSMaterials[shapeName] = std::move(csMat);
+			}
+			else
+				wxLogWarning("Ignoring the Community Shaders material of shape '%s': %s", shapeName, error);
 		}
 
 		for (int i = 0; i < MAX_TEXTURE_PATHS; i++) {
@@ -6585,6 +6614,7 @@ void OutfitProject::DeleteShape(NiShape* shape) {
 	shapeTextures.erase(shapeName);
 	shapeMaterialFiles.erase(shapeName);
 	shapeSFMaterials.erase(shapeName);
+	shapeCSMaterials.erase(shapeName);
 	shapePhysicsFiles.erase(shapeName);
 	clothData.RemoveShape(shapeName);
 
@@ -6842,6 +6872,10 @@ void OutfitProject::CaptureShapeDeleteState(NiShape* shape, UndoStateShapeDelete
 	if (sfMat != shapeSFMaterials.end())
 		state.sfMaterial = sfMat->second;
 
+	auto csMat = shapeCSMaterials.find(state.shapeName);
+	if (csMat != shapeCSMaterials.end())
+		state.csMaterial = csMat->second;
+
 	auto physics = shapePhysicsFiles.find(state.shapeName);
 	if (physics != shapePhysicsFiles.end())
 		state.physicsFiles = physics->second;
@@ -6900,6 +6934,9 @@ NiShape* OutfitProject::RestoreDeletedShape(UndoStateShapeDelete& state) {
 
 	if (state.sfMaterial)
 		shapeSFMaterials[state.shapeName] = state.sfMaterial;
+
+	if (state.csMaterial)
+		shapeCSMaterials[state.shapeName] = state.csMaterial;
 
 	if (!state.physicsFiles.empty())
 		shapePhysicsFiles[state.shapeName] = state.physicsFiles;
@@ -6989,6 +7026,13 @@ void OutfitProject::RenameShape(NiShape* shape, const std::string& newShapeName)
 		auto value = sfMat->second;
 		shapeSFMaterials.erase(sfMat);
 		shapeSFMaterials[newShapeName] = value;
+	}
+
+	auto csMat = shapeCSMaterials.find(shapeName);
+	if (csMat != shapeCSMaterials.end()) {
+		auto value = csMat->second;
+		shapeCSMaterials.erase(csMat);
+		shapeCSMaterials[newShapeName] = value;
 	}
 
 	auto physics = shapePhysicsFiles.find(shapeName);

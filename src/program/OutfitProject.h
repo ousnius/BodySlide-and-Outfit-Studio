@@ -298,6 +298,8 @@ public:
 	std::unordered_map<std::string, MaterialFile> shapeMaterialFiles;
 	// Starfield layered materials by shape, with texture paths resolved against the data folder
 	std::unordered_map<std::string, std::shared_ptr<const SFLayeredMaterial>> shapeSFMaterials;
+	// Skyrim Community Shaders materials (.csm) by shape, merged with their root materials
+	std::unordered_map<std::string, std::shared_ptr<const CSMaterial>> shapeCSMaterials;
 
 	// Physics XML files ("HDT Skinned Mesh Physics Object" extra data) that
 	// were linked to each shape by the NIF it came from. Only the first NIF
@@ -329,6 +331,7 @@ public:
 		std::unordered_map<std::string, std::vector<std::string>> shapeTextures;
 		std::unordered_map<std::string, MaterialFile> shapeMaterialFiles;
 		std::unordered_map<std::string, std::shared_ptr<const SFLayeredMaterial>> shapeSFMaterials;
+		std::unordered_map<std::string, std::shared_ptr<const CSMaterial>> shapeCSMaterials;
 		std::unordered_map<std::string, std::vector<std::string>> shapePhysicsFiles;
 		ClothData::ShapeSources clothSources;
 	};
@@ -561,6 +564,9 @@ public:
 	std::vector<std::string> GetShapeTextures(nifly::NiShape* shape);
 	bool GetShapeMaterialFile(nifly::NiShape* shape, MaterialFile& outMatFile);
 	std::shared_ptr<const SFLayeredMaterial> GetShapeSFMaterial(nifly::NiShape* shape);
+	// The Community Shaders material (.csm) a Skyrim shape uses, merged with its root materials, or
+	// null when its shader names none or the one it names couldn't be read
+	std::shared_ptr<const CSMaterial> GetShapeCSMaterial(nifly::NiShape* shape);
 
 	void SetTextures();
 	void SetTextures(const std::vector<std::string>& textureFiles);
