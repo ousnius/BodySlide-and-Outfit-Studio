@@ -5,6 +5,7 @@
 
 #include <cstdlib>
 #include <filesystem>
+#include <set>
 #include <sstream>
 
 using namespace nifly;
@@ -116,6 +117,20 @@ std::vector<std::string> Bones(NifFile& nif, const std::string& shape) {
     return bones;
 }
 
+// Writes the cloth of every shape left in the NIF, each payload once. Outfit Studio only writes one block, but older
+// versions and other tools leave files with several, which loading has to tell apart.
+void WriteOwned(const ClothData& data, NifFile& nif) {
+    nif.GetHeader().DeleteBlockByType("BSClothExtraData");
+    std::set<std::string> written;
+    for (auto* shape : nif.GetShapes()) {
+        for (const auto& source : data.GetShapeSources(shape->name.get())) {
+            const auto& block = data.GetBlocks().at(source);
+            if (written.insert(std::string(block->data.data(), block->data.size())).second)
+                nif.GetRootNode()->extraDataRefs.AddBlockRef(nif.GetHeader().AddBlock(block->Clone()));
+        }
+    }
+}
+
 std::filesystem::path WorkflowDirectory() {
     const auto* directory = std::getenv("BSOS_CLOTH_DATA_DIR");
     REQUIRE(directory);
@@ -143,16 +158,16 @@ TEST_CASE("Exported shapes retain their own cloth instead of the reference cloth
 
         SECTION("Export only the outfit") {
             work.DeleteShape(work.FindBlockByName<NiShape>("Reference"));
-            data.Apply(work);
+            WriteOwned(data, work);
             CHECK(Payloads(work) == std::vector<std::string>{"badge physics", "coat physics"});
         }
         SECTION("Include the reference") {
-            data.Apply(work);
+            WriteOwned(data, work);
             CHECK(Payloads(work) == std::vector<std::string>{"badge physics", "body physics", "coat physics"});
         }
         SECTION("Export only the reference") {
             work.DeleteShape(work.FindBlockByName<NiShape>("Coat"));
-            data.Apply(work);
+            WriteOwned(data, work);
             CHECK(Payloads(work) == std::vector<std::string>{"body physics"});
         }
         SECTION("Delete the outfit and reuse its name for clothless geometry") {
@@ -160,9 +175,107 @@ TEST_CASE("Exported shapes retain their own cloth instead of the reference cloth
             work.DeleteShape(work.FindBlockByName<NiShape>("Coat"));
             REQUIRE(AddShape(work, "Coat"));
             work.DeleteShape(work.FindBlockByName<NiShape>("Reference"));
-            data.Apply(work);
+            WriteOwned(data, work);
             CHECK(Payloads(work).empty());
         }
+    }
+}
+
+namespace {
+// The preselected source, or an empty name for none
+std::string Preselected(const ClothData::ExportChoices& choices) {
+    return choices.preselected ? choices.sources.at(*choices.preselected) : std::string();
+}
+} // namespace
+
+TEST_CASE("Exports offer every cloth block and preselect the one that fits", "[cloth][export]") {
+    const bool fallout = GENERATE(false, true);
+    CAPTURE(fallout);
+    ClothData data;
+    auto reference = Fixture("Reference", bodyBones, bodyCloth, fallout);
+    data.Capture(reference, "naked.nif", reference.GetShapes(), Skeleton);
+
+    SECTION("An outfit given the body's physics bones by a weight copy takes the reference cloth") {
+        // Like an outfit without cloth that copied the weights of a physics body
+        auto outfit = Fixture("Dress", bodyBones, {}, fallout);
+        data.Capture(outfit, "dress.nif", outfit.GetShapes(), Skeleton);
+        NifFile work(reference);
+        REQUIRE(work.CloneShape(outfit.GetShapes().front(), "Dress", &outfit));
+        work.DeleteShape(work.FindBlockByName<NiShape>("Reference"));
+
+        auto choices = data.GetExportChoices(work, Skeleton);
+        CHECK(choices.sources == ClothData::Sources{"naked.nif"});
+        CHECK(Preselected(choices) == "naked.nif");
+        data.Write(work, Preselected(choices));
+        CHECK(Payloads(work) == std::vector<std::string>{"body physics"});
+    }
+
+    SECTION("An outfit skinned to the skeleton alone gets no cloth by default") {
+        auto outfit = Fixture("Shirt", {"C_Spine"}, {}, fallout);
+        data.Capture(outfit, "shirt.nif", outfit.GetShapes(), Skeleton);
+        auto choices = data.GetExportChoices(outfit, Skeleton);
+        CHECK(choices.sources == ClothData::Sources{"naked.nif"});
+        CHECK_FALSE(choices.preselected);
+    }
+
+    SECTION("An outfit's own cloth beats the reference cloth driving its bones") {
+        auto outfit = Fixture("Coat", {"C_Spine", "Cloth_Bone_001", "Cloth_Body"}, {coatCloth.front()}, fallout);
+        data.Capture(outfit, "coat.nif", outfit.GetShapes(), Skeleton);
+        NifFile work(reference);
+        REQUIRE(work.CloneShape(outfit.GetShapes().front(), "Coat", &outfit));
+        work.DeleteShape(work.FindBlockByName<NiShape>("Reference"));
+
+        auto choices = data.GetExportChoices(work, Skeleton);
+        CHECK(choices.sources == ClothData::Sources{"coat.nif", "naked.nif"});
+        CHECK(Preselected(choices) == "coat.nif");
+
+        SECTION("The reference cloth can be chosen instead") {
+            data.Write(work, "naked.nif");
+            CHECK(Payloads(work) == std::vector<std::string>{"body physics"});
+        }
+        SECTION("Choosing none writes no cloth") {
+            data.Write(work, "");
+            CHECK(Payloads(work).empty());
+        }
+    }
+
+    SECTION("An outfit with several blocks of its own exports just the first") {
+        auto outfit = Fixture("Coat", coatBones, coatCloth, fallout);
+        data.Capture(outfit, "coat.nif", outfit.GetShapes(), Skeleton);
+        auto choices = data.GetExportChoices(outfit, Skeleton);
+        CHECK(choices.sources == ClothData::Sources{"coat.nif", "coat.nif (2)", "naked.nif"});
+        CHECK(Preselected(choices) == "coat.nif");
+        data.Write(outfit, Preselected(choices));
+        CHECK(Payloads(outfit) == std::vector<std::string>{"coat physics"});
+    }
+
+    SECTION("The latest standalone HKX import beats the cloth of the shapes") {
+        auto outfit = Fixture("Coat", coatBones, {coatCloth.front()}, fallout);
+        data.Capture(outfit, "coat.nif", outfit.GetShapes(), Skeleton);
+        data.AddManual("extra.hkx", Cloth("extra physics"));
+        data.AddManual("edited.hkx", Cloth("edited physics"));
+        auto choices = data.GetExportChoices(outfit, Skeleton);
+        CHECK(Preselected(choices) == "edited.hkx");
+        data.Write(outfit, Preselected(choices));
+        CHECK(Payloads(outfit) == std::vector<std::string>{"edited physics"});
+    }
+
+    SECTION("The same block held by several sources is listed once") {
+        auto outfit = Fixture("Coat", coatBones, {coatCloth.front()}, fallout);
+        data.Capture(outfit, "coat.nif", outfit.GetShapes(), Skeleton);
+        data.AddManual("duplicate.hkx", Cloth(coatCloth.front().label, coatCloth.front().bones));
+        auto choices = data.GetExportChoices(outfit, Skeleton);
+        CHECK(choices.sources == ClothData::Sources{"coat.nif", "naked.nif"});
+        CHECK(Preselected(choices) == "coat.nif");
+    }
+
+    SECTION("Writing replaces the cloth already in the NIF") {
+        NifFile work(reference);
+        work.GetRootNode()->extraDataRefs.AddBlockRef(work.GetHeader().AddBlock(Cloth("stale physics")));
+        data.Write(work, "naked.nif");
+        CHECK(Payloads(work) == std::vector<std::string>{"body physics"});
+        data.Write(work, "");
+        CHECK(Payloads(work).empty());
     }
 }
 
@@ -233,17 +346,17 @@ TEST_CASE("Cloth sources survive rename duplication and delete undo", "[cloth][e
     REQUIRE(NifFile::RenameShape(outfit.GetShapes().front(), "Renamed"));
     REQUIRE(outfit.CloneShape(outfit.GetShapes().front(), "Duplicate"));
     data.SetShapeSources("Duplicate", data.GetShapeSources("Renamed"));
-    data.Apply(outfit);
+    WriteOwned(data, outfit);
     CHECK(Payloads(outfit) == std::vector<std::string>{"coat physics"});
     data.RemoveShape("Renamed");
     outfit.DeleteShape(outfit.FindBlockByName<NiShape>("Renamed"));
-    data.Apply(outfit);
+    WriteOwned(data, outfit);
     CHECK(Payloads(outfit) == std::vector<std::string>{"coat physics"});
     data.RemoveShape("Duplicate");
-    data.Apply(outfit);
+    WriteOwned(data, outfit);
     CHECK(Payloads(outfit).empty());
     data.SetShapeSources("Duplicate", sources); // Undo restores the snapshot.
-    data.Apply(outfit);
+    WriteOwned(data, outfit);
     CHECK(Payloads(outfit) == std::vector<std::string>{"coat physics"});
 }
 
@@ -262,7 +375,7 @@ TEST_CASE("Restoring a project snapshot restores the cloth of every shape", "[cl
     data.SetAllShapeSources(snapshot);
     CHECK(data.GetShapeSources("Renamed").empty());
     CHECK(data.GetShapeSources("Other").empty());
-    data.Apply(before);
+    WriteOwned(data, before);
     CHECK(Payloads(before) == std::vector<std::string>{"coat physics"});
 }
 
@@ -272,8 +385,8 @@ TEST_CASE("Reimporting the same path never replaces an earlier shape's cloth", "
     auto second = Fixture("Second", coatBones, {{"second version", {"Cloth_Bone_001"}}});
     data.Capture(first, "outfit.nif", first.GetShapes(), Skeleton);
     data.Capture(second, "outfit.nif", second.GetShapes(), Skeleton);
-    data.Apply(first);
-    data.Apply(second);
+    WriteOwned(data, first);
+    WriteOwned(data, second);
     CHECK(Payloads(first) == std::vector<std::string>{"first version"});
     CHECK(Payloads(second) == std::vector<std::string>{"second version"});
 }
@@ -308,18 +421,6 @@ TEST_CASE("Reloading a file reuses the cloth blocks it stored", "[cloth][export]
     }
 }
 
-TEST_CASE("Explicit HKX additions cannot deselect original cloth", "[cloth][export]") {
-    ClothData data;
-    auto outfit = Fixture("Coat", coatBones, {coatCloth.front()});
-    data.Capture(outfit, "coat.nif", outfit.GetShapes(), Skeleton);
-    data.AddManual("extra.hkx", Cloth("extra physics"));
-    data.AddManual("duplicate.hkx", Cloth(coatCloth.front().label, coatCloth.front().bones));
-    data.Apply(outfit, data.GetManualSources());
-    CHECK(Payloads(outfit) == std::vector<std::string>{"coat physics", "extra physics"});
-    data.Apply(outfit); // Cancel or deselect all optional additions.
-    CHECK(Payloads(outfit) == std::vector<std::string>{"coat physics"});
-}
-
 TEST_CASE("Cloth ownership survives saving and reopening a combined NIF", "[cloth][export][roundtrip]") {
     const bool fallout = GENERATE(false, true);
     CAPTURE(fallout);
@@ -331,7 +432,7 @@ TEST_CASE("Cloth ownership survives saving and reopening a combined NIF", "[clot
     NifFile combined(reference);
     REQUIRE(combined.CloneShape(outfit.GetShapes().front(), "Coat", &outfit));
     REQUIRE(AddShape(combined, "Clothless", {"C_Spine"}));
-    data.Apply(combined);
+    WriteOwned(data, combined);
 
     std::stringstream stream(std::ios::in | std::ios::out | std::ios::binary);
     REQUIRE(combined.Save(stream) == 0);
@@ -370,7 +471,7 @@ TEST_CASE("Cloth ownership survives saving and reopening a combined NIF", "[clot
         if (shape->name.get() != keep)
             reloaded.DeleteShape(shape);
     }
-    reopened.Apply(reloaded);
+    WriteOwned(reopened, reloaded);
     CHECK(Payloads(reloaded) == expected);
 
     // Another save/reopen must retain the narrowed ownership as well.
@@ -380,7 +481,7 @@ TEST_CASE("Cloth ownership survives saving and reopening a combined NIF", "[clot
     REQUIRE(second.Load(secondStream) == 0);
     ClothData secondImport;
     secondImport.Capture(second, "outfit-only.nif", second.GetShapes(), Skeleton);
-    secondImport.Apply(second);
+    WriteOwned(secondImport, second);
     CHECK(Payloads(second) == expected);
 }
 
@@ -392,7 +493,7 @@ TEST_CASE("Shared cloth stays with each owner after reopening", "[cloth][export]
     data.Capture(reference, "naked.nif", reference.GetShapes(), Skeleton);
     data.Capture(outfit, "coat.nif", outfit.GetShapes(), Skeleton);
     REQUIRE(reference.CloneShape(outfit.GetShapes().front(), "Coat", &outfit));
-    data.Apply(reference);
+    WriteOwned(data, reference);
     CHECK(Payloads(reference) == std::vector<std::string>{"body physics", "coat physics", "shared physics"});
     std::stringstream stream(std::ios::in | std::ios::out | std::ios::binary);
     REQUIRE(reference.Save(stream) == 0);
@@ -401,7 +502,7 @@ TEST_CASE("Shared cloth stays with each owner after reopening", "[cloth][export]
     ClothData reopened;
     reopened.Capture(reloaded, "combined.nif", reloaded.GetShapes(), Skeleton);
     reloaded.DeleteShape(reloaded.FindBlockByName<NiShape>("Reference"));
-    reopened.Apply(reloaded);
+    WriteOwned(reopened, reloaded);
     CHECK(Payloads(reloaded) == std::vector<std::string>{"coat physics", "shared physics"});
 }
 
@@ -414,7 +515,7 @@ TEST_CASE("Cloth edited outside Outfit Studio keeps following its bones", "[clot
     NifFile combined(reference);
     REQUIRE(combined.CloneShape(outfit.GetShapes().front(), "Coat", &outfit));
     REQUIRE(AddShape(combined, "Clothless", {"C_Spine"}));
-    data.Apply(combined);
+    WriteOwned(data, combined);
 
     std::stringstream stream(std::ios::in | std::ios::out | std::ios::binary);
     REQUIRE(combined.Save(stream) == 0);
@@ -448,7 +549,7 @@ TEST_CASE("Cloth edited outside Outfit Studio keeps following its bones", "[clot
             if (shape->name.get() != keep)
                 work.DeleteShape(shape);
         }
-        reopened.Apply(work);
+        WriteOwned(reopened, work);
         CHECK(Payloads(work) == expected);
     }
 }
@@ -475,19 +576,19 @@ TEST_CASE("Verify actual Outfit Studio cloth preservation exports", "[.cloth-dat
         NifFile nif;
         REQUIRE(nif.Load(directory / name) == 0);
         CHECK(nif.GetShapes().size() == 1);
-        CHECK(Payloads(nif) == std::vector<std::string>{"badge physics", "coat physics"});
+        CHECK(Payloads(nif) == std::vector<std::string>{"coat physics"});
     }
     NifFile both;
     REQUIRE(both.Load(directory / "with-reference.nif") == 0);
     CHECK(both.GetShapes().size() == 2);
-    CHECK(Payloads(both) == std::vector<std::string>{"badge physics", "body physics", "coat physics"});
+    CHECK(Payloads(both).size() == 1);
     NifFile savedProject;
     REQUIRE(savedProject.Load(directory / "ShapeData/Combined/Combined.nif") == 0);
     CHECK(savedProject.GetShapes().size() == 2);
-    CHECK(Payloads(savedProject) == std::vector<std::string>{"badge physics", "body physics", "coat physics"});
+    CHECK(Payloads(savedProject).size() == 1);
     NifFile merged;
     REQUIRE(merged.Load(directory / "merged.nif") == 0);
     REQUIRE(merged.GetShapes().size() == 1);
     CHECK(merged.GetShapes().front()->GetNumVertices() == 6);
-    CHECK(Payloads(merged) == std::vector<std::string>{"badge physics", "body physics", "coat physics"});
+    CHECK(Payloads(merged).size() == 1);
 }

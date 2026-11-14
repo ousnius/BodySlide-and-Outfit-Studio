@@ -10,6 +10,7 @@ See the included LICENSE file
 #include <functional>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -61,9 +62,22 @@ public:
 		manualSources.clear();
 	}
 
-	// Standalone HKX import that is only written to the output on request
+	// Standalone HKX import, preselected for exports over the cloth of the loaded files
 	void AddManual(const std::string& source, std::unique_ptr<nifly::BSClothExtraData> block);
 
-	// Writes the cloth of the shapes left in the NIF plus any additional sources
-	void Apply(nifly::NifFile& nif, const Sources& additional = {}) const;
+	struct ExportChoices {
+		// Each distinct payload once, by the first source that holds it
+		Sources sources;
+		// Index into sources, unset when no cloth fits the exported shapes
+		std::optional<size_t> preselected;
+	};
+
+	// The blocks an export can write and the default for the shapes left in the NIF. A NIF holds a single cloth block,
+	// so the default is the latest standalone HKX import, else the cloth of the exported shapes, else cloth driving an
+	// added bone they are skinned to. The last one carries body physics over to an outfit that was given the body's
+	// physics bones by a weight copy from the reference.
+	ExportChoices GetExportChoices(nifly::NifFile& nif, const SkeletonBones& isSkeletonBone = {}) const;
+
+	// Replaces any cloth in the NIF with the block of one source, or with none for an empty name
+	void Write(nifly::NifFile& nif, const std::string& source) const;
 };

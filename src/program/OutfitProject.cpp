@@ -8043,31 +8043,33 @@ void OutfitProject::WriteAnimToNif(NifFile& nif, const std::string& shapeExcepti
 }
 
 void OutfitProject::ChooseClothData(NifFile& nif) {
-	// NIF imports are automatic. Only standalone HKX imports need a choice,
-	// because they have no source shapes to associate them with.
-	ClothData::Sources additional;
-	const auto& manual = clothData.GetManualSources();
-	if (!manual.empty()) {
-		if (!host->IsInteractive()) {
-			// Unattended runs get the default answer of "all additional sources"
-			additional = manual;
-		}
-		else {
-			wxArrayString names;
-			for (const auto& source : manual)
-				names.Add(wxString::FromUTF8(source));
+	// A NIF holds a single cloth block. Every loaded block is offered, with the cloth that fits the exported shapes
+	// preselected. That includes the reference's cloth once an outfit has been given its physics bones, even when the
+	// reference isn't exported. Unattended runs and a cancelled prompt get the preselection.
+	auto choices = clothData.GetExportChoices(nif, IsSkeletonBone);
 
-			wxArrayInt sel;
-			if (host->ChooseMany(_("The original cloth data of the exported shapes is preserved automatically. Choose any additional imported HKX data to include."),
-								 _("Choose additional cloth data"),
-								 names,
-								 sel)) {
-				for (size_t i = 0; i < sel.Count(); i++)
-					additional.push_back(manual[sel[i]]);
-			}
-		}
+	std::string source;
+	if (choices.preselected)
+		source = choices.sources[*choices.preselected];
+
+	if (!choices.sources.empty()) {
+		wxArrayString names;
+		for (const auto& name : choices.sources)
+			names.Add(wxString::FromUTF8(name));
+
+		// The last entry writes no cloth
+		names.Add(_("None"));
+
+		int sel = static_cast<int>(choices.preselected.value_or(choices.sources.size()));
+		if (host->ChooseOne(_("There was cloth physics data loaded at some point (BSClothExtraData). Please choose the origin to use in the output."),
+							_("Choose cloth data"),
+							names,
+							sel)
+			&& sel >= 0 && sel < static_cast<int>(names.GetCount()))
+			source = static_cast<size_t>(sel) < choices.sources.size() ? choices.sources[sel] : std::string();
 	}
-	clothData.Apply(nif, additional);
+
+	clothData.Write(nif, source);
 }
 
 void OutfitProject::ChoosePhysicsData(NifFile& nif) {

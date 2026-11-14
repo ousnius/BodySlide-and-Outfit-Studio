@@ -47,6 +47,24 @@ std::unordered_set<std::string> Names(const BSClothExtraData& block) {
 	return names;
 }
 
+// The bones a shape adds to the reference skeleton, lowercase. Only these tell cloth apart, as every payload names the
+// whole skeleton next to the bones it drives.
+std::vector<std::string> AddedBones(NifFile& nif, NiShape* shape, const ClothData::SkeletonBones& isSkeletonBone) {
+	std::vector<std::string> bones;
+	nif.GetShapeBoneList(shape, bones);
+
+	std::vector<std::string> added;
+	for (auto& bone : bones) {
+		if (!isSkeletonBone || !isSkeletonBone(bone))
+			added.push_back(Lower(bone));
+	}
+	return added;
+}
+
+bool Drives(const std::unordered_set<std::string>& names, const std::vector<std::string>& addedBones) {
+	return std::any_of(addedBones.begin(), addedBones.end(), [&](const std::string& bone) { return names.count(bone) > 0; });
+}
+
 } // namespace
 
 std::string ClothData::Add(const std::string& source, std::unique_ptr<BSClothExtraData> block) {
@@ -108,18 +126,9 @@ void ClothData::Capture(NifFile& nif, const std::string& source, const std::vect
 	std::unordered_map<NiShape*, Sources> owned;
 	std::set<std::string> claimed;
 	for (auto& shape : nif.GetShapes()) {
-		std::vector<std::string> bones;
-		nif.GetShapeBoneList(shape, bones);
-
-		std::vector<std::string> added;
-		for (auto& bone : bones) {
-			if (!isSkeletonBone || !isSkeletonBone(bone))
-				added.push_back(Lower(bone));
-		}
-
+		auto added = AddedBones(nif, shape, isSkeletonBone);
 		for (auto& block : captured) {
-			bool drives = std::any_of(added.begin(), added.end(), [&](const std::string& bone) { return block.names.count(bone) > 0; });
-			if (drives) {
+			if (Drives(block.names, added)) {
 				owned[shape].push_back(block.key);
 				claimed.insert(block.key);
 			}
@@ -150,25 +159,51 @@ void ClothData::AddManual(const std::string& source, std::unique_ptr<BSClothExtr
 		manualSources.push_back(key);
 }
 
-void ClothData::Apply(NifFile& nif, const Sources& additional) const {
+ClothData::ExportChoices ClothData::GetExportChoices(NifFile& nif, const SkeletonBones& isSkeletonBone) const {
+	std::optional<std::string> best;
+	if (!manualSources.empty())
+		best = manualSources.back();
+
+	std::vector<std::string> added;
+	for (auto& shape : nif.GetShapes()) {
+		auto owned = GetShapeSources(shape->name.get());
+		if (!best && !owned.empty())
+			best = owned.front();
+
+		auto bones = AddedBones(nif, shape, isSkeletonBone);
+		added.insert(added.end(), bones.begin(), bones.end());
+	}
+
+	if (!best) {
+		for (auto& block : blocks) {
+			if (Drives(Names(*block.second), added)) {
+				best = block.first;
+				break;
+			}
+		}
+	}
+
+	// Different imports can hold the same block, which would only list the same choice twice
+	ExportChoices choices;
+	std::unordered_map<std::string, size_t> listed;
+	for (auto& block : blocks) {
+		auto entry = listed.emplace(Fingerprint(*block.second), choices.sources.size());
+		if (entry.second)
+			choices.sources.push_back(block.first);
+		if (best && *best == block.first)
+			choices.preselected = entry.first->second;
+	}
+	return choices;
+}
+
+void ClothData::Write(NifFile& nif, const std::string& source) const {
 	auto root = nif.GetRootNode();
 	if (!root)
 		return;
 
-	Sources sources;
-	for (auto& shape : nif.GetShapes()) {
-		auto owned = GetShapeSources(shape->name.get());
-		sources.insert(sources.end(), owned.begin(), owned.end());
-	}
-	sources.insert(sources.end(), additional.begin(), additional.end());
-
 	nif.GetHeader().DeleteBlockByType("BSClothExtraData");
 
-	// Several shapes can share a source and different imports can hold the same block, so each payload is written once
-	std::set<std::string> written;
-	for (auto& source : sources) {
-		auto block = blocks.find(source);
-		if (block != blocks.end() && written.insert(Fingerprint(*block->second)).second)
-			root->extraDataRefs.AddBlockRef(nif.GetHeader().AddBlock(block->second->Clone()));
-	}
+	auto block = blocks.find(source);
+	if (block != blocks.end())
+		root->extraDataRefs.AddBlockRef(nif.GetHeader().AddBlock(block->second->Clone()));
 }
