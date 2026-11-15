@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <g transform="translate(-0.4 -0.25)">
+    <path d="M5.5 5 L11 19.5" stroke="#3d3d3d" stroke-width="1.5"/>
+    <path d="M11 19.5 L19 7" stroke="#ffffff" stroke-width="1.5"/>
+    <circle cx="5.5" cy="5" r="2.5" fill="#3d3d3d"/>
+    <circle cx="11" cy="19.5" r="2.5" fill="#3d3d3d"/>
+    <circle cx="19" cy="7" r="2.75" fill="#ffffff"/>
+  </g>
+</svg>

@@ -21,129 +21,132 @@
 					<object class="tool" name="btnNewProject">
 						<label>New Project</label>
 						<tooltip>Create a new project by selecting a reference body slider set, and outfit model files.</tooltip>
-						<bitmap>$(AppDir)\res\images\NewProj.png</bitmap>
+						<bitmap default_size="24,24">$(AppDir)\res\images\NewProj.svg</bitmap>
+						<bitmap2 default_size="24,24">$(AppDir)\res\images\NewProj_d.svg</bitmap2>
 					</object>
 					<object class="separator" />
 					<object class="tool" name="btnLoadProject">
 						<label>Load Project</label>
 						<tooltip>Load a previously created slider set for editing.</tooltip>
-						<bitmap>$(AppDir)\res\images\LoadProj.png</bitmap>
+						<bitmap default_size="24,24">$(AppDir)\res\images\LoadProj.svg</bitmap>
+						<bitmap2 default_size="24,24">$(AppDir)\res\images\LoadProj_d.svg</bitmap2>
 					</object>
 					<object class="separator" />
 					<object class="tool" name="editUndo">
 						<label>Undo</label>
 						<tooltip>Undo a previous action.</tooltip>
-						<bitmap>$(AppDir)\res\images\Undo.png</bitmap>
-						<bitmap2>$(AppDir)\res\images\Undo_d.png</bitmap2>
+						<bitmap default_size="24,24">$(AppDir)\res\images\Undo.svg</bitmap>
+						<bitmap2 default_size="24,24">$(AppDir)\res\images\Undo_d.svg</bitmap2>
 						<disabled>1</disabled>
 					</object>
 					<object class="tool" name="editRedo">
 						<label>Redo</label>
 						<tooltip>Redo the next undone action.</tooltip>
-						<bitmap>$(AppDir)\res\images\Redo.png</bitmap>
-						<bitmap2>$(AppDir)\res\images\Redo_d.png</bitmap2>
+						<bitmap default_size="24,24">$(AppDir)\res\images\Redo.svg</bitmap>
+						<bitmap2 default_size="24,24">$(AppDir)\res\images\Redo_d.svg</bitmap2>
 						<disabled>1</disabled>
 					</object>
 					<object class="separator" />
 					<object class="tool" name="btnSelect">
 						<label>Select</label>
 						<tooltip>Navigate and select meshes (or vertices in vertex mode).</tooltip>
-						<bitmap>$(AppDir)\res\images\SelectBrush.png</bitmap>
-						<bitmap2>$(AppDir)\res\images\SelectBrush_d.png</bitmap2>
+						<bitmap default_size="24,24">$(AppDir)\res\images\SelectBrush.svg</bitmap>
+						<bitmap2 default_size="24,24">$(AppDir)\res\images\SelectBrush_d.svg</bitmap2>
 						<radio>1</radio>
 						<checked>1</checked>
 					</object>
 					<object class="tool" name="btnMaskBrush">
 						<label>Mask</label>
 						<tooltip>Mask vertices to prevent them from being transformed.\nHold down the ALT key to remove masking.</tooltip>
-						<bitmap>$(AppDir)\res\images\MaskBrush.png</bitmap>
-						<bitmap2>$(AppDir)\res\images\MaskBrush_d.png</bitmap2>
+						<bitmap default_size="24,24">$(AppDir)\res\images\MaskBrush.svg</bitmap>
+						<bitmap2 default_size="24,24">$(AppDir)\res\images\MaskBrush_d.svg</bitmap2>
 						<radio>1</radio>
 					</object>
 					<object class="tool" name="btnInflateBrush">
 						<label>Inflate</label>
 						<tooltip>Increase mesh volume in an area.</tooltip>
-						<bitmap>$(AppDir)\res\images\InflateBrush.png</bitmap>
-						<bitmap2>$(AppDir)\res\images\InflateBrush_d.png</bitmap2>
+						<bitmap default_size="24,24">$(AppDir)\res\images\InflateBrush.svg</bitmap>
+						<bitmap2 default_size="24,24">$(AppDir)\res\images\InflateBrush_d.svg</bitmap2>
 						<radio>1</radio>
 					</object>
 					<object class="tool" name="btnDeflateBrush">
 						<label>Deflate</label>
 						<tooltip>Decrease mesh volume in an area.</tooltip>
-						<bitmap>$(AppDir)\res\images\DeflateBrush.png</bitmap>
-						<bitmap2>$(AppDir)\res\images\DeflateBrush_d.png</bitmap2>
+						<bitmap default_size="24,24">$(AppDir)\res\images\DeflateBrush.svg</bitmap>
+						<bitmap2 default_size="24,24">$(AppDir)\res\images\DeflateBrush_d.svg</bitmap2>
 						<radio>1</radio>
 					</object>
 					<object class="tool" name="btnMoveBrush">
 						<label>Move</label>
 						<tooltip>Move vertices over a plane parallel to the view.</tooltip>
-						<bitmap>$(AppDir)\res\images\MoveBrush.png</bitmap>
-						<bitmap2>$(AppDir)\res\images\MoveBrush_d.png</bitmap2>
+						<bitmap default_size="24,24">$(AppDir)\res\images\MoveBrush.svg</bitmap>
+						<bitmap2 default_size="24,24">$(AppDir)\res\images\MoveBrush_d.svg</bitmap2>
 						<radio>1</radio>
 					</object>
 					<object class="tool" name="btnSmoothBrush">
 						<label>Smooth</label>
 						<tooltip>Smooth an area of a mesh.</tooltip>
-						<bitmap>$(AppDir)\res\images\SmoothBrush.png</bitmap>
-						<bitmap2>$(AppDir)\res\images\SmoothBrush_d.png</bitmap2>
+						<bitmap default_size="24,24">$(AppDir)\res\images\SmoothBrush.svg</bitmap>
+						<bitmap2 default_size="24,24">$(AppDir)\res\images\SmoothBrush_d.svg</bitmap2>
 						<radio>1</radio>
 					</object>
 					<object class="tool" name="btnUndiffBrush">
 						<label>Undiff</label>
 						<tooltip>Undiff an area of a slider.</tooltip>
-						<bitmap>$(AppDir)\res\images\UndiffBrush.png</bitmap>
-						<bitmap2>$(AppDir)\res\images\UndiffBrush_d.png</bitmap2>
+						<bitmap default_size="24,24">$(AppDir)\res\images\UndiffBrush.svg</bitmap>
+						<bitmap2 default_size="24,24">$(AppDir)\res\images\UndiffBrush_d.svg</bitmap2>
 						<radio>1</radio>
 					</object>
 					<object class="tool" name="btnWeightBrush">
 						<label>Weight Paint</label>
 						<tooltip>Apply animation weight values for currently selected bone.\nHold down the ALT key to weaken the weighting.</tooltip>
-						<bitmap>$(AppDir)\res\images\WeightBrush.png</bitmap>
-						<bitmap2>$(AppDir)\res\images\WeightBrush_d.png</bitmap2>
+						<bitmap default_size="24,24">$(AppDir)\res\images\WeightBrush.svg</bitmap>
+						<bitmap2 default_size="24,24">$(AppDir)\res\images\WeightBrush_d.svg</bitmap2>
 						<radio>1</radio>
 						<disabled>1</disabled>
 					</object>
 					<object class="tool" name="btnColorBrush">
 						<label>Color Paint</label>
 						<tooltip>Apply vertex colors.\nHold down the ALT key to remove colors.</tooltip>
-						<bitmap>$(AppDir)\res\images\ColorBrush.png</bitmap>
-						<bitmap2>$(AppDir)\res\images\ColorBrush_d.png</bitmap2>
+						<bitmap default_size="24,24">$(AppDir)\res\images\ColorBrush.svg</bitmap>
+						<bitmap2 default_size="24,24">$(AppDir)\res\images\ColorBrush_d.svg</bitmap2>
 						<radio>1</radio>
 						<disabled>1</disabled>
 					</object>
 					<object class="tool" name="btnAlphaBrush">
 						<label>Alpha Paint</label>
 						<tooltip>Apply vertex alpha.\nHold down the ALT key to remove alpha.</tooltip>
-						<bitmap>$(AppDir)\res\images\AlphaBrush.png</bitmap>
-						<bitmap2>$(AppDir)\res\images\AlphaBrush_d.png</bitmap2>
+						<bitmap default_size="24,24">$(AppDir)\res\images\AlphaBrush.svg</bitmap>
+						<bitmap2 default_size="24,24">$(AppDir)\res\images\AlphaBrush_d.svg</bitmap2>
 						<radio>1</radio>
 						<disabled>1</disabled>
 					</object>
 					<object class="tool" name="btnCollapseVertex">
 						<label>Collapse Vertex</label>
 						<tooltip>Deletes vertices with no more than three connections, without creating a hole.</tooltip>
-						<bitmap>$(AppDir)\res\images\CollapseVertex.png</bitmap>
-						<bitmap2>$(AppDir)\res\images\CollapseVertex_d.png</bitmap2>
+						<bitmap default_size="24,24">$(AppDir)\res\images\CollapseVertex.svg</bitmap>
+						<bitmap2 default_size="24,24">$(AppDir)\res\images\CollapseVertex_d.svg</bitmap2>
 						<radio>1</radio>
 					</object>
 					<object class="tool" name="btnFlipEdgeTool">
 						<label>Flip Edge</label>
 						<tooltip>Flips mesh edges so that the opposite pair of vertices is connected.</tooltip>
-						<bitmap>$(AppDir)\res\images\FlipEdge.png</bitmap>
-						<bitmap2>$(AppDir)\res\images\FlipEdge_d.png</bitmap2>
+						<bitmap default_size="24,24">$(AppDir)\res\images\FlipEdge.svg</bitmap>
+						<bitmap2 default_size="24,24">$(AppDir)\res\images\FlipEdge_d.svg</bitmap2>
 						<radio>1</radio>
 					</object>
 					<object class="tool" name="btnSplitEdgeTool">
 						<label>Split Edge</label>
 						<tooltip>Splits a mesh edge in two with a new vertex.</tooltip>
-						<bitmap>$(AppDir)\res\images\SplitEdge.png</bitmap>
-						<bitmap2>$(AppDir)\res\images\SplitEdge_d.png</bitmap2>
+						<bitmap default_size="24,24">$(AppDir)\res\images\SplitEdge.svg</bitmap>
+						<bitmap2 default_size="24,24">$(AppDir)\res\images\SplitEdge_d.svg</bitmap2>
 						<radio>1</radio>
 					</object>
 					<object class="tool" name="btnMoveVertexTool">
 						<label>Move Vertex</label>
 						<tooltip>Moves a vertex.</tooltip>
-						<bitmap>$(AppDir)\res\images\MoveVertex.png</bitmap>
+						<bitmap default_size="24,24">$(AppDir)\res\images\MoveVertex.svg</bitmap>
+						<bitmap2 default_size="24,24">$(AppDir)\res\images\MoveVertex_d.svg</bitmap2>
 						<radio>1</radio>
 					</object>
 					<object class="separator" />
@@ -211,126 +214,140 @@
 							<object class="tool" name="btnTransform">
 								<label>Transform</label>
 								<tooltip>Shows a transform tool to manipulate shapes and vertices with.</tooltip>
-								<bitmap>$(AppDir)\res\images\TransformTool.png</bitmap>
-								<bitmap2>$(AppDir)\res\images\TransformTool_d.png</bitmap2>
+								<bitmap default_size="24,24">$(AppDir)\res\images\TransformTool.svg</bitmap>
+								<bitmap2 default_size="24,24">$(AppDir)\res\images\TransformTool_d.svg</bitmap2>
 								<toggle>1</toggle>
 							</object>
 							<object class="tool" name="btnPivot">
 								<label>Pivot</label>
 								<tooltip>Shows a pivot that can be moved and makes it the center of mesh operations like rotation and scale.</tooltip>
-								<bitmap>$(AppDir)\res\images\Pivot.png</bitmap>
-								<bitmap2>$(AppDir)\res\images\Pivot_d.png</bitmap2>
+								<bitmap default_size="24,24">$(AppDir)\res\images\Pivot.svg</bitmap>
+								<bitmap2 default_size="24,24">$(AppDir)\res\images\Pivot_d.svg</bitmap2>
 								<toggle>1</toggle>
 							</object>
 							<object class="tool" name="btnVertexEdit">
 								<label>Vertex Edit</label>
 								<tooltip>Lets you select vertices to add to or remove from the mask.\nClick on a vertex to select/unmask it.\nHold down CTRL to unselect/mask it.</tooltip>
-								<bitmap>$(AppDir)\res\images\VertexEdit.png</bitmap>
-								<bitmap2>$(AppDir)\res\images\VertexEdit_d.png</bitmap2>
+								<bitmap default_size="24,24">$(AppDir)\res\images\VertexEdit.svg</bitmap>
+								<bitmap2 default_size="24,24">$(AppDir)\res\images\VertexEdit_d.svg</bitmap2>
 								<toggle>1</toggle>
 							</object>
 							<object class="separator" />
 							<object class="tool" name="btnViewFront">
 								<label>View Front</label>
 								<tooltip>Change camera view to the front.</tooltip>
-								<bitmap>$(AppDir)\res\images\ViewFront.png</bitmap>
+								<bitmap default_size="24,24">$(AppDir)\res\images\ViewFront.svg</bitmap>
+								<bitmap2 default_size="24,24">$(AppDir)\res\images\ViewFront_d.svg</bitmap2>
 							</object>
 							<object class="tool" name="btnViewBack">
 								<label>View Back</label>
 								<tooltip>Change camera view to the back.</tooltip>
-								<bitmap>$(AppDir)\res\images\ViewBack.png</bitmap>
+								<bitmap default_size="24,24">$(AppDir)\res\images\ViewBack.svg</bitmap>
+								<bitmap2 default_size="24,24">$(AppDir)\res\images\ViewBack_d.svg</bitmap2>
 							</object>
 							<object class="tool" name="btnViewLeft">
 								<label>View Left</label>
 								<tooltip>Change camera view to the left.</tooltip>
-								<bitmap>$(AppDir)\res\images\ViewLeft.png</bitmap>
+								<bitmap default_size="24,24">$(AppDir)\res\images\ViewLeft.svg</bitmap>
+								<bitmap2 default_size="24,24">$(AppDir)\res\images\ViewLeft_d.svg</bitmap2>
 							</object>
 							<object class="tool" name="btnViewRight">
 								<label>View Right</label>
 								<tooltip>Change camera view to the right.</tooltip>
-								<bitmap>$(AppDir)\res\images\ViewRight.png</bitmap>
+								<bitmap default_size="24,24">$(AppDir)\res\images\ViewRight.svg</bitmap>
+								<bitmap2 default_size="24,24">$(AppDir)\res\images\ViewRight_d.svg</bitmap2>
 							</object>
 							<object class="tool" name="btnViewPerspective">
 								<label>Perspective View</label>
 								<tooltip>Toggle perspective view.</tooltip>
-								<bitmap>$(AppDir)\res\images\ViewPerspective.png</bitmap>
+								<bitmap default_size="24,24">$(AppDir)\res\images\ViewPerspective.svg</bitmap>
+								<bitmap2 default_size="24,24">$(AppDir)\res\images\ViewPerspective_d.svg</bitmap2>
 								<toggle>1</toggle>
 								<checked>1</checked>
 							</object>
 							<object class="tool" name="btnShowNodes">
 								<label>Show Nodes</label>
 								<tooltip>Toggle rendering of nodes.</tooltip>
-								<bitmap>$(AppDir)\res\images\Nodes.png</bitmap>
+								<bitmap default_size="24,24">$(AppDir)\res\images\Nodes.svg</bitmap>
+								<bitmap2 default_size="24,24">$(AppDir)\res\images\Nodes_d.svg</bitmap2>
 								<toggle>1</toggle>
 							</object>
 							<object class="tool" name="btnShowBones">
 								<label>Show Bones</label>
 								<tooltip>Toggle rendering of bones.</tooltip>
-								<bitmap>$(AppDir)\res\images\Bones.png</bitmap>
+								<bitmap default_size="24,24">$(AppDir)\res\images\Bones.svg</bitmap>
+								<bitmap2 default_size="24,24">$(AppDir)\res\images\Bones_d.svg</bitmap2>
 								<toggle>1</toggle>
 							</object>
 							<object class="tool" name="btnShowFloor">
 								<label>Show Floor</label>
 								<tooltip>Toggle rendering of the floor grid.</tooltip>
-								<bitmap>$(AppDir)\res\images\Floor.png</bitmap>
+								<bitmap default_size="24,24">$(AppDir)\res\images\Floor.svg</bitmap>
+								<bitmap2 default_size="24,24">$(AppDir)\res\images\Floor_d.svg</bitmap2>
 								<toggle>1</toggle>
 							</object>
 							<object class="separator" />
 							<object class="tool" name="btnXMirror">
 								<label>X Mirror</label>
 								<tooltip>Mirror edits across the X axis.</tooltip>
-								<bitmap>$(AppDir)\res\images\XMirror.png</bitmap>
-								<bitmap2>$(AppDir)\res\images\XMirror_d.png</bitmap2>
+								<bitmap default_size="24,24">$(AppDir)\res\images\XMirror.svg</bitmap>
+								<bitmap2 default_size="24,24">$(AppDir)\res\images\XMirror_d.svg</bitmap2>
 								<toggle>1</toggle>
 								<checked>0</checked>
 							</object>
 							<object class="tool" name="btnConnected">
 								<label>Edit Connected Only\tC</label>
 								<tooltip>Edit only vertices that are connected to the ones under the brush within the brush radius.</tooltip>
-								<bitmap>$(AppDir)\res\images\EditConnected.png</bitmap>
+								<bitmap default_size="24,24">$(AppDir)\res\images\EditConnected.svg</bitmap>
+								<bitmap2 default_size="24,24">$(AppDir)\res\images\EditConnected_d.svg</bitmap2>
 								<toggle>1</toggle>
 								<checked>0</checked>
 							</object>
 							<object class="tool" name="btnMerge">
 								<label>Merge Vertex</label>
 								<tooltip>Merges two vertices and fills any gaps.</tooltip>
-								<bitmap>$(AppDir)\res\images\Merge.png</bitmap>
+								<bitmap default_size="24,24">$(AppDir)\res\images\Merge.svg</bitmap>
+								<bitmap2 default_size="24,24">$(AppDir)\res\images\Merge_d.svg</bitmap2>
 								<toggle>1</toggle>
 								<checked>0</checked>
 							</object>
 							<object class="tool" name="btnWeld">
 								<label>Weld Vertex</label>
 								<tooltip>Welds two vertices while keeping the texture coordinates (UV) distinct.</tooltip>
-								<bitmap>$(AppDir)\res\images\Weld.png</bitmap>
+								<bitmap default_size="24,24">$(AppDir)\res\images\Weld.svg</bitmap>
+								<bitmap2 default_size="24,24">$(AppDir)\res\images\Weld_d.svg</bitmap2>
 								<toggle>1</toggle>
 								<checked>0</checked>
 							</object>
 							<object class="tool" name="btnEdgeSlide">
 								<label>Edge Slide</label>
 								<tooltip>Slides a vertex along a connected edge.</tooltip>
-								<bitmap>$(AppDir)\res\images\EdgeSlide.png</bitmap>
-								<bitmap2>$(AppDir)\res\images\EdgeSlide_d.png</bitmap2>
+								<bitmap default_size="24,24">$(AppDir)\res\images\EdgeSlide.svg</bitmap>
+								<bitmap2 default_size="24,24">$(AppDir)\res\images\EdgeSlide_d.svg</bitmap2>
 								<toggle>1</toggle>
 								<checked>0</checked>
 							</object>
 							<object class="tool" name="btnRestrictSurface">
 								<label>Restrict To Surface</label>
 								<tooltip>Restricts motion to a mesh surface.</tooltip>
-								<bitmap>$(AppDir)\res\images\RestrictSurface.png</bitmap>
+								<bitmap default_size="24,24">$(AppDir)\res\images\RestrictSurface.svg</bitmap>
+								<bitmap2 default_size="24,24">$(AppDir)\res\images\RestrictSurface_d.svg</bitmap2>
 								<toggle>1</toggle>
 								<checked>0</checked>
 							</object>
 							<object class="tool" name="btnRestrictPlane">
 								<label>Restrict To Plane</label>
 								<tooltip>Restricts motion to parallel to the surface.</tooltip>
-								<bitmap>$(AppDir)\res\images\RestrictPlane.png</bitmap>
+								<bitmap default_size="24,24">$(AppDir)\res\images\RestrictPlane.svg</bitmap>
+								<bitmap2 default_size="24,24">$(AppDir)\res\images\RestrictPlane_d.svg</bitmap2>
 								<toggle>1</toggle>
 								<checked>0</checked>
 							</object>
 							<object class="tool" name="btnRestrictNormal">
 								<label>Restrict To Normal</label>
 								<tooltip>Restricts motion to perpendicular to the surface.</tooltip>
-								<bitmap>$(AppDir)\res\images\RestrictNormal.png</bitmap>
+								<bitmap default_size="24,24">$(AppDir)\res\images\RestrictNormal.svg</bitmap>
+								<bitmap2 default_size="24,24">$(AppDir)\res\images\RestrictNormal_d.svg</bitmap2>
 								<toggle>1</toggle>
 								<checked>0</checked>
 							</object>
