@@ -295,6 +295,9 @@ public:
 					  const nifly::Vector3& directional2Dir);
 
 	void ProjectPointToScreen(const nifly::Vector3& p, int& x, int& y);
+	// Where a point in model space lands in the viewport, in pixels from the top left, with its normalized depth
+	// (smaller is closer). False when the point is behind the camera.
+	bool ProjectPointToViewport(const nifly::Vector3& p, float& x, float& y, float* depth = nullptr) const;
 	// Where a point in model space lands in an image of this size rendered with the current camera (RenderToImage),
 	// in pixels from the top left. False when the point is behind the camera.
 	bool ProjectPointToImage(const nifly::Vector3& p, uint32_t width, uint32_t height, float& x, float& y) const;

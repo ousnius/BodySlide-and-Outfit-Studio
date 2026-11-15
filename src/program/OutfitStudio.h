@@ -758,6 +758,13 @@ public:
 	void SetHoverHighlight(const std::string& shapeName);
 	void ClearHoverHighlight();
 
+	// The displayed bone whose joint or segment is under the screen position,
+	// or empty. Only while bones are shown and no animation plays. Connector
+	// bones, drawn only to link the selection's bones to their ancestors, are
+	// only picked with includeConnectors.
+	std::string PickBone(int x, int y, bool includeConnectors = false);
+	void SetHoverBone(const std::string& bone);
+
 private:
 	void OnShown();
 	void OnPaint(wxPaintEvent& event);
@@ -773,6 +780,7 @@ private:
 
 	void OnRightDown(wxMouseEvent& event);
 	void OnRightUp(wxMouseEvent& event);
+	void OnLeaveWindow(wxMouseEvent& event);
 
 	void OnKeys(wxKeyEvent& event);
 	void OnIdle(wxIdleEvent& event);
@@ -782,6 +790,8 @@ private:
 	std::unique_ptr<wxGLContext> context;
 
 	std::string hoverHighlightName;
+	// Bone under the cursor while bones are shown, highlighted in the viewport
+	std::string hoverBone;
 
 	bool rbuttonDown = false;
 	bool lbuttonDown = false;
@@ -789,6 +799,7 @@ private:
 	bool isLDragging = false;
 	bool isMDragging = false;
 	bool isRDragging = false;
+	wxPoint rDownPos;
 	bool firstPaint = true;
 
 	int lastX = 0;
@@ -850,6 +861,7 @@ private:
 	bool isSelecting = false;
 	bool isPickingVertex = false;
 	bool isPickingEdge = false;
+	bool isPickingBone = false;
 	bool isMovingVertex = false;
 	bool isSlidingEdge = false;
 	bool isPhysicsGrabbing = false;
@@ -937,6 +949,9 @@ private:
 	std::vector<Mesh*> nodesLines;
 	std::vector<Mesh*> bonesPoints;
 	std::vector<Mesh*> bonesLines;
+	// Drawn bones that the selected shapes don't use, shown dimmed only to
+	// connect the bones below them to the hierarchy
+	std::set<std::string> connectorBones;
 	std::vector<Mesh*> floorMeshes;
 
 	wxDECLARE_EVENT_TABLE();
@@ -1403,6 +1418,18 @@ public:
 	void ClearSelected(nifly::NiShape* shape);
 	std::string GetActiveBone();
 
+	// Bone list item of a project bone, or an invalid id
+	wxTreeItemId FindBoneItem(const std::string& bone);
+	// Selects a project bone picked in the viewport, as clicking it in the bone
+	// list would. With toggle, it is added to or removed from the selection.
+	// With keepSelection, an already selected bone only becomes the active one.
+	// False when the bone is not in the project.
+	bool SelectBoneFromViewport(const std::string& bone, bool toggle = false, bool keepSelection = false);
+	// Bone context menu for the bone list or, with a window and position, for a
+	// bone right-clicked in the viewport. Bones that aren't in the project (only
+	// shown to connect the hierarchy) get the add menu, adding children to them.
+	void ShowBoneContextMenu(const std::string& bone = std::string(), wxWindow* at = nullptr, const wxPoint& pos = wxDefaultPosition);
+
 	bool CheckEditableState();
 
 	void HideSliderPanel(wxSliderPanel* sliderPanel);
@@ -1553,6 +1580,11 @@ private:
 	bool selectionLocked = false;
 	std::vector<ShapeItemData*> selectedItems;
 	bool recursingUI = false;
+	// The transform tool was on when hiding bones/nodes on the bones tab turned it off
+	bool boneTransformSuspended = false;
+	// Parent for bones added from a viewport context menu opened on a bone that
+	// isn't in the project, used instead of the active bone
+	std::string contextParentBone;
 	wxTreeItemId activeSegment;
 	wxTreeItemId activePartition;
 	std::string lastCheckedSlider;

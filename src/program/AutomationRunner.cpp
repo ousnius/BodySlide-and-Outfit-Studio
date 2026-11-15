@@ -1022,10 +1022,10 @@ int AutomationRunner::ExecuteStepDeleteBones(const AutomationStep& step) {
 	}
 
 	if (step.deleteBoneFromProject) {
-		for (const auto& boneName : step.deleteBoneNames) {
+		for (const auto& boneName : step.deleteBoneNames)
 			wxLogMessage("Automation: Deleting bone '%s' from project...", boneName);
-			project->DeleteBone(boneName);
-		}
+
+		project->DeleteBones(step.deleteBoneNames);
 	}
 	else {
 		auto shapes = ResolveTargetShapes(step);

@@ -414,6 +414,18 @@ void GLSurface::ProjectPointToScreen(const Vector3& p, int& x, int& y) {
 	y = std::round(vpH - res.y);
 }
 
+bool GLSurface::ProjectPointToViewport(const Vector3& p, float& x, float& y, float* depth) const {
+	glm::vec4 clip = matProjection * matView * glm::vec4(p.x, p.y, p.z, 1.0f);
+	if (clip.w <= 1e-6f)
+		return false;
+
+	x = (clip.x / clip.w * 0.5f + 0.5f) * static_cast<float>(vpW);
+	y = (0.5f - clip.y / clip.w * 0.5f) * static_cast<float>(vpH);
+	if (depth)
+		*depth = clip.z / clip.w;
+	return true;
+}
+
 bool GLSurface::ProjectPointToImage(const Vector3& p, uint32_t width, uint32_t height, float& x, float& y) const {
 	if (width == 0 || height == 0)
 		return false;

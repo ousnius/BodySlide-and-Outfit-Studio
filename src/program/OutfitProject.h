@@ -711,14 +711,29 @@ public:
 	void CaptureShapeDeleteState(nifly::NiShape* shape, UndoStateShapeDelete& state);
 	nifly::NiShape* RestoreDeletedShape(UndoStateShapeDelete& state);
 
-	void DeleteBone(const std::string& boneName) {
-		if (workNif.IsValid()) {
+	void DeleteBone(const std::string& boneName) { DeleteBones({boneName}); }
+
+	void DeleteBones(const std::vector<std::string>& boneNames) {
+		if (!workNif.IsValid())
+			return;
+
+		for (auto& boneName : boneNames)
 			for (auto& s : workNif.GetShapeNames())
 				workAnim.RemoveShapeBone(s, boneName);
 
-			int blockID = workNif.GetBlockID(workNif.FindBlockByName<nifly::NiNode>(boneName));
-			if (blockID >= 0)
-				workNif.GetHeader().DeleteBlock(blockID);
+		// A node with child nodes stays, as an unweighted parent of the bones
+		// below it; deleting it would detach them from the node tree. Repeating
+		// until nothing changes deletes a parent deleted together with its
+		// children too, in any order.
+		bool deleted = true;
+		while (deleted) {
+			deleted = false;
+			for (auto& boneName : boneNames) {
+				if (workNif.CanDeleteNode(boneName)) {
+					workNif.DeleteNode(boneName);
+					deleted = true;
+				}
+			}
 		}
 	}
 

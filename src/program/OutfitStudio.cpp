@@ -7163,18 +7163,77 @@ void OutfitStudioFrame::OnShapeDrop(wxTreeEvent& event) {
 }
 
 void OutfitStudioFrame::OnBoneContext(wxTreeEvent& WXUNUSED(event)) {
-	wxMenu* menu = wxXmlResource::Get()->LoadMenu("menuBoneContext");
-	if (menu) {
+	ShowBoneContextMenu();
+}
+
+void OutfitStudioFrame::ShowBoneContextMenu(const std::string& bone, wxWindow* at, const wxPoint& pos) {
+	// A bone drawn only to connect the hierarchy can't be selected, but bones
+	// can still be added as its children.
+	const bool inProject = bone.empty() || FindBoneItem(bone).IsOk();
+
+	wxMenu* menu = wxXmlResource::Get()->LoadMenu(inProject ? "menuBoneContext" : "menuBoneTreeContext");
+	if (!menu)
+		return;
+
+	if (inProject) {
 		if (!editor.activeBone.empty() && activeItem && project->GetWorkAnim()->BoneHasInconsistentTransforms(activeItem->GetShape()->name.get(), editor.activeBone)) {
 			if (AnimSkeleton::getInstance().GetBonePtr(editor.activeBone)->isStandardBone)
 				menu->Enable(XRCID("setBoneNode"), false);
 		}
 		else
 			menu->Destroy(XRCID("menuBadBone"));
-
-		PopupMenu(menu);
-		delete menu;
 	}
+	else
+		contextParentBone = bone;
+
+	wxPoint menuPos = wxDefaultPosition;
+	if (at && pos != wxDefaultPosition)
+		menuPos = ScreenToClient(at->ClientToScreen(pos));
+
+	// The menu commands run before PopupMenu returns.
+	PopupMenu(menu, menuPos);
+	delete menu;
+
+	contextParentBone.clear();
+}
+
+wxTreeItemId OutfitStudioFrame::FindBoneItem(const std::string& bone) {
+	if (!outfitBones || !bonesRoot.IsOk() || bone.empty())
+		return wxTreeItemId();
+
+	const wxString boneStr = wxString::FromUTF8(bone);
+
+	wxTreeItemIdValue cookie;
+	wxTreeItemId item = outfitBones->GetFirstChild(bonesRoot, cookie);
+	while (item.IsOk()) {
+		if (outfitBones->GetItemText(item) == boneStr)
+			return item;
+		item = outfitBones->GetNextChild(bonesRoot, cookie);
+	}
+
+	return wxTreeItemId();
+}
+
+bool OutfitStudioFrame::SelectBoneFromViewport(const std::string& bone, bool toggle, bool keepSelection) {
+	wxTreeItemId item = FindBoneItem(bone);
+	if (!item.IsOk())
+		return false;
+
+	recursingUI = true;
+	if (toggle) {
+		outfitBones->ToggleItemSelection(item);
+	}
+	else if (!keepSelection || !outfitBones->IsSelected(item)) {
+		outfitBones->UnselectAll();
+		outfitBones->SelectItem(item);
+	}
+	recursingUI = false;
+
+	outfitBones->EnsureVisible(item);
+
+	wxTreeEvent treeEvent(wxEVT_TREE_SEL_CHANGED, outfitBones, item);
+	OnBoneSelect(treeEvent);
+	return true;
 }
 
 void OutfitStudioFrame::OnBoneTreeContext(wxCommandEvent& WXUNUSED(event)) {
@@ -9214,6 +9273,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 	}
 
 	if (id != boneTabButton->GetId()) {
+		boneTransformSuspended = false;
 		cXMirrorBone->Show(false);
 
 		wxStaticText* totalBoneCountLabel = (wxStaticText*)FindWindowByName("totalBoneCountLabel");
@@ -12995,13 +13055,18 @@ void OutfitStudioFrame::OnAddBone(wxCommandEvent& WXUNUSED(event)) {
 
 	wxTreeCtrl* boneTree = XRCCTRL(dlg, "boneTree", wxTreeCtrl);
 
+	// Bones are added as children of the bone the menu was opened on, so the
+	// dialog opens with that bone expanded to show its children.
+	const std::string parentBone = contextParentBone.empty() ? editor.activeBone : contextParentBone;
+	wxTreeItemId parentItem;
+
 	std::function<void(wxTreeItemId, AnimBone*)> fAddBoneChildren = [&](wxTreeItemId treeParent, AnimBone* boneParent) {
 		for (auto& cb : boneParent->children) {
 			if (!cb->boneName.empty()) {
 				auto newItem = boneTree->AppendItem(treeParent, cb->boneName);
 				fAddBoneChildren(newItem, cb);
-				if (cb->boneName == editor.activeBone)
-					boneTree->SelectItem(newItem);
+				if (cb->boneName == parentBone)
+					parentItem = newItem;
 			}
 			else
 				fAddBoneChildren(treeParent, cb);
@@ -13012,23 +13077,45 @@ void OutfitStudioFrame::OnAddBone(wxCommandEvent& WXUNUSED(event)) {
 	wxTreeItemId rt = boneTree->AddRoot(rb->boneName);
 	fAddBoneChildren(rt, rb);
 
+	// Nothing is preselected, so OK doesn't add the parent itself by accident
+	if (parentItem.IsOk()) {
+		boneTree->Expand(parentItem);
+		wxTreeItemIdValue cookie;
+		wxTreeItemId firstChild = boneTree->GetFirstChild(parentItem, cookie);
+		boneTree->EnsureVisible(firstChild.IsOk() ? firstChild : parentItem);
+	}
+
 	if (dlg.ShowModal() == wxID_OK) {
+		std::vector<std::string> activeBones;
+		project->GetActiveBones(activeBones);
+		std::set<std::string> projectBones(activeBones.begin(), activeBones.end());
+
+		std::string lastAdded;
 		wxArrayTreeItemIds sel;
 		boneTree->GetSelections(sel);
 		for (size_t i = 0; i < sel.size(); i++) {
 			std::string bone = boneTree->GetItemText(sel[i]).ToStdString();
+			if (projectBones.count(bone) != 0)
+				continue;
+
 			wxLogMessage("Adding bone '%s' to project.", bone);
 
 			project->AddBoneRef(bone);
+			projectBones.insert(bone);
 			wxTreeItemId item = outfitBones->AppendItem(bonesRoot, bone);
 			UpdateBoneItemState(item, bone);
 			cXMirrorBone->AppendString(bone);
 			cPoseBone->AppendString(bone);
+			lastAdded = bone;
 		}
 
 		glView->UpdateBones();
 		UpdateBoneCounts();
 		SetPendingChanges();
+
+		if (!lastAdded.empty())
+			SelectBoneFromViewport(lastAdded);
+
 		glView->Render();
 	}
 }
@@ -13093,7 +13180,7 @@ void OutfitStudioFrame::OnAddCustomBone(wxCommandEvent& WXUNUSED(event)) {
 	CloseBrushSettings();
 
 	dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudioFrame::OnEnterClose, this);
-	FillParentBoneChoice(dlg, editor.activeBone);
+	FillParentBoneChoice(dlg, contextParentBone.empty() ? editor.activeBone : contextParentBone);
 
 	if (dlg.ShowModal() != wxID_OK)
 		return;
@@ -13170,6 +13257,11 @@ void OutfitStudioFrame::OnAddCustomBone(wxCommandEvent& WXUNUSED(event)) {
 	glView->UpdateBones();
 	UpdateBoneCounts();
 	SetPendingChanges();
+
+	// The new bone starts on its parent's position; selecting it puts the
+	// transform tool on it, ready to be moved out.
+	SelectBoneFromViewport(std::string(bone.ToUTF8()));
+
 	glView->Render();
 }
 
@@ -13238,12 +13330,20 @@ void OutfitStudioFrame::OnEditBone(wxCommandEvent& WXUNUSED(event)) {
 void OutfitStudioFrame::OnDeleteBone(wxCommandEvent& WXUNUSED(event)) {
 	wxArrayTreeItemIds selItems;
 	outfitBones->GetSelections(selItems);
+
+	// Deleted together, so a parent deleted with its child bones doesn't keep
+	// its node for them
+	std::vector<std::string> deleteBones;
+	for (size_t i = 0; i < selItems.size(); i++)
+		deleteBones.push_back(outfitBones->GetItemText(selItems[i]).ToStdString());
+
+	project->DeleteBones(deleteBones);
+
 	for (size_t i = 0; i < selItems.size(); i++) {
 		wxString boneText = outfitBones->GetItemText(selItems[i]);
 		wxLogMessage("Deleting bone '%s' from project.", boneText);
 
 		std::string bone = boneText.ToStdString();
-		project->DeleteBone(bone);
 		editor.activeBone.clear();
 
 		outfitBones->Delete(selItems[i]);
@@ -14645,8 +14745,25 @@ void OutfitStudioFrame::UpdateBoneTransformToolEnabled() {
 	const bool enable = glView->GetBonesMode() || glView->GetNodesMode();
 	menuBar->Enable(XRCID("btnTransform"), enable);
 	toolBarV->EnableTool(XRCID("btnTransform"), enable);
-	if (!enable)
-		glView->SetTransformMode(false);
+
+	if (!enable) {
+		// Hiding bones and nodes only suspends the transform tool; it comes back
+		// with them. The button is unchecked meanwhile, as nothing is shown.
+		if (glView->GetTransformMode()) {
+			boneTransformSuspended = true;
+			glView->SetTransformMode(false);
+		}
+		menuBar->Check(XRCID("btnTransform"), false);
+		toolBarV->ToggleTool(XRCID("btnTransform"), false);
+	}
+	else if (boneTransformSuspended) {
+		boneTransformSuspended = false;
+		if (!glView->GetTransformMode()) {
+			glView->SetTransformMode(true);
+			menuBar->Check(XRCID("btnTransform"), true);
+			toolBarV->ToggleTool(XRCID("btnTransform"), true);
+		}
+	}
 }
 
 void OutfitStudioFrame::RefreshBoneTreeBadBoneIcons() {
@@ -16139,6 +16256,7 @@ wxBEGIN_EVENT_TABLE(wxGLPanel, wxGLCanvas)
 	EVT_MIDDLE_UP(wxGLPanel::OnMiddleUp)
 	EVT_RIGHT_DOWN(wxGLPanel::OnRightDown)
 	EVT_RIGHT_UP(wxGLPanel::OnRightUp)
+	EVT_LEAVE_WINDOW(wxGLPanel::OnLeaveWindow)
 	EVT_CHAR_HOOK(wxGLPanel::OnKeys)
 	EVT_IDLE(wxGLPanel::OnIdle)
 	EVT_MOUSE_CAPTURE_LOST(wxGLPanel::OnCaptureLost)
@@ -18961,6 +19079,11 @@ void wxGLPanel::UpdateNodes() {
 void wxGLPanel::ShowBones(bool show) {
 	bonesMode = show;
 
+	if (!show && !hoverBone.empty()) {
+		hoverBone.clear();
+		UpdateNodeColors();
+	}
+
 	for (auto& m : bonesPoints)
 		m->bVisible = show;
 
@@ -18982,6 +19105,7 @@ void wxGLPanel::UpdateBones() {
 
 	bonesPoints.clear();
 	bonesLines.clear();
+	connectorBones.clear();
 
 	auto workAnim = os->project->GetWorkAnim();
 	bool isSF = os->project->GetWorkNif()->GetHeader().GetVersion().IsSF();
@@ -19002,6 +19126,9 @@ void wxGLPanel::UpdateBones() {
 				}
 
 				if (boneInSelection || childBonesInSelection) {
+					if (!boneInSelection)
+						connectorBones.insert(cb->boneName);
+
 					const MatTransform& toGlobal = os->project->bPose ? cb->xformPoseToGlobal : cb->xformToGlobal;
 					Vector3 position = toGlobal.ApplyTransform(Vector3());
 					const MatTransform& parentToGlobal = os->project->bPose ? parent->xformPoseToGlobal : parent->xformToGlobal;
@@ -19082,9 +19209,20 @@ void wxGLPanel::UpdateNodeColors() {
 		}
 	}
 
+	// Hovered bones are yellow, or orange when also active, and drawn on top.
+	// Connector bones are grey.
 	for (auto& m : bonesPoints) {
 		auto nodeName = m->shapeName.substr(3, m->shapeName.length() - 3);
-		if (nodeName == activeBone) {
+		const bool active = nodeName == activeBone;
+		if (!hoverBone.empty() && nodeName == hoverBone) {
+			m->color = active ? Vector3(1.0f, 0.5f, 0.0f) : Vector3(1.0f, 1.0f, 0.0f);
+			m->overlayLayer = OverlayLayer::NodeSelection;
+		}
+		else if (!active && connectorBones.count(nodeName) != 0) {
+			m->color = Vector3(0.4f, 0.4f, 0.4f);
+			m->overlayLayer = OverlayLayer::Default;
+		}
+		else if (active) {
 			m->color.x = 1.0f;
 			m->color.y = 0.0f;
 			m->color.z = 0.0f;
@@ -19100,7 +19238,16 @@ void wxGLPanel::UpdateNodeColors() {
 
 	for (auto& m : bonesLines) {
 		auto nodeName = m->shapeName.substr(3, m->shapeName.length() - 3);
-		if (nodeName == activeBone) {
+		const bool active = nodeName == activeBone;
+		if (!hoverBone.empty() && nodeName == hoverBone) {
+			m->color = active ? Vector3(0.9f, 0.45f, 0.0f) : Vector3(0.9f, 0.9f, 0.0f);
+			m->overlayLayer = OverlayLayer::NodeSelection;
+		}
+		else if (!active && connectorBones.count(nodeName) != 0) {
+			m->color = Vector3(0.35f, 0.35f, 0.35f);
+			m->overlayLayer = OverlayLayer::Default;
+		}
+		else if (active) {
 			m->color.x = 0.7f;
 			m->color.y = 0.0f;
 			m->color.z = 0.0f;
@@ -19113,6 +19260,101 @@ void wxGLPanel::UpdateNodeColors() {
 			m->overlayLayer = OverlayLayer::Default;
 		}
 	}
+}
+
+void wxGLPanel::SetHoverBone(const std::string& bone) {
+	if (bone == hoverBone)
+		return;
+
+	hoverBone = bone;
+	UpdateNodeColors();
+}
+
+std::string wxGLPanel::PickBone(int x, int y, bool includeConnectors) {
+	if (!bonesMode || !os || os->IsAnimationPlaying())
+		return std::string();
+
+	const float pointRadius = FromDIP(8);
+	const float lineRadius = FromDIP(4);
+	// Joints closer together on screen than this count as overlapping.
+	const float tieTolerance = FromDIP(1);
+	const std::string activeBone = os->GetActiveBone();
+	const Vector3 cursor(static_cast<float>(x), static_cast<float>(y), 0.0f);
+
+	// Overlapping joints, like a new bone still on its parent, prefer the
+	// active bone and then the one nearest to the camera.
+	Mesh* best = nullptr;
+	float bestDist = 0.0f;
+	float bestDepth = 0.0f;
+	bool bestActive = false;
+
+	// A skipped connector joint under the cursor also hides the lines starting
+	// there, so it doesn't pick the bone below it instead.
+	bool connectorJointHit = false;
+
+	auto consider = [&](Mesh* m, float dist, float depth) {
+		if (!includeConnectors && connectorBones.count(m->shapeName.substr(3)) != 0) {
+			if (m->nVerts == 1)
+				connectorJointHit = true;
+			return;
+		}
+
+		const bool active = m->shapeName.compare(3, std::string::npos, activeBone) == 0;
+		bool better = !best || dist < bestDist - tieTolerance;
+		if (!better && std::fabs(dist - bestDist) <= tieTolerance) {
+			if (active != bestActive)
+				better = active;
+			else
+				better = depth < bestDepth;
+		}
+
+		if (better) {
+			best = m;
+			bestDist = dist;
+			bestDepth = depth;
+			bestActive = active;
+		}
+	};
+
+	for (auto& m : bonesPoints) {
+		if (!m->bVisible || m->nVerts < 1)
+			continue;
+
+		float sx, sy, depth;
+		if (!gls.ProjectPointToViewport(m->verts[0], sx, sy, &depth))
+			continue;
+
+		const float dist = Vector3(sx, sy, 0.0f).DistanceTo(cursor);
+		if (dist <= pointRadius)
+			consider(m, dist, depth);
+	}
+
+	// Segments belong to the bone at their end, away from the parent.
+	if (!best && !connectorJointHit) {
+		for (auto& m : bonesLines) {
+			if (!m->bVisible || m->nVerts < 2)
+				continue;
+
+			float sx0, sy0, depth0, sx1, sy1, depth1;
+			if (!gls.ProjectPointToViewport(m->verts[0], sx0, sy0, &depth0) || !gls.ProjectPointToViewport(m->verts[1], sx1, sy1, &depth1))
+				continue;
+
+			const Vector3 a(sx0, sy0, 0.0f);
+			const Vector3 ab = Vector3(sx1, sy1, 0.0f) - a;
+			const float lenSq = ab.dot(ab);
+			float t = lenSq > 0.0f ? (cursor - a).dot(ab) / lenSq : 0.0f;
+			t = std::clamp(t, 0.0f, 1.0f);
+
+			const float dist = (a + ab * t).DistanceTo(cursor);
+			if (dist <= lineRadius)
+				consider(m, dist, depth0 + (depth1 - depth0) * t);
+		}
+	}
+
+	if (!best)
+		return std::string();
+
+	return best->shapeName.substr(3);
 }
 
 void wxGLPanel::ShowFloor(bool show) {
@@ -19281,7 +19523,9 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 	}
 
 	if (rbuttonDown) {
-		isRDragging = true;
+		// A right-click that barely moved still opens the bone context menu
+		if (!isRDragging && std::abs(x - rDownPos.x) + std::abs(y - rDownPos.y) > FromDIP(3))
+			isRDragging = true;
 
 		if (wxGetKeyState(WXK_ALT)) {
 			if (lastHitResult.hoverPoint != -1) {
@@ -19334,6 +19578,9 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		else if (isSlidingEdge) {
 			UpdateEdgeSlide(event.GetPosition());
 		}
+		else if (isPickingBone) {
+			// Dragging off a clicked bone does nothing
+		}
 		else {
 			if (Config.MatchValue("Input/LeftMousePan", "true")) {
 				gls.PanCamera(x - lastX, y - lastY);
@@ -19348,10 +19595,22 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 	if (!rbuttonDown && !lbuttonDown && !isMovingVertex && !isSlidingEdge) {
 		GLSurface::CursorHitResult hitResult{};
 
+		// Shown bones can be hovered and clicked with any tool. The handles of the
+		// transform and pivot tools take precedence where they overlap a bone.
+		std::string boneUnderCursor = PickBone(x, y);
+		if (!boneUnderCursor.empty() && (transformMode || pivotMode)) {
+			Vector3 handleOrigin, handleNormal;
+			Mesh* handleMesh = nullptr;
+			if (gls.CollideOverlay(x, y, handleOrigin, handleNormal, &handleMesh) && handleMesh && handleMesh != PivotCenterMesh)
+				boneUnderCursor.clear();
+		}
+		SetHoverBone(boneUnderCursor);
+
 		// The brush cursor is hidden during playback: the brushes are locked out
 		// anyway, and it would hit-test against the mesh BVHs that playback
 		// leaves stale, reporting vertices that are not where it draws them.
-		if (editMode && !(os && os->IsAnimationPlaying())) {
+		// It is also hidden over a bone, as a click there selects the bone.
+		if (editMode && !(os && os->IsAnimationPlaying()) && hoverBone.empty()) {
 			cursorExists = gls.UpdateCursor(x, y, true, &hitResult);
 		}
 		else {
@@ -19359,7 +19618,7 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 			gls.ShowCursor(false);
 		}
 
-		if (activeTool == ToolID::MoveVertex) {
+		if (activeTool == ToolID::MoveVertex && hoverBone.empty()) {
 			mouseDownMirrorPoint = -1;
 			if (GetToolOptionXMirror()) {
 				Vector3 hitPt, hitNrm;
@@ -19413,7 +19672,10 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		gls.RenderOneFrame();
 
 		if (os->statusBar) {
-			if (cursorExists) {
+			if (!hoverBone.empty()) {
+				os->statusBar->SetStatusText(wxString::Format("Bone: %s", wxString::FromUTF8(hoverBone)), 1);
+			}
+			else if (cursorExists) {
 				if (activeTool == ToolID::MaskBrush)
 					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Mask: %g", hitResult.hoverPoint, hitResult.hoverMask), 1);
 				else if (activeTool == ToolID::WeightBrush) {
@@ -19470,6 +19732,7 @@ void wxGLPanel::OnLeftDown(wxMouseEvent& event) {
 		bool meshHit = StartTransform(event.GetPosition());
 		if (meshHit) {
 			isTransforming = true;
+			SetHoverBone(std::string());
 			return;
 		}
 	}
@@ -19478,8 +19741,19 @@ void wxGLPanel::OnLeftDown(wxMouseEvent& event) {
 		bool meshHit = StartPivotPosition(event.GetPosition());
 		if (meshHit) {
 			isMovingPivot = true;
+			SetHoverBone(std::string());
 			return;
 		}
+	}
+
+	// A click on a shown bone selects it instead of using the active tool.
+	// Ctrl adds it to or removes it from the selection.
+	std::string pickedBone = PickBone(event.GetX(), event.GetY());
+	if (!pickedBone.empty()) {
+		isPickingBone = true;
+		os->SelectBoneFromViewport(pickedBone, event.ControlDown());
+		gls.RenderOneFrame();
+		return;
 	}
 
 	if (brushMode) {
@@ -19550,7 +19824,7 @@ void wxGLPanel::OnLeftUp(wxMouseEvent& event) {
 	// against the mesh BVHs that playback leaves stale.
 	const bool playing = os && os->IsAnimationPlaying();
 
-	if (!playing && !isLDragging && !isPainting && !isPhysicsGrabbing && activeTool == ToolID::Select) {
+	if (!playing && !isLDragging && !isPainting && !isPhysicsGrabbing && !isPickingBone && activeTool == ToolID::Select) {
 		int x, y;
 		event.GetPosition(&x, &y);
 
@@ -19608,6 +19882,7 @@ void wxGLPanel::OnLeftUp(wxMouseEvent& event) {
 	if (isSelecting)
 		isSelecting = false;
 
+	isPickingBone = false;
 	isLDragging = false;
 	lbuttonDown = false;
 
@@ -19656,6 +19931,7 @@ void wxGLPanel::OnCaptureLost(wxMouseCaptureLostEvent& WXUNUSED(event)) {
 	if (isSelecting)
 		isSelecting = false;
 
+	isPickingBone = false;
 	isLDragging = false;
 	lbuttonDown = false;
 
@@ -19663,22 +19939,57 @@ void wxGLPanel::OnCaptureLost(wxMouseCaptureLostEvent& WXUNUSED(event)) {
 	mbuttonDown = false;
 
 	rbuttonDown = false;
+	isRDragging = false;
 
 	gls.RenderOneFrame();
 }
 
-void wxGLPanel::OnRightDown(wxMouseEvent& WXUNUSED(event)) {
+void wxGLPanel::OnRightDown(wxMouseEvent& event) {
 	if (!HasCapture())
 		CaptureMouse();
 
 	rbuttonDown = true;
+	isRDragging = false;
+	rDownPos = event.GetPosition();
 }
 
-void wxGLPanel::OnRightUp(wxMouseEvent& WXUNUSED(event)) {
+void wxGLPanel::OnRightUp(wxMouseEvent& event) {
 	if (HasCapture())
 		ReleaseMouse();
 
+	const bool wasDragging = isRDragging;
 	rbuttonDown = false;
+	isRDragging = false;
+
+	// Right-clicking a shown bone without turning the camera opens the bone
+	// context menu for it, to add bones as its children among other things.
+	if (wasDragging || lbuttonDown || !os)
+		return;
+
+	// Connector bones only get the menu to add bones below them
+	const std::string bone = PickBone(event.GetX(), event.GetY(), true);
+	if (bone.empty())
+		return;
+
+	// The menu acts on the clicked bone: it becomes the active one, the parent
+	// of added bones. A multi-selection it is part of stays, for deleting.
+	if (bone != os->GetActiveBone())
+		os->SelectBoneFromViewport(bone, false, true);
+
+	SetHoverBone(std::string());
+	gls.RenderOneFrame();
+
+	os->ShowBoneContextMenu(bone, this, event.GetPosition());
+}
+
+void wxGLPanel::OnLeaveWindow(wxMouseEvent& event) {
+	event.Skip();
+
+	if (lbuttonDown || rbuttonDown || hoverBone.empty())
+		return;
+
+	SetHoverBone(std::string());
+	gls.RenderOneFrame();
 }
 
 
