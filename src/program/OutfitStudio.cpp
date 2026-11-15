@@ -427,6 +427,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("btnEnableLighting"), OutfitStudioFrame::OnEnableLighting)
 	EVT_MENU(XRCID("btnEnableTextures"), OutfitStudioFrame::OnEnableTextures)
 	EVT_MENU(XRCID("btnEnableVertexColors"), OutfitStudioFrame::OnEnableVertexColors)
+	EVT_MENU(XRCID("btnEnableTints"), OutfitStudioFrame::OnEnableTints)
 
 	EVT_MENU(XRCID("uvEdit"), OutfitStudioFrame::OnEditUV)
 	EVT_MENU(XRCID("uvInvertX"), OutfitStudioFrame::OnInvertUV)
@@ -1662,6 +1663,7 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	if (leftPanel) {
 		glView = new wxGLPanel(leftPanel, wxDefaultSize, GLSurface::GetGLAttribs());
 		glView->SetNotifyWindow(this);
+		glView->SetColorsVisible(menuBar->IsChecked(XRCID("btnEnableVertexColors")));
 
 		float brushSize = OutfitStudioConfig.GetFloatValue("BrushSettings.brushsize");
 		if (brushSize != 0.0f)
@@ -3991,13 +3993,22 @@ ViewState OutfitStudioFrame::GetViewState() {
 }
 
 void OutfitStudioFrame::SetViewState(const ViewState& state) {
+	const bool hadVertexColors = glView->gls.GetDisplaySettings().vertexColors;
+
 	glView->gls.SetCamera(state.camera);
 	glView->gls.SetDisplaySettings(state.display);
 
-	menuBar->Check(XRCID("btnShowWireframe"), state.display.wireframe);
-	menuBar->Check(XRCID("btnEnableLighting"), state.display.lighting);
-	menuBar->Check(XRCID("btnEnableTextures"), state.display.textures);
-	menuBar->Check(XRCID("btnEnableVertexColors"), state.display.vertexColors);
+	// Leaving the colors tab with vertex colors off clears them, so they need filling again
+	if (state.display.vertexColors && !hadVertexColors && !colorSettings->IsShown())
+		FillVertexColors();
+
+	CheckDisplayToggle(XRCID("btnShowWireframe"), state.display.wireframe);
+	CheckDisplayToggle(XRCID("btnEnableLighting"), state.display.lighting);
+	CheckDisplayToggle(XRCID("btnEnableTextures"), state.display.textures);
+	// The colors tab always shows vertex colors, that isn't the choice to keep for the other tabs
+	if (!colorSettings->IsShown())
+		CheckDisplayToggle(XRCID("btnEnableVertexColors"), state.display.vertexColors);
+	CheckDisplayToggle(XRCID("btnEnableTints"), state.display.tints);
 
 	for (auto& shape : state.shapes)
 		SetShapeDisplayMode(shape.first, shape.second);

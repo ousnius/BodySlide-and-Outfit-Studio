@@ -71,7 +71,8 @@ json ViewStateToJson(const ViewState& state) {
 		  {"textures", state.display.textures},
 		  {"mask", state.display.mask},
 		  {"weightColors", state.display.weightColors},
-		  {"vertexColors", state.display.vertexColors}}},
+		  {"vertexColors", state.display.vertexColors},
+		  {"tints", state.display.tints}}},
 		{"shapes", shapes},
 	};
 }
@@ -114,6 +115,7 @@ void ApplyDisplay(GLSurface::DisplaySettings& display, const json& args) {
 	display.mask = McpArgs::Bool(args, "mask", display.mask);
 	display.weightColors = McpArgs::Bool(args, "weightColors", display.weightColors);
 	display.vertexColors = McpArgs::Bool(args, "vertexColors", display.vertexColors);
+	display.tints = McpArgs::Bool(args, "tints", display.tints);
 }
 
 void ApplyCamera(GLSurface::CameraState& camera, const json& args) {
@@ -138,7 +140,8 @@ const json DisplaySchema = {
 	  {"textures", {{"type", "boolean"}}},
 	  {"mask", {{"type", "boolean"}, {"description", "Show masked vertices darkened"}}},
 	  {"weightColors", {{"type", "boolean"}, {"description", "Show the weights of the active bone as colors"}}},
-	  {"vertexColors", {{"type", "boolean"}}}}},
+	  {"vertexColors", {{"type", "boolean"}}},
+	  {"tints", {{"type", "boolean"}, {"description", "Skin and hair tint colors and the face tint map"}}}}},
 };
 
 const json ShapeModesSchema = {
@@ -1003,10 +1006,11 @@ void AddViewTools(OutfitStudioMcp& mcp) {
 	toggleDisplay.description =
 		"Turns display toggles of the view the user sees on or off, like the toolbar buttons: textures (off shows plain "
 		"grey shapes, e.g. when textures are missing), wireframe (shows the triangles, for folds and mesh density), "
-		"lighting, mask, vertexColors and weightColors. Each named toggle flips, or takes the value given in set. Returns "
-		"all toggles after the change. render_view display does the same for one render only.";
+		"lighting, mask, vertexColors, weightColors and tints (skin, hair and face tints). Each named toggle flips, or "
+		"takes the value given in set. Returns all toggles after the change. render_view display does the same for one "
+		"render only.";
 	toggleDisplay.inputSchema = McpSchema({
-		{"toggle", {{"type", "array"}, {"items", {{"type", "string"}, {"enum", {"textures", "wireframe", "lighting", "mask", "vertexColors", "weightColors"}}}}, {"description", "Toggles to flip"}}},
+		{"toggle", {{"type", "array"}, {"items", {{"type", "string"}, {"enum", {"textures", "wireframe", "lighting", "mask", "vertexColors", "weightColors", "tints"}}}}, {"description", "Toggles to flip"}}},
 		{"set", DisplaySchema},
 	});
 	toggleDisplay.handler = [frame](const json& args) {
@@ -1026,8 +1030,10 @@ void AddViewTools(OutfitStudioMcp& mcp) {
 				display.vertexColors = !display.vertexColors;
 			else if (name == "weightColors")
 				display.weightColors = !display.weightColors;
+			else if (name == "tints")
+				display.tints = !display.tints;
 			else
-				McpArgs::Wrong("toggle", "a list of textures, wireframe, lighting, mask, vertexColors, weightColors");
+				McpArgs::Wrong("toggle", "a list of textures, wireframe, lighting, mask, vertexColors, weightColors, tints");
 		}
 		if (const json* set = McpArgs::Find(args, "set"))
 			ApplyDisplay(display, *set);

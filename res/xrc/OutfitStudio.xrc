@@ -334,6 +334,42 @@
 								<toggle>1</toggle>
 								<checked>0</checked>
 							</object>
+							<object class="separator" />
+							<object class="tool" name="btnShowWireframe">
+								<label>Show Wireframe</label>
+								<tooltip>Show wireframe on all models.</tooltip>
+								<bitmap default_size="24,24">$(AppDir)\res\images\Wireframe.svg</bitmap>
+								<toggle>1</toggle>
+								<checked>0</checked>
+							</object>
+							<object class="tool" name="btnEnableLighting">
+								<label>Enable Lighting</label>
+								<tooltip>Turn on or off lighting.</tooltip>
+								<bitmap default_size="24,24">$(AppDir)\res\images\Lighting.svg</bitmap>
+								<toggle>1</toggle>
+								<checked>1</checked>
+							</object>
+							<object class="tool" name="btnEnableTextures">
+								<label>Enable Textures</label>
+								<tooltip>Display texture maps on models.</tooltip>
+								<bitmap default_size="24,24">$(AppDir)\res\images\Textures.svg</bitmap>
+								<toggle>1</toggle>
+								<checked>1</checked>
+							</object>
+							<object class="tool" name="btnEnableVertexColors">
+								<label>Enable Vertex Colors</label>
+								<tooltip>Display vertex colors on models.</tooltip>
+								<bitmap default_size="24,24">$(AppDir)\res\images\VertexColors.svg</bitmap>
+								<toggle>1</toggle>
+								<checked>1</checked>
+							</object>
+							<object class="tool" name="btnEnableTints">
+								<label>Enable Tints</label>
+								<tooltip>Display skin, hair and face tints on models.</tooltip>
+								<bitmap default_size="24,24">$(AppDir)\res\images\Tints.svg</bitmap>
+								<toggle>1</toggle>
+								<checked>1</checked>
+							</object>
 						</object>
 					</object>
 					<object class="sizeritem">
@@ -2877,9 +2913,15 @@
 				<checkable>1</checkable>
 			</object>
 			<object class="wxMenuItem" name="btnEnableVertexColors">
-				<label>Enable Vertex Colors</label>
+				<label>Enable Vertex Colors\tShift+V</label>
 				<help>Display vertex colors on models.</help>
-				<checked>0</checked>
+				<checked>1</checked>
+				<checkable>1</checkable>
+			</object>
+			<object class="wxMenuItem" name="btnEnableTints">
+				<label>Enable Tints\tShift+T</label>
+				<help>Display skin, hair and face tints on models.</help>
+				<checked>1</checked>
 				<checkable>1</checkable>
 			</object>
 		</object>

@@ -497,11 +497,13 @@ public:
 
 	void SetCursorType(GLSurface::CursorType cursorType) { gls.SetCursorType(cursorType); }
 
-	void ShowWireframe() { gls.ToggleWireframe(); }
+	void SetWireframe(bool bEnable = true) { gls.SetWireframe(bEnable); }
 
-	void ToggleLighting() { gls.ToggleLighting(); }
+	void SetLighting(bool bEnable = true) { gls.SetLighting(bEnable); }
 
-	void ToggleTextures() { gls.ToggleTextures(); }
+	void SetTextures(bool bEnable = true) { gls.SetTextures(bEnable); }
+
+	void SetTints(bool bEnable = true) { gls.SetTints(bEnable); }
 
 	void SetMaskVisible(bool bVisible = true) { gls.SetMaskVisible(bVisible); }
 
@@ -1949,22 +1951,39 @@ private:
 
 	void OnToggleVisibility(wxCommandEvent& WXUNUSED(event)) { ToggleVisibility(); }
 
-	void OnShowWireframe(wxCommandEvent& WXUNUSED(event)) {
-		glView->ShowWireframe();
+	// The display toggles are in both the view menu and the vertical toolbar, keep the two in step
+	void CheckDisplayToggle(int id, bool enabled) {
+		menuBar->Check(id, enabled);
+		toolBarV->ToggleTool(id, enabled);
+	}
+
+	void OnShowWireframe(wxCommandEvent& event) {
+		CheckDisplayToggle(event.GetId(), event.IsChecked());
+		glView->SetWireframe(event.IsChecked());
 		glView->Render();
 	}
 
-	void OnEnableLighting(wxCommandEvent& WXUNUSED(event)) {
-		glView->ToggleLighting();
+	void OnEnableLighting(wxCommandEvent& event) {
+		CheckDisplayToggle(event.GetId(), event.IsChecked());
+		glView->SetLighting(event.IsChecked());
 		glView->Render();
 	}
 
-	void OnEnableTextures(wxCommandEvent& WXUNUSED(event)) {
-		glView->ToggleTextures();
+	void OnEnableTextures(wxCommandEvent& event) {
+		CheckDisplayToggle(event.GetId(), event.IsChecked());
+		glView->SetTextures(event.IsChecked());
+		glView->Render();
+	}
+
+	void OnEnableTints(wxCommandEvent& event) {
+		CheckDisplayToggle(event.GetId(), event.IsChecked());
+		glView->SetTints(event.IsChecked());
 		glView->Render();
 	}
 
 	void OnEnableVertexColors(wxCommandEvent& e) {
+		// The colors tab always shows them, the choice applies when leaving it
+		CheckDisplayToggle(e.GetId(), e.IsChecked());
 		if (colorSettings->IsShown())
 			return;
 

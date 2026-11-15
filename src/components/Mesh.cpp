@@ -252,6 +252,11 @@ std::unique_ptr<Mesh> Mesh::CreateFromShape(NifFile* nif, const std::string& sha
 			m->valpha[v] = vColors.at(v).a;
 		}
 	}
+	else if (m->nVerts > 0) {
+		// Without vertex colors the shape renders as if they were all white
+		m->ColorFill(Vector3(1.0f, 1.0f, 1.0f));
+		m->AlphaFill(1.0f);
+	}
 
 	m->CalcTangentSpace();
 	m->CreateBVH();

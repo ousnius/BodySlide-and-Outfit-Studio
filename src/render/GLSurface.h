@@ -47,6 +47,7 @@ private:
 	bool bMaskVisible = true;
 	bool bWeightColors = false;
 	bool bVertexColors = false;
+	bool bTints = true;
 	bool bComplexMaterial = true;
 	bool bPBR = true;
 
@@ -435,11 +436,10 @@ public:
 
 	void UpdateShaders(Mesh* m);
 
-	void ToggleTextures() {
-		if (bTextured)
-			bTextured = false;
-		else
-			bTextured = true;
+	void ToggleTextures() { SetTextures(!bTextured); }
+
+	void SetTextures(bool bEnable = true) {
+		bTextured = bEnable;
 
 		for (auto& m : meshes)
 			UpdateShaders(m);
@@ -458,18 +458,14 @@ public:
 	void SetPBREnabled(bool bEnable = true) { bPBR = bEnable; }
 	bool IsPBREnabled() const { return bPBR; }
 
-	void ToggleWireframe() {
-		if (bWireframe)
-			bWireframe = false;
-		else
-			bWireframe = true;
-	}
+	void ToggleWireframe() { SetWireframe(!bWireframe); }
 
-	void ToggleLighting() {
-		if (bLighting)
-			bLighting = false;
-		else
-			bLighting = true;
+	void SetWireframe(bool bEnable = true) { bWireframe = bEnable; }
+
+	void ToggleLighting() { SetLighting(!bLighting); }
+
+	void SetLighting(bool bEnable = true) {
+		bLighting = bEnable;
 
 		for (auto& m : meshes)
 			UpdateShaders(m);
@@ -477,6 +473,10 @@ public:
 		for (auto& o : overlays)
 			UpdateShaders(o);
 	}
+
+	// Skin and hair tint colors and the face tint map. Those are applied while rendering, so nothing
+	// has to be updated here.
+	void SetTints(bool bEnable = true) { bTints = bEnable; }
 
 	void SetMaskVisible(bool bVisible = true) {
 		bMaskVisible = bVisible;
@@ -508,9 +508,10 @@ public:
 		bool mask = true;
 		bool weightColors = false;
 		bool vertexColors = false;
+		bool tints = true;
 	};
 
-	DisplaySettings GetDisplaySettings() const { return {bWireframe, bLighting, bTextured, bMaskVisible, bWeightColors, bVertexColors}; }
+	DisplaySettings GetDisplaySettings() const { return {bWireframe, bLighting, bTextured, bMaskVisible, bWeightColors, bVertexColors, bTints}; }
 
 	void SetDisplaySettings(const DisplaySettings& settings) {
 		bWireframe = settings.wireframe;
@@ -519,6 +520,7 @@ public:
 		bMaskVisible = settings.mask;
 		bWeightColors = settings.weightColors;
 		bVertexColors = settings.vertexColors;
+		bTints = settings.tints;
 
 		for (auto& m : meshes)
 			UpdateShaders(m);
