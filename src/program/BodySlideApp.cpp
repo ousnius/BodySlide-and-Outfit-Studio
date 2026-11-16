@@ -5639,6 +5639,16 @@ int BodySlideApp::BuildListBodies(
 		failedOutfitsCon[outfit] = message;
 	};
 
+	auto recordBuilt = [&](BuildRecord&& record) {
+		std::lock_guard<std::mutex> lock(batchBuildMutex);
+		builtRecords.push_back(std::move(record));
+	};
+
+	auto recordRemoved = [&](const std::string& outputPath) {
+		std::lock_guard<std::mutex> lock(batchBuildMutex);
+		removedOutputs.push_back(outputPath);
+	};
+
 	auto outputDirectoryExists = [](const wxString& dir) {
 		wxFileName dirName;
 		dirName.AssignDir(dir);
@@ -5699,10 +5709,7 @@ int BodySlideApp::BuildListBodies(
 
 		// ALT key
 		if (clean && custPath.empty()) {
-			{
-				std::lock_guard<std::mutex> lock(batchBuildMutex);
-				removedOutputs.push_back(currentSet.GetOutputFilePath());
-			}
+			recordRemoved(currentSet.GetOutputFilePath());
 
 			bool genWeights = currentSet.GenWeights();
 
@@ -6177,8 +6184,7 @@ int BodySlideApp::BuildListBodies(
 			}
 		}
 
-		std::lock_guard<std::mutex> lock(batchBuildMutex);
-		builtRecords.push_back(std::move(record));
+		recordBuilt(std::move(record));
 	};
 
 	// Multi-threading for 64-bit only due to memory limits of 32-bit builds
