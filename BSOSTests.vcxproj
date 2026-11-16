@@ -224,6 +224,7 @@
     <ClInclude Include="lib\nifly\include\NifFile.hpp" />
     <ClInclude Include="lib\TinyXML-2\tinyxml2.h" />
     <ClInclude Include="src\components\ArchiveIndex.h" />
+    <ClInclude Include="src\components\BuildSelection.h" />
     <ClInclude Include="src\components\MaskTransfer.h" />
     <ClInclude Include="src\components\ClothData.h" />
     <ClInclude Include="src\components\StarfieldSpace.h" />
@@ -250,6 +251,7 @@
     <ClCompile Include="src\utils\StringStuff.cpp" />
     <ClCompile Include="tests\ArchiveIndexTest.cpp" />
     <ClCompile Include="tests\ArchiveTest.cpp" />
+    <ClCompile Include="tests\BuildSelectionTest.cpp" />
     <ClCompile Include="tests\HkxFileTest.cpp" />
     <ClCompile Include="tests\MaterialFileTest.cpp" />
     <ClCompile Include="tests\AutomationJsonTest.cpp" />
@@ -264,9 +266,15 @@
     <ClCompile Include="tests\PoseDataJsonTest.cpp" />
     <ClCompile Include="tests\SFMorphFileTest.cpp" />
     <ClCompile Include="tests\StarfieldSpaceTest.cpp" />
+    <ClCompile Include="tests\MeshDeformTest.cpp" />
+    <ClCompile Include="tests\PoseFitTest.cpp" />
+    <ClCompile Include="tests\PoseMathTest.cpp" />
+    <ClCompile Include="tests\SurfaceFitTest.cpp" />
+    <ClCompile Include="tests\TextureConvertTest.cpp" />
     <ClCompile Include="src\components\ArchiveIndex.cpp" />
     <ClCompile Include="src\components\Automation.cpp" />
     <ClCompile Include="src\components\AutomationJson.cpp" />
+    <ClCompile Include="src\components\BuildSelection.cpp" />
     <ClCompile Include="src\components\ClippingFixer.cpp" />
     <ClCompile Include="src\components\MaskTransfer.cpp" />
     <ClCompile Include="src\components\MeshAnalysis.cpp" />
@@ -285,6 +293,11 @@
     <ClCompile Include="src\components\SliderSetIndex.cpp" />
     <ClCompile Include="src\components\SliderSetInheritance.cpp" />
     <ClCompile Include="src\components\WeightNorm.cpp" />
+    <ClCompile Include="src\components\MeshDeform.cpp" />
+    <ClCompile Include="src\components\PoseFit.cpp" />
+    <ClCompile Include="src\components\PoseMath.cpp" />
+    <ClCompile Include="src\components\SurfaceFit.cpp" />
+    <ClCompile Include="src\components\TextureConvert.cpp" />
     <ClCompile Include="src\files\MaterialFile.cpp" />
     <ClCompile Include="src\files\ObjFile.cpp" />
     <ClCompile Include="src\files\TriFile.cpp" />
@@ -302,6 +315,7 @@
     <ClCompile Include="src\components\SliderPresets.cpp" />
     <ClCompile Include="src\components\UndoHistory.cpp" />
     <ClCompile Include="src\utils\ProjectUtil.cpp" />
+    <ClCompile Include="src\utils\GameUtil.cpp" />
     <ClCompile Include="src\files\HkxFile.cpp" />
     <ClCompile Include="src\files\SFMorphFile.cpp" />
     <ClCompile Include="src\utils\AABBTree.cpp" />

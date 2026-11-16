@@ -521,6 +521,7 @@ if(BSOS_BUILD_TESTS)
 		tests/ArchiveIndexTest.cpp
 		tests/AutomationJsonTest.cpp
 		tests/ArchiveTest.cpp
+		tests/BuildSelectionTest.cpp
 		tests/HkxFileTest.cpp
 		tests/MaterialFileTest.cpp
 		tests/MainThreadDispatcherTest.cpp
@@ -548,6 +549,7 @@ if(BSOS_BUILD_TESTS)
 		src/components/ArchiveIndex.cpp
 		src/components/Automation.cpp
 		src/components/AutomationJson.cpp
+		src/components/BuildSelection.cpp
 		src/components/ClippingFixer.cpp
 		src/components/ClothData.cpp
 		src/components/MaskTransfer.cpp
