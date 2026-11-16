@@ -2,7 +2,7 @@
 <resource xmlns="http://www.wxwidgets.org/wxxrc" version="2.5.3.0">
 	<object class="wxDialog" name="dlgBatchBuild">
 		<style>wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER|wxCLIP_CHILDREN</style>
-		<size>650,300</size>
+		<size>800,450</size>
 		<title>Batch Build</title>
 		<centered>1</centered>
 		<object class="wxBoxSizer">
@@ -18,8 +18,8 @@
 						<flag>wxALL</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="lbDescription">
-							<label>Select the slider sets for the batch build process. Use the group and outfit filters to show the outfits you want!</label>
-							<wrap>625</wrap>
+							<label>Select the slider sets for the batch build process. Use the group and outfit filters to show the outfits you want!\nSpace toggles the selected rows, right-click for more ways to select.</label>
+							<wrap>760</wrap>
 						</object>
 					</object>
 					<object class="spacer">
@@ -34,8 +34,8 @@
 				<option>1</option>
 				<flag>wxBOTTOM|wxEXPAND|wxLEFT|wxRIGHT</flag>
 				<border>5</border>
-				<object class="wxCheckListBox" name="batchBuildList">
-					<style>wxLB_HSCROLL|wxLB_NEEDED_SB|wxLB_EXTENDED</style>
+				<object class="wxListCtrl" name="batchBuildList">
+					<style>wxLC_REPORT</style>
 				</object>
 			</object>
 			<object class="sizeritem">

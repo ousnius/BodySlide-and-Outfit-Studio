@@ -1264,6 +1264,7 @@ void BodySlideApp::ActivatePreset(const std::string& presetName, const bool upda
 	}
 
 	sliderView->SetPresetChanged(false);
+	UpdateBuildRecordLabel();
 
 	if (UpdateZapChoices())
 		zapChanged = true;
@@ -1597,6 +1598,208 @@ void BodySlideApp::GetBuildSelection(BuildSelectionFile& file, BuildSelection& b
 	file.Get(buildSel);
 }
 
+std::string BodySlideApp::GetDefaultOutputChoice(BuildSelection& buildSelection, const std::string& outputPath, const std::string& dataFolder) {
+	auto outFile = outFileCount.find(outputPath);
+	if (outFile == outFileCount.end())
+		return {};
+
+	auto writesOutput = [&](const std::string& outfit) {
+		return !outfit.empty() && std::find(outFile->second.cbegin(), outFile->second.cend(), outfit) != outFile->second.cend();
+	};
+
+	// Ignore saved choices and builds of outfits that no longer exist
+	std::string choice = buildSelection.GetOutputChoice(outputPath);
+	if (writesOutput(choice))
+		return choice;
+
+	const BuildRecord* record = buildSelection.GetBuildRecord(outputPath, dataFolder);
+	if (record && writesOutput(record->set))
+		return record->set;
+
+	return {};
+}
+
+// Local time with its offset to UTC, e.g. 2026-11-16T21:15:50+01:00
+static std::string BuildRecordTimeNow() {
+	wxDateTime now = wxDateTime::Now();
+	wxString offset = now.Format("%z");
+	if (offset.length() == 5)
+		offset.insert(3, ":");
+
+	return (now.Format("%Y-%m-%dT%H:%M:%S") + offset).ToUTF8().data();
+}
+
+// Changed sliders and zaps of a build record for a tooltip, shortened when there are many
+static wxString BuildRecordChanges(const BuildRecord& record) {
+	const size_t maxShown = 12;
+	wxString changes;
+
+	if (!record.sliders.empty()) {
+		// Low and high weight values of a slider on one line
+		std::vector<std::string> names;
+		std::map<std::string, std::pair<wxString, wxString>> values;
+		for (auto& slider : record.sliders) {
+			auto& value = values[slider.name];
+			if (value.first.empty() && value.second.empty())
+				names.push_back(slider.name);
+
+			(slider.isSmall ? value.first : value.second) = wxString::Format("%d%%", slider.value);
+		}
+
+		changes += "\n" + _("Changed sliders:");
+		for (size_t i = 0; i < names.size() && i < maxShown; i++) {
+			auto& value = values[names[i]];
+			wxString line = "\n  " + wxString::FromUTF8(names[i]) + ":";
+			if (!value.first.empty())
+				line += " " + wxString::Format(_("low %s"), value.first);
+			if (!value.second.empty())
+				line += " " + wxString::Format(_("high %s"), value.second);
+			changes += line;
+		}
+
+		if (names.size() > maxShown)
+			changes += "\n  " + wxString::Format(_("and %d more"), (int)(names.size() - maxShown));
+	}
+
+	if (!record.zaps.empty()) {
+		changes += "\n" + _("Changed zaps:");
+		for (size_t i = 0; i < record.zaps.size() && i < maxShown; i++) {
+			auto& zap = record.zaps[i];
+			changes += "\n  " + wxString::FromUTF8(zap.name) + ": " + (zap.zapped ? _("on") : _("off"));
+		}
+
+		if (record.zaps.size() > maxShown)
+			changes += "\n  " + wxString::Format(_("and %d more"), (int)(record.zaps.size() - maxShown));
+	}
+
+	return changes;
+}
+
+BuildRecord BodySlideApp::ActiveSetBuildRecord() {
+	auto& activeSet = GetActiveSet();
+	std::string preset = BodySlideConfig["SelectedPreset"];
+
+	BuildRecord record;
+	record.path = activeSet.GetOutputFilePath();
+	record.set = activeSet.GetName();
+
+	// Zaps that aren't in their default state flip the defaults of the zaps they toggle, like batch builds do
+	std::unordered_set<std::string> flippedDefaults;
+	for (auto& slider : sliderManager.slidersBig) {
+		if (!slider.zap || slider.uv || (slider.value > 0.0f) == (slider.defValue > 0.0f))
+			continue;
+
+		for (auto& zapToggle : slider.zapToggles)
+			if (!flippedDefaults.insert(zapToggle).second)
+				flippedDefaults.erase(zapToggle);
+	}
+
+	auto defaultValue = [&](const Slider& slider) {
+		return flippedDefaults.count(slider.name) ? 1.0f - slider.defValue : slider.defValue;
+	};
+
+	// The values set in the UI, before toggles hold other sliders
+	for (auto& slider : sliderManager.slidersBig)
+		if (!slider.clamp)
+			record.AddPresetChange(slider.name, false, slider.zap, slider.value, sliderManager.GetBigPresetValue(preset, slider.name, defaultValue(slider)));
+
+	if (activeSet.GenWeights())
+		for (auto& slider : sliderManager.slidersSmall)
+			if (!slider.clamp && !slider.zap)
+				record.AddPresetChange(slider.name, true, false, slider.value, sliderManager.GetSmallPresetValue(preset, slider.name, defaultValue(slider)));
+
+	return record;
+}
+
+void BodySlideApp::RecordBuilds(std::vector<BuildRecord>& builtRecords, const std::vector<std::string>& removedOutputs, const std::string& dataFolder) {
+	if (builtRecords.empty() && removedOutputs.empty())
+		return;
+
+	BuildSelectionFile buildSelFile;
+	BuildSelection buildSelection;
+	GetBuildSelection(buildSelFile, buildSelection);
+
+	std::string preset = BodySlideConfig["SelectedPreset"];
+	std::string time = BuildRecordTimeNow();
+
+	for (auto& record : builtRecords) {
+		record.dataFolder = dataFolder;
+		record.preset = preset;
+		record.time = time;
+	}
+
+	buildSelFile.SetBuildRecords(builtRecords);
+	buildSelFile.RemoveBuildRecords(removedOutputs, dataFolder);
+
+	if (!buildSelFile.Save())
+		wxLogWarning("Failed to save the build records to '%s'.", buildSelFile.fileName);
+
+	if (!projects.empty())
+		UpdateBuildRecordLabel();
+}
+
+void BodySlideApp::UpdateBuildRecordLabel() {
+	if (projects.empty() || !sliderView)
+		return;
+
+	auto buildInfo = (wxStaticText*)sliderView->FindWindowByName("buildInfo");
+	if (!buildInfo)
+		return;
+
+	BuildSelectionFile buildSelFile;
+	BuildSelection buildSelection;
+	GetBuildSelection(buildSelFile, buildSelection);
+
+	auto& activeSet = GetActiveSet();
+	std::string dataFolder = GetOutputDataPath();
+	const BuildRecord* record = dataFolder.empty() ? nullptr : buildSelection.GetBuildRecord(activeSet.GetOutputFilePath(), dataFolder);
+
+	if (!record) {
+		buildInfo->SetLabel(_("Not built"));
+		buildInfo->SetToolTip(_("No build of this output to the output folder was recorded."));
+		buildInfo->SetForegroundColour(wxColour("#C8C8C8"));
+	}
+	else {
+		wxString set = wxString::FromUTF8(record->set);
+		wxString preset = wxString::FromUTF8(record->preset);
+
+		if (record->set != activeSet.GetName()) {
+			buildInfo->SetLabel(wxString::Format(_("Built from '%s'"), set));
+			buildInfo->SetForegroundColour(wxColour("#FFD769"));
+		}
+		else if (record->preset != BodySlideConfig["SelectedPreset"]) {
+			if (record->IsModified())
+				buildInfo->SetLabel(wxString::Format(_("Built with '%s' (modified)"), preset));
+			else
+				buildInfo->SetLabel(wxString::Format(_("Built with '%s'"), preset));
+			buildInfo->SetForegroundColour(wxColour("#FFD769"));
+		}
+		else {
+			if (record->IsModified())
+				buildInfo->SetLabel(_("Built with this preset (modified)"));
+			else
+				buildInfo->SetLabel(_("Built with this preset"));
+			buildInfo->SetForegroundColour(wxColour("#00FFFF"));
+		}
+
+		wxString time = wxString::FromUTF8(record->time);
+		time.Replace("T", " ");
+
+		wxString tip = wxString::Format(_("Last build of this output:\nOutfit: %s\nPreset: %s\nTime: %s\nFolder: %s"),
+										set,
+										preset,
+										time,
+										wxString::FromUTF8(record->dataFolder));
+		tip += BuildRecordChanges(*record);
+		buildInfo->SetToolTip(tip);
+	}
+
+	buildInfo->Show();
+
+	if (sliderView->leftPanel)
+		sliderView->leftPanel->Layout();
+}
+
 void BodySlideApp::UpdateConflictManager() {
 	if (projects.empty())
 		return;
@@ -1638,6 +1841,8 @@ void BodySlideApp::UpdateConflictManager() {
 		conflictInfo->Show();
 	else
 		conflictInfo->Hide();
+
+	UpdateBuildRecordLabel();
 
 	if (sliderView->leftPanel)
 		sliderView->leftPanel->Layout();
@@ -4339,10 +4544,23 @@ void BodySlideApp::ApplyOutfitFilter() {
 			filterBatchBuildSelected = menuFilterOutputWinners->IsChecked();
 	}
 
-	BuildSelectionFile buildSelFile;
-	BuildSelection buildSelection;
-	if (filterBatchBuildSelected)
+	// Default winners of the conflicting outputs
+	std::unordered_map<std::string, std::string> outputWinners;
+	if (filterBatchBuildSelected) {
+		BuildSelectionFile buildSelFile;
+		BuildSelection buildSelection;
 		GetBuildSelection(buildSelFile, buildSelection);
+
+		std::string dataFolder = GetOutputDataPath();
+		for (auto& outFile : outFileCount) {
+			if (outFile.second.size() <= 1)
+				continue;
+
+			std::string choice = GetDefaultOutputChoice(buildSelection, outFile.first, dataFolder);
+			if (!choice.empty())
+				outputWinners[outFile.first] = choice;
+		}
+	}
 
 	wxString grpSrch = sliderView->search->GetValue();
 	std::string outfitSrch{sliderView->outfitsearch->GetValue()};
@@ -4393,18 +4611,14 @@ void BodySlideApp::ApplyOutfitFilter() {
 		}
 
 		if (!filteredOut && filterBatchBuildSelected) {
-			for (auto& outFile : outFileCount) {
-				if (outFile.second.size() > 1) {
-					bool isInConflict = std::find(outFile.second.cbegin(), outFile.second.cend(), no) != outFile.second.cend();
-					if (isInConflict) {
-						// Ignore saved choices of outfits that no longer exist
-						std::string choice = buildSelection.GetOutputChoice(outFile.first);
-						bool choiceExists = std::find(outFile.second.cbegin(), outFile.second.cend(), choice) != outFile.second.cend();
-						if (!choice.empty() && choice != no && choiceExists) {
-							filteredOut = true;
-							break;
-						}
-					}
+			for (auto& winner : outputWinners) {
+				if (winner.second == no)
+					continue;
+
+				auto& outfits = outFileCount[winner.first];
+				if (std::find(outfits.cbegin(), outfits.cend(), no) != outfits.cend()) {
+					filteredOut = true;
+					break;
 				}
 			}
 		}
@@ -4651,6 +4865,9 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 			msg.Append(removeHigh + "\n");
 		else
 			msg.Append(removeHigh + _(" (no action)\n"));
+
+		std::vector<BuildRecord> noBuilds;
+		RecordBuilds(noBuilds, {activeSet.GetOutputFilePath()}, GetOutputDataPath());
 
 		if (!genWeights) {
 			wxLogMessage("%s", msg);
@@ -4993,6 +5210,12 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 	if (!savedHigh.IsEmpty())
 		msg.Append(savedHigh);
 
+	// Builds to the BodySlide folder or to a file chosen after a failure aren't in the output folder
+	if (!localPath && !useCustName) {
+		std::vector<BuildRecord> built{ActiveSetBuildRecord()};
+		RecordBuilds(built, {}, GetOutputDataPath());
+	}
+
 	wxLogMessage("%s", msg);
 	wxMessageBox(msg, _("Process Successful"));
 	return 0;
@@ -5180,7 +5403,7 @@ int BodySlideApp::BuildListBodies(
 	// Quiet builds take the saved choice or the first one instead of asking
 	if (!choicesList.empty() && cmdQuiet) {
 		for (size_t i = 0; i < choicesList.size(); i++) {
-			std::string choice = buildSelection.GetOutputChoice(outFileList[i]);
+			std::string choice = GetDefaultOutputChoice(buildSelection, outFileList[i], datapath);
 			if (choice.empty() || choicesList[i].Index(wxString::FromUTF8(choice)) == wxNOT_FOUND)
 				choice = choicesList[i][0].ToUTF8().data();
 			wxLogWarning("Outfits '%s' all write '%s', building '%s'.", wxJoin(choicesList[i], ','), outFileList[i], choice);
@@ -5226,7 +5449,7 @@ int BodySlideApp::BuildListBodies(
 				wxString defaultSet;
 
 				// Check previous choices to see if radio button should be checked by default
-				std::string outputChoice = buildSelection.GetOutputChoice(outFile);
+				std::string outputChoice = GetDefaultOutputChoice(buildSelection, outFile, datapath);
 				if (!outputChoice.empty()) {
 					wxString c = wxString::FromUTF8(outputChoice);
 					if (choices.Index(c) != wxNOT_FOUND) {
@@ -5406,6 +5629,11 @@ int BodySlideApp::BuildListBodies(
 	std::mutex batchBuildMutex;
 	std::mutex outputDirectoryMutex;
 
+	// Only builds to the output folder are recorded, not ones to a custom folder
+	bool recordBuilds = custPath.empty() || BuildRecord::SameFolder(BuildRecord::NormalizeFolder(custPath), BuildRecord::NormalizeFolder(GetOutputDataPath()));
+	std::vector<BuildRecord> builtRecords;
+	std::vector<std::string> removedOutputs;
+
 	auto recordFailure = [&](const std::string& outfit, const auto& message) {
 		std::lock_guard<std::mutex> lock(batchBuildMutex);
 		failedOutfitsCon[outfit] = message;
@@ -5471,6 +5699,11 @@ int BodySlideApp::BuildListBodies(
 
 		// ALT key
 		if (clean && custPath.empty()) {
+			{
+				std::lock_guard<std::mutex> lock(batchBuildMutex);
+				removedOutputs.push_back(currentSet.GetOutputFilePath());
+			}
+
 			bool genWeights = currentSet.GenWeights();
 
 			wxString removePath = wxString::FromUTF8(datapath + currentSet.GetOutputFilePath());
@@ -5598,6 +5831,31 @@ int BodySlideApp::BuildListBodies(
 				}
 			}
 			batchSlidersSmall.push_back(std::move(sliderValue));
+		}
+
+		// The values the outfit is built with that differ from the preset, before toggles hold other sliders
+		BuildRecord record;
+		record.path = currentSet.GetOutputFilePath();
+		record.set = outfit;
+		for (size_t s = 0; s < currentSet.size(); s++) {
+			if (currentSet[s].bClamp)
+				continue;
+
+			const std::string& name = currentSet[s].name;
+			bool zap = currentSet[s].bZap;
+			float vbig = batchSlidersBig[s].value;
+
+			if (zap && !currentSet[s].bUV && !currentSet[s].bHidden && buildSelection.HasZapChoice(currentSet.GetName(), name))
+				vbig = buildSelection.GetZapChoice(currentSet.GetName(), name) ? 1.0f : 0.0f;
+
+			record.AddPresetChange(name, false, zap, vbig, sliderManager.GetBigPresetValue(activePreset, name, currentSet[s].defBigValue / 100.0f));
+
+			if (currentSet.GenWeights() && !zap)
+				record.AddPresetChange(name,
+									   true,
+									   false,
+									   batchSlidersSmall[s].value,
+									   sliderManager.GetSmallPresetValue(activePreset, name, currentSet[s].defSmallValue / 100.0f));
 		}
 
 		std::vector<int> forcedBig;
@@ -5918,6 +6176,9 @@ int BodySlideApp::BuildListBodies(
 				return;
 			}
 		}
+
+		std::lock_guard<std::mutex> lock(batchBuildMutex);
+		builtRecords.push_back(std::move(record));
 	};
 
 	// Multi-threading for 64-bit only due to memory limits of 32-bit builds
@@ -5944,6 +6205,9 @@ int BodySlideApp::BuildListBodies(
 	}
 
 	progWnd.Update(1000);
+
+	if (recordBuilds)
+		RecordBuilds(builtRecords, removedOutputs, datapath);
 
 	failedOutfits.insert(failedOutfitsCon.begin(), failedOutfitsCon.end());
 
@@ -6066,7 +6330,7 @@ void BodySlideApp::CommandLineBuild() {
 		if (outfitsInBuild.size() <= 1)
 			continue;
 
-		std::string outputChoice = buildSelection.GetOutputChoice(outFile.first);
+		std::string outputChoice = GetDefaultOutputChoice(buildSelection, outFile.first, cmdTargetDir.empty() ? GetOutputDataPath() : cmdTargetDir);
 		if (outputChoice.empty())
 			continue;
 
@@ -6411,6 +6675,11 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize& size)
 	auto conflictInfo = (wxStaticText*)FindWindowByName("conflictInfo", this);
 	if (conflictInfo)
 		conflictInfo->Bind(wxEVT_RIGHT_DOWN, &BodySlideFrame::OnConflictPopup, this);
+
+	// Takes the rest of the row and gets shortened, so its text doesn't widen the columns and move the buttons
+	auto buildInfo = (wxStaticText*)FindWindowByName("buildInfo", this);
+	if (buildInfo)
+		buildInfo->SetMinSize(wxSize(FromDIP(10), -1));
 
 	xrc->AttachUnknownControl("searchHolder", search, this);
 	xrc->AttachUnknownControl("outfitsearchHolder", outfitsearch, this);
@@ -7955,8 +8224,8 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 	if (!batchBuildChooser)
 		return;
 
-	batchBuildChooser->SetSize(batchBuildChooser->FromDIP(wxSize(650, 300)));
-	batchBuildChooser->SetSizeHints(batchBuildChooser->FromDIP(wxSize(650, 300)), batchBuildChooser->FromDIP(wxSize(650, -1)));
+	batchBuildChooser->SetSize(batchBuildChooser->FromDIP(wxSize(800, 450)));
+	batchBuildChooser->SetSizeHints(batchBuildChooser->FromDIP(wxSize(600, 300)));
 	batchBuildChooser->CenterOnParent();
 
 	// Load BuildSelection file
@@ -7964,13 +8233,59 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 	BuildSelection buildSelection;
 	app->GetBuildSelection(buildSelFile, buildSelection);
 
-	batchBuildList = XRCCTRL((*batchBuildChooser), "batchBuildList", wxCheckListBox);
-	batchBuildList->Bind(wxEVT_RIGHT_UP, &BodySlideFrame::OnBatchBuildContext, this);
+	// The first column only holds the check boxes
+	enum { ColCheck, ColOutfit, ColBuilt, ColModified, ColPreset, ColBuiltInstead };
+	batchBuildList = XRCCTRL((*batchBuildChooser), "batchBuildList", wxListCtrl);
+	batchBuildList->EnableCheckBoxes();
+	batchBuildList->AppendColumn(wxEmptyString);
+	batchBuildList->AppendColumn(_("Outfit"));
+	batchBuildList->AppendColumn(_("Built"), wxLIST_FORMAT_CENTRE);
+	batchBuildList->AppendColumn(_("Modified"), wxLIST_FORMAT_CENTRE);
+	batchBuildList->AppendColumn(_("Preset"));
+	batchBuildList->AppendColumn(_("Built Instead"));
+	batchBuildList->Bind(wxEVT_CONTEXT_MENU, &BodySlideFrame::OnBatchBuildContext, this);
+	batchBuildList->Bind(wxEVT_KEY_DOWN, &BodySlideFrame::OnBatchBuildKey, this);
+	batchBuildList->Bind(wxEVT_CHAR, &BodySlideFrame::OnBatchBuildKey, this);
 
-	batchBuildList->Append(oChoices);
+	for (uint32_t i = 0; i < oChoices.size(); i++) {
+		batchBuildList->InsertItem(i, wxEmptyString);
+		batchBuildList->SetItem(i, ColOutfit, oChoices[i]);
+	}
+
+	// Show what was last built to the output of each outfit
+	const wxString checkMark(wxUniChar(0x2713));
+	std::string dataFolder = app->GetOutputDataPath();
+	std::string activePreset = BodySlideConfig["SelectedPreset"];
+	batchBuildStates.assign(outfitChoices.size(), BatchBuildState::NotBuilt);
+	if (!dataFolder.empty()) {
+		for (auto& outFile : app->outFileCount) {
+			const BuildRecord* record = buildSelection.GetBuildRecord(outFile.first, dataFolder);
+			if (!record)
+				continue;
+
+			for (auto& outfit : outFile.second) {
+				auto outfitIndex = outfitIndices.find(outfit);
+				if (outfitIndex == outfitIndices.end())
+					continue;
+
+				uint32_t i = outfitIndex->second;
+				if (record->set != outfit) {
+					batchBuildStates[i] = BatchBuildState::OtherOutfitBuilt;
+					batchBuildList->SetItem(i, ColBuiltInstead, wxString::FromUTF8(record->set));
+					continue;
+				}
+
+				batchBuildStates[i] = record->preset == activePreset ? BatchBuildState::BuiltWithPreset : BatchBuildState::BuiltWithOtherPreset;
+				batchBuildList->SetItem(i, ColBuilt, checkMark);
+				batchBuildList->SetItem(i, ColPreset, wxString::FromUTF8(record->preset));
+				if (record->IsModified())
+					batchBuildList->SetItem(i, ColModified, checkMark);
+			}
+		}
+	}
 
 	for (uint32_t i = 0; i < oChoices.size(); i++)
-		batchBuildList->Check(i);
+		batchBuildList->CheckItem(i, true);
 
 	for (auto& outFile : app->outFileCount) {
 		if (outFile.second.size() > 1) {
@@ -7985,30 +8300,51 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 			if (outfitsInBuild.size() <= 1)
 				continue;
 
-			// Ignore saved choices of outfits that no longer exist
-			std::string outputChoice = buildSelection.GetOutputChoice(outFile.first);
-			bool choiceExists = std::find(outFile.second.cbegin(), outFile.second.cend(), outputChoice) != outFile.second.cend();
-			if (!outputChoice.empty() && choiceExists) {
+			// The saved choice, otherwise the outfit last built to the output
+			std::string outputChoice = app->GetDefaultOutputChoice(buildSelection, outFile.first, dataFolder);
+			if (!outputChoice.empty()) {
 				for (auto& outfit : outfitsInBuild) {
 					if (outfit != outputChoice) {
 						// Uncheck choice by default
-						batchBuildList->Check(outfitIndices[outfit], false);
+						batchBuildList->CheckItem(outfitIndices[outfit], false);
 					}
 				}
 			}
 		}
 	}
 
-	if (batchBuildChooser->ShowModal() == wxID_OK) {
-		wxArrayInt sel;
-		batchBuildList->GetCheckedItems(sel);
-		toBuild.clear();
-		for (size_t i = 0; i < sel.size(); i++)
-			toBuild.push_back(outfitChoices[sel[i]]);
+	batchBuildDefaults.resize(oChoices.size());
+	for (uint32_t i = 0; i < oChoices.size(); i++)
+		batchBuildDefaults[i] = batchBuildList->IsItemChecked(i);
 
+	// Columns as wide as their header or content, whichever is wider
+	batchBuildList->SetColumnWidth(ColCheck, batchBuildList->FromDIP(28));
+	for (int col = ColOutfit; col <= ColBuiltInstead; col++) {
+		batchBuildList->SetColumnWidth(col, wxLIST_AUTOSIZE);
+		int contentWidth = batchBuildList->GetColumnWidth(col);
+		batchBuildList->SetColumnWidth(col, wxLIST_AUTOSIZE_USEHEADER);
+		if (contentWidth > batchBuildList->GetColumnWidth(col))
+			batchBuildList->SetColumnWidth(col, contentWidth);
+	}
+
+	if (batchBuildList->GetItemCount() > 0)
+		batchBuildList->SetItemState(0, wxLIST_STATE_FOCUSED, wxLIST_STATE_FOCUSED);
+
+	int batchBuildResult = batchBuildChooser->ShowModal();
+	batchBuildDefaults.clear();
+	batchBuildStates.clear();
+
+	if (batchBuildResult == wxID_OK) {
+		toBuild.clear();
+		for (int i = 0; i < batchBuildList->GetItemCount(); i++)
+			if (batchBuildList->IsItemChecked(i))
+				toBuild.push_back(outfitChoices[i]);
+
+		batchBuildList = nullptr;
 		delete batchBuildChooser;
 	}
 	else {
+		batchBuildList = nullptr;
 		delete batchBuildChooser;
 		return;
 	}
@@ -8046,27 +8382,63 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 	}
 }
 
-void BodySlideFrame::OnBatchBuildContext(wxMouseEvent& WXUNUSED(event)) {
+void BodySlideFrame::OnBatchBuildContext(wxContextMenuEvent& WXUNUSED(event)) {
 	wxMenu* menu = wxXmlResource::Get()->LoadMenu("batchBuildContext");
 	if (menu) {
 		menu->Bind(wxEVT_MENU, &BodySlideFrame::OnBatchBuildSelect, this);
-		PopupMenu(menu);
+		batchBuildList->PopupMenu(menu);
 		delete menu;
 	}
 }
 
+void BodySlideFrame::OnBatchBuildKey(wxKeyEvent& event) {
+	if (event.GetKeyCode() != WXK_SPACE || event.HasAnyModifiers()) {
+		event.Skip();
+		return;
+	}
+
+	// The list only toggles the focused row itself, so space is handled here for both key down and char
+	if (event.GetEventType() != wxEVT_KEY_DOWN)
+		return;
+
+	// All selected rows take the opposite state of the focused one
+	long focused = batchBuildList->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_FOCUSED);
+	long first = batchBuildList->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+	if (focused < 0 || batchBuildList->GetItemState(focused, wxLIST_STATE_SELECTED) == 0)
+		focused = first;
+	if (focused < 0)
+		return;
+
+	bool check = !batchBuildList->IsItemChecked(focused);
+	for (long i = first; i >= 0; i = batchBuildList->GetNextItem(i, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED))
+		batchBuildList->CheckItem(i, check);
+}
+
 void BodySlideFrame::OnBatchBuildSelect(wxCommandEvent& event) {
+	int count = batchBuildList->GetItemCount();
 	if (event.GetId() == XRCID("batchBuildNone")) {
-		for (uint32_t i = 0; i < batchBuildList->GetCount(); i++)
-			batchBuildList->Check(i, false);
+		for (int i = 0; i < count; i++)
+			batchBuildList->CheckItem(i, false);
 	}
 	else if (event.GetId() == XRCID("batchBuildAll")) {
-		for (uint32_t i = 0; i < batchBuildList->GetCount(); i++)
-			batchBuildList->Check(i);
+		for (int i = 0; i < count; i++)
+			batchBuildList->CheckItem(i, true);
 	}
 	else if (event.GetId() == XRCID("batchBuildInvert")) {
-		for (uint32_t i = 0; i < batchBuildList->GetCount(); i++)
-			batchBuildList->Check(i, !batchBuildList->IsChecked(i));
+		for (int i = 0; i < count; i++)
+			batchBuildList->CheckItem(i, !batchBuildList->IsItemChecked(i));
+	}
+	else if (event.GetId() == XRCID("batchBuildBuilt")) {
+		// What's in the output folder now, to rebuild it
+		for (int i = 0; i < count && i < (int)batchBuildStates.size(); i++) {
+			auto state = batchBuildStates[i];
+			batchBuildList->CheckItem(i, state == BatchBuildState::BuiltWithPreset || state == BatchBuildState::BuiltWithOtherPreset);
+		}
+	}
+	else if (event.GetId() == XRCID("batchBuildNotBuilt")) {
+		// What a batch build would build by default, without the outputs already built with this preset
+		for (int i = 0; i < count && i < (int)batchBuildStates.size() && i < (int)batchBuildDefaults.size(); i++)
+			batchBuildList->CheckItem(i, batchBuildDefaults[i] && batchBuildStates[i] != BatchBuildState::BuiltWithPreset);
 	}
 }
 

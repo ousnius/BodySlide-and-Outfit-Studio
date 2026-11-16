@@ -400,7 +400,19 @@ public:
 
 	void GetBuildSelection(BuildSelectionFile& file, BuildSelection& buildSel);
 
+	// Outfit that wins a conflicting output by default: the saved choice, otherwise the outfit last built to the data folder.
+	// Empty if neither names an outfit that still writes the output.
+	std::string GetDefaultOutputChoice(BuildSelection& buildSelection, const std::string& outputPath, const std::string& dataFolder);
+
+	// Records the outfits built to (or removed from) the data folder in the build selection file.
+	// The built records need their path, set and changes from the preset, the rest is filled in.
+	void RecordBuilds(std::vector<BuildRecord>& builtRecords, const std::vector<std::string>& removedOutputs, const std::string& dataFolder);
+
+	// Record of a single build of the active set, with the UI values that differ from the preset
+	BuildRecord ActiveSetBuildRecord();
+
 	void UpdateConflictManager();
+	void UpdateBuildRecordLabel();
 	void SetDefaultBuildSelection();
 
 	bool UpdateZapChoices();
@@ -724,7 +736,13 @@ public:
 	wxScrolledWindow* sliderScroll = nullptr;
 	wxFlexGridSizer* sliderLayout = nullptr;
 
-	wxCheckListBox* batchBuildList = nullptr;
+	wxListCtrl* batchBuildList = nullptr;
+
+	// Batch build list items that are checked by default, and the ones whose output was last built from them
+	enum class BatchBuildState { NotBuilt, BuiltWithPreset, BuiltWithOtherPreset, OtherOutfitBuilt };
+	std::vector<bool> batchBuildDefaults;
+	std::vector<BatchBuildState> batchBuildStates;
+
 	wxMenu* fileCollisionMenu = nullptr;
 	std::vector<std::string> outfitChoiceNames;
 	std::vector<std::string> presetChoiceNames;
@@ -861,7 +879,8 @@ private:
 	void OnBuildBodies(wxCommandEvent& event);
 	void OnConformAddOns(wxCommandEvent& event);
 	void OnBatchBuild(wxCommandEvent& event);
-	void OnBatchBuildContext(wxMouseEvent& event);
+	void OnBatchBuildContext(wxContextMenuEvent& event);
+	void OnBatchBuildKey(wxKeyEvent& event);
 	void OnBatchBuildSelect(wxCommandEvent& event);
 	void OnOutfitStudio(wxCommandEvent& event);
 	void SettingsFillDataFiles(wxCheckListBox* dataFileList, wxString& dataDir, int targetGame);

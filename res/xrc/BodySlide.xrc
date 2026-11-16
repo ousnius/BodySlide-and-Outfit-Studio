@@ -404,7 +404,7 @@
 					<object class="sizeritem">
 						<cellpos>1,0</cellpos>
 						<cellspan>1,3</cellspan>
-						<flag>wxLEFT</flag>
+						<flag>wxLEFT|wxEXPAND</flag>
 						<border>5</border>
 						<object class="wxBoxSizer">
 							<orient>wxHORIZONTAL</orient>
@@ -420,7 +420,7 @@
 								</object>
 							</object>
 							<object class="sizeritem">
-								<option>1</option>
+								<option>0</option>
 								<flag>wxLEFT</flag>
 								<border>5</border>
 								<object class="wxStaticText" name="conflictLabel">
@@ -438,6 +438,18 @@
 								<object class="wxStaticText" name="conflictInfo">
 									<fg>#c8c8d8</fg>
 									<label>(right-click to view alternatives)</label>
+									<wrap>-1</wrap>
+									<hidden>1</hidden>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>10</border>
+								<object class="wxStaticText" name="buildInfo">
+									<style>wxST_ELLIPSIZE_END</style>
+									<fg>#c8c8c8</fg>
+									<label></label>
 									<wrap>-1</wrap>
 									<hidden>1</hidden>
 								</object>
@@ -674,6 +686,15 @@
 		</object>
 		<object class="wxMenuItem" name="batchBuildInvert">
 			<label>Invert Selection</label>
+		</object>
+		<object class="separator" />
+		<object class="wxMenuItem" name="batchBuildBuilt">
+			<label>Select Built</label>
+			<help>Select the outfits last built to the output folder</help>
+		</object>
+		<object class="wxMenuItem" name="batchBuildNotBuilt">
+			<label>Select Not Built With This Preset</label>
+			<help>Select the default choices, except the ones last built with the current preset</help>
 		</object>
 	</object>
 	<object class="wxMenu" name="menuFileCollision">
