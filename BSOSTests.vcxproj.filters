@@ -16,6 +16,12 @@
     <Filter Include="Libraries">
       <UniqueIdentifier>{a8c4e2d1-6f3b-4e9a-b7c5-1d2e3f4a5b61}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Program">
+      <UniqueIdentifier>{9ed9cc48-20eb-4905-80a2-636e7a41bed8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MCP">
+      <UniqueIdentifier>{1167e2be-804d-40e9-8edc-0c0c42c78cc5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\files\SFMaterialDatabase.h">
@@ -79,6 +85,9 @@
       <Filter>Libraries</Filter>
     </ClInclude>
     <ClInclude Include="src\components\ArchiveIndex.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\BuildSelection.h">
       <Filter>Components</Filter>
     </ClInclude>
     <ClInclude Include="src\components\MaskTransfer.h">
@@ -149,6 +158,9 @@
     <ClCompile Include="tests\ArchiveTest.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
+    <ClCompile Include="tests\BuildSelectionTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
     <ClCompile Include="tests\HkxFileTest.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
@@ -171,6 +183,9 @@
       <Filter>Tests</Filter>
     </ClCompile>
     <ClCompile Include="src\components\ArchiveIndex.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\BuildSelection.cpp">
       <Filter>Components</Filter>
     </ClCompile>
     <ClCompile Include="src\components\MaskTransfer.cpp">
@@ -271,6 +286,171 @@
     </ClCompile>
     <ClCompile Include="lib\TinyXML-2\tinyxml2.cpp">
       <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\AddOnSlidersTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\SliderSetTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\MainThreadDispatcher.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\AutomationJsonTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\MainThreadDispatcherTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\McpProtocolTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\MeshAnalysisTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\MeshRefineTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\OutfitProjectTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\PoseDataJsonTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\MeshDeformTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\PoseFitTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\PoseMathTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\SurfaceFitTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TextureConvertTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\Automation.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\AutomationJson.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\ClippingFixer.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\MeshAnalysis.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\MeshRefine.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\PhysicsChains.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\AddOnSliders.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\Automorph.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\DiffData.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\MaskOps.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\Mesh.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\NormalGenLayers.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\SliderData.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\SliderSet.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\SliderSetIndex.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\SliderSetInheritance.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\WeightNorm.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\MeshDeform.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\PoseFit.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\PoseMath.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\SurfaceFit.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\TextureConvert.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\files\MaterialFile.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\files\ObjFile.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\files\TriFile.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\program\OutfitProject.cpp">
+      <Filter>Program</Filter>
+    </ClCompile>
+    <ClCompile Include="src\program\ProjectHost.cpp">
+      <Filter>Program</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpProtocol.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpServer.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\program\ProjectOperations.cpp">
+      <Filter>Program</Filter>
+    </ClCompile>
+    <ClCompile Include="src\program\BrushStrokeController.cpp">
+      <Filter>Program</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\TweakBrush.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\PoseData.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\PoseDataJson.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\PoseDataYaml.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\SliderManager.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\SliderPresets.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\UndoHistory.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\ProjectUtil.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\GameUtil.cpp">
+      <Filter>Utilities</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

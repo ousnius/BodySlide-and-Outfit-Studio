@@ -2195,8 +2195,92 @@
     <ClInclude Include="src\files\GameDataStream.h">
       <Filter>Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\components\MaskOps.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\MeshAnalysis.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\MeshDeform.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\MeshRefine.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\PhysicsChains.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\PoseFit.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\PoseMath.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\SurfaceFit.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\TextureConvert.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\files\EXRImage.h">
+      <Filter>Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\render\GLHDRiEnvironment.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\ProjectUtil.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\GameUtil.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\MainThreadDispatcher.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
     <ClCompile Include="src\files\GameDataStream.cpp">
       <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\MaskOps.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\MeshAnalysis.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\MeshDeform.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\MeshRefine.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\PhysicsChains.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\PoseFit.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\PoseMath.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\SurfaceFit.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\TextureConvert.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\files\EXRImage.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\GLHDRiEnvironment.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\ProjectUtil.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\GameUtil.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\MainThreadDispatcher.cpp">
+      <Filter>Utilities</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
