@@ -55,7 +55,8 @@ public:
 
 
 	nifly::NiShape* FindShapeByName(const std::string& name);
-	std::vector<nifly::NiShape*> ResolveTargetShapes(const AutomationStep& step, bool includeBaseShapeOnEmpty = true);
+	// Regex patterns leave the reference out unless the step sets TargetReference or patternsMatchBaseShape is true.
+	std::vector<nifly::NiShape*> ResolveTargetShapes(const AutomationStep& step, bool includeBaseShapeOnEmpty = true, bool patternsMatchBaseShape = false);
 
 	static wxString MakeAbsoluteToProject(const wxString& path);
 	static bool StepChangesSliderSet(AutomationStepType type);

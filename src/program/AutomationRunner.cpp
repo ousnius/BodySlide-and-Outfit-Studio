@@ -681,7 +681,7 @@ NiShape* AutomationRunner::FindShapeByName(const std::string& name) {
 	}
 	return nullptr;
 }
-std::vector<NiShape*> AutomationRunner::ResolveTargetShapes(const AutomationStep& step, bool includeBaseShapeOnEmpty) {
+std::vector<NiShape*> AutomationRunner::ResolveTargetShapes(const AutomationStep& step, bool includeBaseShapeOnEmpty, bool patternsMatchBaseShape) {
 	SyncProject();
 	if (step.targetMeshes.empty()) {
 		auto allShapes = project->GetWorkNif()->GetShapes();
@@ -705,7 +705,7 @@ std::vector<NiShape*> AutomationRunner::ResolveTargetShapes(const AutomationStep
 		// data too. A step that is meant for the reference names it without TargetRegex or sets TargetReference,
 		// and steps that work on the reference when empty (MaskCovered) let patterns match it as well.
 		auto allShapes = project->GetWorkNif()->GetShapes();
-		auto* baseShape = (step.targetReference || includeBaseShapeOnEmpty) ? nullptr : project->GetBaseShape();
+		auto* baseShape = (step.targetReference || patternsMatchBaseShape) ? nullptr : project->GetBaseShape();
 		for (const auto& pattern : step.targetMeshes) {
 			try {
 				std::regex re(pattern, std::regex::icase);
@@ -3644,7 +3644,7 @@ int AutomationRunner::ExecuteStepMaskCovered(const AutomationStep& step) {
 			shapes.push_back(baseShape);
 	}
 	else
-		shapes = ResolveTargetShapes(step, true);
+		shapes = ResolveTargetShapes(step, true, true);
 	if (shapes.empty()) {
 		wxLogWarning("Automation: MaskCovered - no target shapes found.");
 		return 0;
