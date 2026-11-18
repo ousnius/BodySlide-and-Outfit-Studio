@@ -4061,7 +4061,6 @@ bool BodySlideApp::SetDefaultConfig() {
 	Config.SetDefaultBoolValue("WarnMissingGamePath", true);
 	Config.SetDefaultBoolValue("BSATextureScan", true);
 	Config.SetDefaultValue("LogLevel", "3");
-	Config.SetDefaultBoolValue("UseSystemLanguage", false);
 	SettingsDialogShared::SetDefaultAppearanceMode(Config);
 	BodySlideConfig.SetDefaultValue("SelectedOutfit", "");
 	BodySlideConfig.SetDefaultValue("SelectedPreset", "");

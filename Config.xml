@@ -34,9 +34,8 @@
     <LogLevel>3</LogLevel>
     <Language>-1</Language>
     <!-- Default groups are the groups virtually assigned to outfits that are not currently members of any groups.
-	This information is used by BodySlide for choosing what presets to display for outfits.
-	If the attribute "includeInBuild" is true, batch building the specified groups will also build unassigned outfits. -->
-    <DefaultGroups includeInBuild="true"></DefaultGroups>
+	This information is used by BodySlide for choosing what presets to display for outfits. -->
+    <DefaultGroups></DefaultGroups>
     <!-- Group aliases provide a way for presets saved under older group names to still apply when a group has been renamed -->
     <GroupAliases></GroupAliases>
     <Input>
