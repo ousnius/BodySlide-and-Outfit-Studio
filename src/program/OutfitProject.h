@@ -618,6 +618,44 @@ public:
 	void AddCustomBoneRef(const std::string& boneName, const std::string& parentBone, const nifly::MatTransform& xformToParent);
 	void ModifyCustomBone(AnimBone* bPtr, const std::string& parentBone, const nifly::MatTransform& xformToParent);
 
+	// Why a duplicated bone can't get a name
+	enum class DuplicateBoneConflict { None, EmptyName, StandardBone, Original, InProject, ParentBone, Repeated };
+
+	// Names of duplicated bones: every 'find' in a name is replaced, then 'suffix' is appended
+	static std::string DuplicateBoneName(const std::string& boneName, const std::string& find, const std::string& replace, const std::string& suffix);
+	static std::vector<std::string> DuplicateBoneNames(const std::vector<std::string>& boneNames,
+													   const std::string& find,
+													   const std::string& replace,
+													   const std::string& suffix);
+	// The conflict of each new name of the bones: standard bones, the bones themselves, bones of the project and bones
+	// other bones hang from are taken, and no two copies can share a name
+	static std::vector<DuplicateBoneConflict> DuplicateBoneConflicts(const std::vector<std::string>& boneNames, const std::vector<std::string>& newNames);
+	// English description of a conflict, for logs and MCP errors
+	static std::string DuplicateBoneConflictText(DuplicateBoneConflict conflict, const std::string& newName);
+	// No suffix if replacing gives every bone a free name, otherwise the lowest ".N" suffix that does
+	std::string NextFreeDuplicateSuffix(const std::vector<std::string>& boneNames, const std::string& find, const std::string& replace);
+	// The parents the copies of these bones hang from: the parents of the bones whose parent isn't duplicated with
+	// them, empty for none
+	static std::set<std::string> DuplicateChainParents(const std::vector<std::string>& boneNames);
+	// Adds a custom bone copy of each bone with the same transforms. A copy's parent is the copy of the original's
+	// parent when that is duplicated too, otherwise 'newParent' ("" for none) or by default the original's parent.
+	// With another parent, a copy keeps its place in the skeleton. Copies have no weights.
+	// Returns false with 'error' and adds nothing if a bone or the parent doesn't exist or a new name is taken.
+	bool DuplicateBones(const std::vector<std::string>& boneNames,
+						const std::string& find,
+						const std::string& replace,
+						const std::string& suffix,
+						const std::optional<std::string>& newParent,
+						std::vector<std::string>& outNewNames,
+						std::string& error);
+	// Mirrors the custom bones on the X axis of the skeleton, keeping the mesh in place by recalculating the skin
+	// binds. Standard bones are skipped. Returns the changes, parents first.
+	std::vector<UndoStateBoneXform> MirrorBonesX(const std::vector<std::string>& boneNames);
+	// Sets the transforms of a mirror (or its undo), recalculating the skin binds
+	void ApplyBoneXforms(const std::vector<UndoStateBoneXform>& xforms, bool undo);
+	// Sets a custom bone's transform to its parent and recalculates the skin binds of it and its descendants
+	void SetCustomBoneTransform(AnimBone* bPtr, const nifly::MatTransform& xformToParent);
+
 	// CopySegPart returns the number of failed triangles, or 0 for success.
 	int CopySegPart(nifly::NiShape* shape);
 

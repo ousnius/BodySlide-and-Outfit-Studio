@@ -94,6 +94,8 @@ private:
 	int ExecuteStepDeleteBones(const AutomationStep& step);
 	int ExecuteStepAddCustomBone(const AutomationStep& step);
 	int ExecuteStepEditBone(const AutomationStep& step);
+	int ExecuteStepDuplicateBones(const AutomationStep& step);
+	int ExecuteStepMirrorBones(const AutomationStep& step);
 	int ExecuteStepRemoveSkinning(const AutomationStep& step);
 	int ExecuteStepApplyPose(const AutomationStep& step);
 	int ExecuteStepImportSliderData(const AutomationStep& step);

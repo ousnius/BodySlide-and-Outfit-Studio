@@ -3607,7 +3607,8 @@ void OutfitProject::AddBoneRef(const std::string& boneName) {
 void OutfitProject::AddCustomBoneRef(const std::string& boneName, const std::string& parentBone, const MatTransform& xformToParent) {
 	AnimBone& customBone = AnimSkeleton::getInstance().AddCustomBone(boneName);
 	customBone.SetTransformBoneToParent(xformToParent);
-	customBone.SetParentBone(AnimSkeleton::getInstance().GetBonePtr(parentBone));
+	// An empty name is no parent, not a bone that happens to have no name
+	customBone.SetParentBone(parentBone.empty() ? nullptr : AnimSkeleton::getInstance().GetBonePtr(parentBone));
 
 	for (auto& s : workNif.GetShapeNames())
 		workAnim.AddShapeBone(s, boneName);
@@ -3615,7 +3616,238 @@ void OutfitProject::AddCustomBoneRef(const std::string& boneName, const std::str
 
 void OutfitProject::ModifyCustomBone(AnimBone* bPtr, const std::string& parentBone, const MatTransform& xformToParent) {
 	bPtr->SetTransformBoneToParent(xformToParent);
-	bPtr->SetParentBone(AnimSkeleton::getInstance().GetBonePtr(parentBone));
+	bPtr->SetParentBone(parentBone.empty() ? nullptr : AnimSkeleton::getInstance().GetBonePtr(parentBone));
+
+	for (auto& s : workNif.GetShapeNames())
+		workAnim.RecursiveRecalcXFormSkinToBone(s, bPtr);
+}
+
+std::string OutfitProject::DuplicateBoneName(const std::string& boneName, const std::string& find, const std::string& replace, const std::string& suffix) {
+	std::string newName = boneName;
+	if (!find.empty()) {
+		size_t pos = 0;
+		while ((pos = newName.find(find, pos)) != std::string::npos) {
+			newName.replace(pos, find.length(), replace);
+			pos += replace.length();
+		}
+	}
+	return newName + suffix;
+}
+
+std::vector<std::string> OutfitProject::DuplicateBoneNames(const std::vector<std::string>& boneNames,
+														   const std::string& find,
+														   const std::string& replace,
+														   const std::string& suffix) {
+	std::vector<std::string> newNames;
+	newNames.reserve(boneNames.size());
+	for (auto& bone : boneNames)
+		newNames.push_back(DuplicateBoneName(bone, find, replace, suffix));
+	return newNames;
+}
+
+std::vector<OutfitProject::DuplicateBoneConflict> OutfitProject::DuplicateBoneConflicts(const std::vector<std::string>& boneNames,
+																						 const std::vector<std::string>& newNames) {
+	AnimSkeleton& skel = AnimSkeleton::getInstance();
+	const std::set<std::string> originals(boneNames.begin(), boneNames.end());
+
+	std::vector<DuplicateBoneConflict> conflicts;
+	conflicts.reserve(newNames.size());
+	std::set<std::string> seen;
+	for (auto& newName : newNames) {
+		// A custom bone left in the skeleton from an earlier project can be reused, unless other bones hang from
+		// it: it could be an ancestor of the bone it would copy
+		const AnimBone* existing = newName.empty() ? nullptr : skel.GetBonePtr(newName);
+
+		DuplicateBoneConflict conflict = DuplicateBoneConflict::None;
+		if (newName.empty())
+			conflict = DuplicateBoneConflict::EmptyName;
+		else if (skel.GetBonePtr(newName, false))
+			conflict = DuplicateBoneConflict::StandardBone;
+		else if (originals.count(newName))
+			conflict = DuplicateBoneConflict::Original;
+		else if (skel.GetBoneRefCount(newName) > 0)
+			conflict = DuplicateBoneConflict::InProject;
+		else if (existing && !existing->children.empty())
+			conflict = DuplicateBoneConflict::ParentBone;
+		else if (!seen.insert(newName).second)
+			conflict = DuplicateBoneConflict::Repeated;
+		conflicts.push_back(conflict);
+	}
+	return conflicts;
+}
+
+std::string OutfitProject::DuplicateBoneConflictText(DuplicateBoneConflict conflict, const std::string& newName) {
+	switch (conflict) {
+		case DuplicateBoneConflict::EmptyName: return "A new bone name is empty.";
+		case DuplicateBoneConflict::StandardBone: return "'" + newName + "' is a bone of the reference skeleton.";
+		case DuplicateBoneConflict::Original: return "'" + newName + "' is one of the bones to duplicate.";
+		case DuplicateBoneConflict::InProject: return "Bone '" + newName + "' already exists in the project.";
+		case DuplicateBoneConflict::ParentBone: return "Bone '" + newName + "' already exists in the skeleton as the parent of other bones.";
+		case DuplicateBoneConflict::Repeated: return "More than one bone would be named '" + newName + "'.";
+		default: return std::string();
+	}
+}
+
+std::string OutfitProject::NextFreeDuplicateSuffix(const std::vector<std::string>& boneNames, const std::string& find, const std::string& replace) {
+	// No suffix when the replaced names are free already
+	for (int n = 0;; ++n) {
+		const std::string suffix = n == 0 ? std::string() : "." + std::to_string(n);
+		const auto conflicts = DuplicateBoneConflicts(boneNames, DuplicateBoneNames(boneNames, find, replace, suffix));
+		const bool free = std::all_of(conflicts.begin(), conflicts.end(), [](DuplicateBoneConflict c) { return c == DuplicateBoneConflict::None; });
+		if (free || n >= 10000)
+			return suffix;
+	}
+}
+
+std::set<std::string> OutfitProject::DuplicateChainParents(const std::vector<std::string>& boneNames) {
+	AnimSkeleton& skel = AnimSkeleton::getInstance();
+
+	std::set<AnimBone*> bones;
+	for (auto& name : boneNames)
+		if (AnimBone* bPtr = skel.GetBonePtr(name))
+			bones.insert(bPtr);
+
+	std::set<std::string> parents;
+	for (AnimBone* bPtr : bones)
+		if (!bones.count(bPtr->parent))
+			parents.insert(bPtr->parent ? bPtr->parent->boneName : std::string());
+	return parents;
+}
+
+bool OutfitProject::DuplicateBones(const std::vector<std::string>& boneNames,
+								   const std::string& find,
+								   const std::string& replace,
+								   const std::string& suffix,
+								   const std::optional<std::string>& newParent,
+								   std::vector<std::string>& outNewNames,
+								   std::string& error) {
+	outNewNames.clear();
+	AnimSkeleton& skel = AnimSkeleton::getInstance();
+
+	std::vector<AnimBone*> bones;
+	for (auto& name : boneNames) {
+		AnimBone* bPtr = skel.GetBonePtr(name);
+		if (!bPtr) {
+			error = "There is no bone '" + name + "'.";
+			return false;
+		}
+		bones.push_back(bPtr);
+	}
+
+	// A bone listed twice gets the same name twice, a conflict too
+	const std::vector<std::string> newNames = DuplicateBoneNames(boneNames, find, replace, suffix);
+	const std::vector<DuplicateBoneConflict> conflicts = DuplicateBoneConflicts(boneNames, newNames);
+	for (size_t i = 0; i < newNames.size(); ++i) {
+		if (conflicts[i] != DuplicateBoneConflict::None) {
+			error = DuplicateBoneConflictText(conflicts[i], newNames[i]);
+			return false;
+		}
+	}
+
+	AnimBone* parentOverride = nullptr;
+	if (newParent && !newParent->empty()) {
+		if (std::find(newNames.begin(), newNames.end(), *newParent) != newNames.end()) {
+			error = "The copies can't hang from one of themselves, '" + *newParent + "'.";
+			return false;
+		}
+		parentOverride = skel.GetBonePtr(*newParent);
+		if (!parentOverride) {
+			error = "There is no parent bone '" + *newParent + "'.";
+			return false;
+		}
+	}
+
+	std::unordered_map<AnimBone*, std::string> copyNames;
+	for (size_t i = 0; i < bones.size(); ++i)
+		copyNames[bones[i]] = newNames[i];
+
+	// Parents are added first, so their copies exist for their children
+	for (AnimBone* bPtr : SortBonesParentsFirst(bones)) {
+		auto parentCopy = bPtr->parent ? copyNames.find(bPtr->parent) : copyNames.end();
+
+		std::string parentName;
+		MatTransform xformToParent = bPtr->xformToParent;
+		if (parentCopy != copyNames.end()) {
+			// The parent's copy is where the parent is, so the transform to it stays
+			parentName = parentCopy->second;
+		}
+		else if (newParent) {
+			// Keeps its place in the skeleton under the other parent
+			MatTransform parentToGlobal;
+			if (parentOverride)
+				parentToGlobal = parentOverride->xformToGlobal;
+			parentName = *newParent;
+			xformToParent = parentToGlobal.InverseTransform().ComposeTransforms(bPtr->xformToGlobal);
+		}
+		else if (bPtr->parent)
+			parentName = bPtr->parent->boneName;
+
+		const std::string& newName = copyNames[bPtr];
+		wxLogMessage("Duplicating bone '%s' as '%s' (parent: '%s').", bPtr->boneName, newName, parentName);
+		AddCustomBoneRef(newName, parentName, xformToParent);
+	}
+
+	outNewNames = newNames;
+	return true;
+}
+
+std::vector<UndoStateBoneXform> OutfitProject::MirrorBonesX(const std::vector<std::string>& boneNames) {
+	AnimSkeleton& skel = AnimSkeleton::getInstance();
+
+	std::vector<AnimBone*> bones;
+	for (auto& name : boneNames) {
+		AnimBone* bPtr = skel.GetBonePtr(name);
+		if (!bPtr) {
+			wxLogWarning("Can't mirror bone '%s', there is no such bone.", name);
+			continue;
+		}
+		if (bPtr->isStandardBone) {
+			wxLogWarning("Can't mirror bone '%s', it's a bone of the reference skeleton.", name);
+			continue;
+		}
+		if (std::find(bones.begin(), bones.end(), bPtr) == bones.end())
+			bones.push_back(bPtr);
+	}
+	bones = SortBonesParentsFirst(bones);
+
+	// Targets come from the bones as they were, before any parent moved
+	std::vector<MatTransform> targets;
+	targets.reserve(bones.size());
+	for (AnimBone* bPtr : bones)
+		targets.push_back(MirrorTransformX(bPtr->xformToGlobal));
+
+	std::vector<UndoStateBoneXform> xforms;
+	for (size_t i = 0; i < bones.size(); ++i) {
+		AnimBone* bPtr = bones[i];
+
+		// The parent is already at its final place, mirrored or not
+		MatTransform parentToGlobal;
+		if (bPtr->parent)
+			parentToGlobal = bPtr->parent->xformToGlobal;
+
+		UndoStateBoneXform& xform = xforms.emplace_back();
+		xform.boneName = bPtr->boneName;
+		xform.startXformToParent = bPtr->xformToParent;
+		xform.endXformToParent = parentToGlobal.InverseTransform().ComposeTransforms(targets[i]);
+
+		wxLogMessage("Mirroring bone '%s' on the X axis.", xform.boneName);
+		SetCustomBoneTransform(bPtr, xform.endXformToParent);
+	}
+
+	return xforms;
+}
+
+void OutfitProject::ApplyBoneXforms(const std::vector<UndoStateBoneXform>& xforms, bool undo) {
+	// Parents first in both directions: each change recalculates the skin binds of its whole subtree
+	for (auto& xform : xforms) {
+		AnimBone* bPtr = AnimSkeleton::getInstance().GetBonePtr(xform.boneName);
+		if (bPtr && !bPtr->isStandardBone)
+			SetCustomBoneTransform(bPtr, undo ? xform.startXformToParent : xform.endXformToParent);
+	}
+}
+
+void OutfitProject::SetCustomBoneTransform(AnimBone* bPtr, const MatTransform& xformToParent) {
+	bPtr->SetTransformBoneToParent(xformToParent);
 
 	for (auto& s : workNif.GetShapeNames())
 		workAnim.RecursiveRecalcXFormSkinToBone(s, bPtr);

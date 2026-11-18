@@ -454,6 +454,9 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("deleteBone"), OutfitStudioFrame::OnDeleteBone)
 	EVT_MENU(XRCID("deleteBoneSelected"), OutfitStudioFrame::OnDeleteBoneFromSelected)
 	EVT_MENU(XRCID("editBone"), OutfitStudioFrame::OnEditBone)
+	EVT_MENU(XRCID("duplicateBones"), OutfitStudioFrame::OnDuplicateBones)
+	EVT_MENU(XRCID("duplicateBonesMirrored"), OutfitStudioFrame::OnDuplicateBonesMirrored)
+	EVT_MENU(XRCID("mirrorBonesX"), OutfitStudioFrame::OnMirrorBonesX)
 	EVT_MENU(XRCID("copyBoneWeight"), OutfitStudioFrame::OnCopyBoneWeight)
 	EVT_MENU(XRCID("copySelectedWeight"), OutfitStudioFrame::OnCopySelectedWeight)
 	EVT_MENU(XRCID("transferSelectedWeight"), OutfitStudioFrame::OnTransferSelectedWeight)
@@ -7181,6 +7184,18 @@ void OutfitStudioFrame::ShowBoneContextMenu(const std::string& bone, wxWindow* a
 		}
 		else
 			menu->Destroy(XRCID("menuBadBone"));
+
+		const std::vector<std::string> selBones = GetSelectedBoneNames();
+		bool anyCustom = false;
+		for (auto& b : selBones) {
+			AnimBone* bPtr = AnimSkeleton::getInstance().GetBonePtr(b);
+			if (bPtr && !bPtr->isStandardBone)
+				anyCustom = true;
+		}
+
+		menu->Enable(XRCID("duplicateBones"), !selBones.empty());
+		menu->Enable(XRCID("duplicateBonesMirrored"), !selBones.empty());
+		menu->Enable(XRCID("mirrorBonesX"), anyCustom);
 	}
 	else
 		contextParentBone = bone;
@@ -13240,11 +13255,7 @@ void OutfitStudioFrame::OnAddCustomBone(wxCommandEvent& WXUNUSED(event)) {
 	wxLogMessage("Adding custom bone '%s' to project (%d/%d).", bone, 1, addCount);
 	project->AddCustomBoneRef(bone.ToStdString(), parentBone, xform);
 
-	wxTreeItemId newItem = outfitBones->AppendItem(bonesRoot, bone);
-	UpdateBoneItemState(newItem, bone.ToStdString());
-
-	cXMirrorBone->AppendString(bone);
-	cPoseBone->AppendString(bone);
+	AddBoneItemToGUI(bone.ToStdString());
 
 	wxString origBone = bone;
 	int suffixNumber = 0;
@@ -13276,11 +13287,7 @@ void OutfitStudioFrame::OnAddCustomBone(wxCommandEvent& WXUNUSED(event)) {
 		wxLogMessage("Adding custom bone '%s' to project (%d/%d).", bone, i, addCount);
 		project->AddCustomBoneRef(bone.ToStdString(), parentBone, xform);
 
-		newItem = outfitBones->AppendItem(bonesRoot, bone);
-		UpdateBoneItemState(newItem, bone.ToStdString());
-
-		cXMirrorBone->AppendString(bone);
-		cPoseBone->AppendString(bone);
+		AddBoneItemToGUI(bone.ToStdString());
 
 		parentBone = bone;
 	}
@@ -13356,6 +13363,244 @@ void OutfitStudioFrame::OnEditBone(wxCommandEvent& WXUNUSED(event)) {
 	glView->UpdateBones();
 	ApplyPose();
 	SetPendingChanges();
+}
+
+wxTreeItemId OutfitStudioFrame::AddBoneItemToGUI(const std::string& bone) {
+	wxTreeItemId item = outfitBones->AppendItem(bonesRoot, bone);
+	UpdateBoneItemState(item, bone);
+
+	cXMirrorBone->AppendString(bone);
+	cPoseBone->AppendString(bone);
+	return item;
+}
+
+std::vector<std::string> OutfitStudioFrame::GetSelectedBoneNames() {
+	std::vector<std::string> bones;
+
+	wxTreeItemIdValue cookie;
+	wxTreeItemId item = outfitBones->GetFirstChild(bonesRoot, cookie);
+	while (item.IsOk()) {
+		if (outfitBones->IsSelected(item))
+			bones.push_back(outfitBones->GetItemText(item).ToStdString());
+		item = outfitBones->GetNextChild(bonesRoot, cookie);
+	}
+
+	if (bones.empty() && !editor.activeBone.empty())
+		bones.push_back(editor.activeBone);
+
+	return bones;
+}
+
+void OutfitStudioFrame::DuplicateSelectedBones(bool mirror) {
+	const std::vector<std::string> bones = GetSelectedBoneNames();
+	if (bones.empty()) {
+		wxMessageBox(_("No bones are selected."), _("Error"), wxICON_INFORMATION, this);
+		return;
+	}
+
+	wxDialog dlg;
+	if (!wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgDuplicateBones"))
+		return;
+
+	CloseBrushSettings();
+
+	wxTextCtrl* textFind = XRCCTRL(dlg, "textFind", wxTextCtrl);
+	wxTextCtrl* textReplace = XRCCTRL(dlg, "textReplace", wxTextCtrl);
+	wxTextCtrl* textSuffix = XRCCTRL(dlg, "textSuffix", wxTextCtrl);
+	wxCheckBox* chkMirrorX = XRCCTRL(dlg, "chkMirrorX", wxCheckBox);
+	wxListBox* listPreview = XRCCTRL(dlg, "listPreview", wxListBox);
+	wxStaticText* lbConflict = XRCCTRL(dlg, "lbConflict", wxStaticText);
+	wxButton* btnOK = XRCCTRL(dlg, "wxID_OK", wxButton);
+
+	chkMirrorX->SetValue(mirror);
+	textSuffix->ChangeValue(wxString(project->NextFreeDuplicateSuffix(bones, "", "")));
+
+	// Parent choices: what the chain hangs from now, no parent, or any bone of the project. Each entry's
+	// parent, or none to keep the originals' parents when they differ.
+	wxChoice* cDupParent = XRCCTRL(dlg, "cDupParent", wxChoice);
+	std::vector<std::optional<std::string>> parentChoices;
+	const std::set<std::string> chainParents = OutfitProject::DuplicateChainParents(bones);
+	const bool oneParent = chainParents.size() == 1;
+	if (!oneParent) {
+		cDupParent->Append(_("(original parents)"));
+		parentChoices.push_back(std::nullopt);
+	}
+	cDupParent->Append(_("(none)"));
+	parentChoices.push_back(std::string());
+
+	std::vector<std::string> projectBones;
+	project->GetActiveBones(projectBones);
+	if (oneParent && !chainParents.begin()->empty() && std::find(projectBones.begin(), projectBones.end(), *chainParents.begin()) == projectBones.end())
+		projectBones.push_back(*chainParents.begin());
+	std::sort(projectBones.begin(), projectBones.end());
+	for (auto& bone : projectBones) {
+		cDupParent->Append(wxString(bone));
+		parentChoices.push_back(bone);
+	}
+
+	cDupParent->SetSelection(0);
+	if (oneParent) {
+		for (size_t i = 0; i < parentChoices.size(); ++i)
+			if (parentChoices[i] == *chainParents.begin())
+				cDupParent->SetSelection(static_cast<int>(i));
+	}
+
+	auto conflictText = [](OutfitProject::DuplicateBoneConflict conflict, const std::string& newName) {
+		switch (conflict) {
+			case OutfitProject::DuplicateBoneConflict::EmptyName: return wxString(_("A new bone name is empty."));
+			case OutfitProject::DuplicateBoneConflict::StandardBone:
+				return wxString::Format(_("'%s' is a bone of the reference skeleton."), wxString(newName));
+			case OutfitProject::DuplicateBoneConflict::Original:
+				return wxString::Format(_("'%s' is one of the bones to duplicate."), wxString(newName));
+			case OutfitProject::DuplicateBoneConflict::InProject:
+				return wxString::Format(_("Bone '%s' already exists in the project!"), wxString(newName));
+			case OutfitProject::DuplicateBoneConflict::ParentBone:
+				return wxString::Format(_("Bone '%s' already exists in the skeleton as the parent of other bones."), wxString(newName));
+			case OutfitProject::DuplicateBoneConflict::Repeated:
+				return wxString::Format(_("More than one bone would be named '%s'."), wxString(newName));
+			default: return wxString();
+		}
+	};
+
+	auto updatePreview = [&]() {
+		const std::vector<std::string> newNames = OutfitProject::DuplicateBoneNames(bones,
+																					 textFind->GetValue().ToStdString(),
+																					 textReplace->GetValue().ToStdString(),
+																					 textSuffix->GetValue().ToStdString());
+		const std::vector<OutfitProject::DuplicateBoneConflict> conflicts = OutfitProject::DuplicateBoneConflicts(bones, newNames);
+
+		wxArrayString lines;
+		wxString firstConflict;
+		for (size_t i = 0; i < bones.size(); ++i) {
+			wxString line = wxString(bones[i]) + "  ->  " + wxString(newNames[i]);
+			if (conflicts[i] != OutfitProject::DuplicateBoneConflict::None) {
+				line += "  (!)";
+				if (firstConflict.empty())
+					firstConflict = conflictText(conflicts[i], newNames[i]);
+			}
+			lines.Add(line);
+		}
+
+		listPreview->Set(lines);
+		lbConflict->SetLabel(firstConflict);
+		lbConflict->Wrap(listPreview->GetSize().GetWidth());
+		btnOK->Enable(firstConflict.empty());
+		dlg.Layout();
+	};
+
+	// Until it's edited, the suffix follows the replacement: none when the replaced names are free
+	bool suffixEdited = false;
+	auto replaceChanged = [&](wxCommandEvent&) {
+		if (!suffixEdited)
+			textSuffix->ChangeValue(
+				wxString(project->NextFreeDuplicateSuffix(bones, textFind->GetValue().ToStdString(), textReplace->GetValue().ToStdString())));
+		updatePreview();
+	};
+
+	textFind->Bind(wxEVT_TEXT, replaceChanged);
+	textReplace->Bind(wxEVT_TEXT, replaceChanged);
+	textSuffix->Bind(wxEVT_TEXT, [&](wxCommandEvent&) {
+		suffixEdited = true;
+		updatePreview();
+	});
+	dlg.Bind(wxEVT_CHAR_HOOK, [&](wxKeyEvent& event) {
+		if (event.GetKeyCode() == WXK_RETURN || event.GetKeyCode() == WXK_NUMPAD_ENTER) {
+			if (btnOK->IsEnabled())
+				dlg.EndModal(wxID_OK);
+		}
+		else
+			event.Skip();
+	});
+
+	updatePreview();
+	dlg.Fit();
+	dlg.CenterOnParent();
+
+	if (dlg.ShowModal() != wxID_OK)
+		return;
+
+	const std::string find = textFind->GetValue().ToStdString();
+	const std::string replace = textReplace->GetValue().ToStdString();
+	const std::string suffix = textSuffix->GetValue().ToStdString();
+	const bool mirrorNew = chkMirrorX->GetValue();
+
+	// The chain's own parent needs no change
+	std::optional<std::string> newParent;
+	const int parentSel = cDupParent->GetSelection();
+	if (parentSel != wxNOT_FOUND && static_cast<size_t>(parentSel) < parentChoices.size())
+		newParent = parentChoices[parentSel];
+	if (newParent && oneParent && *newParent == *chainParents.begin())
+		newParent.reset();
+
+	std::vector<std::string> newNames;
+	std::string error;
+	if (!project->DuplicateBones(bones, find, replace, suffix, newParent, newNames, error)) {
+		wxMessageBox(wxString(error), _("Error"), wxICON_INFORMATION, this);
+		return;
+	}
+
+	std::vector<wxTreeItemId> newItems;
+	for (auto& newName : newNames)
+		newItems.push_back(AddBoneItemToGUI(newName));
+
+	// Not undoable, like adding the bones: undoing would only leave unmirrored new bones
+	if (mirrorNew)
+		project->MirrorBonesX(newNames);
+
+	glView->UpdateBones();
+	UpdateBoneCounts();
+	ApplyPose();
+	SetPendingChanges();
+
+	// The copies are selected, ready to be mirrored or moved
+	recursingUI = true;
+	outfitBones->UnselectAll();
+	for (auto& item : newItems)
+		outfitBones->SelectItem(item, true);
+	recursingUI = false;
+
+	if (!newItems.empty()) {
+		outfitBones->EnsureVisible(newItems.front());
+		wxTreeEvent treeEvent(wxEVT_TREE_SEL_CHANGED, outfitBones, newItems.front());
+		OnBoneSelect(treeEvent);
+	}
+
+	glView->Render();
+}
+
+void OutfitStudioFrame::OnDuplicateBones(wxCommandEvent& WXUNUSED(event)) {
+	DuplicateSelectedBones(false);
+}
+
+void OutfitStudioFrame::OnDuplicateBonesMirrored(wxCommandEvent& WXUNUSED(event)) {
+	DuplicateSelectedBones(true);
+}
+
+void OutfitStudioFrame::OnMirrorBonesX(wxCommandEvent& WXUNUSED(event)) {
+	const std::vector<std::string> bones = GetSelectedBoneNames();
+	if (bones.empty())
+		return;
+
+	std::vector<UndoStateBoneXform> xforms = project->MirrorBonesX(bones);
+	if (xforms.empty()) {
+		wxMessageBox(_("Only custom bones can be mirrored."), _("Error"), wxICON_INFORMATION, this);
+		return;
+	}
+
+	UndoStateProject* usp = glView->GetUndoHistory()->PushState();
+	usp->undoType = UndoType::BoneEdit;
+	usp->boneXforms = std::move(xforms);
+
+	glView->UpdateBones();
+	ApplyPose();
+	RefreshBoneTreeBadBoneIcons();
+	UpdateUndoTools();
+	SetPendingChanges();
+
+	if (glView->GetTransformMode())
+		glView->ShowTransformTool();
+	else
+		glView->Render();
 }
 
 void OutfitStudioFrame::OnDeleteBone(wxCommandEvent& WXUNUSED(event)) {
@@ -18754,6 +18999,23 @@ void wxGLPanel::ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender) 
 
 			// Re-skin all shapes so poses and bind-pose display both follow
 			// the restored bone transform.
+			for (auto& s : nif->GetShapes()) {
+				std::vector<Vector3> verts;
+				os->project->GetLiveVerts(s, verts);
+				UpdateMeshVertices(s->name.get(), &verts, true, true, false);
+			}
+		}
+
+		UpdateBones();
+		UpdateNodes();
+		os->RefreshBoneTreeBadBoneIcons();
+		os->SetPendingChanges();
+	}
+	else if (undoType == UndoType::BoneEdit) {
+		os->project->ApplyBoneXforms(usp->boneXforms, bUndo);
+
+		// The skin binds were recalculated, so this only changes posed meshes
+		if (auto* nif = os->project->GetWorkNif()) {
 			for (auto& s : nif->GetShapes()) {
 				std::vector<Vector3> verts;
 				os->project->GetLiveVerts(s, verts);

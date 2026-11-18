@@ -29,6 +29,8 @@ enum class AutomationStepType {
 	TransferWeights,
 	DeleteBones,
 	EditBone,
+	DuplicateBones,
+	MirrorBones,
 	SetBoneTransform,
 	RemoveSkinning,
 	ExportFile,
@@ -96,7 +98,7 @@ enum class AutomationStepType {
 	LogMessage
 };
 
-constexpr int AutomationStepTypeCount = 71;
+constexpr int AutomationStepTypeCount = 73;
 static_assert(static_cast<int>(AutomationStepType::LogMessage) + 1 == AutomationStepTypeCount,
 	"AutomationStepTypeCount must match the number of enum values");
 
@@ -268,6 +270,17 @@ struct AutomationStep {
 	std::string editBoneParent;
 	float editBoneTransX = 0.0f, editBoneTransY = 0.0f, editBoneTransZ = 0.0f;
 	float editBoneRotX = 0.0f, editBoneRotY = 0.0f, editBoneRotZ = 0.0f;
+
+	// DuplicateBones params
+	std::vector<std::string> dupBoneNames;
+	std::string dupBoneFind;
+	std::string dupBoneReplace;
+	std::string dupBoneSuffix; // Empty for none if replacing gives free names, otherwise the lowest free ".N"
+	bool dupBoneMirror = false;
+	std::string dupBoneParent; // Empty to keep the originals' parents
+
+	// MirrorBones params
+	std::vector<std::string> mirrorBoneNames;
 
 	// ApplyPose params
 	std::string poseName;

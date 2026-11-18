@@ -3120,6 +3120,18 @@
 			<label>Edit Bone...</label>
 			<help>Edit a custom bone or view a standard bone.</help>
 		</object>
+		<object class="wxMenuItem" name="duplicateBones">
+			<label>Duplicate...</label>
+			<help>Duplicate the selected bones as custom bones, keeping their hierarchy.</help>
+		</object>
+		<object class="wxMenuItem" name="duplicateBonesMirrored">
+			<label>Duplicate Mirrored...</label>
+			<help>Duplicate the selected bones and mirror the copies to the other side on the X axis.</help>
+		</object>
+		<object class="wxMenuItem" name="mirrorBonesX">
+			<label>Mirror on X Axis</label>
+			<help>Mirror the position and rotation of the selected custom bones to the other side on the X axis. The mesh stays in place.</help>
+		</object>
 		<object class="wxMenuItem" name="maskBoneWeightedVerts">
 			<label>Mask Weighted Vertices</label>
 			<help>Masks vertices with weights for the selected bones.</help>

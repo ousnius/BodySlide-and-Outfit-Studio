@@ -598,6 +598,146 @@
 											</object>
 										</object>
 
+										<!-- DuplicateBones -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageDuplicateBones">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Duplicate Bones</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Bone Names:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtDupBoneNames">
+																	<tooltip>Comma-separated list of bones to duplicate. Copies of bones whose parent is duplicated too keep the hierarchy.</tooltip>
+																	<hint>Comma-separated bone list</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Replace:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtDupBoneFind">
+																	<tooltip>Text in the bone names to replace (leave empty to keep the names)</tooltip>
+																	<hint>Text to replace</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>With:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtDupBoneReplace">
+																	<tooltip>Replacement text</tooltip>
+																	<hint>Replacement</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Suffix:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtDupBoneSuffix">
+																	<tooltip>Appended to every new bone name (leave empty for none if the replaced names are free, otherwise the lowest free .1, .2, ...)</tooltip>
+																	<hint>.1</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Mirror:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxCheckBox" name="chkDupBoneMirror">
+																	<label>Mirror the copies on the X axis</label>
+																	<checked>0</checked>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Parent Bone:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtDupBoneParent">
+																	<tooltip>Bone the duplicated chain hangs from instead of the originals' parents (leave empty to keep them). The copies keep their place in the skeleton.</tooltip>
+																	<hint>Parent bone name</hint>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- MirrorBones -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageMirrorBones">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Mirror Bones</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Bone Names:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtMirrorBoneNames">
+																	<tooltip>Comma-separated list of custom bones to mirror on the X axis. The mesh stays in place.</tooltip>
+																	<hint>Comma-separated bone list</hint>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
 										<!-- RemoveSkinning -->
 										<object class="simplebookpage">
 											<object class="wxPanel" name="pageRemoveSkinning">

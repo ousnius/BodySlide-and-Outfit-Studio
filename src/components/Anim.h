@@ -256,6 +256,14 @@ public:
 	void DisableCustomTransforms();
 };
 
+// Reflects a bone-to-global transform across the YZ plane (x -> -x). The
+// rotation stays proper: the bone's Y and Z axes are mirrored and its X axis
+// is flipped, so the mirrored bone is the left/right counterpart.
+nifly::MatTransform MirrorTransformX(const nifly::MatTransform& xform);
+
+// Orders bones so that every bone comes after its ancestors among them.
+std::vector<AnimBone*> SortBonesParentsFirst(std::vector<AnimBone*> bones);
+
 // Loads the skeleton configured as "Anim/DefaultSkeletonReference" into the
 // AnimSkeleton singleton, resolving a relative path against the application
 // directory. Returns 0 on success.

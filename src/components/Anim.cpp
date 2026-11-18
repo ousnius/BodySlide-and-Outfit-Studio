@@ -6,6 +6,7 @@ See the included LICENSE file
 #include "Anim.h"
 #include "NifUtil.hpp"
 #include "../utils/StringStuff.h"
+#include <algorithm>
 #include <unordered_set>
 #include <wx/filename.h>
 #include <wx/log.h>
@@ -1196,6 +1197,29 @@ bool AnimBone::IsFullyUnposed() {
 		p = p->parent;
 	}
 	return IsUnposed();
+}
+
+MatTransform MirrorTransformX(const MatTransform& xform) {
+	// M * xform * M with M = diag(-1, 1, 1)
+	MatTransform mirrored = xform;
+	mirrored.translation.x = -mirrored.translation.x;
+	mirrored.rotation[0].y = -mirrored.rotation[0].y;
+	mirrored.rotation[0].z = -mirrored.rotation[0].z;
+	mirrored.rotation[1].x = -mirrored.rotation[1].x;
+	mirrored.rotation[2].x = -mirrored.rotation[2].x;
+	return mirrored;
+}
+
+std::vector<AnimBone*> SortBonesParentsFirst(std::vector<AnimBone*> bones) {
+	auto depth = [](const AnimBone* bone) {
+		int d = 0;
+		for (const AnimBone* p = bone->parent; p; p = p->parent)
+			++d;
+		return d;
+	};
+
+	std::stable_sort(bones.begin(), bones.end(), [&](const AnimBone* a, const AnimBone* b) { return depth(a) < depth(b); });
+	return bones;
 }
 
 int LoadDefaultSkeletonReference() {

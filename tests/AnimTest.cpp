@@ -6,6 +6,7 @@
 #include <catch2/generators/catch_generators.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <filesystem>
 #include <sstream>
@@ -773,4 +774,47 @@ TEST_CASE("Pose rotations turn model space normals in mesh coordinates", "[anim]
 	m.modelSpace = false;
 	m.SetPoseRotations(rotations);
 	CHECK(!m.poseRotations);
+}
+
+TEST_CASE("Mirroring a transform on X gives its left/right counterpart", "[anim][mirror]") {
+	MatTransform t;
+	t.translation = Vector3(1.0f, 2.0f, 3.0f);
+	t.rotation = RotVecToMat(Vector3(0.3f, -0.5f, 0.7f));
+	t.scale = 1.5f;
+
+	MatTransform m = MirrorTransformX(t);
+	CHECK(m.translation == Vector3(-1.0f, 2.0f, 3.0f));
+	CHECK(m.scale == 1.5f);
+	// Still a rotation, not a reflection
+	CHECK(std::fabs(m.rotation.Determinant() - 1.0f) < 1e-4f);
+	// Its Y and Z axes are the mirror images of the original's
+	Vector3 y = t.rotation * Vector3(0.0f, 1.0f, 0.0f);
+	Vector3 my = m.rotation * Vector3(0.0f, 1.0f, 0.0f);
+	CHECK(my.IsNearlyEqualTo(Vector3(-y.x, y.y, y.z)));
+	// Mirroring twice gives the original back
+	MatTransform twice = MirrorTransformX(m);
+	CHECK(twice.translation == t.translation);
+	CHECK(twice.rotation == t.rotation);
+
+	// Mirroring a parent and its child gives the mirrored child's global transform, so chains stay chains
+	MatTransform child;
+	child.translation = Vector3(-4.0f, 0.5f, 6.0f);
+	child.rotation = RotVecToMat(Vector3(-0.2f, 0.9f, 0.1f));
+	MatTransform mirroredGlobal = MirrorTransformX(t.ComposeTransforms(child));
+	MatTransform composedMirrors = MirrorTransformX(t).ComposeTransforms(MirrorTransformX(child));
+	CHECK(mirroredGlobal.IsNearlyEqualTo(composedMirrors));
+}
+
+TEST_CASE("Bones are sorted with parents before their children", "[anim][mirror]") {
+	AnimBone root, a, b, c, other;
+	a.parent = &root;
+	b.parent = &a;
+	c.parent = &b;
+	other.parent = &root;
+
+	std::vector<AnimBone*> sorted = SortBonesParentsFirst({&c, &a, &other, &b});
+	REQUIRE(sorted.size() == 4);
+	auto pos = [&](AnimBone* bone) { return std::find(sorted.begin(), sorted.end(), bone) - sorted.begin(); };
+	CHECK(pos(&a) < pos(&b));
+	CHECK(pos(&b) < pos(&c));
 }

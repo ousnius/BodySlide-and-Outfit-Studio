@@ -88,7 +88,7 @@ Buckles, plates and holster pieces need even weights, or they bend and tear in p
 - **Weights unlike the body:** `analyze_weights` with `compareToReference`, then `mask_ops` `from_analysis` `metric: "weight_deviation"` and `copy_bone_weights` on what stays unmasked.
 - `get_weights` and `set_weights` read and write one bone's weights; `list_bones` lists a shape's bones; `brush_stroke` with `weight`, `unweight` or `smooth_weight` paints them.
 - `weld_seams` with `weights: true` gives both sides of a seam the same weights, so it doesn't open in poses.
-- Bone structure: `list_skeleton_bones`, `add_bones`, `add_custom_bone` (bones the skeleton doesn't have, e.g. for physics), `edit_bone`, `delete_bones`, `set_bone_transforms`, `remove_skinning`, `fix_bad_bones` (transforms that don't match the skeleton). These aren't in the undo history: take a `snapshot_save` first.
+- Bone structure: `list_skeleton_bones`, `add_bones`, `add_custom_bone` (bones the skeleton doesn't have, e.g. for physics), `edit_bone`, `duplicate_bones` (copies of a chain with its hierarchy, optionally mirrored), `mirror_bones` (custom bones to the other side on X), `delete_bones`, `set_bone_transforms`, `remove_skinning`, `fix_bad_bones` (transforms that don't match the skeleton). These aren't in the undo history: take a `snapshot_save` first.
 - `apply_pose_to_mesh` bakes a pose into the shapes.
 
 ## Physics

@@ -1863,6 +1863,14 @@ private:
 	void FillParentBoneChoice(wxDialog& dlg, const std::string& selBone = "");
 	void GetBoneDlgData(wxDialog& dlg, nifly::MatTransform& xform, std::string& parentBone, int& addCount);
 	void OnEditBone(wxCommandEvent& event);
+	// Adds a bone that was added to the project to the bone list and the mirror and pose bone choices
+	wxTreeItemId AddBoneItemToGUI(const std::string& bone);
+	// Names of the bones selected in the bone list, in list order
+	std::vector<std::string> GetSelectedBoneNames();
+	void DuplicateSelectedBones(bool mirror);
+	void OnDuplicateBones(wxCommandEvent& event);
+	void OnDuplicateBonesMirrored(wxCommandEvent& event);
+	void OnMirrorBonesX(wxCommandEvent& event);
 	void OnCopyBoneWeight(wxCommandEvent& event);
 	void OnCopySelectedWeight(wxCommandEvent& event);
 	void OnTransferSelectedWeight(wxCommandEvent& event);

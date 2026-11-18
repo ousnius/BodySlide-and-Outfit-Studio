@@ -593,6 +593,8 @@ int AutomationRunner::ExecuteStep(const AutomationStep& step) {
 		{AutomationStepType::CopyBoneWeights, &AutomationRunner::ExecuteStepCopyBoneWeights},
 		{AutomationStepType::DeleteBones, &AutomationRunner::ExecuteStepDeleteBones},
 		{AutomationStepType::EditBone, &AutomationRunner::ExecuteStepEditBone},
+		{AutomationStepType::DuplicateBones, &AutomationRunner::ExecuteStepDuplicateBones},
+		{AutomationStepType::MirrorBones, &AutomationRunner::ExecuteStepMirrorBones},
 		{AutomationStepType::RemoveSkinning, &AutomationRunner::ExecuteStepRemoveSkinning},
 		{AutomationStepType::ExportFile, &AutomationRunner::ExecuteStepExportFile},
 		{AutomationStepType::ExportSFMorphs, &AutomationRunner::ExecuteStepExportSFMorphs},
@@ -1083,6 +1085,47 @@ int AutomationRunner::ExecuteStepEditBone(const AutomationStep& step) {
 
 	wxLogMessage("Automation: Editing custom bone '%s' (parent: '%s')...", step.editBoneName, step.editBoneParent);
 	project->ModifyCustomBone(bPtr, step.editBoneParent, xform);
+	return 0;
+}
+
+int AutomationRunner::ExecuteStepDuplicateBones(const AutomationStep& step) {
+	if (step.dupBoneNames.empty()) {
+		wxLogError("Automation: DuplicateBones - no bone names specified.");
+		return 1;
+	}
+
+	std::string suffix = step.dupBoneSuffix;
+	if (suffix.empty())
+		suffix = project->NextFreeDuplicateSuffix(step.dupBoneNames, step.dupBoneFind, step.dupBoneReplace);
+
+	std::optional<std::string> newParent;
+	if (!step.dupBoneParent.empty())
+		newParent = step.dupBoneParent;
+
+	std::vector<std::string> newNames;
+	std::string error;
+	if (!project->DuplicateBones(step.dupBoneNames, step.dupBoneFind, step.dupBoneReplace, suffix, newParent, newNames, error)) {
+		wxLogError("Automation: DuplicateBones - %s", error);
+		return 1;
+	}
+
+	if (step.dupBoneMirror)
+		project->MirrorBonesX(newNames);
+
+	wxLogMessage("Automation: Duplicated %zu bone(s) as '%s'.", newNames.size(), JoinStrings(newNames, "', '"));
+	return 0;
+}
+
+int AutomationRunner::ExecuteStepMirrorBones(const AutomationStep& step) {
+	if (step.mirrorBoneNames.empty()) {
+		wxLogError("Automation: MirrorBones - no bone names specified.");
+		return 1;
+	}
+
+	if (project->MirrorBonesX(step.mirrorBoneNames).empty()) {
+		wxLogError("Automation: MirrorBones - none of the bones is a custom bone.");
+		return 1;
+	}
 	return 0;
 }
 

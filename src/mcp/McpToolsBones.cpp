@@ -260,6 +260,107 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 	};
 	mcp.AddTool(std::move(editBone));
 
+	McpTool duplicateBones;
+	duplicateBones.name = "duplicate_bones";
+	duplicateBones.description =
+		"Duplicates bones as custom bones with the same transforms, like Duplicate in the window's bone menu: e.g. a physics "
+		"chain for the other side. A copy's parent is the copy of the original's parent when that is duplicated too, "
+		"otherwise the original's parent, so a chain keeps its hierarchy. Names get find replaced and suffix appended, "
+		"e.g. DressBone1 becomes DressBone1.1. parent hangs the chain from another bone instead, keeping the copies' "
+		"place in the skeleton. With mirror the copies are mirrored on the X axis like mirror_bones, so a left chain "
+		"duplicated onto the right side's parent ends up on the right. The copies have no weights, and saving leaves out "
+		"bones without weights unless weighted bones hang from them, so weight them before saving.";
+	duplicateBones.inputSchema = McpSchema(
+		{
+			{"bones", McpStringList("Bones to duplicate")},
+			{"find", McpProp("string", "Text in the names to replace. Default: none.")},
+			{"replace", McpProp("string", "What replaces find. Default: empty.")},
+			{"suffix", McpProp("string", "Appended to every new name. Default: none if find/replace gives free names, otherwise the lowest free \".N\", e.g. \".1\".")},
+			{"mirror", McpProp("boolean", "Mirror the copies on the X axis. Default false.")},
+			{"parent", McpProp("string", "Bone the chain hangs from instead of the originals' parents. Default: the originals' parents.")},
+		},
+		{"bones"});
+	duplicateBones.handler = [&mcp, frame](const json& args) {
+		std::vector<std::string> bones = McpArgs::Strings(args, "bones");
+		if (bones.empty())
+			McpArgs::Wrong("bones", "a list of bone names");
+		const std::string find = McpArgs::String(args, "find", "");
+		const std::string replace = McpArgs::String(args, "replace", "");
+
+		OutfitProject* project = &mcp.Project();
+		const std::string suffix = McpArgs::Has(args, "suffix") ? McpArgs::String(args, "suffix") : project->NextFreeDuplicateSuffix(bones, find, replace);
+
+		// The names are checked here, so a taken one comes back as an error the caller can act on
+		for (auto& bone : bones)
+			if (!AnimSkeleton::getInstance().GetBonePtr(bone))
+				throw McpToolError("There is no bone '" + bone + "'.");
+		const std::vector<std::string> newNames = OutfitProject::DuplicateBoneNames(bones, find, replace, suffix);
+		const auto conflicts = OutfitProject::DuplicateBoneConflicts(bones, newNames);
+		json mapping = json::object();
+		for (size_t i = 0; i < bones.size(); ++i) {
+			if (conflicts[i] != OutfitProject::DuplicateBoneConflict::None)
+				throw McpToolError(OutfitProject::DuplicateBoneConflictText(conflicts[i], newNames[i]) + " Pick another find/replace or suffix.");
+			mapping[bones[i]] = newNames[i];
+		}
+
+		const std::string parent = McpArgs::String(args, "parent", "");
+		if (!parent.empty() && std::find(newNames.begin(), newNames.end(), parent) != newNames.end())
+			throw McpToolError("The copies can't hang from one of themselves, '" + parent + "'.");
+		if (!parent.empty() && !AnimSkeleton::getInstance().GetBonePtr(parent))
+			throw McpToolError("There is no parent bone '" + parent + "'.");
+
+		McpRunStep(mcp,
+				   {{"type", "DuplicateBones"},
+					{"BoneNames", bones},
+					{"Find", find},
+					{"Replace", replace},
+					{"Suffix", suffix},
+					{"Mirror", McpArgs::Bool(args, "mirror", false)},
+					{"Parent", parent}});
+		frame->UpdateAnimationGUI();
+
+		McpToolResult result;
+		json list = json::array();
+		for (auto& newName : newNames)
+			if (AnimBone* copy = AnimSkeleton::getInstance().GetBonePtr(newName))
+				list.push_back(BoneJson(*copy));
+		result.data["names"] = mapping;
+		result.data["bones"] = list;
+		return result;
+	};
+	mcp.AddTool(std::move(duplicateBones));
+
+	McpTool mirrorBones;
+	mirrorBones.name = "mirror_bones";
+	mirrorBones.description =
+		"Mirrors the position and rotation of custom bones on the X axis of the skeleton, like Mirror on X Axis in "
+		"the window, e.g. after duplicate_bones. Bones whose parent is mirrored too move along with it. The mesh stays in "
+		"place: the skin transforms are recalculated. Bones of the reference skeleton can't be mirrored.";
+	mirrorBones.inputSchema = McpSchema({{"bones", McpStringList("Custom bones to mirror")}}, {"bones"});
+	mirrorBones.handler = [&mcp, frame](const json& args) {
+		std::vector<std::string> bones = McpArgs::Strings(args, "bones");
+		if (bones.empty())
+			McpArgs::Wrong("bones", "a list of bone names");
+		for (auto& bone : bones) {
+			AnimBone* bPtr = AnimSkeleton::getInstance().GetBonePtr(bone);
+			if (!bPtr)
+				throw McpToolError("There is no bone '" + bone + "'.");
+			if (bPtr->isStandardBone)
+				throw McpToolError("'" + bone + "' is a bone of the reference skeleton, only custom bones can be mirrored.");
+		}
+
+		McpRunStep(mcp, {{"type", "MirrorBones"}, {"BoneNames", bones}});
+		frame->UpdateAnimationGUI();
+
+		McpToolResult result;
+		json list = json::array();
+		for (auto& bone : bones)
+			list.push_back(BoneJson(*AnimSkeleton::getInstance().GetBonePtr(bone)));
+		result.data["bones"] = list;
+		return result;
+	};
+	mcp.AddTool(std::move(mirrorBones));
+
 	McpTool deleteBones;
 	deleteBones.name = "delete_bones";
 	deleteBones.description =

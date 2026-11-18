@@ -45,7 +45,7 @@ const std::set<std::string> AutoSnapshotTools = {
 	"remove_unused_nodes", "set_shader_properties", "set_texture_paths", "set_geometry_properties",
 	"set_shape_flags", "shape_shader", "copy_shader", "set_alpha_property", "set_extra_data", "set_partitions", "set_segments",
 	"copy_partitions", "add_bones", "add_custom_bone",
-	"edit_bone", "delete_bones", "set_bone_transforms", "transfer_weights", "remove_skinning",
+	"edit_bone", "duplicate_bones", "mirror_bones", "delete_bones", "set_bone_transforms", "transfer_weights", "remove_skinning",
 	"apply_pose_to_mesh", "fix_bad_bones", "new_slider", "clone_slider", "negate_sliders", "clear_slider_data",
 	"delete_sliders", "set_slider_properties", "import_slider_data", "physics_data", "transfer_zaps", "auto_fix_clipping", "import_from_game",
 	"fit_to_body", "make_contact_morph", "make_physics_chains",

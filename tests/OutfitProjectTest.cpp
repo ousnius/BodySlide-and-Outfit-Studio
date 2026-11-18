@@ -1502,3 +1502,190 @@ TEST_CASE("An add-on of an outfit can load a reference with add-ons and save", "
 	f.derived.DeleteShape(f.DerivedShape("Skirt"));
 	CHECK_FALSE(f.SaveDerived("Ignored.nif").empty());
 }
+
+namespace {
+// A chain prefix0 <- prefix1 <- ... <- prefix<count>, starting off the center line
+void AddBoneChain(OutfitProject& project, const std::string& prefix, int count) {
+	nifly::MatTransform root;
+	root.translation = Vector3(5.0f, 0.0f, 100.0f);
+	project.AddCustomBoneRef(prefix + "0", "", root);
+	for (int i = 1; i <= count; i++) {
+		nifly::MatTransform link;
+		link.translation = Vector3(1.0f, 0.5f, -10.0f);
+		link.rotation = nifly::RotVecToMat(Vector3(0.1f * i, 0.2f, -0.3f));
+		project.AddCustomBoneRef(prefix + std::to_string(i), prefix + std::to_string(i - 1), link);
+	}
+}
+} // namespace
+
+TEST_CASE("Duplicated bone chains keep their hierarchy and numbering", "[OutfitProject][bones]") {
+	ProjectFixture f;
+	AnimSkeleton& skel = AnimSkeleton::getInstance();
+	AddBoneChain(f.project, "DupDress", 5);
+
+	const std::vector<std::string> chain = {"DupDress3", "DupDress1", "DupDress2", "DupDress5", "DupDress4"};
+	CHECK(f.project.NextFreeDuplicateSuffix(chain, "", "") == ".1");
+	// Renamed bones need no suffix while their names are free
+	CHECK(f.project.NextFreeDuplicateSuffix(chain, "Dress", "Skirt").empty());
+
+	std::vector<std::string> newNames;
+	std::string error;
+	REQUIRE(f.project.DuplicateBones(chain, "", "", ".1", std::nullopt, newNames, error));
+	CHECK(newNames == std::vector<std::string>{"DupDress3.1", "DupDress1.1", "DupDress2.1", "DupDress5.1", "DupDress4.1"});
+
+	for (int i = 1; i <= 5; i++) {
+		AnimBone* orig = skel.GetBonePtr("DupDress" + std::to_string(i));
+		AnimBone* copy = skel.GetBonePtr("DupDress" + std::to_string(i) + ".1");
+		REQUIRE(copy);
+		CHECK_FALSE(copy->isStandardBone);
+		CHECK(copy->xformToParent.IsNearlyEqualTo(orig->xformToParent));
+		CHECK(copy->xformToGlobal.IsNearlyEqualTo(orig->xformToGlobal));
+		CHECK(f.project.GetWorkAnim()->GetShapeBoneIndex("Body", copy->boneName) >= 0);
+		CHECK_FALSE(f.project.GetWorkAnim()->HasWeights("Body", copy->boneName));
+	}
+
+	// The top of the copy hangs from the original's parent, the rest from the copies
+	CHECK(skel.GetBonePtr("DupDress1.1")->parent == skel.GetBonePtr("DupDress0"));
+	for (int i = 2; i <= 5; i++)
+		CHECK(skel.GetBonePtr("DupDress" + std::to_string(i) + ".1")->parent == skel.GetBonePtr("DupDress" + std::to_string(i - 1) + ".1"));
+
+	// The originals are left alone
+	AnimBone* orig1 = skel.GetBonePtr("DupDress1");
+	CHECK(orig1->parent == skel.GetBonePtr("DupDress0"));
+	REQUIRE(orig1->children.size() == 1);
+	CHECK(orig1->children.front() == skel.GetBonePtr("DupDress2"));
+
+	// Names in use aren't taken again
+	CHECK(f.project.NextFreeDuplicateSuffix(chain, "", "") == ".2");
+	std::vector<std::string> again;
+	CHECK_FALSE(f.project.DuplicateBones(chain, "", "", ".1", std::nullopt, again, error));
+	CHECK_FALSE(error.empty());
+	CHECK(again.empty());
+
+	// Two bones can't get the same name, and a bone can't be duplicated twice at once
+	CHECK_FALSE(f.project.DuplicateBones({"DupDress1", "DupDress2"}, "1", "2", ".9", std::nullopt, again, error));
+	CHECK(skel.GetBoneRefCount("DupDress2.9") == 0);
+	CHECK_FALSE(f.project.DuplicateBones({"DupDress1", "DupDress1"}, "", "", ".9", std::nullopt, again, error));
+	CHECK(skel.GetBoneRefCount("DupDress1.9") == 0);
+
+	// The chain hangs from what the top of the selection hangs from
+	CHECK(OutfitProject::DuplicateChainParents(chain) == std::set<std::string>{"DupDress0"});
+	CHECK(OutfitProject::DuplicateChainParents({"DupDress1", "DupDress3"}) == std::set<std::string>{"DupDress0", "DupDress2"});
+}
+
+TEST_CASE("Duplicated bone chains can hang from another parent", "[OutfitProject][bones]") {
+	ProjectFixture f;
+	AnimSkeleton& skel = AnimSkeleton::getInstance();
+	AddBoneChain(f.project, "ParChain", 3);
+
+	// The other side's root, mirrored
+	nifly::MatTransform otherRoot = skel.GetBonePtr("ParChain0")->xformToGlobal;
+	otherRoot.translation.x = -otherRoot.translation.x;
+	otherRoot.rotation = nifly::RotVecToMat(Vector3(0.0f, 0.0f, 0.4f));
+	f.project.AddCustomBoneRef("ParChainR0", "", otherRoot);
+
+	const std::vector<std::string> chain = {"ParChain1", "ParChain2", "ParChain3"};
+	std::vector<std::string> newNames;
+	std::string error;
+
+	// Unknown parents and the copies themselves are refused
+	CHECK_FALSE(f.project.DuplicateBones(chain, "Chain", "ChainR", "", std::string("NoSuchBone"), newNames, error));
+	CHECK_FALSE(f.project.DuplicateBones(chain, "Chain", "ChainR", "", std::string("ParChainR2"), newNames, error));
+	CHECK(skel.GetBoneRefCount("ParChainR1") == 0);
+
+	// The copies keep their place in the skeleton under the other parent
+	REQUIRE(f.project.DuplicateBones(chain, "Chain", "ChainR", "", std::string("ParChainR0"), newNames, error));
+	CHECK(newNames == std::vector<std::string>{"ParChainR1", "ParChainR2", "ParChainR3"});
+	CHECK(skel.GetBonePtr("ParChainR1")->parent == skel.GetBonePtr("ParChainR0"));
+	CHECK(skel.GetBonePtr("ParChainR2")->parent == skel.GetBonePtr("ParChainR1"));
+	for (int i = 1; i <= 3; i++) {
+		const std::string n = std::to_string(i);
+		CHECK(skel.GetBonePtr("ParChainR" + n)->xformToGlobal.IsNearlyEqualTo(skel.GetBonePtr("ParChain" + n)->xformToGlobal));
+	}
+
+	// Mirrored, they're the other side's chain
+	f.project.MirrorBonesX(newNames);
+	for (int i = 1; i <= 3; i++) {
+		const std::string n = std::to_string(i);
+		CHECK(skel.GetBonePtr("ParChainR" + n)->xformToGlobal.IsNearlyEqualTo(MirrorTransformX(skel.GetBonePtr("ParChain" + n)->xformToGlobal)));
+	}
+
+	// No parent at all
+	REQUIRE(f.project.DuplicateBones({"ParChain2"}, "", "", ".1", std::string(), newNames, error));
+	CHECK(skel.GetBonePtr("ParChain2.1")->parent == nullptr);
+	CHECK(skel.GetBonePtr("ParChain2.1")->xformToGlobal.IsNearlyEqualTo(skel.GetBonePtr("ParChain2")->xformToGlobal));
+}
+
+TEST_CASE("Duplicates don't reuse bones of their own hierarchy", "[OutfitProject][bones]") {
+	ProjectFixture f;
+	AnimSkeleton& skel = AnimSkeleton::getInstance();
+
+	// A node left in the skeleton without weights, which the project bone hangs from
+	nifly::MatTransform up;
+	up.translation = Vector3(0.0f, 0.0f, 50.0f);
+	skel.AddCustomBone("LoopHair.1").SetTransformBoneToParent(up);
+	f.project.AddCustomBoneRef("LoopHair", "LoopHair.1", nifly::MatTransform());
+	REQUIRE(skel.GetBoneRefCount("LoopHair.1") == 0);
+
+	std::vector<std::string> newNames;
+	std::string error;
+	CHECK(OutfitProject::DuplicateBoneConflicts({"LoopHair"}, {"LoopHair.1"}).front() == OutfitProject::DuplicateBoneConflict::ParentBone);
+	CHECK_FALSE(f.project.DuplicateBones({"LoopHair"}, "", "", ".1", std::nullopt, newNames, error));
+	CHECK(skel.GetBonePtr("LoopHair")->parent == skel.GetBonePtr("LoopHair.1"));
+	CHECK(skel.GetBonePtr("LoopHair.1")->parent == nullptr);
+	CHECK(f.project.NextFreeDuplicateSuffix({"LoopHair"}, "", "") == ".2");
+
+	// A leaf left in the skeleton can be reused
+	skel.AddCustomBone("LoopHair.2");
+	REQUIRE(f.project.DuplicateBones({"LoopHair"}, "", "", ".2", std::nullopt, newNames, error));
+	CHECK(skel.GetBonePtr("LoopHair.2")->parent == skel.GetBonePtr("LoopHair.1"));
+	CHECK(skel.GetBoneRefCount("LoopHair.2") > 0);
+
+	// A bone can't be its own copy, even when it isn't in the project
+	skel.AddCustomBone("LoopLeftover");
+	CHECK(OutfitProject::DuplicateBoneConflicts({"LoopLeftover"}, {"LoopLeftover"}).front() == OutfitProject::DuplicateBoneConflict::Original);
+	CHECK_FALSE(f.project.DuplicateBones({"LoopLeftover"}, "", "", "", std::nullopt, newNames, error));
+}
+
+TEST_CASE("Duplicate bone names replace text and add a suffix", "[OutfitProject][bones]") {
+	CHECK(OutfitProject::DuplicateBoneName("DressBone1", "", "", ".1") == "DressBone1.1");
+	CHECK(OutfitProject::DuplicateBoneName("DressBoneL1", "L", "R", "") == "DressBoneR1");
+	CHECK(OutfitProject::DuplicateBoneName("aXa", "a", "bab", ".2") == "babXbab.2");
+}
+
+TEST_CASE("Mirrored bones go to the other side and the mesh stays", "[OutfitProject][bones]") {
+	ProjectFixture f;
+	AnimSkeleton& skel = AnimSkeleton::getInstance();
+	AddBoneChain(f.project, "MirChain", 3);
+
+	std::unordered_map<uint16_t, float> weights{{0, 1.0f}, {5, 0.5f}};
+	f.project.GetWorkAnim()->SetWeights("Body", "MirChain2", weights);
+
+	std::map<std::string, nifly::MatTransform> before;
+	for (int i = 0; i <= 3; i++)
+		before[std::to_string(i)] = skel.GetBonePtr("MirChain" + std::to_string(i))->xformToGlobal;
+
+	std::vector<UndoStateBoneXform> xforms = f.project.MirrorBonesX({"MirChain3", "MirChain1", "MirChain2"});
+	REQUIRE(xforms.size() == 3);
+	CHECK(xforms[0].boneName == "MirChain1");
+	CHECK(xforms[2].boneName == "MirChain3");
+
+	CHECK(skel.GetBonePtr("MirChain0")->xformToGlobal.IsNearlyEqualTo(before["0"]));
+	for (int i = 1; i <= 3; i++) {
+		AnimBone* bone = skel.GetBonePtr("MirChain" + std::to_string(i));
+		CHECK(bone->xformToGlobal.IsNearlyEqualTo(MirrorTransformX(before[std::to_string(i)])));
+		CHECK(bone->parent == skel.GetBonePtr("MirChain" + std::to_string(i - 1)));
+	}
+	CHECK(skel.GetBonePtr("MirChain1")->xformToGlobal.translation.x < 0.0f);
+
+	// The skin binds follow the bones, so the mesh doesn't move
+	CHECK_FALSE(f.project.GetWorkAnim()->BoneHasInconsistentTransforms("Body", "MirChain2"));
+
+	f.project.ApplyBoneXforms(xforms, true);
+	for (int i = 1; i <= 3; i++)
+		CHECK(skel.GetBonePtr("MirChain" + std::to_string(i))->xformToGlobal.IsNearlyEqualTo(before[std::to_string(i)]));
+	CHECK_FALSE(f.project.GetWorkAnim()->BoneHasInconsistentTransforms("Body", "MirChain2"));
+
+	f.project.ApplyBoneXforms(xforms, false);
+	CHECK(skel.GetBonePtr("MirChain3")->xformToGlobal.IsNearlyEqualTo(MirrorTransformX(before["3"])));
+}

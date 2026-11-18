@@ -245,6 +245,21 @@ std::vector<AutomationStepInfo> BuildStepTypes() {
 			FieldFloat("RotZ", &Step::editBoneRotZ, 0.0f, "txtEditBoneRotZ"),
 		});
 
+	add(AutomationStepType::DuplicateBones, "DuplicateBones", wxTRANSLATE("Bones"), wxTRANSLATE("Bones: Duplicate Bones"), "pageDuplicateBones",
+		{
+			FieldStringList("BoneNames", &Step::dupBoneNames, "txtDupBoneNames"),
+			FieldString("Find", &Step::dupBoneFind, "txtDupBoneFind"),
+			FieldString("Replace", &Step::dupBoneReplace, "txtDupBoneReplace"),
+			FieldString("Suffix", &Step::dupBoneSuffix, "txtDupBoneSuffix"),
+			FieldBool("Mirror", &Step::dupBoneMirror, false, "chkDupBoneMirror"),
+			FieldString("Parent", &Step::dupBoneParent, "txtDupBoneParent"),
+		});
+
+	add(AutomationStepType::MirrorBones, "MirrorBones", wxTRANSLATE("Bones"), wxTRANSLATE("Bones: Mirror Bones"), "pageMirrorBones",
+		{
+			FieldStringList("BoneNames", &Step::mirrorBoneNames, "txtMirrorBoneNames"),
+		});
+
 	add(AutomationStepType::SetBoneTransform, "SetBoneTransform", wxTRANSLATE("Bones"), wxTRANSLATE("Bones: Set Bone Transform"), "pageSetBoneTransform",
 		{
 			FieldStringList("BoneNames", &Step::boneXformNames, "txtBoneXformNames"),

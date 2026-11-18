@@ -19,7 +19,14 @@ See the included LICENSE file
 #include <unordered_set>
 #include <vector>
 
-enum class UndoType { VertexPosition, Mask, Weight, Color, Alpha, Mesh, Mirror, ShapeDelete, NodeTransform };
+enum class UndoType { VertexPosition, Mask, Weight, Color, Alpha, Mesh, Mirror, ShapeDelete, NodeTransform, BoneEdit };
+
+// A custom bone's transform to its parent before and after an edit
+struct UndoStateBoneXform {
+	std::string boneName;
+	nifly::MatTransform startXformToParent;
+	nifly::MatTransform endXformToParent;
+};
 
 struct UndoStateVertexWeight {
 	float startVal, endVal;
@@ -157,4 +164,8 @@ struct UndoStateProject {
 	std::string boneName;
 	nifly::MatTransform nodeStartXformToParent;
 	nifly::MatTransform nodeEndXformToParent;
+
+	// Only meaningful for UndoType::BoneEdit: custom bones whose transforms
+	// were changed with their skin binds recalculated, parents first.
+	std::vector<UndoStateBoneXform> boneXforms;
 };
