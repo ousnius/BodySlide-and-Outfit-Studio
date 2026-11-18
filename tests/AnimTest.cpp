@@ -3,6 +3,7 @@
 #include "../src/components/UndoState.h"
 
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/generators/catch_generators.hpp>
 
 #include <algorithm>
 #include <cstdlib>
@@ -213,6 +214,239 @@ TEST_CASE("Non-Starfield export still warns about missing skeleton bones", "[ani
 	REQUIRE(anim.LoadFromNif(&nif));
 	AnimSkeleton::getInstance().Clear();
 	REQUIRE_FALSE(anim.WriteToNif(&nif));
+}
+
+TEST_CASE("Cloned shapes keep their weights after bones changed since loading", "[anim][clone]") {
+	auto& skeleton = AnimSkeleton::getInstance();
+	skeleton.Clear();
+	const std::vector<std::string> bones{"Pauldron", "Pelvis", "Thigh"};
+	for (auto& bn : bones)
+		skeleton.AddStandardBone(bn).boneName = bn;
+	skeleton.AddStandardBone("Calf").boneName = "Calf";
+
+	// NiTriShape with NiSkinData, BSTriShape with vertex weights, and FO4's BSSkinInstance
+	const NiVersion version = GENERATE(NiVersion::getSK(), NiVersion::getSSE(), NiVersion::getFO4());
+	CAPTURE(version.GetVersionInfo());
+	NifFile nif;
+	nif.Create(version);
+	const std::vector<Vector3> verts{{0, 0, 0}, {1, 0, 0}, {0, 1, 0}};
+	const std::vector<Triangle> tris{{0, 1, 2}};
+	std::vector<int> ids;
+	for (auto& bn : bones)
+		ids.push_back(static_cast<int>(nif.GetBlockID(nif.AddNode(bn, MatTransform()))));
+	nif.AddNode("Calf", MatTransform());
+
+	auto armor = nif.CreateShapeFromData("Armor", &verts, &tris, nullptr);
+	nif.CreateSkinning(armor);
+	nif.SetShapeBoneIDList(armor, ids);
+	// The separated pauldrons still use their bone, so its node stays in the NIF
+	auto pauldrons = nif.CreateShapeFromData("Pauldrons", &verts, &tris, nullptr);
+	nif.CreateSkinning(pauldrons);
+	std::vector<int> pauldronIds{ids[0]};
+	nif.SetShapeBoneIDList(pauldrons, pauldronIds);
+
+	AnimInfo anim;
+	REQUIRE(anim.LoadFromNif(&nif));
+	std::unordered_map<uint16_t, float> pelvis{{0, 1.0f}};
+	std::unordered_map<uint16_t, float> thigh{{1, 1.0f}};
+	std::unordered_map<uint16_t, float> calf{{2, 1.0f}};
+	anim.SetWeights("Armor", "Pelvis", pelvis);
+	anim.SetWeights("Armor", "Thigh", thigh);
+
+	std::vector<std::string> expectedBones;
+	SECTION("A bone left the shape") {
+		// CleanupBones after deleting vertices or saving
+		REQUIRE(anim.RemoveShapeBone("Armor", "Pauldron"));
+		expectedBones = {"Pelvis", "Thigh"};
+	}
+	SECTION("A bone was added to the shape") {
+		REQUIRE(anim.AddShapeBone("Armor", "Calf"));
+		anim.SetWeights("Armor", "Calf", calf);
+		expectedBones = {"Pauldron", "Pelvis", "Thigh", "Calf"};
+	}
+	SECTION("The NIF has none of the bones yet") {
+		// Skinning created in the editor, e.g. weights copied onto an imported mesh
+		std::vector<int> none;
+		nif.SetShapeBoneIDList(armor, none);
+		expectedBones = bones;
+	}
+
+	// Separating or duplicating the shape
+	REQUIRE(anim.CloneShape(&nif, armor, "Cuirass"));
+	REQUIRE(nif.CloneShape(armor, "Cuirass"));
+	CHECK(anim.shapeBones["Cuirass"] == expectedBones);
+
+	// Export the way the project does, and read the file back
+	NifFile output(nif);
+	anim.WriteToNif(&output);
+	for (auto& s : output.GetShapes())
+		output.UpdateSkinPartitions(s);
+	std::stringstream stream(std::ios::in | std::ios::out | std::ios::binary);
+	REQUIRE(output.Save(stream) == 0);
+	NifFile reloaded;
+	REQUIRE(reloaded.Load(stream) == 0);
+
+	// Both the separated shape and the one it came from
+	for (const std::string shapeName : {"Cuirass", "Armor"}) {
+		CAPTURE(shapeName);
+		auto exported = reloaded.FindBlockByName<NiShape>(shapeName);
+		REQUIRE(exported);
+		std::vector<std::string> exportedBones;
+		reloaded.GetShapeBoneList(exported, exportedBones);
+		REQUIRE(exportedBones == expectedBones);
+
+		auto exportedWeights = [&](const std::string& bone) {
+			auto it = std::find(exportedBones.begin(), exportedBones.end(), bone);
+			std::unordered_map<uint16_t, float> weights;
+			reloaded.GetShapeBoneWeights(exported, static_cast<int>(it - exportedBones.begin()), weights);
+			return weights;
+		};
+		CHECK(exportedWeights("Pelvis") == pelvis);
+		CHECK(exportedWeights("Thigh") == thigh);
+		if (std::find(expectedBones.begin(), expectedBones.end(), "Calf") != expectedBones.end())
+			CHECK(exportedWeights("Calf") == calf);
+		if (std::find(expectedBones.begin(), expectedBones.end(), "Pauldron") != expectedBones.end())
+			CHECK(exportedWeights("Pauldron").empty());
+	}
+
+	skeleton.Clear();
+}
+
+TEST_CASE("Cloned Starfield shapes keep their weights after bones changed since loading", "[anim][clone][starfield]") {
+	AnimSkeleton::getInstance().Clear();
+	NifFile nif;
+	nif.Create(NiVersion::getSF());
+
+	// BSGeometry binds by the SkinAttach names, there are no bone nodes
+	const std::vector<std::string> bones{"Pauldron", "Pelvis", "Thigh"};
+	auto block = std::make_unique<BSGeometry>();
+	auto armor = block.get();
+	armor->name.get() = "Armor";
+	armor->SetInternalGeomData(true);
+	auto mesh = armor->AddMesh();
+	mesh->meshData.version = 2;
+	mesh->meshData.scale = 1.0f;
+	mesh->meshData.nVertices = 3;
+	mesh->meshData.vertices = {{0, 0, 0}, {1, 0, 0}, {0, 1, 0}};
+	mesh->meshData.nWeightsPerVert = 1;
+	mesh->meshData.skinWeights = {{{0, 65535}}, {{0, 65535}}, {{0, 65535}}};
+	nif.GetRootNode()->childRefs.AddBlockRef(nif.GetHeader().AddBlock(std::move(block)));
+
+	auto attach = std::make_unique<SkinAttach>();
+	attach->bones.resize(bones.size());
+	for (size_t i = 0; i < bones.size(); ++i)
+		attach->bones[i].get() = bones[i];
+	nif.AssignExtraData(armor, std::move(attach));
+	auto data = std::make_unique<BSSkinBoneData>();
+	data->nBones = static_cast<uint32_t>(bones.size());
+	data->boneXforms.resize(bones.size());
+	auto skin = std::make_unique<BSSkinInstance>();
+	skin->dataRef.index = nif.GetHeader().AddBlock(std::move(data));
+	skin->targetRef.index = nif.GetBlockID(nif.GetRootNode());
+	for (size_t i = 0; i < bones.size(); ++i)
+		skin->boneRefs.AddBlockRef(NIF_NPOS);
+	armor->SkinInstanceRef()->index = nif.GetHeader().AddBlock(std::move(skin));
+
+	AnimInfo anim;
+	REQUIRE(anim.LoadFromNif(&nif));
+	REQUIRE(anim.shapeBones["Armor"] == bones);
+	std::unordered_map<uint16_t, float> none;
+	std::unordered_map<uint16_t, float> pelvis{{0, 1.0f}};
+	std::unordered_map<uint16_t, float> thigh{{1, 1.0f}};
+	std::unordered_map<uint16_t, float> calf{{2, 1.0f}};
+	anim.SetWeights("Armor", "Pauldron", none);
+	anim.SetWeights("Armor", "Pelvis", pelvis);
+	anim.SetWeights("Armor", "Thigh", thigh);
+
+	std::vector<std::string> expectedBones;
+	SECTION("A bone left the shape") {
+		// Undoing a stroke that brought the bone
+		REQUIRE(anim.RemoveShapeBone("Armor", "Pauldron"));
+		expectedBones = {"Pelvis", "Thigh"};
+	}
+	SECTION("A bone was added to the shape") {
+		REQUIRE(anim.AddShapeBone("Armor", "Calf", MatTransform()));
+		anim.SetWeights("Armor", "Calf", calf);
+		expectedBones = {"Pauldron", "Pelvis", "Thigh", "Calf"};
+	}
+
+	REQUIRE(anim.CloneShape(&nif, armor, "Cuirass"));
+	REQUIRE(nif.CloneShape(armor, "Cuirass"));
+	CHECK(anim.shapeBones["Cuirass"] == expectedBones);
+
+	NifFile output(nif);
+	CHECK(anim.WriteToNif(&output));
+	std::stringstream stream(std::ios::in | std::ios::out | std::ios::binary);
+	REQUIRE(output.Save(stream) == 0);
+	NifFile reloaded;
+	REQUIRE(reloaded.Load(stream) == 0);
+
+	for (const std::string shapeName : {"Cuirass", "Armor"}) {
+		CAPTURE(shapeName);
+		auto exported = reloaded.FindBlockByName<BSGeometry>(shapeName);
+		REQUIRE(exported);
+		std::vector<std::string> exportedBones;
+		reloaded.GetShapeBoneList(exported, exportedBones);
+		REQUIRE(exportedBones == expectedBones);
+
+		auto exportedWeights = [&](const std::string& bone) {
+			auto it = std::find(exportedBones.begin(), exportedBones.end(), bone);
+			std::unordered_map<uint16_t, float> weights;
+			reloaded.GetShapeBoneWeights(exported, static_cast<int>(it - exportedBones.begin()), weights);
+			return weights;
+		};
+		CHECK(exportedWeights("Pelvis") == pelvis);
+		CHECK(exportedWeights("Thigh") == thigh);
+		if (std::find(expectedBones.begin(), expectedBones.end(), "Calf") != expectedBones.end())
+			CHECK(exportedWeights("Calf") == calf);
+	}
+
+	AnimSkeleton::getInstance().Clear();
+}
+
+TEST_CASE("Setting a shape's skin keeps the bone references and nodes in step", "[anim][clone]") {
+	auto& skeleton = AnimSkeleton::getInstance();
+	skeleton.Clear();
+	const std::vector<std::string> bones{"Pauldron", "Pelvis", "Thigh"};
+	for (auto& bn : bones)
+		skeleton.AddStandardBone(bn).boneName = bn;
+
+	const NiVersion version = GENERATE(NiVersion::getSK(), NiVersion::getSSE(), NiVersion::getFO4());
+	CAPTURE(version.GetVersionInfo());
+	NifFile nif;
+	nif.Create(version);
+	const std::vector<Vector3> verts{{0, 0, 0}, {1, 0, 0}, {0, 1, 0}};
+	const std::vector<Triangle> tris{{0, 1, 2}};
+	std::vector<int> ids;
+	for (auto& bn : bones)
+		ids.push_back(static_cast<int>(nif.GetBlockID(nif.AddNode(bn, MatTransform()))));
+	auto armor = nif.CreateShapeFromData("Armor", &verts, &tris, nullptr);
+	nif.CreateSkinning(armor);
+	nif.SetShapeBoneIDList(armor, ids);
+	// Another shape keeps Thigh in use
+	auto boots = nif.CreateShapeFromData("Boots", &verts, &tris, nullptr);
+	nif.CreateSkinning(boots);
+	std::vector<int> bootIds{ids[2]};
+	nif.SetShapeBoneIDList(boots, bootIds);
+
+	AnimInfo anim;
+	REQUIRE(anim.LoadFromNif(&nif));
+
+	AnimSkin skin;
+	skin.boneNames["Pelvis"] = 0;
+	skin.boneWeights[0].weights = {{0, 1.0f}};
+	anim.SetShapeSkin("Armor", {"Pelvis"}, skin);
+
+	CHECK(anim.shapeBones["Armor"] == std::vector<std::string>{"Pelvis"});
+	CHECK(anim.GetShapeBoneIndex("Armor", "Pelvis") == 0);
+	CHECK(skeleton.GetBoneRefCount("Pauldron") == 0);
+	CHECK(skeleton.GetBoneRefCount("Pelvis") == 1);
+	CHECK(skeleton.GetBoneRefCount("Thigh") == 1);
+	CHECK_FALSE(nif.FindBlockByName<NiNode>("Pauldron"));
+	CHECK(nif.FindBlockByName<NiNode>("Pelvis"));
+	CHECK(nif.FindBlockByName<NiNode>("Thigh"));
+
+	skeleton.Clear();
 }
 
 namespace {

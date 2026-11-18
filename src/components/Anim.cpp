@@ -279,19 +279,47 @@ bool AnimInfo::CloneShape(NifFile* nif, NiShape* shape, const std::string& newSh
 
 	std::string shapeName = shape->name.get();
 
+	// The working NIF's bone list is only rewritten on export, so it misses bones that were
+	// added or removed since loading. Take the live list, whose order matches the skin's bone indices.
 	std::vector<std::string> boneNames;
-	if (!nif->GetShapeBoneList(shape, boneNames)) {
+	auto liveBones = shapeBones.find(shapeName);
+	if (liveBones != shapeBones.end())
+		boneNames = liveBones->second;
+	else if (!nif->GetShapeBoneList(shape, boneNames)) {
 		wxLogWarning("No skinning found in shape '%s'.", shapeName);
 		return false;
 	}
 
+	auto& newBones = shapeBones[newShape];
 	for (auto& bn : boneNames) {
 		AnimSkeleton::getInstance().RefBone(bn);
-		shapeBones[newShape].push_back(bn);
+		newBones.push_back(bn);
 	}
 
 	shapeSkinning[newShape] = shapeSkinning[shapeName];
 	return true;
+}
+
+void AnimInfo::SetShapeSkin(const std::string& shape, const std::vector<std::string>& bones, const AnimSkin& skin) {
+	auto& skeleton = AnimSkeleton::getInstance();
+	std::vector<std::string> oldBones = std::move(shapeBones[shape]);
+
+	// Reference the new bones first, so the ones in both lists never drop to zero
+	for (auto& bn : bones)
+		skeleton.RefBone(bn);
+
+	shapeBones[shape] = bones;
+	shapeSkinning[shape] = skin;
+
+	for (auto& bn : oldBones) {
+		skeleton.ReleaseBone(bn);
+
+		// Like RemoveShapeBone, drop nodes that no shape uses anymore
+		if (refNif && refNif->IsValid() && skeleton.GetBoneRefCount(bn) <= 0) {
+			if (refNif->CanDeleteNode(bn))
+				refNif->DeleteNode(bn);
+		}
+	}
 }
 
 int AnimInfo::GetShapeBoneIndex(const std::string& shapeName, const std::string& boneName) const {

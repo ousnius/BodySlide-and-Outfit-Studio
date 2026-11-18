@@ -330,6 +330,126 @@ TEST_CASE("Weight copies don't keep reference bones they leave out", "[OutfitPro
 	CHECK(f.Weight(f.skirt, "BoneRight", 0) < 0.1f);
 }
 
+TEST_CASE("Undoing a shape delete brings back the weights edited since loading", "[OutfitProject]") {
+	ProjectFixture f;
+
+	// The skirt's bones were added in the editor, the NIF still has none
+	f.project.GetWorkAnim()->RemoveShapeBone("Skirt", "BoneLeft");
+	std::unordered_map<uint16_t, float> right{{0, 1.0f}, {5, 0.5f}};
+	f.project.GetWorkAnim()->SetWeights("Skirt", "BoneRight", right);
+	const auto bones = f.project.GetWorkAnim()->shapeBones["Skirt"];
+	REQUIRE(bones == std::vector<std::string>{"BoneRight"});
+
+	auto& skeleton = AnimSkeleton::getInstance();
+	const int rightRefs = skeleton.GetBoneRefCount("BoneRight");
+	const int leftRefs = skeleton.GetBoneRefCount("BoneLeft");
+
+	UndoStateShapeDelete state;
+	f.project.CaptureShapeDeleteState(f.skirt, state);
+	f.project.DeleteShape(f.skirt);
+	REQUIRE(f.project.GetWorkAnim()->shapeBones.count("Skirt") == 0);
+
+	// Redo deletes it again and the next undo restores it from the same state
+	for (int pass = 0; pass < 2; pass++) {
+		NiShape* restored = f.project.RestoreDeletedShape(state);
+		REQUIRE(restored);
+		CHECK(f.project.GetWorkAnim()->shapeBones["Skirt"] == bones);
+		CHECK(f.Weight(restored, "BoneRight", 0) == 1.0f);
+		CHECK(f.Weight(restored, "BoneRight", 5) == 0.5f);
+		CHECK(f.project.GetWorkAnim()->GetShapeBoneIndex("Skirt", "BoneRight") == 0);
+		CHECK(skeleton.GetBoneRefCount("BoneRight") == rightRefs);
+		CHECK(skeleton.GetBoneRefCount("BoneLeft") == leftRefs);
+
+		if (pass == 0)
+			f.project.DeleteShape(restored);
+	}
+}
+
+TEST_CASE("Separated and restored shapes export the weights edited since loading", "[OutfitProject]") {
+	auto game = GENERATE(SKYRIM, SKYRIMSE, FO4);
+	CAPTURE(static_cast<int>(game));
+	nifly::NiVersion version = game == SKYRIM ? nifly::NiVersion::getSK() : game == SKYRIMSE ? nifly::NiVersion::getSSE() : nifly::NiVersion::getFO4();
+
+	TargetGameScope targetGame{game};
+	TempFolder folder;
+	MeshHost host;
+	OutfitProject project{&host, false};
+	host.project = &project;
+
+	// An armor with the pauldron bone that its separated pauldrons still use
+	{
+		const std::vector<std::string> bones{"Pauldron", "Pelvis", "Thigh"};
+		NifFile nif;
+		nif.Create(version);
+		const std::vector<Vector3> verts{{0, 0, 0}, {1, 0, 0}, {0, 1, 0}};
+		const std::vector<Triangle> tris{{0, 1, 2}};
+		std::vector<int> ids;
+		for (auto& bn : bones)
+			ids.push_back(static_cast<int>(nif.GetBlockID(nif.AddNode(bn, nifly::MatTransform()))));
+		auto armor = nif.CreateShapeFromData("Armor", &verts, &tris, nullptr);
+		nif.CreateSkinning(armor);
+		nif.SetShapeBoneIDList(armor, ids);
+		auto pauldrons = nif.CreateShapeFromData("Pauldrons", &verts, &tris, nullptr);
+		nif.CreateSkinning(pauldrons);
+		std::vector<int> pauldronIds{ids[0]};
+		nif.SetShapeBoneIDList(pauldrons, pauldronIds);
+		REQUIRE(nif.Save(folder.path / "Armor.nif") == 0);
+	}
+	REQUIRE(project.ImportNIF((folder.path / "Armor.nif").string(), false) == 0);
+
+	auto* anim = project.GetWorkAnim();
+	std::unordered_map<uint16_t, float> none;
+	std::unordered_map<uint16_t, float> all{{0, 1.0f}, {1, 1.0f}, {2, 1.0f}};
+	std::unordered_map<uint16_t, float> pelvis{{0, 1.0f}, {2, 0.5f}};
+	std::unordered_map<uint16_t, float> thigh{{1, 1.0f}, {2, 0.5f}};
+	anim->SetWeights("Pauldrons", "Pauldron", all);
+	anim->SetWeights("Armor", "Pauldron", none);
+	anim->SetWeights("Armor", "Pelvis", pelvis);
+	anim->SetWeights("Armor", "Thigh", thigh);
+	// Deleting vertices or saving drops the bone the armor no longer uses
+	anim->CleanupBones();
+	REQUIRE(anim->shapeBones["Armor"] == std::vector<std::string>{"Pelvis", "Thigh"});
+
+	// Separate the cuirass, delete it and undo that
+	NiShape* cuirass = project.DuplicateShape(project.GetWorkNif()->FindBlockByName<NiShape>("Armor"), "Cuirass");
+	REQUIRE(cuirass);
+	UndoStateShapeDelete state;
+	project.CaptureShapeDeleteState(cuirass, state);
+	project.DeleteShape(cuirass);
+	REQUIRE(project.RestoreDeletedShape(state));
+
+	const auto exportPath = (folder.path / "Export.nif").string();
+	REQUIRE(project.ExportNIF(exportPath, {}, true) == 0);
+	NifFile exported;
+	REQUIRE(exported.Load(exportPath) == 0);
+
+	auto weightsOf = [&](NiShape* shape, const std::vector<std::string>& bones, const std::string& bone) {
+		std::unordered_map<uint16_t, float> weights;
+		auto it = std::find(bones.begin(), bones.end(), bone);
+		if (it != bones.end())
+			exported.GetShapeBoneWeights(shape, static_cast<int>(it - bones.begin()), weights);
+		for (auto& w : weights)
+			w.second = std::round(w.second * 100.0f) / 100.0f;
+		return weights;
+	};
+	for (const std::string shapeName : {"Cuirass", "Armor"}) {
+		CAPTURE(shapeName);
+		auto shape = exported.FindBlockByName<NiShape>(shapeName);
+		REQUIRE(shape);
+		std::vector<std::string> bones;
+		exported.GetShapeBoneList(shape, bones);
+		CHECK(bones == std::vector<std::string>{"Pelvis", "Thigh"});
+		CHECK(weightsOf(shape, bones, "Pelvis") == pelvis);
+		CHECK(weightsOf(shape, bones, "Thigh") == thigh);
+	}
+	auto pauldrons = exported.FindBlockByName<NiShape>("Pauldrons");
+	REQUIRE(pauldrons);
+	std::vector<std::string> pauldronBones;
+	exported.GetShapeBoneList(pauldrons, pauldronBones);
+	CHECK(pauldronBones == std::vector<std::string>{"Pauldron"});
+	CHECK(weightsOf(pauldrons, pauldronBones, "Pauldron") == all);
+}
+
 TEST_CASE("Weight copies only add the bones they may", "[OutfitProject]") {
 	ProjectFixture f;
 	f.project.GetWorkAnim()->RemoveShapeBone("Skirt", "BoneRight");

@@ -177,6 +177,8 @@ public:
 	bool LoadFromNif(nifly::NifFile* nif);
 	bool LoadFromNif(nifly::NifFile* nif, nifly::NiShape* shape, bool newRefNif = true);
 	bool CloneShape(nifly::NifFile* nif, nifly::NiShape* shape, const std::string& newShape);
+	// Replaces the shape's bones and weights, e.g. with the ones captured before it was deleted
+	void SetShapeSkin(const std::string& shape, const std::vector<std::string>& bones, const AnimSkin& skin);
 
 	int GetShapeBoneIndex(const std::string& shapeName, const std::string& boneName) const;
 	std::unordered_map<uint16_t, float>* GetWeightsPtr(const std::string& shape, const std::string& boneName);

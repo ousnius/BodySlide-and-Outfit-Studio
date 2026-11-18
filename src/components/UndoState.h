@@ -5,6 +5,7 @@ See the included LICENSE file
 
 #pragma once
 
+#include "Anim.h"
 #include "../utils/AABBTree.h"
 #include "../files/MaterialFile.h"
 #include "../files/SFLayeredMaterial.h"
@@ -120,6 +121,10 @@ struct UndoStateShapeDelete {
 	std::shared_ptr<const SFLayeredMaterial> sfMaterial;
 	std::vector<std::string> physicsFiles;
 	std::vector<std::string> clothSources;
+	// Skinning as it was in the editor. The backup NIF only has the bones the shape was loaded with.
+	bool hadSkinning = false;
+	std::vector<std::string> bones;
+	AnimSkin skin;
 	// Reference info captured when wasBaseShape, restored on undo
 	std::string refProjectFile;
 	std::string refProjectName;

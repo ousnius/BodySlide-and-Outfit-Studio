@@ -6808,6 +6808,15 @@ void OutfitProject::CaptureShapeDeleteState(NiShape* shape, UndoStateShapeDelete
 	state.nifBackup.Create(workNif.GetHeader().GetVersion());
 	state.nifBackup.CloneShape(shape, state.shapeName, &workNif);
 
+	// The working NIF's skinning isn't updated before export, so take the editor's
+	auto bones = workAnim.shapeBones.find(state.shapeName);
+	auto skin = workAnim.shapeSkinning.find(state.shapeName);
+	state.hadSkinning = bones != workAnim.shapeBones.end() && skin != workAnim.shapeSkinning.end();
+	if (state.hadSkinning) {
+		state.bones = bones->second;
+		state.skin = skin->second;
+	}
+
 	// Capture slider diffs
 	std::string target = ShapeToTarget(state.shapeName);
 	for (size_t si = 0; si < activeSet.size(); si++) {
@@ -6879,8 +6888,10 @@ NiShape* OutfitProject::RestoreDeletedShape(UndoStateShapeDelete& state) {
 
 	clothData.SetShapeSources(restoreName, state.clothSources);
 
-	// Reload bone weights from the cloned NIF blocks
+	// Loading registers custom bones the skeleton doesn't know, the captured skinning then replaces the stale NIF weights
 	workAnim.LoadFromNif(&workNif, restoredShape);
+	if (state.hadSkinning)
+		workAnim.SetShapeSkin(restoreName, state.bones, state.skin);
 
 	// Restore slider diffs
 	std::string target = ShapeToTarget(state.shapeName);
