@@ -1417,6 +1417,7 @@ public:
 	std::vector<ShapeItemData*>& GetSelectedItems();
 	void ClearSelected(nifly::NiShape* shape);
 	std::string GetActiveBone();
+	bool IsBoneSelected(const std::string& bone) const { return editor.lastSelectedBones.count(bone) != 0; }
 
 	// Bone list item of a project bone, or an invalid id
 	wxTreeItemId FindBoneItem(const std::string& bone);

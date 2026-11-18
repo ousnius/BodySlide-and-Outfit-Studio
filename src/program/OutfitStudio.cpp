@@ -19468,18 +19468,20 @@ void wxGLPanel::UpdateBones() {
 void wxGLPanel::UpdateNodeColors() {
 	std::string activeBone = os->GetActiveBone();
 
+	// The active bone (whose weights are shown and edited) is red, other selected bones are pink.
+	// Selected nodes and bones are drawn on top.
 	for (auto& m : nodesPoints) {
 		auto nodeName = m->shapeName.substr(2, m->shapeName.length() - 2);
 		if (nodeName == activeBone) {
-			m->color.x = 1.0f;
-			m->color.y = 0.0f;
-			m->color.z = 0.0f;
+			m->color = Vector3(1.0f, 0.0f, 0.0f);
+			m->overlayLayer = OverlayLayer::NodeSelection;
+		}
+		else if (os->IsBoneSelected(nodeName)) {
+			m->color = Vector3(1.0f, 0.35f, 0.75f);
 			m->overlayLayer = OverlayLayer::NodeSelection;
 		}
 		else {
-			m->color.x = 0.0f;
-			m->color.y = 1.0f;
-			m->color.z = 0.0f;
+			m->color = Vector3(0.0f, 1.0f, 0.0f);
 			m->overlayLayer = OverlayLayer::Default;
 		}
 	}
@@ -19487,42 +19489,43 @@ void wxGLPanel::UpdateNodeColors() {
 	for (auto& m : nodesLines) {
 		auto nodeName = m->shapeName.substr(2, m->shapeName.length() - 2);
 		if (nodeName == activeBone) {
-			m->color.x = 0.7f;
-			m->color.y = 0.0f;
-			m->color.z = 0.0f;
+			m->color = Vector3(0.7f, 0.0f, 0.0f);
+			m->overlayLayer = OverlayLayer::NodeSelection;
+		}
+		else if (os->IsBoneSelected(nodeName)) {
+			m->color = Vector3(0.7f, 0.25f, 0.53f);
 			m->overlayLayer = OverlayLayer::NodeSelection;
 		}
 		else {
-			m->color.x = 0.0f;
-			m->color.y = 0.7f;
-			m->color.z = 0.0f;
+			m->color = Vector3(0.0f, 0.7f, 0.0f);
 			m->overlayLayer = OverlayLayer::Default;
 		}
 	}
 
 	// Hovered bones are yellow, or orange when also active, and drawn on top.
-	// Connector bones are grey.
+	// Connector bones are grey unless selected.
 	for (auto& m : bonesPoints) {
 		auto nodeName = m->shapeName.substr(3, m->shapeName.length() - 3);
 		const bool active = nodeName == activeBone;
+		const bool selected = !active && os->IsBoneSelected(nodeName);
 		if (!hoverBone.empty() && nodeName == hoverBone) {
 			m->color = active ? Vector3(1.0f, 0.5f, 0.0f) : Vector3(1.0f, 1.0f, 0.0f);
 			m->overlayLayer = OverlayLayer::NodeSelection;
 		}
-		else if (!active && connectorBones.count(nodeName) != 0) {
+		else if (active) {
+			m->color = Vector3(1.0f, 0.0f, 0.0f);
+			m->overlayLayer = OverlayLayer::NodeSelection;
+		}
+		else if (selected) {
+			m->color = Vector3(1.0f, 0.35f, 0.75f);
+			m->overlayLayer = OverlayLayer::NodeSelection;
+		}
+		else if (connectorBones.count(nodeName) != 0) {
 			m->color = Vector3(0.4f, 0.4f, 0.4f);
 			m->overlayLayer = OverlayLayer::Default;
 		}
-		else if (active) {
-			m->color.x = 1.0f;
-			m->color.y = 0.0f;
-			m->color.z = 0.0f;
-			m->overlayLayer = OverlayLayer::NodeSelection;
-		}
 		else {
-			m->color.x = 0.0f;
-			m->color.y = 1.0f;
-			m->color.z = 0.0f;
+			m->color = Vector3(0.0f, 1.0f, 0.0f);
 			m->overlayLayer = OverlayLayer::Default;
 		}
 	}
@@ -19530,24 +19533,25 @@ void wxGLPanel::UpdateNodeColors() {
 	for (auto& m : bonesLines) {
 		auto nodeName = m->shapeName.substr(3, m->shapeName.length() - 3);
 		const bool active = nodeName == activeBone;
+		const bool selected = !active && os->IsBoneSelected(nodeName);
 		if (!hoverBone.empty() && nodeName == hoverBone) {
 			m->color = active ? Vector3(0.9f, 0.45f, 0.0f) : Vector3(0.9f, 0.9f, 0.0f);
 			m->overlayLayer = OverlayLayer::NodeSelection;
 		}
-		else if (!active && connectorBones.count(nodeName) != 0) {
+		else if (active) {
+			m->color = Vector3(0.7f, 0.0f, 0.0f);
+			m->overlayLayer = OverlayLayer::NodeSelection;
+		}
+		else if (selected) {
+			m->color = Vector3(0.7f, 0.25f, 0.53f);
+			m->overlayLayer = OverlayLayer::NodeSelection;
+		}
+		else if (connectorBones.count(nodeName) != 0) {
 			m->color = Vector3(0.35f, 0.35f, 0.35f);
 			m->overlayLayer = OverlayLayer::Default;
 		}
-		else if (active) {
-			m->color.x = 0.7f;
-			m->color.y = 0.0f;
-			m->color.z = 0.0f;
-			m->overlayLayer = OverlayLayer::NodeSelection;
-		}
 		else {
-			m->color.x = 0.0f;
-			m->color.y = 0.7f;
-			m->color.z = 0.0f;
+			m->color = Vector3(0.0f, 0.7f, 0.0f);
 			m->overlayLayer = OverlayLayer::Default;
 		}
 	}
