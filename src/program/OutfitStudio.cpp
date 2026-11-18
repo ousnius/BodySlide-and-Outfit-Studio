@@ -1943,6 +1943,8 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 
 							if (check)
 								selectedProjects.insert(name);
+							else
+								selectedProjects.erase(name);
 						}
 					}
 				});
