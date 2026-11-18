@@ -2710,8 +2710,7 @@
 			</object>
 			<object class="wxMenuItem" name="sliderRigidify">
 				<label>Rigidify Parts...</label>
-				<help>Makes the unmasked parts of the selected shapes, like buckles and plates, follow the current slider without bending.</help>
-				<enabled>0</enabled>
+				<help>Makes the unmasked parts of the selected shapes, like buckles and plates, follow the current slider (or the checked sliders) without bending.</help>
 			</object>
 			<object class="wxMenuItem" name="sliderMask">
 				<label>Mask Affected Vertices</label>

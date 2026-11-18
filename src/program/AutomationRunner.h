@@ -136,6 +136,7 @@ private:
 	int ExecuteStepClearSliderData(const AutomationStep& step);
 	int ExecuteStepCloneSlider(const AutomationStep& step);
 	int ExecuteStepNegateSlider(const AutomationStep& step);
+	int ExecuteStepRigidifySlider(const AutomationStep& step);
 	int ExecuteStepNewCombinedSlider(const AutomationStep& step);
 	int ExecuteStepNewZapSlider(const AutomationStep& step);
 	int ExecuteStepGrowShrinkMask(const AutomationStep& step);

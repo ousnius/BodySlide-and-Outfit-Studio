@@ -645,6 +645,7 @@ int AutomationRunner::ExecuteStep(const AutomationStep& step) {
 		{AutomationStepType::ClearSliderData, &AutomationRunner::ExecuteStepClearSliderData},
 		{AutomationStepType::CloneSlider, &AutomationRunner::ExecuteStepCloneSlider},
 		{AutomationStepType::NegateSlider, &AutomationRunner::ExecuteStepNegateSlider},
+		{AutomationStepType::RigidifySlider, &AutomationRunner::ExecuteStepRigidifySlider},
 		{AutomationStepType::NewCombinedSlider, &AutomationRunner::ExecuteStepNewCombinedSlider},
 		{AutomationStepType::NewZapSlider, &AutomationRunner::ExecuteStepNewZapSlider},
 		{AutomationStepType::GrowShrinkMask, &AutomationRunner::ExecuteStepGrowShrinkMask},
@@ -3441,6 +3442,80 @@ int AutomationRunner::ExecuteStepNegateSlider(const AutomationStep& step) {
 	}
 
 	outfitStudio->SetPendingChanges();
+	return 0;
+}
+
+int AutomationRunner::ExecuteStepRigidifySlider(const AutomationStep& step) {
+	// The reference keeps its morphs, rigidify only changes the outfit
+	std::vector<NiShape*> shapes;
+	for (auto* shape : ResolveTargetShapes(step, false))
+		if (!project->IsBaseShape(shape))
+			shapes.push_back(shape);
+
+	if (shapes.empty()) {
+		wxLogWarning("Automation: RigidifySlider - no target shapes found.");
+		return 0;
+	}
+
+	// Named sliders, or else every morph slider with data on the target shapes
+	std::vector<std::string> sliderNames;
+	if (!step.rigidifySliderNames.empty()) {
+		for (const auto& sliderName : step.rigidifySliderNames) {
+			size_t sliderIndex = 0;
+			if (!project->SliderIndexFromName(sliderName, sliderIndex))
+				wxLogWarning("Automation: RigidifySlider - slider '%s' not found, skipping.", sliderName);
+			else if (project->SliderZap(sliderIndex) || project->SliderUV(sliderIndex))
+				wxLogWarning("Automation: RigidifySlider - slider '%s' is a zap or UV slider, skipping.", sliderName);
+			else
+				sliderNames.push_back(sliderName);
+		}
+	}
+	else {
+		for (size_t i = 0; i < project->SliderCount(); i++) {
+			if (project->SliderZap(i) || project->SliderUV(i))
+				continue;
+			for (auto* shape : shapes) {
+				TargetDataDiffs* diff = project->GetDiffSet(project->activeSet[i], shape);
+				if (diff && !diff->empty()) {
+					sliderNames.push_back(project->GetSliderName(i));
+					break;
+				}
+			}
+		}
+	}
+
+	if (sliderNames.empty()) {
+		wxLogWarning("Automation: RigidifySlider - no sliders to rigidify.");
+		return 0;
+	}
+
+	RigidifyOptions options;
+	options.allowScale = step.rigidifyMode == 1;
+	options.perPart = step.rigidifyMode != 2;
+	options.clearance = step.rigidifyClearance;
+	options.maxPartVertices = std::max(0, step.rigidifyMaxPartVertices);
+	options.maxPartLength = std::max(0.0f, step.rigidifyMaxPartLength);
+
+	// Rigidify reads the project's slider data, not the meshes, so they are refreshed once at the end
+	ProjectOperations ops(*project, outfitStudio->editor);
+	RefreshFlags refresh = RefreshFlags::None;
+	for (const auto& sliderName : sliderNames) {
+		wxLogMessage("Automation: Rigidifying the parts of slider '%s' for %zu shape(s)...", sliderName, shapes.size());
+
+		// One slider per undo state
+		UndoStateProject usp;
+		size_t parts = 0;
+		OpResult result = ops.RigidifySlider(shapes, sliderName, options, usp, &parts);
+		refresh |= result.refresh;
+		if (!result.ok) {
+			outfitStudio->ApplyRefresh(refresh);
+			wxLogError("Automation: RigidifySlider - %s", result.error);
+			return 1;
+		}
+		wxLogMessage("Automation: Rigidified %zu part(s), %zu shape(s) changed.", parts, usp.usss.size());
+	}
+
+	outfitStudio->ApplyRefresh(refresh);
 	return 0;
 }
 

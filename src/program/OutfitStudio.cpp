@@ -4379,7 +4379,6 @@ void OutfitStudioFrame::MenuEnterSliderEdit() {
 	menuBar->Enable(XRCID("menuExportSlider"), true);
 	menuBar->Enable(XRCID("sliderClone"), true);
 	menuBar->Enable(XRCID("sliderNegate"), true);
-	menuBar->Enable(XRCID("sliderRigidify"), true);
 	menuBar->Enable(XRCID("sliderMask"), true);
 	menuBar->Enable(XRCID("sliderProperties"), true);
 }
@@ -4389,7 +4388,6 @@ void OutfitStudioFrame::MenuExitSliderEdit() {
 	menuBar->Enable(XRCID("menuExportSlider"), false);
 	menuBar->Enable(XRCID("sliderClone"), false);
 	menuBar->Enable(XRCID("sliderNegate"), false);
-	menuBar->Enable(XRCID("sliderRigidify"), false);
 	menuBar->Enable(XRCID("sliderMask"), false);
 	menuBar->Enable(XRCID("sliderProperties"), false);
 }
@@ -10817,8 +10815,22 @@ void OutfitStudioFrame::OnSliderRigidify(wxCommandEvent& WXUNUSED(event)) {
 	if (!ShapeSelectionCheck())
 		return;
 
-	if (!editor.bEditSlider) {
-		wxMessageBox(_("There is no slider in edit mode to rigidify!"), _("Error"));
+	// The slider in edit mode, or else the checked sliders that have a morph
+	std::vector<std::string> sliderNames;
+	if (editor.bEditSlider)
+		sliderNames.push_back(editor.activeSlider);
+	else {
+		for (auto& sliderPanel : sliderPanels) {
+			if (sliderPanel.second->sliderCheck->Get3StateValue() != wxCheckBoxState::wxCHK_CHECKED)
+				continue;
+			size_t sliderIndex = 0;
+			if (project->SliderIndexFromName(sliderPanel.first, sliderIndex) && !project->SliderZap(sliderIndex) && !project->SliderUV(sliderIndex))
+				sliderNames.push_back(sliderPanel.first);
+		}
+	}
+
+	if (sliderNames.empty()) {
+		wxMessageBox(_("Check the sliders to rigidify, or enter edit mode for one. Zap and UV sliders have no morph to rigidify."), _("Error"));
 		return;
 	}
 
@@ -10832,7 +10844,7 @@ void OutfitStudioFrame::OnSliderRigidify(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	if (!ConfirmSliderDataLocalForEdit(shapes, std::vector<std::string>{editor.activeSlider}))
+	if (!ConfirmSliderDataLocalForEdit(shapes, sliderNames))
 		return;
 
 	wxArrayString choices;
@@ -10840,8 +10852,15 @@ void OutfitStudioFrame::OnSliderRigidify(wxCommandEvent& WXUNUSED(event)) {
 	choices.Add(_("Each part moves, turns and scales evenly"));
 	choices.Add(_("All unmasked vertices of a shape move as one part"));
 
-	int choice = wxGetSingleChoiceIndex(_("The unmasked parts of the selected shapes will follow the slider without bending, e.g. buckles, gems "
-										  "and armor plates. Mask everything else first. Masked vertices keep their morph, partly masked ones blend."),
+	wxString message = sliderNames.size() == 1
+		? wxString::Format(_("The unmasked parts of the selected shapes will follow the slider '%s' without bending, e.g. buckles, gems "
+							 "and armor plates. Mask everything else first. Masked vertices keep their morph, partly masked ones blend."),
+						   wxString::FromUTF8(sliderNames.front()))
+		: wxString::Format(_("The unmasked parts of the selected shapes will follow the %zu checked sliders without bending, e.g. buckles, gems "
+							 "and armor plates. Mask everything else first. Masked vertices keep their morph, partly masked ones blend."),
+						   sliderNames.size());
+
+	int choice = wxGetSingleChoiceIndex(message,
 										_("Rigidify Parts"),
 										choices,
 										0,
@@ -10853,21 +10872,32 @@ void OutfitStudioFrame::OnSliderRigidify(wxCommandEvent& WXUNUSED(event)) {
 	options.allowScale = choice == 1;
 	options.perPart = choice != 2;
 
-	wxLogMessage("Rigidifying slider '%s' for the selected shapes.", editor.activeSlider);
+	wxBusyCursor busy;
+	ProjectOperations ops(*project, editor);
+	RefreshFlags refresh = RefreshFlags::None;
+	OpResult result;
+	for (auto& sliderName : sliderNames) {
+		wxLogMessage("Rigidifying slider '%s' for the selected shapes.", sliderName);
 
-	UndoStateProject* usp = glView->GetUndoHistory()->PushState();
-	size_t parts = 0;
-	OpResult result = ProjectOperations(*project, editor).RigidifySlider(shapes, editor.activeSlider, options, *usp, &parts);
-	if (!result.ok || usp->usss.empty())
-		glView->GetUndoHistory()->PopState();
+		// An undo step per slider, an undo state holds the changes of one slider
+		UndoStateProject* usp = glView->GetUndoHistory()->PushState();
+		size_t parts = 0;
+		result = ops.RigidifySlider(shapes, sliderName, options, *usp, &parts);
+		if (!result.ok || usp->usss.empty())
+			glView->GetUndoHistory()->PopState();
 
-	ApplyRefresh(result.refresh);
+		refresh |= result.refresh;
+		if (!result.ok)
+			break;
+
+		wxLogMessage("Rigidified %d parts.", static_cast<int>(parts));
+	}
+
+	ApplyRefresh(refresh);
 	UpdateUndoTools();
 
 	if (!result.ok)
 		wxMessageBox(wxString::FromUTF8(result.error), _("Rigidify Parts"), wxOK | wxICON_WARNING, this);
-	else
-		wxLogMessage("Rigidified %d parts.", static_cast<int>(parts));
 }
 
 void OutfitStudioFrame::OnMaskAffected(wxCommandEvent& WXUNUSED(event)) {

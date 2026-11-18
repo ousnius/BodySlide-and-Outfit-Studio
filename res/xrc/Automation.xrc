@@ -3897,6 +3897,126 @@ If Target Meshes is empty, all shapes are deleted. Use Regex mode for pattern ma
 											</object>
 										</object>
 
+										<!-- RigidifySlider -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageRigidifySlider">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Rigidify Parts</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Slider Names:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxBoxSizer">
+																	<orient>wxHORIZONTAL</orient>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<flag>wxEXPAND|wxRIGHT</flag>
+																		<border>5</border>
+																		<object class="wxTextCtrl" name="txtRigidifySliderNames">
+																			<tooltip>Comma-separated list of sliders to rigidify. Leave empty for every slider with data on the target shapes.</tooltip>
+																			<hint>Empty for all sliders with data</hint>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<flag>wxALIGN_CENTER_VERTICAL</flag>
+																		<object class="wxButton" name="btnAddRigidifySlider">
+																			<label translate="0">+</label>
+																			<size>24,-1</size>
+																			<tooltip>Add sliders from list</tooltip>
+																		</object>
+																	</object>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Mode:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxChoice" name="choiceRigidifyMode">
+																	<content>
+																		<item>Each part moves and turns, keeping its size</item>
+																		<item>Each part moves, turns and scales evenly</item>
+																		<item>All unmasked vertices of a shape move as one part</item>
+																	</content>
+																	<selection>0</selection>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Clearance:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtRigidifyClearance">
+																	<tooltip>Moves each part out as a whole where it would sink into the reference with the slider at 100, keeping it this far outside (e.g. 0.02). Leave empty to leave the parts where the fit puts them.</tooltip>
+																	<hint>Leave empty to allow sinking in</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Max. Part Vertices:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtRigidifyMaxPartVertices">
+																	<value translate="0">0</value>
+																	<tooltip>Parts with more vertices keep bending with the morph, e.g. the cloth next to small clasps. 0 for no limit.</tooltip>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Max. Part Length:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtRigidifyMaxPartLength">
+																	<value translate="0">0</value>
+																	<tooltip>Parts longer than this along their longest side keep bending with the morph, e.g. wires and chains. 0 for no limit.</tooltip>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>The unmasked parts of the target shapes follow the sliders without bending, e.g. buckles, gems and armor plates. Mask everything else first. Masked vertices keep their morph, partly masked ones blend. The reference isn't changed.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
 										<!-- NewCombinedSlider -->
 										<object class="simplebookpage">
 											<object class="wxPanel" name="pageNewCombinedSlider">

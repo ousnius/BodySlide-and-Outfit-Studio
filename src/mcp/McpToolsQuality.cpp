@@ -2484,7 +2484,7 @@ void AddQualityTools(OutfitStudioMcp& mcp) {
 		"gems, buttons, armor plates and other rigid pieces a conform warped: mask everything else first (mask_ops parts or "
 		"invert). Partly masked vertices blend between the morph and the rigid motion. A rigid part can't follow a valley or "
 		"curve the slider makes, so each part is moved out as a whole where it would sink into the reference (clearance). "
-		"One undo step per slider; the window has it as Slider > Rigidify Parts.";
+		"One undo step per slider; the window has it as Slider > Rigidify Parts, and automation as the RigidifySlider step.";
 	rigidify.inputSchema = McpSchema(
 		{
 			{"shapes", ShapesProp},

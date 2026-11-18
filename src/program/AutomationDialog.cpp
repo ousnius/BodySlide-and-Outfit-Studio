@@ -626,6 +626,10 @@ AutomationDialog::AutomationDialog(OutfitStudioFrame* outfitStudio, OutfitProjec
 	if (btnAddNegateSlider)
 		btnAddNegateSlider->Bind(wxEVT_BUTTON, &AutomationDialog::OnAddSliderToField, this);
 
+	auto* btnAddRigidifySlider = XRCCTRL(*this, "btnAddRigidifySlider", wxButton);
+	if (btnAddRigidifySlider)
+		btnAddRigidifySlider->Bind(wxEVT_BUTTON, &AutomationDialog::OnAddSliderToField, this);
+
 	// Restore last selected automation script
 	std::string lastScript = OutfitStudioConfig["AutomationDialog.lastScript"];
 	if (!lastScript.empty()) {
@@ -3587,6 +3591,8 @@ void AutomationDialog::OnAddSliderToField(wxCommandEvent& event) {
 			textCtrlName = "txtClearSliderNames";
 		else if (name == "btnAddNegateSlider")
 			textCtrlName = "txtNegateSliderNames";
+		else if (name == "btnAddRigidifySlider")
+			textCtrlName = "txtRigidifySliderNames";
 	}
 
 	if (!textCtrlName)

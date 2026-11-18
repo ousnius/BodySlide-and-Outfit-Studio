@@ -72,6 +72,7 @@ enum class AutomationStepType {
 	ConformSliders,
 	DeleteSlider,
 	NegateSlider,
+	RigidifySlider,
 	NewCombinedSlider,
 	NewZapSlider,
 	SetSliderValues,
@@ -95,7 +96,7 @@ enum class AutomationStepType {
 	LogMessage
 };
 
-constexpr int AutomationStepTypeCount = 70;
+constexpr int AutomationStepTypeCount = 71;
 static_assert(static_cast<int>(AutomationStepType::LogMessage) + 1 == AutomationStepTypeCount,
 	"AutomationStepTypeCount must match the number of enum values");
 
@@ -402,6 +403,13 @@ struct AutomationStep {
 
 	// NegateSlider params
 	std::vector<std::string> negateSliderNames;
+
+	// RigidifySlider params
+	std::vector<std::string> rigidifySliderNames; // Empty = every morph slider with data on the target shapes
+	int rigidifyMode = 0;						  // 0 = parts move and turn, 1 = and scale evenly, 2 = all unmasked vertices of a shape as one part
+	float rigidifyClearance = -1.0f;			  // < 0 = parts may sink into the reference
+	int rigidifyMaxPartVertices = 0;			  // Bigger parts keep bending, 0 = no limit
+	float rigidifyMaxPartLength = 0.0f;			  // Longer parts keep bending, 0 = no limit
 
 	// ClearSliderData params
 	std::vector<std::string> clearSliderNames; // Empty = every slider of the project

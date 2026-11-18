@@ -520,6 +520,15 @@ std::vector<AutomationStepInfo> BuildStepTypes() {
 			FieldStringList("SliderNames", &Step::negateSliderNames, "txtNegateSliderNames"),
 		});
 
+	add(AutomationStepType::RigidifySlider, "RigidifySlider", wxTRANSLATE("Sliders"), wxTRANSLATE("Sliders: Rigidify Parts"), "pageRigidifySlider",
+		{
+			FieldStringList("SliderNames", &Step::rigidifySliderNames, "txtRigidifySliderNames"),
+			FieldInt("Mode", &Step::rigidifyMode, 0, "choiceRigidifyMode", AutomationFieldUI::ChoiceIndex),
+			FieldFloat("Clearance", &Step::rigidifyClearance, -1.0f, "txtRigidifyClearance", AutomationFieldUI::TextOptional, "%.3g"),
+			FieldInt("MaxPartVertices", &Step::rigidifyMaxPartVertices, 0, "txtRigidifyMaxPartVertices"),
+			FieldFloat("MaxPartLength", &Step::rigidifyMaxPartLength, 0.0f, "txtRigidifyMaxPartLength", AutomationFieldUI::Text, "%.3g"),
+		});
+
 	add(AutomationStepType::NewCombinedSlider, "NewCombinedSlider", wxTRANSLATE("Sliders"), wxTRANSLATE("Sliders: New Combined Slider"), "pageNewCombinedSlider",
 		{
 			FieldString("SliderName", &Step::newSliderName, "txtNewCombinedSliderName"),
