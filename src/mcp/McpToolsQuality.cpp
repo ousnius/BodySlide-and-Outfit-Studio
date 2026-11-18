@@ -1005,8 +1005,14 @@ json StrainToJson(const MeshAnalysis::StrainStats& stats) {
 	return {{"stretchedEdges", stats.stretched}, {"maxStrain", stats.maxStrain}, {"meanStrain", stats.meanStrain}};
 }
 
-int DefaultInfluenceLimit() {
-	return static_cast<TargetGame>(Config.GetIntValue("TargetGame")) == SF ? 8 : 4;
+// Most bones per vertex a shape keeps when it's saved. Starfield meshes store their own count, from 1 to 8.
+// Shapes without one, like other games' shapes or newly skinned ones, keep 4.
+int DefaultInfluenceLimit(NiShape* shape) {
+	if (auto* geom = dynamic_cast<BSGeometry*>(shape))
+		if (auto* data = dynamic_cast<BSGeometryMeshData*>(geom->GetGeomData()))
+			if (data->nWeightsPerVert > 0)
+				return static_cast<int>(data->nWeightsPerVert);
+	return 4;
 }
 
 // Smoothing passes that spread weights over about radius (NIF units) on a mesh with the mean edge length. Weights
@@ -1101,7 +1107,6 @@ McpToolResult SmoothShapeWeights(OutfitStudioMcp& mcp, const json& args) {
 	OutfitProject& project = mcp.Project();
 	AnimInfo* anim = project.GetWorkAnim();
 	const float strength = std::clamp(McpArgs::Float(args, "strength", 0.5f), 0.01f, 1.0f);
-	const int maxInfluences = McpArgs::Int(args, "maxInfluences", DefaultInfluenceLimit());
 	const float pruneBelow = McpArgs::Float(args, "pruneBelow", 0.01f);
 	const bool useMask = McpArgs::Bool(args, "useMask", true);
 	std::vector<std::string> onlyBones = McpArgs::Strings(args, "bones");
@@ -1109,6 +1114,7 @@ McpToolResult SmoothShapeWeights(OutfitStudioMcp& mcp, const json& args) {
 	McpToolResult result;
 	for (auto* shape : mcp.Shapes(args, "shapes")) {
 		const std::string shapeName = shape->name.get();
+		const int maxInfluences = McpArgs::Int(args, "maxInfluences", DefaultInfluenceLimit(shape));
 		auto bones = ShapeBones(anim, shapeName);
 		if (bones.empty())
 			throw McpToolError("'" + shapeName + "' has no bone weights to smooth.");
@@ -1271,7 +1277,6 @@ McpToolResult AutoFixWeights(OutfitStudioMcp& mcp, const json& args) {
 	const int feather = std::clamp(McpArgs::Int(args, "feather", 4), 0, 50);
 	const float keepClose = McpArgs::Float(args, "keepClose", 0.0f);
 	const float maxPoseIncrease = std::max(0.0f, McpArgs::Float(args, "maxPoseIncrease", 0.25f));
-	const int maxInfluences = McpArgs::Int(args, "maxInfluences", DefaultInfluenceLimit());
 	const float pruneBelow = McpArgs::Float(args, "pruneBelow", 0.01f);
 	const bool useMask = McpArgs::Bool(args, "useMask", true);
 
@@ -1282,6 +1287,7 @@ McpToolResult AutoFixWeights(OutfitStudioMcp& mcp, const json& args) {
 	McpToolResult result;
 	for (auto* shape : shapes) {
 		const std::string shapeName = shape->name.get();
+		const int maxInfluences = McpArgs::Int(args, "maxInfluences", DefaultInfluenceLimit(shape));
 		auto bones = ShapeBones(anim, shapeName);
 		if (bones.empty())
 			throw McpToolError("'" + shapeName + "' has no bone weights.");
@@ -1527,7 +1533,6 @@ McpToolResult ValidateProject(OutfitStudioMcp& mcp, const json& args) {
 	NifFile* nif = project.GetWorkNif();
 	NiShape* reference = project.GetBaseShape();
 	const auto game = static_cast<TargetGame>(Config.GetIntValue("TargetGame"));
-	const int influenceLimit = McpArgs::Int(args, "influenceLimit", game == SF ? 8 : 4);
 	const bool usesPartitions = game == SKYRIM || game == SKYRIMSE || game == SKYRIMVR;
 	const bool usesSegments = game == FO4 || game == FO4VR || game == FO76;
 
@@ -1615,6 +1620,7 @@ McpToolResult ValidateProject(OutfitStudioMcp& mcp, const json& args) {
 			f.Add(f.warnings, name, "noShader", "The shape has no shader, it may not show in game.");
 
 		if (shape->IsSkinned()) {
+			const int influenceLimit = McpArgs::Int(args, "influenceLimit", DefaultInfluenceLimit(shape));
 			MeshAnalysis::WeightStats stats;
 			mcp.Apply(mcp.Ops().AnalyzeWeights(shape, stats, influenceLimit));
 			if (stats.unweighted)
@@ -1622,7 +1628,7 @@ McpToolResult ValidateProject(OutfitStudioMcp& mcp, const json& args) {
 					  {{"count", stats.unweighted}});
 			if (stats.overInfluenceLimit)
 				f.Add(f.warnings, name, "influenceLimit",
-					  "Vertices weighted to more than " + std::to_string(influenceLimit) + " bones; the game drops the extra ones. clean_weights with maxInfluences fixes them.",
+					  "Vertices weighted to more than " + std::to_string(influenceLimit) + " bones; saving keeps only the strongest " + std::to_string(influenceLimit) + ". clean_weights with maxInfluences fixes them.",
 					  {{"count", stats.overInfluenceLimit}});
 			if (stats.badSum)
 				f.Add(f.warnings, name, "weightSum", "Vertices whose weights don't add up to 1. clean_weights normalizes them.", {{"count", stats.badSum}, {"largestError", stats.maxSumError}});
@@ -2453,8 +2459,8 @@ size_t McpApplyWeights(OutfitStudioMcp& mcp, NiShape* shape, const std::map<std:
 	return ApplyWeights(mcp, shape, newWeights);
 }
 
-int McpInfluenceLimit() {
-	return DefaultInfluenceLimit();
+int McpInfluenceLimit(NiShape* shape) {
+	return DefaultInfluenceLimit(shape);
 }
 
 void AddQualityTools(OutfitStudioMcp& mcp) {
@@ -2637,7 +2643,7 @@ void AddQualityTools(OutfitStudioMcp& mcp) {
 		{"iterations", McpProp("integer", "Smoothing passes. Default 10.")},
 		{"strength", McpProp("number", "How far each pass moves the weights, 0 to 1. Default 0.5.")},
 		{"bones", McpStringList("Only blend these bones; each vertex keeps its total weight on them, the other bones stay. Default all.")},
-		{"maxInfluences", McpProp("integer", "Most bones per vertex afterwards. Default 4 (8 for Starfield).")},
+		{"maxInfluences", McpProp("integer", "Most bones per vertex afterwards. Default what the shape keeps when saved: 4, or the count its Starfield mesh stores.")},
 		{"pruneBelow", McpProp("number", "Drop weights below this afterwards. Default 0.01.")},
 		{"useMask", McpProp("boolean", "Leave masked vertices alone. Default true.")},
 	});
@@ -2714,7 +2720,7 @@ void AddQualityTools(OutfitStudioMcp& mcp) {
 		{"feather", McpProp("integer", "Passes that soften the border of the smoothed area. Default 4.")},
 		{"keepClose", McpProp("number", "Vertices closer to the reference than this (or inside it) keep their weights. Default 0, off.")},
 		{"maxPoseIncrease", McpProp("number", "How much one pose's peak strain may rise for the others to get better, relative to its peak or the threshold, whichever is higher. Default 0.25.")},
-		{"maxInfluences", McpProp("integer", "Most bones per vertex. Default 4 (8 for Starfield).")},
+		{"maxInfluences", McpProp("integer", "Most bones per vertex. Default what the shape keeps when saved: 4, or the count its Starfield mesh stores.")},
 		{"pruneBelow", McpProp("number", "Drop weights below this. Default 0.01.")},
 		{"useMask", McpProp("boolean", "Leave masked vertices alone. Default true.")},
 	});
@@ -2731,7 +2737,7 @@ void AddQualityTools(OutfitStudioMcp& mcp) {
 		"clipping at rest and bad bones. Returns errors, warnings and info; ok is true without errors.";
 	validate.inputSchema = McpSchema({
 		{"shapes", McpStringList("Shapes to check. Default all outfit shapes.")},
-		{"influenceLimit", McpProp("integer", "Most bones per vertex the game takes. Default 4 (8 for Starfield).")},
+		{"influenceLimit", McpProp("integer", "Most bones per vertex. Default what each shape keeps when saved: 4, or the count its Starfield mesh stores.")},
 	});
 	validate.outputSchema = {
 		{"type", "object"},

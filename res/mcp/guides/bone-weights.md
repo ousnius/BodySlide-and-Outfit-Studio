@@ -13,7 +13,7 @@ Bone weights decide how each vertex follows the skeleton. Where the outfit sits 
    - **Parts on one bone stay rigid** (`keepRigidParts`, on by default): a connected part weighted at least 0.99 to one of the copied bones on every vertex (a buckle, a plate, a prop) keeps its weights, listed as `rigidPartsKept`. A copy would bend it with the body under it.
    - **`addBones: false`** only copies the bones each shape has already, and lists the others as `bonesNotAdded`. Use it on an outfit that's weighted already: a full copy can add bones nobody would weight there, like genital or head bones on a vest, or forearm bones on hip pieces that hang next to the hands.
    - A shape that a linked SMP physics XML simulates only gets the new bones the XML declares (`bonesNotDeclaredByPhysics`); see Physics below.
-   - `cleanup` (on) limits the copied vertices to the game's bones per vertex (4, Starfield 8) and normalizes them. Bones it added that end up without weights (the leg bones of a top) are removed again (`removeEmptyBones`).
+   - `cleanup` (on) limits the copied vertices to the bones per vertex the shape keeps when saved (4, or the count its Starfield mesh stores) and normalizes them. Bones it added that end up without weights (the leg bones of a top) are removed again (`removeEmptyBones`).
    - The result lists `bonesAdded`, `skippedBones` and the weight problems left. One `undo` takes it all back, added bones included.
    - Vertices farther than `proximityRadius` (10) from the body get no weights: the hem of a long dress left 158 vertices `unweighted` (the result has a `hint`). `undo` and copy again with a larger radius, e.g. 25.
 3. **Check** with `analyze_weights`: no `unweighted` vertices, none over `influenceLimit` bones; with `compareToReference` a low `deviation` from the body where the outfit is within `maxDistance` (2).
@@ -126,7 +126,7 @@ Physics mods move extra bones of the body (breasts, butt, belly, thighs) or clot
 - Legs: `LLeg_Thigh`, `LLeg_Calf`, `LLeg_Foot`, `LLeg_Toe1`; skin bones `LLeg_Thigh_skin`, `LLeg_Thigh_Low_skin`, `LLeg_Thigh_Fat_skin`, `LLeg_Calf_skin`, `LLeg_Calf_Low_skin`, `LButtFat_skin`, `LBreast_skin`.
 - The same with `R` for the right side. Body physics bones depend on the body and its physics mod: check the body's `list_bones`.
 
-**Starfield.** At most 8 bones per vertex.
+**Starfield.** Each mesh stores its own number of bones per vertex, from 1 to 8 in the game's meshes; a shape keeps the number of the mesh it was loaded from, a newly skinned or imported shape 4.
 - Spine: `C_Hips`, `C_Spine`, `C_Spine1`, `C_Spine2`, `C_Chest`, `C_Neck`, `C_Neck1`, `C_Head`, plus `C_Waist` and `C_Belly`.
 - Arms: `L_Clavicle`, `L_Arm`, `L_Biceps`, `L_Biceps_Twist`, `L_Forearm`, `L_Wrist`, `L_Wrist_Twist`, fingers `L_Thumb`, `L_Index`, `L_Middle`, `L_Ring`, `L_Pinky` (with `1` and `2`); helpers `L_Deltoid`, `L_Elbow`, `L_ArmMass`.
 - Legs: `L_Thigh`, `L_Thigh_Twist`, `L_Knee`, `L_Calf`, `L_CalfMass`, `L_Foot`, `L_Toe`.

@@ -291,8 +291,8 @@ private:
 // number of changed vertex weights.
 size_t McpApplyWeights(OutfitStudioMcp& mcp, nifly::NiShape* shape, const std::map<std::string, std::unordered_map<uint16_t, float>>& newWeights);
 
-// Most bones per vertex the target game takes (4, Starfield 8)
-int McpInfluenceLimit();
+// Most bones per vertex the shape keeps when it's saved: the count stored in a Starfield mesh, otherwise 4
+int McpInfluenceLimit(nifly::NiShape* shape);
 
 class Mesh;
 

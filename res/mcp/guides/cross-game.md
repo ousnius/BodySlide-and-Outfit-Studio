@@ -165,4 +165,4 @@ A Fallout 4 shape's own material can be changed the same way: `write_material` w
 
 ### Starfield
 
-Starfield keeps geometry in separate `.mesh` files, morphs in `morph.dat` files (`export_slider_data` `dat`) and materials in its material database. The tools don't map Starfield materials, and skinned vertices can have up to 8 bones. Convert the shape and sliders as above, and tell the user what the materials need.
+Starfield keeps geometry in separate `.mesh` files, morphs in `morph.dat` files (`export_slider_data` `dat`) and materials in its material database. The tools don't map Starfield materials, and skinned vertices keep as many bones as their mesh stores, from 1 to 8 (4 for a shape that didn't come from a Starfield mesh). Convert the shape and sliders as above, and tell the user what the materials need.
