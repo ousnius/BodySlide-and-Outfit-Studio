@@ -4146,7 +4146,8 @@ bool BodySlideApp::SetDefaultConfig() {
 	if (Config["GameDataPath"].empty()) {
 		if (Config["WarnMissingGamePath"] == "true") {
 			wxLogWarning("Failed to find game install path registry key or GameDataPath in the config.");
-			wxMessageBox(_("Failed to find game install path registry key or GameDataPath in the config."), _("Warning"), wxICON_WARNING);
+			if (!cmdQuiet)
+				wxMessageBox(_("Failed to find game install path registry key or GameDataPath in the config."), _("Warning"), wxICON_WARNING);
 		}
 	}
 	else
@@ -5350,7 +5351,10 @@ int BodySlideApp::BuildListBodies(
 				wxMessageBox(_("WARNING: Game data path not configured. Files can't be removed that way."), _("Game not found"), wxOK | wxICON_ERROR);
 				return 1;
 			}
-			if (Config["WarnMissingGamePath"] == "true") {
+			if (cmdQuiet) {
+				wxLogWarning("Game data path not configured. Saving files to the working directory '%s'.", Config["AppDir"]);
+			}
+			else if (Config["WarnMissingGamePath"] == "true") {
 				int ret = wxMessageBox(_("WARNING: Game data path not configured. Continue saving files to the working directory?"),
 									   _("Game not found"),
 									   wxYES_NO | wxCANCEL | wxICON_EXCLAMATION);
