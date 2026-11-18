@@ -1262,6 +1262,26 @@ TEST_CASE("After saving as another project, saving again writes the new project'
 	CHECK((*firstSkirt)[0].z == Catch::Approx(0.5f));
 }
 
+TEST_CASE("Saving without a reference keeps the choice to copy one", "[OutfitProject]") {
+	SavedProjectFixture f;
+	auto saveAs = [&](bool copyRef) {
+		wxFileName setFile(wxString::FromUTF8((f.projectFolder.path / "SliderSets" / "C.osp").u8string()));
+		return f.project.Save(setFile, "C", "Other", "Other.nif", "meshes", "C", false, copyRef, false, false, "", "");
+	};
+
+	// Without a reference the save dialog can't copy one
+	NiShape* body = f.project.GetBaseShape();
+	REQUIRE(body);
+	f.project.SetBaseShape(nullptr);
+	REQUIRE(saveAs(false).empty());
+	CHECK(f.project.mCopyRef);
+
+	// With a reference, the choice is remembered for the next save
+	f.project.SetBaseShape(body);
+	REQUIRE(saveAs(false).empty());
+	CHECK_FALSE(f.project.mCopyRef);
+}
+
 TEST_CASE("After saving into another data folder, a body loaded as reference keeps its own folder", "[OutfitProject]") {
 	SavedProjectFixture f;
 	REQUIRE(f.Save().empty());

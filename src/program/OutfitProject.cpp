@@ -512,7 +512,9 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 	mBaseFile = wxString::FromUTF8(baseFile);
 	mGamePath = strGamePath;
 	mGameFile = wxString::FromUTF8(gameFile);
-	mCopyRef = copyRef;
+	// Without a reference there's nothing to copy, keep the choice for when one is set
+	if (baseShape)
+		mCopyRef = copyRef;
 	mGenWeights = genWeights;
 	bPreventMorphFile = preventMorphFile;
 	bKeepZappedShapes = keepZappedShapes;
