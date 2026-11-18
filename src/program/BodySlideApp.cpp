@@ -6757,8 +6757,9 @@ void BodySlideFrame::OnEnterClose(wxKeyEvent& event) {
 
 void BodySlideFrame::OnEnterSliderWindow(wxMouseEvent& event) {
 	if (this->IsActive()) {
-		if (!this->FindFocus()->IsKindOf(wxClassInfo::FindClass("wxTextCtrl")) &&
-			!this->FindFocus()->IsKindOf(wxClassInfo::FindClass("wxSearchCtrl"))) {
+		// Nothing can have the focus, e.g. on GTK after scrolling the outfit list with the mouse wheel
+		wxWindow* focus = FindFocus();
+		if (!focus || (!focus->IsKindOf(wxClassInfo::FindClass("wxTextCtrl")) && !focus->IsKindOf(wxClassInfo::FindClass("wxSearchCtrl")))) {
 			wxScrolledWindow* sw = (wxScrolledWindow*)event.GetEventObject();
 			sw->SetFocusIgnoringChildren();
 		}

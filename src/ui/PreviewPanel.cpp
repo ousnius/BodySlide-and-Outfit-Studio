@@ -784,9 +784,16 @@ void PreviewPanel::AddNifShapeTextures(NifFile* fromNif, const std::string& shap
 }
 
 void PreviewPanel::RenderNormalMap(const std::string& outfilename) {
+	// The generated map replaces the normal map of the preview mesh named "CBBE", which other outfits don't have
+	Mesh* mesh = gls.GetMesh("CBBE");
+	if (!mesh || !mesh->material) {
+		wxLogWarning("Normal map generation needs a preview shape named 'CBBE'.");
+		return;
+	}
+
 	wxBusyCursor busycursor;
 
-	std::string dest_tex = gls.GetMesh("CBBE")->material->GetTexName(1);
+	std::string dest_tex = mesh->material->GetTexName(1);
 	GLuint w, h;
 	gls.GetSize(w, h);
 	std::vector<GLuint> texIds;
