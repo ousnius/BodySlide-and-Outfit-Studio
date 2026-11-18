@@ -12,7 +12,7 @@
 				<flag>wxALL|wxEXPAND</flag>
 				<border>10</border>
 				<object class="wxStaticText" name="copyWeightsDescription">
-					<label>Each vertex of the reference will copy its weights to the nearest collection of vertices within the given radius. Bear in mind that some geometry will always require manual tweaking to become weighted and work well. Often, the default values are sufficient.</label>
+					<label>Each vertex of the selected shapes takes its weights from the nearest vertices of the reference within the given radius, averaged by distance. Bear in mind that some geometry will always require manual tweaking to become weighted and work well. Often, the default values are sufficient.</label>
 					<wrap>550</wrap>
 				</object>
 			</object>
