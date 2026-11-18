@@ -799,6 +799,9 @@
     <ClInclude Include="src\ui\PreviewPanel.h">
       <Filter>UI</Filter>
     </ClInclude>
+    <ClInclude Include="src\ui\wxFavoriteChoice.h">
+      <Filter>UI</Filter>
+    </ClInclude>
     <ClInclude Include="src\ui\wxNormalsGenDlg.h">
       <Filter>UI</Filter>
     </ClInclude>
@@ -1942,6 +1945,9 @@
       <Filter>Program</Filter>
     </ClCompile>
     <ClCompile Include="src\ui\PreviewPanel.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ui\wxFavoriteChoice.cpp">
       <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="src\ui\wxNormalsGenDlg.cpp">

@@ -36,6 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "PresetSaveDialog.h"
 #include "PreviewWindow.h"
 #include "../ui/PreviewPanel.h"
+#include "../ui/wxFavoriteChoice.h"
 #include "../ui/wxStateButton.h"
 
 #include "FSEngine/FSEngine.h"
@@ -720,10 +721,10 @@ public:
 
 	wxTimer delayLoad;
 
-	wxChoice* outfitChoice = nullptr;
+	wxFavoriteChoice* outfitChoice = nullptr;
 	wxStaticText* lblOutfitBase = nullptr;
 	wxStaticText* lblOutfitAddOns = nullptr;
-	wxChoice* presetChoice = nullptr;
+	wxFavoriteChoice* presetChoice = nullptr;
 	wxButton* btnFavoriteOutfit = nullptr;
 	wxButton* btnFavoritePreset = nullptr;
 	wxButton* btnSavePreset = nullptr;
@@ -821,9 +822,8 @@ private:
 	void OnEnterClose(wxKeyEvent& event);
 
 	void OnEnterSliderWindow(wxMouseEvent& event);
-	wxString FavoriteChoiceLabel(const std::string& name, bool favorite) const;
-	wxString OutfitChoiceLabel(const std::string& name) const;
-	bool SelectChoiceName(wxChoice* choice, const std::vector<std::string>& names, const std::string& selectItem) const;
+	wxString OutfitChoiceSuffix(const std::string& name) const;
+	bool SelectChoiceName(wxFavoriteChoice* choice, const std::vector<std::string>& names, const std::string& selectItem) const;
 	void SetFavoriteButtonBitmap(wxButton* button, bool favorite) const;
 	void UpdateFavoriteButtons();
 	void RebuildOutfitChoice(const std::string& selectItem);

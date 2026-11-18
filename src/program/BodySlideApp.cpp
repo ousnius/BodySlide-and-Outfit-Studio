@@ -101,8 +101,8 @@ wxBEGIN_EVENT_TABLE(BodySlideFrame, wxFrame)
 	EVT_TEXT_ENTER(XRCID("presetFilter"), BodySlideFrame::OnPresetFilterChanged)
 	EVT_TEXT(XRCID("presetFilter"), BodySlideFrame::OnPresetFilterChanged)
 	EVT_TIMER(DELAYLOAD_TIMER, BodySlideFrame::OnDelayLoad)
-	EVT_CHOICE(XRCID("outfitChoice"), BodySlideFrame::OnChooseOutfit)
-	EVT_CHOICE(XRCID("presetChoice"), BodySlideFrame::OnChoosePreset)
+	EVT_COMBOBOX(XRCID("outfitChoice"), BodySlideFrame::OnChooseOutfit)
+	EVT_COMBOBOX(XRCID("presetChoice"), BodySlideFrame::OnChoosePreset)
 	EVT_BUTTON(XRCID("btnFavoriteOutfit"), BodySlideFrame::OnFavoriteOutfit)
 	EVT_BUTTON(XRCID("btnFavoritePreset"), BodySlideFrame::OnFavoritePreset)
 
@@ -6615,13 +6615,13 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize& size)
 	// Listen for pop-out events from the preview panel
 	splitter->Bind(EVT_PREVIEW_POPOUT, &BodySlideFrame::OnPreviewPopout, this);
 
-	outfitChoice = (wxChoice*)FindWindowByName("outfitChoice", this);
+	outfitChoice = (wxFavoriteChoice*)FindWindowByName("outfitChoice", this);
 	lblOutfitBase = (wxStaticText*)FindWindowByName("lblOutfitBase", this);
 	lblOutfitAddOns = (wxStaticText*)FindWindowByName("lblOutfitAddOns", this);
 
 	if (auto cbConformAddOns = XRCCTRL(*this, "cbConformAddOns", wxCheckBox))
 		cbConformAddOns->SetValue(app->GetConformAddOnSliders());
-	presetChoice = (wxChoice*)FindWindowByName("presetChoice", this);
+	presetChoice = (wxFavoriteChoice*)FindWindowByName("presetChoice", this);
 	btnFavoriteOutfit = (wxButton*)FindWindowByName("btnFavoriteOutfit", this);
 	btnFavoritePreset = (wxButton*)FindWindowByName("btnFavoritePreset", this);
 	btnSavePreset = (wxButton*)FindWindowByName("btnSavePreset", this);
@@ -6882,22 +6882,12 @@ void BodySlideFrame::SetPresetChanged(bool changed) {
 		btnSavePreset->Enable(changed);
 }
 
-wxString BodySlideFrame::FavoriteChoiceLabel(const std::string& name, bool favorite) const {
-	wxString label = wxString::FromUTF8(name);
-	if (!favorite || label.empty())
-		return label;
-
-	return wxString::FromUTF8(FavoriteStar) + " " + label;
-}
-
-wxString BodySlideFrame::OutfitChoiceLabel(const std::string& name) const {
-	wxString label = FavoriteChoiceLabel(name, app->IsFavoriteOutfit(name));
-
+wxString BodySlideFrame::OutfitChoiceSuffix(const std::string& name) const {
 	bool addOn = false;
-	if (!app->GetOutfitBaseProject(name, &addOn).empty())
-		label += addOn ? _(" (add-on)") : _(" (variant)");
+	if (app->GetOutfitBaseProject(name, &addOn).empty())
+		return wxString();
 
-	return label;
+	return addOn ? _(" (add-on)") : _(" (variant)");
 }
 
 void BodySlideFrame::ShowOutfitBaseProject(const SliderSet* set) {
@@ -6996,7 +6986,7 @@ void BodySlideFrame::ShowOutfitAddOns(const BodySlideApp::ProjectAddOns* addOns)
 	Layout();
 }
 
-bool BodySlideFrame::SelectChoiceName(wxChoice* choice, const std::vector<std::string>& names, const std::string& selectItem) const {
+bool BodySlideFrame::SelectChoiceName(wxFavoriteChoice* choice, const std::vector<std::string>& names, const std::string& selectItem) const {
 	for (size_t i = 0; i < names.size(); i++) {
 		if (names[i] == selectItem) {
 			choice->SetSelection(i);
@@ -7044,27 +7034,27 @@ void BodySlideFrame::RebuildOutfitChoice(const std::string& selectItem) {
 	app->SortOutfitNamesForDisplay(outfitChoiceNames);
 
 	populatingChoices = true;
-	wxEventBlocker blocker(outfitChoice, wxEVT_CHOICE);
+	wxEventBlocker blocker(outfitChoice, wxEVT_COMBOBOX);
 	outfitChoice->Freeze();
 	outfitChoice->Clear();
 
 	for (const auto& rawName : outfitChoiceNames)
-		outfitChoice->Append(OutfitChoiceLabel(rawName));
+		outfitChoice->AppendItem(wxString::FromUTF8(rawName), app->IsFavoriteOutfit(rawName), OutfitChoiceSuffix(rawName));
 
 	if (!SelectChoiceName(outfitChoice, outfitChoiceNames, selectedName)) {
 		int i = wxNOT_FOUND;
 		wxString missingItem = wxString::FromUTF8(selectedName);
 		if (missingItem.empty()) {
 			outfitChoiceNames.push_back("");
-			i = outfitChoice->Append("");
+			i = outfitChoice->AppendItem("");
 		}
 		else if (!missingItem.StartsWith("[")) {
 			outfitChoiceNames.push_back(selectedName);
-			i = outfitChoice->Append("[" + OutfitChoiceLabel(selectedName) + "]");
+			i = outfitChoice->AppendItem("[" + missingItem + "]", false, OutfitChoiceSuffix(selectedName));
 		}
 		else {
 			outfitChoiceNames.push_back(selectedName);
-			i = outfitChoice->Append(missingItem);
+			i = outfitChoice->AppendItem(missingItem);
 		}
 
 		outfitChoice->SetSelection(i);
@@ -7100,27 +7090,27 @@ void BodySlideFrame::RebuildPresetChoice(const std::string& selectItem) {
 	app->SortPresetNamesForDisplay(presetChoiceNames);
 
 	populatingChoices = true;
-	wxEventBlocker blocker(presetChoice, wxEVT_CHOICE);
+	wxEventBlocker blocker(presetChoice, wxEVT_COMBOBOX);
 	presetChoice->Freeze();
 	presetChoice->Clear();
 
 	for (const auto& rawName : presetChoiceNames)
-		presetChoice->Append(FavoriteChoiceLabel(rawName, app->IsFavoritePreset(rawName)));
+		presetChoice->AppendItem(wxString::FromUTF8(rawName), app->IsFavoritePreset(rawName));
 
 	if (!SelectChoiceName(presetChoice, presetChoiceNames, selectedName)) {
 		int i = wxNOT_FOUND;
 		wxString missingItem = wxString::FromUTF8(selectedName);
 		if (missingItem.empty()) {
 			presetChoiceNames.push_back("");
-			i = presetChoice->Append("");
+			i = presetChoice->AppendItem("");
 		}
 		else if (!missingItem.StartsWith("[")) {
 			presetChoiceNames.push_back(selectedName);
-			i = presetChoice->Append("[" + missingItem + "]");
+			i = presetChoice->AppendItem("[" + missingItem + "]");
 		}
 		else {
 			presetChoiceNames.push_back(selectedName);
-			i = presetChoice->Append(missingItem);
+			i = presetChoice->AppendItem(missingItem);
 		}
 
 		presetChoice->SetSelection(i);

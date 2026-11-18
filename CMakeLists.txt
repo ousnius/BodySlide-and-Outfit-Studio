@@ -470,6 +470,7 @@ set(BSOS_BODYSLIDE_SOURCES
 	src/program/NormalsGenDialog.cpp
 	src/program/PreviewWindow.cpp
 	src/ui/PreviewPanel.cpp
+	src/ui/wxFavoriteChoice.cpp
 	src/ui/wxNormalsGenDlg.cpp
 )
 
