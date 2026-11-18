@@ -48,7 +48,8 @@ class NiShape;
 
 class AutomationDialog : public wxDialog {
 public:
-	AutomationDialog(OutfitStudioFrame* outfitStudio, OutfitProject* project);
+	// A headless dialog doesn't restore or remember the last selected script.
+	AutomationDialog(OutfitStudioFrame* outfitStudio, OutfitProject* project, bool headless = false);
 	~AutomationDialog() override;
 
 	// Run an automation script without showing the dialog. Returns 0 on success,
@@ -189,7 +190,9 @@ private:
 	void PopulateAutomationList();
 	void CollectScripts(const wxString& baseFolder, const wxString& currentFolder, std::vector<std::pair<wxString, wxString>>& entries);
 	static bool IsSeparatorItem(const wxString& text);
-	void LoadAutomation(const wxString& name);
+	// Returns false if the script exists but can't be read. The dialog then starts a new script.
+	bool LoadAutomation(const wxString& name);
+	void ClearAutomation();
 	static wxString SanitizePath(const wxString& name);
 
 	void PopulateRefTemplates();

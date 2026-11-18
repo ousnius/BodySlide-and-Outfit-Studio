@@ -927,7 +927,7 @@ bool OutfitStudio::OnCmdLineParsed(wxCmdLineParser& parser) {
 int OutfitStudio::RunAutomationFromCmdLine() {
 	wxLogMessage("Automation: Running script '%s' in headless mode.", cmdAutomation);
 
-	AutomationDialog* dlg = new AutomationDialog(frame, frame->project);
+	AutomationDialog* dlg = new AutomationDialog(frame, frame->project, true);
 	// Dialog must remain unshown.
 
 	int code = dlg->RunHeadless(cmdAutomation, cmdFiles);

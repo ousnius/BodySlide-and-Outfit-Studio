@@ -477,8 +477,8 @@ wxBEGIN_EVENT_TABLE(AutomationDialog, wxDialog)
 	EVT_RADIOBOX(XRCID("radioBatchMode"), AutomationDialog::OnBatchModeChanged)
 wxEND_EVENT_TABLE()
 
-AutomationDialog::AutomationDialog(OutfitStudioFrame* outfitStudio, OutfitProject* project)
-	: outfitStudio(outfitStudio), project(project), runner(outfitStudio) {
+AutomationDialog::AutomationDialog(OutfitStudioFrame* outfitStudio, OutfitProject* project, bool headless)
+	: outfitStudio(outfitStudio), project(project), runner(outfitStudio), headlessMode(headless) {
 	wxXmlResource* xrc = wxXmlResource::Get();
 	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/Automation.xrc");
 	xrc->LoadDialog(this, outfitStudio, "dlgAutomation");
@@ -630,8 +630,8 @@ AutomationDialog::AutomationDialog(OutfitStudioFrame* outfitStudio, OutfitProjec
 	if (btnAddRigidifySlider)
 		btnAddRigidifySlider->Bind(wxEVT_BUTTON, &AutomationDialog::OnAddSliderToField, this);
 
-	// Restore last selected automation script
-	std::string lastScript = OutfitStudioConfig["AutomationDialog.lastScript"];
+	// Restore last selected automation script. Headless runs load their own script.
+	std::string lastScript = headlessMode ? std::string() : OutfitStudioConfig["AutomationDialog.lastScript"];
 	if (!lastScript.empty()) {
 		wxString name = wxString::FromUTF8(lastScript);
 		if (cmbAutomation && cmbAutomation->FindString(name) != wxNOT_FOUND) {
@@ -655,9 +655,11 @@ AutomationDialog::AutomationDialog(OutfitStudioFrame* outfitStudio, OutfitProjec
 
 AutomationDialog::~AutomationDialog() {
 	// Save last selected automation script
-	wxString name = cmbAutomation ? cmbAutomation->GetValue().Trim().Trim(false) : wxString();
-	OutfitStudioConfig.SetValue("AutomationDialog.lastScript", name.ToUTF8().data());
-	OutfitStudioConfig.SaveConfig(Config["AppDir"] + "/OutfitStudio.xml", "OutfitStudioConfig");
+	if (!headlessMode) {
+		wxString name = cmbAutomation ? cmbAutomation->GetValue().Trim().Trim(false) : wxString();
+		OutfitStudioConfig.SetValue("AutomationDialog.lastScript", name.ToUTF8().data());
+		OutfitStudioConfig.SaveConfig(Config["AppDir"] + "/OutfitStudio.xml", "OutfitStudioConfig");
+	}
 
 	wxXmlResource::Get()->Unload(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/Automation.xrc");
 }
@@ -2128,7 +2130,8 @@ int AutomationDialog::RunHeadless(const wxString& scriptName, const wxArrayStrin
 		return 2;
 	}
 
-	LoadAutomation(scriptName);
+	if (!LoadAutomation(scriptName))
+		return 9;
 
 	std::vector<size_t> indices;
 	for (size_t i = 0; i < script.GetSteps().size(); i++) {
@@ -2314,23 +2317,26 @@ int AutomationDialog::RunHeadless(const wxString& scriptName, const wxArrayStrin
 	return 8;
 }
 
-void AutomationDialog::LoadAutomation(const wxString& name) {
+bool AutomationDialog::LoadAutomation(const wxString& name) {
 	if (name.IsEmpty())
-		return;
+		return true;
 
 	wxString sanitized = SanitizePath(name);
 	wxString filePath = wxString::FromUTF8(GetAutomationsFolder()) + "/" + sanitized + ".xml";
 
 	if (!wxFileExists(filePath))
-		return;
+		return true;
 
 	int err = script.Load(filePath.ToUTF8().data());
 	if (err) {
+		// Don't keep the previous script's steps under this script's name
+		ClearAutomation();
+
 		if (headlessMode)
 			wxLogError("Automation: Failed to load automation script (error %d).", err);
 		else
 			wxMessageBox(wxString::Format(_("Failed to load automation script (error %d)."), err), _("Error"), wxICON_ERROR);
-		return;
+		return false;
 	}
 
 	selectedStep = -1;
@@ -2346,6 +2352,29 @@ void AutomationDialog::LoadAutomation(const wxString& name) {
 		paneVariables->Collapse(script.GetVariables().empty());
 	if (paneBatch)
 		paneBatch->Collapse(script.GetBatchMode() == AutomationBatchMode::None);
+
+	UpdateButtonState();
+	GetSizer()->Layout();
+	return true;
+}
+
+void AutomationDialog::ClearAutomation() {
+	script = AutomationScript();
+	selectedStep = -1;
+	ShowStepSettings(false);
+	PopulateStepList();
+	PopulateVariablesUI();
+	SyncBatchUIFromScript();
+
+	auto* paneVariables = XRCCTRL(*this, "paneVariables", wxCollapsiblePane);
+	auto* paneBatch = XRCCTRL(*this, "paneBatch", wxCollapsiblePane);
+	if (paneVariables)
+		paneVariables->Collapse(true);
+	if (paneBatch)
+		paneBatch->Collapse(true);
+
+	if (cmbAutomation)
+		cmbAutomation->SetValue(wxEmptyString);
 
 	UpdateButtonState();
 	GetSizer()->Layout();
@@ -2369,23 +2398,7 @@ void AutomationDialog::OnAutomationSelected(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	if (name == _("<New>")) {
-		script = AutomationScript();
-		selectedStep = -1;
-		ShowStepSettings(false);
-		PopulateStepList();
-		PopulateVariablesUI();
-		SyncBatchUIFromScript();
-
-		auto* paneVariables = XRCCTRL(*this, "paneVariables", wxCollapsiblePane);
-		auto* paneBatch = XRCCTRL(*this, "paneBatch", wxCollapsiblePane);
-		if (paneVariables)
-			paneVariables->Collapse(true);
-		if (paneBatch)
-			paneBatch->Collapse(true);
-
-		cmbAutomation->SetValue(wxEmptyString);
-		UpdateButtonState();
-		GetSizer()->Layout();
+		ClearAutomation();
 		return;
 	}
 	LoadAutomation(name);
