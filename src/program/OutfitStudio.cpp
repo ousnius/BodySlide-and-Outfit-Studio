@@ -16645,7 +16645,16 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 		return;
 	}
 
-	if (!event.HasAnyModifiers()) {
+	if (event.GetKeyCode() == WXK_SPACE && event.GetModifiers() == wxMOD_CONTROL) {
+		if (!os->editor.activeSlider.empty()) {
+			os->ExitSliderEdit();
+		}
+		else {
+			os->EnterSliderEdit();
+			os->ScrollToActiveSlider();
+		}
+	}
+	else if (!event.HasAnyModifiers()) {
 		if (event.GetUnicodeKey() == 'V') {
 			wxPoint cursorPos(event.GetPosition());
 
@@ -16751,26 +16760,15 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 		else if (event.GetUnicodeKey() == '9' && os->menuBar->IsEnabled(XRCID("btnAlphaBrush")))
 			os->SelectTool(ToolID::AlphaBrush);
 		else if (event.GetKeyCode() == WXK_SPACE) {
-			if (event.ControlDown()) {
-				if (!os->editor.activeSlider.empty()) {
-					os->ExitSliderEdit();
-				}
-				else {
-					os->EnterSliderEdit();
-					os->ScrollToActiveSlider();
-				}
+			if (os->brushSettingsPopupTransient && os->brushSettingsPopupTransient->IsShown()) {
+				os->CloseBrushSettings();
 			}
 			else {
-				if (os->brushSettingsPopupTransient && os->brushSettingsPopupTransient->IsShown()) {
-					os->CloseBrushSettings();
-				}
-				else {
-					bool brushSettingsNearCursor = Config.GetBoolValue("Input/BrushSettingsNearCursor");
-					if (brushSettingsNearCursor)
-						os->PopupBrushSettings();
-					else
-						os->PopupBrushSettings(os->brushSettings);
-				}
+				bool brushSettingsNearCursor = Config.GetBoolValue("Input/BrushSettingsNearCursor");
+				if (brushSettingsNearCursor)
+					os->PopupBrushSettings();
+				else
+					os->PopupBrushSettings(os->brushSettings);
 			}
 		}
 		else if (event.GetKeyCode() == WXK_ESCAPE) {
