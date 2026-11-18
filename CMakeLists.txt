@@ -537,6 +537,7 @@ if(BSOS_BUILD_TESTS)
 		tests/PoseDataJsonTest.cpp
 		tests/PoseFitTest.cpp
 		tests/PoseMathTest.cpp
+		tests/ProjectUtilTest.cpp
 		tests/SFMaterialDatabaseTest.cpp
 		tests/SFLayeredMaterialTest.cpp
 		tests/SFMaterialFileTest.cpp

@@ -269,6 +269,7 @@
     <ClCompile Include="tests\MeshDeformTest.cpp" />
     <ClCompile Include="tests\PoseFitTest.cpp" />
     <ClCompile Include="tests\PoseMathTest.cpp" />
+    <ClCompile Include="tests\ProjectUtilTest.cpp" />
     <ClCompile Include="tests\SurfaceFitTest.cpp" />
     <ClCompile Include="tests\TextureConvertTest.cpp" />
     <ClCompile Include="src\components\ArchiveIndex.cpp" />

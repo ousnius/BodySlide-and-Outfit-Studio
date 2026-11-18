@@ -326,6 +326,9 @@
     <ClCompile Include="tests\PoseMathTest.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
+    <ClCompile Include="tests\ProjectUtilTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
     <ClCompile Include="tests\SurfaceFitTest.cpp">
       <Filter>Tests</Filter>
     </ClCompile>

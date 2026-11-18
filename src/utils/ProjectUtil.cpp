@@ -16,20 +16,18 @@ std::string ProjectUtil::GetProjectPath() {
 	std::string appDir = Config["AppDir"];
 	std::string gameDataPath = Config["GameDataPath"];
 
-	// Build list of paths to check in order of preference
-	std::vector<std::string> pathsToCheck;
-
 	// First priority: configured ProjectPath (if set)
-	if (!projectPath.empty()) {
-		pathsToCheck.push_back(projectPath);
+	if (!projectPath.empty() && wxDir::Exists(projectPath)) {
+		return projectPath;
 	}
 
-	// Check if SliderSets subdirectory exists in appDir, but return appDir if it does
+	// Then the app dir, if it has project files
 	if (wxDir::Exists(appDir + PathSepStr + "SliderSets")) {
 		return appDir;
 	}
 
 	// Fallback paths in order of preference
+	std::vector<std::string> pathsToCheck;
 	pathsToCheck.push_back(gameDataPath + PathSepStr + "CalienteTools" + PathSepStr + "BodySlide");
 	pathsToCheck.push_back(gameDataPath + PathSepStr + "Tools" + PathSepStr + "BodySlide");
 
