@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
+#include "McpHelpers.h"
 #include "components/SliderPresets.h"
 #include "outfitstudio/OutfitStudioFrame.h"
 #include "utils/ProjectUtil.h"
@@ -18,13 +19,6 @@ using nlohmann::json;
 using namespace nifly;
 
 namespace {
-
-json Names(const std::vector<NiShape*>& shapes) {
-	json names = json::array();
-	for (NiShape* shape : shapes)
-		names.push_back(shape->name.get());
-	return names;
-}
 
 size_t SliderIndex(OutfitProject& project, const std::string& name) {
 	size_t index = 0;
@@ -407,7 +401,7 @@ void AddSliderFileTools(OutfitStudioMcp& mcp) {
 		if (kind == "empty")
 			frame->NewSlider(name, true);
 		else if (kind == "zap")
-			McpRunStep(mcp, {{"type", "NewZapSlider"}, {"TargetMeshes", Names(mcp.Shapes(args, "shapes", true))}, {"SliderName", name}});
+			McpRunStep(mcp, {{"type", "NewZapSlider"}, {"TargetMeshes", ShapeNames(mcp.Shapes(args, "shapes", true))}, {"SliderName", name}});
 		else if (kind == "combined")
 			McpRunStep(mcp, {{"type", "NewCombinedSlider"}, {"SliderName", name}});
 		else
@@ -444,7 +438,7 @@ void AddSliderFileTools(OutfitStudioMcp& mcp) {
 	negate.handler = [&mcp](const json& args) {
 		auto sliders = ExistingSliders(mcp.Project(), args, "sliders");
 		auto shapes = mcp.Shapes(args, "shapes");
-		McpRunStep(mcp, {{"type", "NegateSlider"}, {"TargetMeshes", Names(shapes)}, {"SliderNames", sliders}});
+		McpRunStep(mcp, {{"type", "NegateSlider"}, {"TargetMeshes", ShapeNames(shapes)}, {"SliderNames", sliders}});
 		return SlidersChanged(mcp.Project(), "negated", sliders);
 	};
 	mcp.AddTool(std::move(negate));
@@ -466,7 +460,7 @@ void AddSliderFileTools(OutfitStudioMcp& mcp) {
 		for (auto& slider : sliders)
 			SliderIndex(mcp.Project(), slider);
 		// Steps can replace the shapes, so only their names are kept
-		json shapes = Names(mcp.Shapes(args, "shapes", McpArgs::Bool(args, "allowReference", false)));
+		json shapes = ShapeNames(mcp.Shapes(args, "shapes", McpArgs::Bool(args, "allowReference", false)));
 		McpRunStep(mcp, {{"type", "ClearSliderData"}, {"TargetMeshes", shapes}, {"SliderNames", sliders}, {"UseMask", McpArgs::Bool(args, "useMask", true)}});
 		McpToolResult result = SlidersChanged(mcp.Project(), "cleared", sliders.empty() ? json("all") : json(sliders));
 		result.data["shapes"] = shapes;

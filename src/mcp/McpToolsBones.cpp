@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
+#include "McpHelpers.h"
 #include "components/Anim.h"
 #include "components/PoseMath.h"
 #include "outfitstudio/OutfitStudioFrame.h"
@@ -15,17 +16,6 @@ using nlohmann::json;
 using namespace nifly;
 
 namespace {
-
-json Names(const std::vector<NiShape*>& shapes) {
-	json names = json::array();
-	for (NiShape* shape : shapes)
-		names.push_back(shape->name.get());
-	return names;
-}
-
-json Vec(const Vector3& v) {
-	return {v.x, v.y, v.z};
-}
 
 Vector3 VectorArg(const json& args, const char* name) {
 	const json* value = McpArgs::Find(args, name);
@@ -42,9 +32,9 @@ json BoneJson(const AnimBone& bone) {
 		{"parent", bone.parent ? json(bone.parent->boneName) : json(nullptr)},
 		{"custom", !bone.isStandardBone},
 		{"inProject", bone.refCount > 0},
-		{"translation", Vec(bone.xformToParent.translation)},
-		{"rotation", Vec(RotMatToVec(bone.xformToParent.rotation))},
-		{"globalPosition", Vec(bone.xformToGlobal.translation)},
+		{"translation", McpVector(bone.xformToParent.translation)},
+		{"rotation", McpVector(RotMatToVec(bone.xformToParent.rotation))},
+		{"globalPosition", McpVector(bone.xformToGlobal.translation)},
 	};
 }
 
@@ -62,7 +52,7 @@ json BonePoseInfo(const AnimBone& bone, bool main, const PoseMath::TwistContext&
 		Vector3 direction = child->xformToGlobal.translation - bone.xformToGlobal.translation;
 		info["length"] = direction.length() * units;
 		direction.Normalize();
-		info["unposedDirection"] = Vec(direction);
+		info["unposedDirection"] = McpVector(direction);
 		info["reaches"] = child->boneName;
 	}
 
@@ -379,7 +369,7 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 
 		json step = {{"type", "DeleteBones"}, {"BoneNames", bones}, {"FromProject", !McpArgs::Has(args, "shapes")}};
 		if (McpArgs::Has(args, "shapes"))
-			step["TargetMeshes"] = Names(mcp.Shapes(args, "shapes", true));
+			step["TargetMeshes"] = ShapeNames(mcp.Shapes(args, "shapes", true));
 		McpRunStep(mcp, step);
 		frame->UpdateAnimationGUI();
 
@@ -409,7 +399,7 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 		if (mode != "skin_from_node" && mode != "node_from_skin")
 			McpArgs::Wrong("mode", "skin_from_node or node_from_skin");
 
-		json names = Names(mcp.Shapes(args, "shapes", true));
+		json names = ShapeNames(mcp.Shapes(args, "shapes", true));
 		McpRunStep(mcp, {{"type", "SetBoneTransform"}, {"TargetMeshes", names}, {"BoneNames", bones}, {"Mode", mode == "skin_from_node" ? 0 : 1}});
 		frame->UpdateAnimationGUI();
 
@@ -433,7 +423,7 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 	transfer.handler = [&mcp](const json& args) {
 		if (!mcp.Project().GetBaseShape())
 			throw McpToolError("There is no reference shape to transfer weights from.");
-		json names = Names(mcp.Shapes(args, "shapes"));
+		json names = ShapeNames(mcp.Shapes(args, "shapes"));
 		McpRunStep(mcp,
 				   {{"type", "TransferWeights"},
 					{"TargetMeshes", names},
@@ -451,7 +441,7 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 	removeSkinning.description = "Removes the skinning and all bone weights of shapes, so they no longer follow the bones.";
 	removeSkinning.inputSchema = McpSchema({{"shapes", McpStringList("Shapes, the selected ones by default")}});
 	removeSkinning.handler = [&mcp, frame](const json& args) {
-		json names = Names(mcp.Shapes(args, "shapes", true));
+		json names = ShapeNames(mcp.Shapes(args, "shapes", true));
 		McpRunStep(mcp, {{"type", "RemoveSkinning"}, {"TargetMeshes", names}});
 		frame->UpdateAnimationGUI();
 

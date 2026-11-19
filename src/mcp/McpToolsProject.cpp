@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
+#include "McpHelpers.h"
 #include "components/AddOnSliders.h"
 #include "components/AutomationJson.h"
 #include "project/AutomationRunner.h"
@@ -29,10 +30,6 @@ using nlohmann::json;
 using namespace nifly;
 
 namespace {
-
-std::string ToUTF8(const wxString& text) {
-	return text.ToUTF8().data();
-}
 
 // Path relative to the BodySlide folder, the way the tools take it back
 std::string RelativeToProject(const wxString& path) {

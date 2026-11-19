@@ -1702,6 +1702,9 @@
     <ClInclude Include="src\mcp\McpArgs.h">
       <Filter>MCP</Filter>
     </ClInclude>
+    <ClInclude Include="src\mcp\McpHelpers.h">
+      <Filter>MCP</Filter>
+    </ClInclude>
     <ClInclude Include="src\mcp\McpProtocol.h">
       <Filter>MCP</Filter>
     </ClInclude>

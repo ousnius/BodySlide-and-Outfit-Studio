@@ -917,6 +917,7 @@
     <ClInclude Include="src\ui\outfitstudio\SliderDataImportDialog.h" />
     <ClInclude Include="src\ui\outfitstudio\AddProjectDialog.h" />
     <ClInclude Include="src\mcp\McpArgs.h" />
+    <ClInclude Include="src\mcp\McpHelpers.h" />
     <ClInclude Include="src\mcp\McpProtocol.h" />
     <ClInclude Include="src\mcp\McpServer.h" />
     <ClInclude Include="src\mcp\McpSnapshots.h" />

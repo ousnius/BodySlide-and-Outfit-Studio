@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
+#include "McpHelpers.h"
 #include "components/Anim.h"
 #include "components/MeshAnalysis.h"
 #include "components/PhysicsChains.h"
@@ -26,10 +27,6 @@ using namespace nifly;
 
 namespace {
 
-json Vec(const Vector3& v) {
-	return {v.x, v.y, v.z};
-}
-
 Vector3 VectorArg(const json& args, const char* name, const Vector3& fallback) {
 	const json* value = McpArgs::Find(args, name);
 	if (!value)
@@ -37,12 +34,6 @@ Vector3 VectorArg(const json& args, const char* name, const Vector3& fallback) {
 	if (!value->is_array() || value->size() != 3 || !(*value)[0].is_number() || !(*value)[1].is_number() || !(*value)[2].is_number())
 		McpArgs::Wrong(name, "an array of three numbers");
 	return Vector3((*value)[0].get<float>(), (*value)[1].get<float>(), (*value)[2].get<float>());
-}
-
-std::vector<Triangle> Triangles(NiShape* shape) {
-	std::vector<Triangle> tris;
-	shape->GetTriangles(tris);
-	return tris;
 }
 
 // Custom bones whose name starts with prefix and a space
@@ -157,7 +148,7 @@ McpToolResult MakePhysicsChains(OutfitStudioMcp& mcp, const json& args) {
 		const float rootDistance = McpArgs::Float(args, "rootDistance", 2.5f);
 		const float supportDistance = std::max(rootDistance, McpArgs::Float(args, "rootSupportDistance", 0.0f));
 		const float supportHeight = anchorPos.z + McpArgs::Float(args, "rootSupportHeight", 2.0f);
-		auto closest = MeshAnalysis::ClosestSurfacePoints(surface, Triangles(rootShape), verts, supportDistance);
+		auto closest = MeshAnalysis::ClosestSurfacePoints(surface, ShapeTriangles(rootShape), verts, supportDistance);
 		for (size_t v = 0; v < verts.size(); v++) {
 			if (closest[v].triangle < 0 || verts[v].z < anchorPos.z + rootMinHeight)
 				continue;
@@ -213,7 +204,7 @@ McpToolResult MakePhysicsChains(OutfitStudioMcp& mcp, const json& args) {
 					a = parent[a] = parent[parent[a]];
 				return a;
 			};
-			for (auto& t : Triangles(mcp.Shape(shapeNames[i]))) {
+			for (auto& t : ShapeTriangles(mcp.Shape(shapeNames[i]))) {
 				if (t.p1 >= count || t.p2 >= count || t.p3 >= count)
 					continue;
 				parent[find(t.p1)] = find(t.p2);
@@ -249,7 +240,7 @@ McpToolResult MakePhysicsChains(OutfitStudioMcp& mcp, const json& args) {
 				neighbors[b].push_back(int(a));
 			}
 		};
-		for (auto& t : Triangles(mcp.Shape(shapeNames[i]))) {
+		for (auto& t : ShapeTriangles(mcp.Shape(shapeNames[i]))) {
 			link(t.p1, t.p2);
 			link(t.p2, t.p3);
 			link(t.p3, t.p1);
@@ -264,7 +255,7 @@ McpToolResult MakePhysicsChains(OutfitStudioMcp& mcp, const json& args) {
 		auto& chain = detected.chains[c];
 		json joints = json::array();
 		for (auto& j : chain.joints)
-			joints.push_back(Vec(j));
+			joints.push_back(McpVector(j));
 		chains.push_back({
 			{"side", chain.side},
 			{"azimuth", std::round(chain.azimuth)},

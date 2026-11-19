@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
+#include "McpHelpers.h"
 #include "outfitstudio/OutfitStudioFrame.h"
 #include "outfitstudio/GLPanel.h"
 #include "components/UndoHistory.h"
@@ -25,24 +26,6 @@ constexpr size_t MaxEntriesPerCall = 20000;
 
 const json ShapesProp = McpStringList("Outfit shapes, the selected ones by default");
 constexpr const char* SnapshotNote = " Like automation, this isn't in the undo history: take a snapshot_save first to go back.";
-
-Mesh* ShapeMesh(OutfitStudioMcp& mcp, NiShape* shape) {
-	Mesh* m = mcp.Project().GetHost().GetShapeMesh(shape->name.get());
-	if (!m)
-		throw McpToolError("The shape '" + shape->name.get() + "' has no mesh in the view.");
-	return m;
-}
-
-json Names(const std::vector<NiShape*>& shapes) {
-	json names = json::array();
-	for (NiShape* shape : shapes)
-		names.push_back(shape->name.get());
-	return names;
-}
-
-json Vec(const Vector3& v) {
-	return {v.x, v.y, v.z};
-}
 
 // The shapes of the project after a change, with their sizes
 McpToolResult ShapeList(OutfitStudioMcp& mcp) {
@@ -228,7 +211,7 @@ McpToolResult GetShapeGeometry(OutfitStudioMcp& mcp, const json& args) {
 			hi.y = std::max(hi.y, v.y);
 			hi.z = std::max(hi.z, v.z);
 		}
-		data["bounds"] = {{"min", Vec(lo)}, {"max", Vec(hi)}, {"center", Vec((lo + hi) * 0.5f)}, {"size", Vec(hi - lo)}};
+		data["bounds"] = {{"min", McpVector(lo)}, {"max", McpVector(hi)}, {"center", McpVector((lo + hi) * 0.5f)}, {"size", McpVector(hi - lo)}};
 	}
 
 	std::vector<std::string> include = McpArgs::Strings(args, "include");
@@ -256,9 +239,9 @@ McpToolResult GetShapeGeometry(OutfitStudioMcp& mcp, const json& args) {
 	for (int v : selection) {
 		json entry = {{"index", v}};
 		if (wants("positions"))
-			entry["position"] = Vec(verts[v]);
+			entry["position"] = McpVector(verts[v]);
 		if (wants("normals") && m && m->norms && v < m->nVerts)
-			entry["normal"] = Vec(Mesh::TransformDirMeshToNif(m->norms[v]));
+			entry["normal"] = McpVector(Mesh::TransformDirMeshToNif(m->norms[v]));
 		if (wants("uvs") && v < static_cast<int>(uvs.size()))
 			entry["uv"] = {uvs[v].u, uvs[v].v};
 		if (wants("colors") && v < static_cast<int>(colors.size()))
@@ -845,7 +828,7 @@ McpToolResult GetShapeProperties(OutfitStudioMcp& mcp, const json& args) {
 			{"properties",
 			 {
 				 {"ShaderType", shaderType},
-				 {"SpecularColor", Vec(values->GetSpecularColor())},
+				 {"SpecularColor", McpVector(values->GetSpecularColor())},
 				 {"SpecularStrength", shader->GetSpecularStrength()},
 				 {"SpecularPower", values->GetGlossiness()},
 				 {"EmissiveColor", {emissive.r, emissive.g, emissive.b, emissive.a}},
@@ -1545,7 +1528,7 @@ void AddShapeTools(OutfitStudioMcp& mcp) {
 		if (McpArgs::Strings(args, "shapes").empty())
 			McpArgs::Wrong("shapes", "a list of shape names");
 		auto shapes = mcp.Shapes(args, "shapes", true);
-		McpRunStep(mcp, {{"type", "DeleteShape"}, {"TargetMeshes", Names(shapes)}});
+		McpRunStep(mcp, {{"type", "DeleteShape"}, {"TargetMeshes", ShapeNames(shapes)}});
 		return ShapeList(mcp);
 	};
 	mcp.AddTool(std::move(deleteShapes));
@@ -1579,7 +1562,7 @@ void AddShapeTools(OutfitStudioMcp& mcp) {
 	reorder.handler = [&mcp](const json& args) {
 		if (McpArgs::Strings(args, "shapes").empty())
 			McpArgs::Wrong("shapes", "a list of shape names");
-		std::vector<std::string> moved = Names(mcp.Shapes(args, "shapes", true));
+		std::vector<std::string> moved = ShapeNames(mcp.Shapes(args, "shapes", true));
 		if (std::set<std::string>(moved.begin(), moved.end()).size() != moved.size())
 			throw McpToolError("A shape is named more than once in 'shapes'.");
 
@@ -1651,7 +1634,7 @@ void AddShapeTools(OutfitStudioMcp& mcp) {
 		auto shapes = mcp.Shapes(args, "shapes");
 		McpRunStep(mcp,
 				   {{"type", "DeleteVertices"},
-					{"TargetMeshes", Names(shapes)},
+					{"TargetMeshes", ShapeNames(shapes)},
 					{"DeleteMasked", McpArgs::Bool(args, "masked", false)},
 					{"DeleteEmptyShapes", McpArgs::Bool(args, "deleteEmptyShapes", true)}});
 		return ShapeList(mcp);
@@ -1699,7 +1682,7 @@ void AddShapeTools(OutfitStudioMcp& mcp) {
 	refine.description = std::string("Subdivides the unmasked triangles of shapes, adding vertices on the curve of the surface.") + SnapshotNote;
 	refine.inputSchema = McpSchema({{"shapes", ShapesProp}});
 	refine.handler = [&mcp](const json& args) {
-		McpRunStep(mcp, {{"type", "RefineMesh"}, {"TargetMeshes", Names(mcp.Shapes(args, "shapes"))}});
+		McpRunStep(mcp, {{"type", "RefineMesh"}, {"TargetMeshes", ShapeNames(mcp.Shapes(args, "shapes"))}});
 		return ShapeList(mcp);
 	};
 	mcp.AddTool(std::move(refine));
@@ -1758,7 +1741,7 @@ void AddShapeTools(OutfitStudioMcp& mcp) {
 		auto has = [&axes](const char* axis) { return std::find(axes.begin(), axes.end(), axis) != axes.end(); };
 		McpRunStep(mcp,
 				   {{"type", "MirrorShape"},
-					{"TargetMeshes", Names(mcp.Shapes(args, "shapes"))},
+					{"TargetMeshes", ShapeNames(mcp.Shapes(args, "shapes"))},
 					{"MirrorX", has("x")},
 					{"MirrorY", has("y")},
 					{"MirrorZ", has("z")},
@@ -1775,7 +1758,7 @@ void AddShapeTools(OutfitStudioMcp& mcp) {
 		bool u = McpArgs::Bool(args, "u", false), v = McpArgs::Bool(args, "v", false);
 		if (!u && !v)
 			throw McpToolError("Pass u: true, v: true or both.");
-		McpRunStep(mcp, {{"type", "InvertUVs"}, {"TargetMeshes", Names(mcp.Shapes(args, "shapes"))}, {"InvertU", u}, {"InvertV", v}});
+		McpRunStep(mcp, {{"type", "InvertUVs"}, {"TargetMeshes", ShapeNames(mcp.Shapes(args, "shapes"))}, {"InvertU", u}, {"InvertV", v}});
 		return ShapeList(mcp);
 	};
 	mcp.AddTool(std::move(invertUVs));
@@ -1794,7 +1777,7 @@ void AddShapeTools(OutfitStudioMcp& mcp) {
 		auto triState = [&args](const char* name) { return McpArgs::Has(args, name) ? (McpArgs::Bool(args, name, false) ? 1 : 0) : -1; };
 		McpRunStep(mcp,
 				   {{"type", "RecalcNormals"},
-					{"TargetMeshes", Names(mcp.Shapes(args, "shapes", true))},
+					{"TargetMeshes", ShapeNames(mcp.Shapes(args, "shapes", true))},
 					{"Force", McpArgs::Bool(args, "force", true)},
 					{"SeamSmooth", triState("smoothSeams")},
 					{"SeamAngle", McpArgs::Float(args, "seamAngle", -1.0f)},
@@ -1914,7 +1897,7 @@ void AddShapeTools(OutfitStudioMcp& mcp) {
 	transforms.handler = [&mcp](const json& args) {
 		std::string op = McpArgs::String(args, "op");
 		if (op == "apply")
-			McpRunStep(mcp, {{"type", "ApplyTransforms"}, {"TargetMeshes", Names(mcp.Shapes(args, "shapes", true))}});
+			McpRunStep(mcp, {{"type", "ApplyTransforms"}, {"TargetMeshes", ShapeNames(mcp.Shapes(args, "shapes", true))}});
 		else if (op == "reset")
 			McpRunStep(mcp, {{"type", "ResetTransforms"}});
 		else
@@ -2053,7 +2036,7 @@ void AddShapeTools(OutfitStudioMcp& mcp) {
 		if ((!props || !props->is_object() || props->empty()) && (!flags || !flags->is_object() || flags->empty()))
 			McpArgs::Wrong("properties", "an object of property names to values, or flags an object of flag names to true or false");
 		std::vector<NiShape*> shapes = mcp.Shapes(args, "shapes", true);
-		json names = Names(shapes);
+		json names = ShapeNames(shapes);
 
 		if (flags && flags->is_object()) {
 			const auto& flagBits = LightingFlagBits();
@@ -2143,7 +2126,7 @@ void AddShapeTools(OutfitStudioMcp& mcp) {
 				throw McpToolError("'" + item.key() + "' isn't a texture slot index.");
 			list.push_back({{"index", slot}, {"path", item.value().get<std::string>()}});
 		}
-		json names = Names(mcp.Shapes(args, "shapes", true));
+		json names = ShapeNames(mcp.Shapes(args, "shapes", true));
 		McpRunStep(mcp, {{"type", "SetTexturePaths"}, {"TargetMeshes", names}, {"TexturePaths", list}});
 		return GetShapeProperties(mcp, {{"shape", names.front()}});
 	};
@@ -2179,7 +2162,7 @@ void AddShapeTools(OutfitStudioMcp& mcp) {
 			throw McpToolError("Give at least one of skinned, fullPrecision, subIndex, dynamic and bonesPerVertex.");
 
 		// The step can replace the shape blocks, so only the names are kept
-		json names = Names(mcp.Shapes(args, "shapes", true));
+		json names = ShapeNames(mcp.Shapes(args, "shapes", true));
 		if (setBonesPerVertex) {
 			const int bonesPerVertex = McpArgs::Int(args, "bonesPerVertex", 0);
 			if (bonesPerVertex < 0 || bonesPerVertex > 8)
@@ -2309,7 +2292,7 @@ void AddShapeTools(OutfitStudioMcp& mcp) {
 	extraData.handler = [&mcp](const json& args) {
 		json step = {{"Name", McpArgs::String(args, "name")}};
 		if (McpArgs::Has(args, "shapes"))
-			step["TargetMeshes"] = Names(mcp.Shapes(args, "shapes", true));
+			step["TargetMeshes"] = ShapeNames(mcp.Shapes(args, "shapes", true));
 		if (McpArgs::Bool(args, "delete", false))
 			step["type"] = "DeleteExtraData";
 		else {
@@ -2397,7 +2380,7 @@ void AddShapeTools(OutfitStudioMcp& mcp) {
 	copyPartitions.description = "Copies the partitions or segments of the reference shape to outfit shapes by the nearest reference triangle.";
 	copyPartitions.inputSchema = McpSchema({{"shapes", ShapesProp}});
 	copyPartitions.handler = [&mcp](const json& args) {
-		json names = Names(mcp.Shapes(args, "shapes"));
+		json names = ShapeNames(mcp.Shapes(args, "shapes"));
 		McpRunStep(mcp, {{"type", "CopySegPart"}, {"TargetMeshes", names}});
 		return GetPartitions(mcp, {{"shape", names.front()}});
 	};

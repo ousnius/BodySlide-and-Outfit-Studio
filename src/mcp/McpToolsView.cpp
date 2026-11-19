@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
+#include "McpHelpers.h"
 #include "components/PoseMath.h"
 #include "outfitstudio/OutfitStudioFrame.h"
 #include "outfitstudio/GLPanel.h"
@@ -45,10 +46,6 @@ ShapeDisplayMode ModeFromName(const std::string& name) {
 	throw McpToolError("Display mode '" + name + "' has to be visible, hidden or ghost.");
 }
 
-json VectorToJson(const Vector3& v) {
-	return json::array({v.x, v.y, v.z});
-}
-
 Vector3 VectorFromJson(const json& value, const char* name) {
 	if (!value.is_array() || value.size() != 3 || !value[0].is_number() || !value[1].is_number() || !value[2].is_number())
 		McpArgs::Wrong(name, "an array of three numbers");
@@ -62,10 +59,10 @@ json ViewStateToJson(const ViewState& state) {
 
 	return {
 		{"camera",
-		 {{"position", VectorToJson(state.camera.camPos)},
-		  {"offset", VectorToJson(state.camera.camOffset)},
-		  {"rotation", VectorToJson(state.camera.camRot)},
-		  {"rotationOffset", VectorToJson(state.camera.camRotOffset)},
+		 {{"position", McpVector(state.camera.camPos)},
+		  {"offset", McpVector(state.camera.camOffset)},
+		  {"rotation", McpVector(state.camera.camRot)},
+		  {"rotationOffset", McpVector(state.camera.camRotOffset)},
 		  {"perspective", state.camera.perspective},
 		  {"fov", state.camera.fov}}},
 		{"display",
@@ -247,7 +244,7 @@ json OrbitToJson(const GLSurface::CameraState& camera) {
 	if (!camera.camRotOffset.IsZero(true) || std::abs(camera.camPos.x) > 1e-4f || std::abs(camera.camPos.y) > 1e-4f)
 		return nullptr;
 	return {
-		{"target", VectorToJson(Mesh::TransformPosMeshToNif(camera.camOffset * -1.0f))},
+		{"target", McpVector(Mesh::TransformPosMeshToNif(camera.camOffset * -1.0f))},
 		{"yaw", camera.camRot.y},
 		{"pitch", camera.camRot.x},
 		{"distance", -camera.camPos.z * 10.0f},
@@ -857,7 +854,7 @@ McpToolResult ListShapes(OutfitStudioMcp& mcp, const json& args) {
 				hi.y = std::max(hi.y, v.y);
 				hi.z = std::max(hi.z, v.z);
 			}
-			entry["bounds"] = {{"min", VectorToJson(lo)}, {"max", VectorToJson(hi)}};
+			entry["bounds"] = {{"min", McpVector(lo)}, {"max", McpVector(hi)}};
 		}
 
 		ShapeDisplayMode mode;

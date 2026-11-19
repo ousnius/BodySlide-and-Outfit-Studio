@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
+#include "McpHelpers.h"
 #include "components/MaskOps.h"
 #include "project/BrushStrokeController.h"
 #include "outfitstudio/OutfitStudioFrame.h"
@@ -22,13 +23,6 @@ using namespace nifly;
 namespace {
 
 constexpr size_t MaxVerticesPerCall = 20000;
-
-Mesh* ShapeMesh(OutfitStudioMcp& mcp, NiShape* shape) {
-	Mesh* m = mcp.Project().GetHost().GetShapeMesh(shape->name.get());
-	if (!m)
-		throw McpToolError("The shape '" + shape->name.get() + "' has no mesh in the view.");
-	return m;
-}
 
 int VertexIndex(const std::string& key, const Mesh* m) {
 	int vertex = -1;

@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
+#include "McpHelpers.h"
 #include "McpSnapshots.h"
 #include "components/MaskOps.h"
 #include "components/MeshAnalysis.h"
@@ -25,10 +26,6 @@ using nlohmann::json;
 using namespace nifly;
 
 namespace {
-
-float Round(float v, float step = 0.01f) {
-	return std::round(v / step) * step;
-}
 
 // Vertices of a shape as the sliders morph it, unposed, in the skeleton's global space and units
 std::vector<Vector3> GlobalVerts(OutfitProject& project, NiShape* shape, float units) {
@@ -247,9 +244,9 @@ std::vector<AnimBone*> DefaultFitBones(const std::vector<PoseFit::Template>& tem
 json PoseSummary(const PoseFit::Result& fit, float units) {
 	json bones = json::array();
 	for (auto& b : fit.bones) {
-		json entry = {{"bone", b.bone->boneName}, {"matches", b.matches}, {"distance", Round(b.distance * units)}, {"turned", Round(b.turnedDegrees, 0.1f)}};
+		json entry = {{"bone", b.bone->boneName}, {"matches", b.matches}, {"distance", RoundTo(b.distance * units)}, {"turned", RoundTo(b.turnedDegrees, 0.1f)}};
 		if (std::fabs(b.scale - 1.0f) > 1e-3f)
-			entry["scale"] = Round(b.scale, 0.001f);
+			entry["scale"] = RoundTo(b.scale, 0.001f);
 		bones.push_back(entry);
 	}
 	return bones;
@@ -314,8 +311,8 @@ McpToolResult FitPoseToShapes(OutfitStudioMcp& mcp, const json& args) {
 	frame->ApplyRefresh(ops.SetPreviewPose(posed));
 
 	McpToolResult result;
-	result.data["distanceBefore"] = Round(fit.distanceBefore * units);
-	result.data["distanceAfter"] = Round(fit.distanceAfter * units);
+	result.data["distanceBefore"] = RoundTo(fit.distanceBefore * units);
+	result.data["distanceAfter"] = RoundTo(fit.distanceAfter * units);
 	result.data["matchedVertices"] = fit.matchesAfter;
 	result.data["bones"] = PoseSummary(fit, units);
 	result.data["note"] =
@@ -401,21 +398,21 @@ McpToolResult ScaleToBody(OutfitStudioMcp& mcp, const json& args) {
 	frame->UpdateUndoTools();
 
 	McpToolResult result;
-	result.data["scale"] = Round(scale, 0.0001f);
+	result.data["scale"] = RoundTo(scale, 0.0001f);
 	result.data["estimated"] = estimated;
 	if (estimated) {
-		result.data["meanDistance"] = Round(estimate.distance);
+		result.data["meanDistance"] = RoundTo(estimate.distance);
 		result.data["method"] = estimate.byLegs ? "leg length" : "best match";
 		if (estimate.byLegs) {
-			result.data["figureCrotchHeight"] = Round(estimate.figureCrotch);
-			result.data["templateCrotchHeight"] = Round(estimate.templateCrotch);
+			result.data["figureCrotchHeight"] = RoundTo(estimate.figureCrotch);
+			result.data["templateCrotchHeight"] = RoundTo(estimate.templateCrotch);
 		}
 		if (!estimate.byLegs)
 			result.data["note"] = "The legs couldn't be measured (no gap between them), so the size is the best match, which a figure of other "
 								  "proportions can throw off. Check it with render_view from the front and the side, and give scale to correct it.";
 	}
-	result.data["figureFeet"] = {Round(estimate.figureFloor.x), Round(estimate.figureFloor.y), Round(estimate.figureFloor.z)};
-	result.data["templateFeet"] = {Round(estimate.templateFloor.x), Round(estimate.templateFloor.y), Round(estimate.templateFloor.z)};
+	result.data["figureFeet"] = {RoundTo(estimate.figureFloor.x), RoundTo(estimate.figureFloor.y), RoundTo(estimate.figureFloor.z)};
+	result.data["templateFeet"] = {RoundTo(estimate.templateFloor.x), RoundTo(estimate.templateFloor.y), RoundTo(estimate.templateFloor.z)};
 	result.data["changedVertices"] = changed;
 	return result;
 }
@@ -538,9 +535,9 @@ McpToolResult UnposeShapes(OutfitStudioMcp& mcp, const json& args) {
 			maxMove = std::max(maxMove, diff.length());
 		}
 
-		json entry = {{"movedVertices", uss.restDiffs.size()}, {"meanMove", uss.restDiffs.empty() ? 0.0f : Round(static_cast<float>(moveSum / uss.restDiffs.size()))}, {"maxMove", Round(maxMove)}};
+		json entry = {{"movedVertices", uss.restDiffs.size()}, {"meanMove", uss.restDiffs.empty() ? 0.0f : RoundTo(static_cast<float>(moveSum / uss.restDiffs.size()))}, {"maxMove", RoundTo(maxMove)}};
 		MeshAnalysis::StrainStats strain = MeshAnalysis::AnalyzeStrain(posedPoints, rest, tris, 0.25f);
-		entry["maxStrain"] = Round(strain.maxStrain);
+		entry["maxStrain"] = RoundTo(strain.maxStrain);
 		entry["strainedEdges"] = strain.stretched;
 		if (unweighted)
 			entry["notNearTemplates"] = unweighted;
@@ -757,24 +754,24 @@ McpToolResult FitToBody(OutfitStudioMcp& mcp, const json& args) {
 
 		shapesResult[shape->name.get()] = {
 			{"movedVertices", diffs.size()},
-			{"meanMove", Round(fit.meanMove)},
-			{"maxMove", Round(fit.maxMove)},
+			{"meanMove", RoundTo(fit.meanMove)},
+			{"maxMove", RoundTo(fit.maxMove)},
 			{"pulled", fit.pulled},
 			{"followed", fit.followed},
-			{"meanGapError", Round(fit.meanGapError)},
-			{"maxGapError", Round(fit.maxGapError)},
+			{"meanGapError", RoundTo(fit.meanGapError)},
+			{"maxGapError", RoundTo(fit.maxGapError)},
 			{"insideBefore", fit.insideBefore},
 			{"insideAfter", fit.insideAfter},
 			{"bodyPokingThroughBefore", fit.pokeBefore},
 			{"bodyPokingThroughAfter", fit.pokeAfter},
 			{"flippedTriangles", fit.flipped},
-			{"maxStrain", Round(fit.maxStrain)},
-			{"meanStrain", Round(fit.meanStrain, 0.001f)},
+			{"maxStrain", RoundTo(fit.maxStrain)},
+			{"meanStrain", RoundTo(fit.meanStrain, 0.001f)},
 			{"strainedEdges", fit.strainedEdges},
 			{"keptForm", fit.relaxed},
 		};
 		if (autoGap)
-			shapesResult[shape->name.get()]["autoGap"] = {{"gap", Round(shapeOptions.gap)}, {"borderVertices", borderVertices}};
+			shapesResult[shape->name.get()]["autoGap"] = {{"gap", RoundTo(shapeOptions.gap)}, {"borderVertices", borderVertices}};
 	}
 
 	if (usp->usss.empty()) {
@@ -912,7 +909,7 @@ McpToolResult FixFlippedTriangles(OutfitStudioMcp& mcp, const json& args) {
 			{"flippedBefore", fix.flippedBefore},
 			{"flippedAfter", fix.flippedAfter},
 			{"movedVertices", fix.movedVertices},
-			{"maxMove", Round(fix.maxMove, 0.001f)},
+			{"maxMove", RoundTo(fix.maxMove, 0.001f)},
 			{"rings", fix.rings},
 		};
 		if (fix.movedVertices == 0)
@@ -1050,8 +1047,8 @@ McpToolResult MakeContactMorph(OutfitStudioMcp& mcp, const json& args) {
 		{"shape", body->name.get()},
 		{"coveredVertices", morph.covered},
 		{"movedVertices", moved},
-		{"maxDepth", Round(morph.maxDepth, 0.001f)},
-		{"maxBulge", Round(morph.maxBulge, 0.001f)},
+		{"maxDepth", RoundTo(morph.maxDepth, 0.001f)},
+		{"maxBulge", RoundTo(morph.maxBulge, 0.001f)},
 	};
 
 	// The outfit moves with the body under it
@@ -1075,7 +1072,7 @@ McpToolResult MakeContactMorph(OutfitStudioMcp& mcp, const json& args) {
 				maxMove = std::max(maxMove, deltas[i].length());
 			}
 		}
-		followResult[follower->name.get()] = {{"movedVertices", followed}, {"maxMove", Round(maxMove, 0.001f)}};
+		followResult[follower->name.get()] = {{"movedVertices", followed}, {"maxMove", RoundTo(maxMove, 0.001f)}};
 		followDeltas.emplace_back(follower, std::move(deltas));
 	}
 	result.data["follow"] = followResult;
