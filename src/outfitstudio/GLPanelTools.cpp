@@ -6,6 +6,7 @@ See the included LICENSE file
 // Viewport: the editing tools - brush strokes, vertex and edge tools, physics grab and brush settings
 
 #include "GLPanel.h"
+#include "PhysicsPreview.h"
 #include "OutfitStudioFrame.h"
 #include "ShapeTreeItems.h"
 #include "ui/wxStateButton.h"
@@ -615,14 +616,14 @@ void wxGLPanel::CancelEdgeSlide() {
 }
 
 bool wxGLPanel::StartPhysicsGrab(const wxPoint& screenPos) {
-	const auto& affectedShapes = os->GetPhysicsAffectedShapes();
+	const auto& affectedShapes = os->physicsPreview->GetAffectedShapes();
 	if (affectedShapes.empty())
 		return false;
 
 	// The pump skips the BVH update every frame, so the trees still describe
 	// the pose the simulation started from. Fit them to where the mesh is now,
 	// or the grab misses the cloth that has swung away since.
-	os->RefitPhysicsBVH();
+	os->physicsPreview->RefitBVH();
 
 	// Any shape the simulation moves can be grabbed, whether or not it is one
 	// of the shapes picked for editing: what is being grabbed is the
@@ -664,7 +665,7 @@ bool wxGLPanel::StartPhysicsGrab(const wxPoint& screenPos) {
 	if (!CollectPhysicsGrabTargets(hitMesh, hitMeshPos, targets))
 		return false;
 
-	if (!os->BeginPhysicsGrab(targets))
+	if (!os->physicsPreview->BeginGrab(targets))
 		return false;
 
 	// The simulation pulls the grabbed patch out from under the cursor right
@@ -772,14 +773,14 @@ void wxGLPanel::UpdatePhysicsGrab(const wxPoint& screenPos) {
 	if (!gls.CollidePlane(screenPos.x, screenPos.y, target, physicsGrabPlaneNormal, physicsGrabPlaneDist))
 		return;
 
-	os->UpdatePhysicsGrab(Mesh::TransformDiffMeshToNif(target - physicsGrabStart));
+	os->physicsPreview->UpdateGrab(Mesh::TransformDiffMeshToNif(target - physicsGrabStart));
 	ShowPhysicsGrabMarker(target);
 }
 
 void wxGLPanel::EndPhysicsGrab() {
 	isPhysicsGrabbing = false;
 	HidePhysicsGrabMarker();
-	os->EndPhysicsGrab();
+	os->physicsPreview->EndGrab();
 }
 
 void wxGLPanel::ShowPhysicsGrabMarker(const Vector3& modelPos) {

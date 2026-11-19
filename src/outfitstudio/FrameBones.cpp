@@ -6,6 +6,7 @@ See the included LICENSE file
 // Outfit Studio window: the bone list, bones, skinning and bone weights
 
 #include "OutfitStudioFrame.h"
+#include "PhysicsPreview.h"
 #include "ShapeTreeItems.h"
 #include "GLPanel.h"
 #include "OutfitStudioApp.h"
@@ -245,7 +246,7 @@ void OutfitStudioFrame::UpdateAnimationGUI() {
 
 	RefreshGUIWeightColors();
 	PoseToGUI();
-	UpdatePhysicsControlsVisibility();
+	physicsPreview->UpdateControlsVisibility();
 
 	glView->UpdateNodes();
 	glView->UpdateBones();

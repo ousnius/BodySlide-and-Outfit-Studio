@@ -4,10 +4,10 @@ See the included LICENSE file
 */
 
 #include "AnimationPlayer.h"
+#include "PhysicsPreview.h"
 #include "FrameHelpers.h"
 #include "OutfitStudioApp.h"
 #include "OutfitStudioFrame.h"
-#include "physics/Controller.h"
 #include "project/OutfitProject.h"
 #include "utils/ConfigurationManager.h"
 #include "utils/GameUtil.h"
@@ -237,7 +237,7 @@ void AnimationPlayer::Start() {
 
 	// Physics switches from its own pump to stepping in lockstep with the
 	// displayed animation frames (see ApplyPose)
-	frame.UpdatePhysicsState();
+	frame.physicsPreview->UpdateState();
 }
 
 void AnimationPlayer::Pause() {
@@ -264,7 +264,7 @@ void AnimationPlayer::Pause() {
 	UpdateUI();
 
 	// Back to the physics pump if physics stays enabled with pose mode on
-	frame.UpdatePhysicsState();
+	frame.physicsPreview->UpdateState();
 }
 
 void AnimationPlayer::Deselect() {
@@ -435,8 +435,7 @@ void AnimationPlayer::OnFrameSlider(wxScrollEvent& event) {
 
 	// Seeking teleports the pose; re-seat the physics bodies on it instead of
 	// letting them interpret the jump as a huge velocity.
-	if (frame.physicsRunning)
-		frame.physics->ResetDynamics();
+	frame.physicsPreview->ResetDynamics();
 
 	ApplyFrame(std::max(event.GetPosition(), 0), !playing);
 

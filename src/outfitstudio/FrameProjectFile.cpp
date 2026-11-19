@@ -6,6 +6,7 @@ See the included LICENSE file
 // Outfit Studio window: creating, loading, saving and closing projects
 
 #include "OutfitStudioFrame.h"
+#include "PhysicsPreview.h"
 #include "AnimationPlayer.h"
 #include "ui/outfitstudio/EditUV.h"
 #include "ShapeTreeItems.h"
@@ -748,7 +749,7 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName,
 		editor.bEditSlider = false;
 		MenuExitSliderEdit();
 
-		ShutdownPhysics();
+		physicsPreview->Shutdown();
 		delete project;
 		project = new OutfitProject(&projectHost);
 	}
@@ -1119,7 +1120,7 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	editor.bEditSlider = false;
 	MenuExitSliderEdit();
 
-	ShutdownPhysics();
+	physicsPreview->Shutdown();
 	delete project;
 	project = new OutfitProject(&projectHost);
 
@@ -1623,7 +1624,7 @@ void OutfitStudioFrame::OnUnloadProject(wxCommandEvent& WXUNUSED(event)) {
 
 	ResetProject();
 
-	ShutdownPhysics();
+	physicsPreview->Shutdown();
 	delete project;
 	project = new OutfitProject(&projectHost);
 

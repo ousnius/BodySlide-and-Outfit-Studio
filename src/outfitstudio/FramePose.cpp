@@ -6,6 +6,7 @@ See the included LICENSE file
 // Outfit Studio window: posing the skeleton and pose files
 
 #include "OutfitStudioFrame.h"
+#include "PhysicsPreview.h"
 #include "AnimationPlayer.h"
 #include "FrameHelpers.h"
 #include "GLPanel.h"
@@ -64,15 +65,14 @@ void OutfitStudioFrame::ApplyPose() {
 	// While an animation plays there is no separate physics pump; the
 	// simulation advances in lockstep with each displayed frame, using the
 	// wall-clock time since the last step.
-	if (physicsRunning && animation->IsPlaying())
-		physics->Step(physicsClock.TakeElapsed());
+	physicsPreview->StepWithAnimation();
 
 	// Asking for a BVH update queues the shape with wxGLPanel::OnIdle, which
 	// rebuilds a whole AABB tree over every triangle of it - far too expensive
 	// to pay once per displayed animation frame. The tree only serves picking
 	// and brush hit tests, both locked out during playback, so the rebuild is
 	// deferred to the single ApplyPose that AnimationPlayer::Pause does.
-	const bool updateBVH = !animation->IsPlaying() && !physicsPumpActive;
+	const bool updateBVH = !animation->IsPlaying() && !physicsPreview->IsPumping();
 
 	for (auto& shape : project->GetWorkNif()->GetShapes())
 		UpdateLiveMesh(shape, updateBVH);
@@ -260,7 +260,7 @@ void OutfitStudioFrame::ActivatePose(bool checked) {
 	project->bPose = checked;
 	poseToMesh->Enable(checked);
 
-	UpdatePhysicsState();
+	physicsPreview->UpdateState();
 	ApplyPose();
 }
 

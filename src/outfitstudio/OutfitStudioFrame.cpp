@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "OutfitStudioFrame.h"
+#include "PhysicsPreview.h"
 #include "AnimationPlayer.h"
 #include "ui/AppSetup.h"
 #include "FrameHelpers.h"
@@ -145,21 +146,6 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_BUTTON(XRCID("resetAllPose"), OutfitStudioFrame::OnResetAllPose)
 	EVT_BUTTON(XRCID("poseToMesh"), OutfitStudioFrame::OnPoseToMesh)
 	EVT_CHECKBOX(XRCID("cbPose"), OutfitStudioFrame::OnPoseCheckBox)
-	EVT_CHECKBOX(XRCID("cbPhysics"), OutfitStudioFrame::OnPhysicsCheckBox)
-	EVT_CHECKBOX(XRCID("cbPhysicsVis"), OutfitStudioFrame::OnPhysicsVisCheckBox)
-	EVT_CHECKBOX(XRCID("cbPhysicsGrab"), OutfitStudioFrame::OnPhysicsGrabCheckBox)
-	EVT_CHECKBOX(XRCID("cbPhysicsProbe"), OutfitStudioFrame::OnPhysicsProbeCheckBox)
-	EVT_COMMAND_SCROLL(XRCID("physicsProbeX"), OutfitStudioFrame::OnPhysicsProbeAxisSlider)
-	EVT_COMMAND_SCROLL(XRCID("physicsProbeY"), OutfitStudioFrame::OnPhysicsProbeAxisSlider)
-	EVT_COMMAND_SCROLL(XRCID("physicsProbeZ"), OutfitStudioFrame::OnPhysicsProbeAxisSlider)
-	EVT_COMMAND_SCROLL(XRCID("physicsProbeSize"), OutfitStudioFrame::OnPhysicsProbeAxisSlider)
-	EVT_TEXT(XRCID("physicsProbeXText"), OutfitStudioFrame::OnPhysicsProbeAxisText)
-	EVT_TEXT(XRCID("physicsProbeYText"), OutfitStudioFrame::OnPhysicsProbeAxisText)
-	EVT_TEXT(XRCID("physicsProbeZText"), OutfitStudioFrame::OnPhysicsProbeAxisText)
-	EVT_TEXT(XRCID("physicsProbeSizeText"), OutfitStudioFrame::OnPhysicsProbeAxisText)
-	EVT_COMMAND_SCROLL(XRCID("physicsWindSlider"), OutfitStudioFrame::OnPhysicsWindSlider)
-	EVT_CHOICE(XRCID("physicsWindDir"), OutfitStudioFrame::OnPhysicsWindDir)
-	EVT_TIMER(PHYSICS_TIMER, OutfitStudioFrame::OnPhysicsTimer)
 
 	EVT_COMBOBOX(XRCID("cPoseName"), OutfitStudioFrame::OnSelectPose)
 	EVT_BUTTON(XRCID("savePose"), OutfitStudioFrame::OnSavePose)
@@ -448,6 +434,7 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	// Other threads wake the dispatcher through the event queue, which wx makes thread safe
 	dispatcher = std::make_unique<MainThreadDispatcher>([this]() { CallAfter([this]() { dispatcher->ProcessPending(); }); });
 	animation = std::make_unique<AnimationPlayer>(*this);
+	physicsPreview = std::make_unique<PhysicsPreview>(*this);
 
 	wxLogMessage("Loading Outfit Studio frame at X:%d Y:%d with W:%d H:%d...", pos.x, pos.y, size.GetWidth(), size.GetHeight());
 
@@ -685,21 +672,6 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	tzPoseText = (wxTextCtrl*)FindWindowByName("tzPoseText");
 	scPoseText = (wxTextCtrl*)FindWindowByName("scPoseText");
 	cbPose = (wxCheckBox*)FindWindowByName("cbPose");
-	cbPhysics = (wxCheckBox*)FindWindowByName("cbPhysics");
-	cbPhysicsVis = (wxCheckBox*)FindWindowByName("cbPhysicsVis");
-	cbPhysicsGrab = (wxCheckBox*)FindWindowByName("cbPhysicsGrab");
-	cbPhysicsProbe = (wxCheckBox*)FindWindowByName("cbPhysicsProbe");
-	physicsProbePanel = (wxPanel*)FindWindowByName("physicsProbePanel");
-	physicsProbeX = (wxSlider*)FindWindowByName("physicsProbeX");
-	physicsProbeY = (wxSlider*)FindWindowByName("physicsProbeY");
-	physicsProbeZ = (wxSlider*)FindWindowByName("physicsProbeZ");
-	physicsProbeSize = (wxSlider*)FindWindowByName("physicsProbeSize");
-	physicsProbeXText = (wxTextCtrl*)FindWindowByName("physicsProbeXText");
-	physicsProbeYText = (wxTextCtrl*)FindWindowByName("physicsProbeYText");
-	physicsProbeZText = (wxTextCtrl*)FindWindowByName("physicsProbeZText");
-	physicsProbeSizeText = (wxTextCtrl*)FindWindowByName("physicsProbeSizeText");
-	physicsWindSlider = (wxSlider*)FindWindowByName("physicsWindSlider");
-	physicsWindDir = (wxChoice*)FindWindowByName("physicsWindDir");
 	poseToMesh = (wxButton*)FindWindowByName("poseToMesh");
 
 	// Nothing is loaded yet, and only meshes that reference a physics XML can be
@@ -709,9 +681,8 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 		physicsPane->Hide();
 
 	animation->Init();
+	physicsPreview->Init();
 	animation->ResetList();
-
-	physicsTimer.SetOwner(this, PHYSICS_TIMER);
 
 	wxWindow* leftPanel = FindWindowByName("leftSplitPanel");
 	if (leftPanel) {
@@ -836,7 +807,7 @@ void OutfitStudioFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
 	dispatcher->Shutdown();
 
 	if (project) {
-		ShutdownPhysics();
+		physicsPreview->Shutdown();
 		delete project;
 		project = nullptr;
 	}
@@ -1226,7 +1197,7 @@ void OutfitStudioFrame::ApplyRefresh(RefreshFlags flags) {
 			poseToMesh->Enable(project->bPose);
 
 		PoseToGUI();
-		UpdatePhysicsState();
+		physicsPreview->UpdateState();
 		ApplyPose();
 	}
 

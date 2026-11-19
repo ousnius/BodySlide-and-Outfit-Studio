@@ -6,6 +6,7 @@ See the included LICENSE file
 // Viewport: keyboard and mouse input
 
 #include "GLPanel.h"
+#include "PhysicsPreview.h"
 #include "AnimationPlayer.h"
 #include "OutfitStudioFrame.h"
 #include "ui/outfitstudio/wxBrushSettingsPopup.h"
@@ -253,7 +254,7 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 	// and the WM_TIMER that drive playback and physics, so tick them from here
 	// as well.
 	os->animation->Pump();
-	os->PumpPhysics();
+	os->physicsPreview->Pump();
 
 	bool cursorExists = false;
 	int x;
@@ -294,7 +295,7 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		else {
 			float yawDegrees = gls.TurnTableCamera(x - lastX);
 			gls.PitchCamera(y - lastY);
-			os->InjectPhysicsCameraYaw(yawDegrees);
+			os->physicsPreview->InjectCameraYaw(yawDegrees);
 			ShowRotationCenter();
 		}
 
@@ -474,7 +475,7 @@ void wxGLPanel::OnLeftDown(wxMouseEvent& event) {
 	// A grab feeds the running simulation and never touches the mesh data, so
 	// while it is armed it takes the click ahead of the editing tools. Missing
 	// the simulated mesh leaves the click to them as if it were not.
-	if (os->IsPhysicsGrabEnabled()) {
+	if (os->physicsPreview->IsGrabEnabled()) {
 		bool meshHit = StartPhysicsGrab(event.GetPosition());
 		if (meshHit) {
 			isPhysicsGrabbing = true;

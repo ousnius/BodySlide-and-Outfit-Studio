@@ -6,6 +6,7 @@ See the included LICENSE file
 // Outfit Studio window: the view around the viewport such as camera, display options, lights, backgrounds and tabs
 
 #include "OutfitStudioFrame.h"
+#include "PhysicsPreview.h"
 #include "OutfitStudioApp.h"
 #include "GLPanel.h"
 #include "ShapeTreeItems.h"
@@ -536,7 +537,7 @@ void OutfitStudioFrame::LeaveBoneTab() {
 
 	if (project->bPose) {
 		project->bPose = false;
-		UpdatePhysicsState();
+		physicsPreview->UpdateState();
 		ApplyPose();
 	}
 
@@ -585,7 +586,7 @@ void OutfitStudioFrame::EnterBoneTab() {
 	ShowWindowsByName(BoneControls, true);
 	posePane->Show();
 	if (physicsPane)
-		physicsPane->Show(physicsAvailable);
+		physicsPane->Show(physicsPreview->IsAvailable());
 	if (animationPane)
 		animationPane->Show();
 	bonesFilter->GetParent()->Show();

@@ -61,7 +61,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <wx/msw/registry.h>
 #endif
 
-#define PHYSICS_TIMER 301
 
 struct MergeCheckErrors;
 
@@ -95,6 +94,7 @@ struct ConformOptions;
 struct ClippingFixOptions;
 class OutfitStudioFrame;
 class AnimationPlayer;
+class PhysicsPreview;
 class ArchiveBrowser;
 class BrushStrokeController;
 class EditUV;
@@ -169,37 +169,8 @@ public:
 	// Plays HKX animations on the skeleton, with the player controls of the pose pane
 	std::unique_ptr<AnimationPlayer> animation;
 
-	// Feeds a horizontal camera rotation into the physics preview so cloth
-	// and hair react as if the character turned under a fixed camera. No-op
-	// while physics is not simulating.
-	void InjectPhysicsCameraYaw(float deltaDegrees);
-
-	// The per-frame physics tick while physics runs without animation
-	// playback; while an animation plays, ApplyPose steps the simulation in
-	// lockstep instead. Internally paced, so like AnimationPlayer::Pump it is
-	// safe to call from any event source at any rate.
-	void PumpPhysics();
-
-	// Whether the viewport should treat a left drag as a grab of the running
-	// simulation rather than as whatever the active tool does.
-	bool IsPhysicsGrabEnabled() const;
-
-	// The shapes the simulation moves; empty while it is not running.
-	const std::unordered_set<std::string>& GetPhysicsAffectedShapes() const;
-
-	// Fits the BVHs of those shapes to where the simulation has moved them.
-	// The pump leaves them behind on purpose - rebuilding a tree per frame
-	// costs far more than it is worth for trees only picking uses - so
-	// anything that does pick the simulated mesh has to catch them up first.
-	void RefitPhysicsBVH();
-
-	// Grabbing the mesh with the cursor: drags the physics bones the grabbed
-	// patch is skinned to, leaving what the mesh does on the way to the
-	// constraints, collisions and gravity of its physics XML. Purely a
-	// simulation input - none of it reaches the mesh data or the undo history.
-	bool BeginPhysicsGrab(const std::vector<Physics::GrabTarget>& targets);
-	void UpdatePhysicsGrab(const nifly::Vector3& offset);
-	void EndPhysicsGrab();
+	// The physics preview, with the controls of the physics pane
+	std::unique_ptr<PhysicsPreview> physicsPreview;
 
 	wxGLPanel* glView = nullptr;
 	EditUV* editUV = nullptr;
@@ -246,21 +217,6 @@ public:
 	wxTextCtrl* tzPoseText = nullptr;
 	wxTextCtrl* scPoseText = nullptr;
 	wxCheckBox* cbPose = nullptr;
-	wxCheckBox* cbPhysics = nullptr;
-	wxCheckBox* cbPhysicsVis = nullptr;
-	wxCheckBox* cbPhysicsGrab = nullptr;
-	wxCheckBox* cbPhysicsProbe = nullptr;
-	wxPanel* physicsProbePanel = nullptr;
-	wxSlider* physicsProbeX = nullptr;
-	wxSlider* physicsProbeY = nullptr;
-	wxSlider* physicsProbeZ = nullptr;
-	wxSlider* physicsProbeSize = nullptr;
-	wxTextCtrl* physicsProbeXText = nullptr;
-	wxTextCtrl* physicsProbeYText = nullptr;
-	wxTextCtrl* physicsProbeZText = nullptr;
-	wxTextCtrl* physicsProbeSizeText = nullptr;
-	wxSlider* physicsWindSlider = nullptr;
-	wxChoice* physicsWindDir = nullptr;
 	wxButton* poseToMesh = nullptr;
 	wxScrolledWindow* sliderScroll = nullptr;
 	wxMenuBar* menuBar = nullptr;
@@ -876,11 +832,11 @@ private:
 	void OnCopyMask(wxCommandEvent& event);
 	void OnPaneCollapse(wxCollapsiblePaneEvent& event);
 	void OnBottomPanelResize(wxSizeEvent& event);
+
+public:
 	// Re-lays out the bottom panel, capping the scrolled tool area so the
 	// slider list below it keeps its room no matter how many panes are open.
 	void UpdateToolScrollLayout();
-
-public:
 	void ApplyPose();
 	// Called after a bone/node transform is applied, to re-enable the
 	// transform tool on the bones tab and refresh the bone tree icons so
@@ -920,61 +876,6 @@ private:
 	// Bound while an animation plays; swallows every menu, toolbar and
 	// accelerator command so nothing can edit the project.
 	void OnBlockedCommandDuringPlayback(wxCommandEvent& event);
-
-
-public:
-	// Physics preview (HDT-SMP): simulation runs while the physics checkbox
-	// is set and either pose mode is active or an animation is playing.
-	// Single authority over building/tearing down the simulation; call after
-	// anything that changes one of those conditions or the loaded meshes.
-	void UpdatePhysicsState();
-	// Hands the shapes as the sliders morph them to the running simulation.
-	void UpdatePhysicsShapes();
-	// Shows the physics controls only while the loaded meshes reference a
-	// physics XML, since there is nothing to simulate otherwise. Stops a running
-	// simulation when the last of them goes away.
-	void UpdatePhysicsControlsVisibility();
-	// Hard teardown for project unload/close: stops the pump and drops all
-	// simulation state without touching the (possibly dying) project meshes.
-	void ShutdownPhysics();
-	void StartPhysicsPump();
-	void StopPhysicsPump();
-	void OnPhysicsCheckBox(wxCommandEvent& event);
-	void OnPhysicsVisCheckBox(wxCommandEvent& event);
-	void OnPhysicsGrabCheckBox(wxCommandEvent& event);
-	// Puts the grab checkbox in the state a (not) running simulation allows
-	void UpdatePhysicsGrabControl(bool enabled);
-	void OnPhysicsProbeCheckBox(wxCommandEvent& event);
-	// Each ball slider writes its value into the field beside it, and each field
-	// puts the handle back where the value is; either way the field is what is read.
-	void OnPhysicsProbeSlider(wxScrollEvent& event, wxTextCtrl* text);
-	void OnPhysicsProbeAxisSlider(wxScrollEvent& event);
-	void OnPhysicsProbeText(wxTextCtrl* text, wxSlider* slider);
-	void OnPhysicsProbeAxisText(wxCommandEvent& event);
-	// The same for the collision ball checkbox
-	void UpdatePhysicsProbeControl(bool enabled);
-	// Shows or hides the ball, its controls and its collider to match the box
-	void UpdatePhysicsProbeState();
-	// Pushes the ball's position and size into the simulation and the viewport
-	void ApplyPhysicsProbe();
-	void OnPhysicsWindSlider(wxScrollEvent& event);
-	void OnPhysicsWindDir(wxCommandEvent& event);
-	// Pushes the wind controls into the simulation; the controller is built
-	// fresh every time physics starts, so it has no idea of either value.
-	void ApplyPhysicsWind();
-	void OnPhysicsTimer(wxTimerEvent& event);
-	void OnPhysicsIdle(wxIdleEvent& event);
-
-	std::unique_ptr<Physics::Controller> physics;
-	// Whether any loaded mesh references a physics XML. The physics pane only
-	// exists on the bones tab, so showing it takes both this and the tab.
-	bool physicsAvailable = false;
-	wxTimer physicsTimer;
-	// Simulation built and active (either pump mode or animation lockstep).
-	bool physicsRunning = false;
-	// Own idle+timer pump bound (pose mode without animation playback).
-	bool physicsPumpActive = false;
-	Physics::PumpClock physicsClock;
 
 	wxDECLARE_EVENT_TABLE();
 };

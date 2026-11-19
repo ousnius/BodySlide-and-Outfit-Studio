@@ -6,6 +6,7 @@ See the included LICENSE file
 // Outfit Studio window: the slider list, slider editing and slider operations
 
 #include "OutfitStudioFrame.h"
+#include "PhysicsPreview.h"
 #include "FrameHelpers.h"
 #include "components/UndoHistory.h"
 #include "DropTargets.h"
@@ -214,7 +215,7 @@ void OutfitStudioFrame::ApplySliders(bool recalcBVH) {
 	for (auto& shape : project->GetWorkNif()->GetShapes())
 		UpdateLiveMesh(shape, recalcBVH, true);
 
-	UpdatePhysicsShapes();
+	physicsPreview->UpdateShapes();
 
 	bool tMode = glView->GetTransformMode();
 
