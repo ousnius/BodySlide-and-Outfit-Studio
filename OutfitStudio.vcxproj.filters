@@ -715,6 +715,9 @@
     <ClInclude Include="src\components\ArchiveIndex.h">
       <Filter>Components</Filter>
     </ClInclude>
+    <ClInclude Include="src\components\PartitionTypes.h">
+      <Filter>Components</Filter>
+    </ClInclude>
     <ClInclude Include="src\components\DiffData.h">
       <Filter>Components</Filter>
     </ClInclude>

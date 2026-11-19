@@ -5,11 +5,11 @@ See the included LICENSE file
 
 #include "OutfitStudioMcp.h"
 #include "McpHelpers.h"
+#include "components/PartitionTypes.h"
 #include "project/ProjectOperations.h"
 #include "project/StudioSession.h"
 #include "components/UndoHistory.h"
 #include "render/GLSurface.h"
-#include "ui/outfitstudio/PartitionTypeChoices.h"
 
 #include <algorithm>
 #include <cfloat>
@@ -732,7 +732,7 @@ json AlphaProperty(NifFile* nif, NiShape* shape) {
 
 std::string PartitionName(int slot) {
 	std::string prefix = std::to_string(slot) + " ";
-	for (const char* label : PartitionTypeChoices::Labels)
+	for (const char* label : PartitionTypes::Labels)
 		if (std::string(label).rfind(prefix, 0) == 0)
 			return std::string(label).substr(prefix.size());
 	return "Unknown";

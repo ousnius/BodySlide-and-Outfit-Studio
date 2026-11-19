@@ -806,6 +806,7 @@
     <ClInclude Include="lib\TinyXML-2\tinyxml2.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\components\Anim.h" />
+    <ClInclude Include="src\components\PartitionTypes.h" />
     <ClInclude Include="src\components\ArchiveIndex.h" />
     <ClInclude Include="src\components\AddOnSliders.h" />
     <ClInclude Include="src\components\ConformOptions.h" />
