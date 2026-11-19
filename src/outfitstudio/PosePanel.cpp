@@ -3,8 +3,9 @@ BodySlide and Outfit Studio
 See the included LICENSE file
 */
 
-// Outfit Studio window: posing the skeleton and pose files
+// The pose pane: posing the skeleton by hand, and pose files
 
+#include "PosePanel.h"
 #include "OutfitStudioFrame.h"
 #include "PhysicsPreview.h"
 #include "AnimationPlayer.h"
@@ -61,31 +62,68 @@ wxString EnsurePoseFileExtension(const wxString& filePath, int filterIndex) {
 
 } // namespace
 
-void OutfitStudioFrame::ApplyPose() {
-	// While an animation plays there is no separate physics pump; the
-	// simulation advances in lockstep with each displayed frame, using the
-	// wall-clock time since the last step.
-	physicsPreview->StepWithAnimation();
+PosePanel::PosePanel(OutfitStudioFrame& frame)
+	: frame(frame) {}
 
-	// Asking for a BVH update queues the shape with wxGLPanel::OnIdle, which
-	// rebuilds a whole AABB tree over every triangle of it - far too expensive
-	// to pay once per displayed animation frame. The tree only serves picking
-	// and brush hit tests, both locked out during playback, so the rebuild is
-	// deferred to the single ApplyPose that AnimationPlayer::Pause does.
-	const bool updateBVH = !animation->IsPlaying() && !physicsPreview->IsPumping();
+void PosePanel::Init() {
+	cPoseBone = (wxChoice*)frame.FindWindowByName("cPoseBone");
+	rxPoseSlider = (wxSlider*)frame.FindWindowByName("rxPoseSlider");
+	ryPoseSlider = (wxSlider*)frame.FindWindowByName("ryPoseSlider");
+	rzPoseSlider = (wxSlider*)frame.FindWindowByName("rzPoseSlider");
+	txPoseSlider = (wxSlider*)frame.FindWindowByName("txPoseSlider");
+	tyPoseSlider = (wxSlider*)frame.FindWindowByName("tyPoseSlider");
+	tzPoseSlider = (wxSlider*)frame.FindWindowByName("tzPoseSlider");
+	scPoseSlider = (wxSlider*)frame.FindWindowByName("scPoseSlider");
+	rxPoseText = (wxTextCtrl*)frame.FindWindowByName("rxPoseText");
+	ryPoseText = (wxTextCtrl*)frame.FindWindowByName("ryPoseText");
+	rzPoseText = (wxTextCtrl*)frame.FindWindowByName("rzPoseText");
+	txPoseText = (wxTextCtrl*)frame.FindWindowByName("txPoseText");
+	tyPoseText = (wxTextCtrl*)frame.FindWindowByName("tyPoseText");
+	tzPoseText = (wxTextCtrl*)frame.FindWindowByName("tzPoseText");
+	scPoseText = (wxTextCtrl*)frame.FindWindowByName("scPoseText");
+	cbPose = (wxCheckBox*)frame.FindWindowByName("cbPose");
+	poseToMesh = (wxButton*)frame.FindWindowByName("poseToMesh");
 
-	for (auto& shape : project->GetWorkNif()->GetShapes())
-		UpdateLiveMesh(shape, updateBVH);
-
-	// Bone overlays cost one GL mesh created and destroyed per bone, not worth
-	// paying for every frame while they are not being drawn.
-	if (!animation->IsPlaying() || glView->GetBonesMode() || glView->GetNodesMode())
-		glView->UpdateBones();
-
-	glView->Render();
+	frame.Bind(wxEVT_CHOICE, &PosePanel::OnPoseBoneChanged, this, XRCID("cPoseBone"));
+	frame.Bind(wxEVT_TEXT, &PosePanel::OnPoseTextChanged, this, XRCID("rxPoseText"));
+	frame.Bind(wxEVT_TEXT, &PosePanel::OnPoseTextChanged, this, XRCID("ryPoseText"));
+	frame.Bind(wxEVT_TEXT, &PosePanel::OnPoseTextChanged, this, XRCID("rzPoseText"));
+	frame.Bind(wxEVT_TEXT, &PosePanel::OnPoseTextChanged, this, XRCID("txPoseText"));
+	frame.Bind(wxEVT_TEXT, &PosePanel::OnPoseTextChanged, this, XRCID("tyPoseText"));
+	frame.Bind(wxEVT_TEXT, &PosePanel::OnPoseTextChanged, this, XRCID("tzPoseText"));
+	frame.Bind(wxEVT_TEXT, &PosePanel::OnPoseTextChanged, this, XRCID("scPoseText"));
+	frame.Bind(wxEVT_BUTTON, &PosePanel::OnResetBonePose, this, XRCID("resetBonePose"));
+	frame.Bind(wxEVT_BUTTON, &PosePanel::OnResetAllPose, this, XRCID("resetAllPose"));
+	frame.Bind(wxEVT_BUTTON, &PosePanel::OnPoseToMesh, this, XRCID("poseToMesh"));
+	frame.Bind(wxEVT_CHECKBOX, &PosePanel::OnPoseCheckBox, this, XRCID("cbPose"));
+	frame.Bind(wxEVT_COMBOBOX, &PosePanel::OnSelectPose, this, XRCID("cPoseName"));
+	frame.Bind(wxEVT_BUTTON, &PosePanel::OnSavePose, this, XRCID("savePose"));
+	frame.Bind(wxEVT_BUTTON, &PosePanel::OnDeletePose, this, XRCID("deletePose"));
+	frame.Bind(wxEVT_BUTTON, &PosePanel::OnSaveHkxPose, this, XRCID("exportPoseFile"));
+	frame.Bind(wxEVT_BUTTON, &PosePanel::OnLoadHkxPose, this, XRCID("importPoseFile"));
+	for (auto& type : CommandScrollEventTypes()) {
+		frame.Bind(type, &PosePanel::OnPoseSlider, this, XRCID("rxPoseSlider"));
+		frame.Bind(type, &PosePanel::OnPoseSlider, this, XRCID("ryPoseSlider"));
+		frame.Bind(type, &PosePanel::OnPoseSlider, this, XRCID("rzPoseSlider"));
+		frame.Bind(type, &PosePanel::OnPoseSlider, this, XRCID("txPoseSlider"));
+		frame.Bind(type, &PosePanel::OnPoseSlider, this, XRCID("tyPoseSlider"));
+		frame.Bind(type, &PosePanel::OnPoseSlider, this, XRCID("tzPoseSlider"));
+		frame.Bind(type, &PosePanel::OnPoseSlider, this, XRCID("scPoseSlider"));
+	}
 }
 
-AnimBone* OutfitStudioFrame::GetPoseBonePtr() {
+bool PosePanel::IsShowPoseChecked() const {
+	return cbPose->GetValue();
+}
+
+void PosePanel::ShowProjectPoseState() {
+	if (cbPose)
+		cbPose->SetValue(frame.project->bPose);
+	if (poseToMesh)
+		poseToMesh->Enable(frame.project->bPose);
+}
+
+AnimBone* PosePanel::GetPoseBonePtr() {
 	int selind = cPoseBone->GetSelection();
 	if (selind == wxNOT_FOUND)
 		return nullptr;
@@ -93,7 +131,7 @@ AnimBone* OutfitStudioFrame::GetPoseBonePtr() {
 	return AnimSkeleton::getInstance().GetBonePtr(poseBone);
 }
 
-void OutfitStudioFrame::PoseToGUI() {
+void PosePanel::PoseToGUI() {
 	AnimBone* bone = GetPoseBonePtr();
 	if (bone) {
 		rxPoseSlider->SetValue(bone->poseRotVec.x * 100);
@@ -127,15 +165,15 @@ void OutfitStudioFrame::PoseToGUI() {
 		tzPoseText->ChangeValue("0");
 		scPoseText->ChangeValue("1");
 	}
-	if (project->bPose != cbPose->GetValue())
-		cbPose->SetValue(project->bPose);
+	if (frame.project->bPose != cbPose->GetValue())
+		cbPose->SetValue(frame.project->bPose);
 }
 
-void OutfitStudioFrame::OnPoseBoneChanged(wxCommandEvent& WXUNUSED(event)) {
+void PosePanel::OnPoseBoneChanged(wxCommandEvent& WXUNUSED(event)) {
 	PoseToGUI();
 }
 
-void OutfitStudioFrame::OnPoseValChanged(int cind, float val) {
+void PosePanel::OnPoseValChanged(int cind, float val) {
 	// Called when any pose slider or text control is changed.
 	AnimBone* bone = GetPoseBonePtr();
 	if (!bone)
@@ -151,7 +189,7 @@ void OutfitStudioFrame::OnPoseValChanged(int cind, float val) {
 	ActivatePose(true);
 }
 
-void OutfitStudioFrame::OnAnyPoseSlider(wxScrollEvent& e, wxTextCtrl* t, int cind) {
+void PosePanel::OnAnyPoseSlider(wxScrollEvent& e, wxTextCtrl* t, int cind) {
 	float val = (cind == 6) ?
 		std::exp(e.GetPosition() * 0.002f * std::log(2)) :
 		e.GetPosition() * 0.01f;
@@ -163,7 +201,7 @@ void OutfitStudioFrame::OnAnyPoseSlider(wxScrollEvent& e, wxTextCtrl* t, int cin
 static const char* const PoseSliderNames[] = {"rxPoseSlider", "ryPoseSlider", "rzPoseSlider", "txPoseSlider", "tyPoseSlider", "tzPoseSlider", "scPoseSlider"};
 static const char* const PoseTextNames[] = {"rxPoseText", "ryPoseText", "rzPoseText", "txPoseText", "tyPoseText", "tzPoseText", "scPoseText"};
 
-void OutfitStudioFrame::OnPoseSlider(wxScrollEvent& event) {
+void PosePanel::OnPoseSlider(wxScrollEvent& event) {
 	wxTextCtrl* texts[] = {rxPoseText, ryPoseText, rzPoseText, txPoseText, tyPoseText, tzPoseText, scPoseText};
 	for (int i = 0; i < 7; i++) {
 		if (event.GetId() == XRCID(PoseSliderNames[i])) {
@@ -173,7 +211,7 @@ void OutfitStudioFrame::OnPoseSlider(wxScrollEvent& event) {
 	}
 }
 
-void OutfitStudioFrame::OnAnyPoseTextChanged(wxTextCtrl* t, wxSlider* s, int cind) {
+void PosePanel::OnAnyPoseTextChanged(wxTextCtrl* t, wxSlider* s, int cind) {
 	if (!t || !s)
 		return;
 	double val;
@@ -186,7 +224,7 @@ void OutfitStudioFrame::OnAnyPoseTextChanged(wxTextCtrl* t, wxSlider* s, int cin
 	OnPoseValChanged(cind, val);
 }
 
-void OutfitStudioFrame::OnPoseTextChanged(wxCommandEvent& event) {
+void PosePanel::OnPoseTextChanged(wxCommandEvent& event) {
 	wxTextCtrl* texts[] = {rxPoseText, ryPoseText, rzPoseText, txPoseText, tyPoseText, tzPoseText, scPoseText};
 	wxSlider* sliders[] = {rxPoseSlider, ryPoseSlider, rzPoseSlider, txPoseSlider, tyPoseSlider, tzPoseSlider, scPoseSlider};
 	for (int i = 0; i < 7; i++) {
@@ -197,7 +235,7 @@ void OutfitStudioFrame::OnPoseTextChanged(wxCommandEvent& event) {
 	}
 }
 
-void OutfitStudioFrame::OnResetBonePose(wxCommandEvent& WXUNUSED(event)) {
+void PosePanel::OnResetBonePose(wxCommandEvent& WXUNUSED(event)) {
 	AnimBone* bone = GetPoseBonePtr();
 	if (!bone)
 		return;
@@ -206,28 +244,28 @@ void OutfitStudioFrame::OnResetBonePose(wxCommandEvent& WXUNUSED(event)) {
 	bone->poseScale = 1.0f;
 	bone->UpdatePoseTransform();
 	PoseToGUI();
-	ApplyPose();
+	frame.ApplyPose();
 }
 
-void OutfitStudioFrame::OnResetAllPose(wxCommandEvent& WXUNUSED(event)) {
-	wxMessageDialog dlg(this, _("Reset all bone poses?"), _("Reset Pose"), wxOK | wxCANCEL | wxICON_WARNING | wxCANCEL_DEFAULT);
+void PosePanel::OnResetAllPose(wxCommandEvent& WXUNUSED(event)) {
+	wxMessageDialog dlg(&frame, _("Reset all bone poses?"), _("Reset Pose"), wxOK | wxCANCEL | wxICON_WARNING | wxCANCEL_DEFAULT);
 	dlg.SetOKCancelLabels(_("Reset"), _("Cancel"));
 	if (dlg.ShowModal() != wxID_OK)
 		return;
 
 	ResetAllPoseBones();
 	PoseToGUI();
-	ApplyPose();
+	frame.ApplyPose();
 }
 
-void OutfitStudioFrame::ResetAllPoseBones() {
-	ProjectOperations(*project, editor).ResetPose();
+void PosePanel::ResetAllPoseBones() {
+	ProjectOperations(*frame.project, frame.editor).ResetPose();
 }
 
-void OutfitStudioFrame::OnPoseToMesh(wxCommandEvent& WXUNUSED(event)) {
-	if (project->bPose) {
-		UndoStateProject* usp = glView->GetUndoHistory()->PushState();
-		project->ApplyPoseTransformsToAllShapeGeometry(*usp);
+void PosePanel::OnPoseToMesh(wxCommandEvent& WXUNUSED(event)) {
+	if (frame.project->bPose) {
+		UndoStateProject* usp = frame.glView->GetUndoHistory()->PushState();
+		frame.project->ApplyPoseTransformsToAllShapeGeometry(*usp);
 
 		std::vector<std::string> bones;
 		AnimSkeleton::getInstance().GetBoneNames(bones);
@@ -247,32 +285,32 @@ void OutfitStudioFrame::OnPoseToMesh(wxCommandEvent& WXUNUSED(event)) {
 		}
 
 		PoseToGUI();
-		glView->UpdateBones();
-		glView->ApplyUndoState(usp, false);
-		SetPendingChanges();
+		frame.glView->UpdateBones();
+		frame.glView->ApplyUndoState(usp, false);
+		frame.SetPendingChanges();
 	}
 }
 
-void OutfitStudioFrame::ActivatePose(bool checked) {
+void PosePanel::ActivatePose(bool checked) {
 	if (cbPose->IsChecked() != checked)
 		cbPose->SetValue(checked);
 
-	project->bPose = checked;
+	frame.project->bPose = checked;
 	poseToMesh->Enable(checked);
 
-	physicsPreview->UpdateState();
-	ApplyPose();
+	frame.physicsPreview->UpdateState();
+	frame.ApplyPose();
 }
 
-void OutfitStudioFrame::OnPoseCheckBox(wxCommandEvent& e) {
+void PosePanel::OnPoseCheckBox(wxCommandEvent& e) {
 	ActivatePose(e.IsChecked());
 }
 
-void OutfitStudioFrame::OnSelectPose(wxCommandEvent& WXUNUSED(event)) {
+void PosePanel::OnSelectPose(wxCommandEvent& WXUNUSED(event)) {
 	// Selecting a pose takes over the skeleton from any selected animation.
-	animation->Deselect();
+	frame.animation->Deselect();
 
-	wxComboBox* cPoseName = (wxComboBox*)FindWindowByName("cPoseName");
+	wxComboBox* cPoseName = (wxComboBox*)frame.FindWindowByName("cPoseName");
 	int poseSel = cPoseName->GetSelection();
 	if (poseSel != wxNOT_FOUND) {
 		auto poseData = reinterpret_cast<PoseData*>(cPoseName->GetClientData(poseSel));
@@ -282,7 +320,7 @@ void OutfitStudioFrame::OnSelectPose(wxCommandEvent& WXUNUSED(event)) {
 			ResetAllPoseBones();
 
 			PoseToGUI();
-			ApplyPose();
+			frame.ApplyPose();
 			UpdatePoseButtonStates();
 			return;
 		}
@@ -296,10 +334,10 @@ void OutfitStudioFrame::OnSelectPose(wxCommandEvent& WXUNUSED(event)) {
 	}
 }
 
-void OutfitStudioFrame::UpdatePoseButtonStates() {
-	wxComboBox* cPoseName = (wxComboBox*)FindWindowByName("cPoseName");
-	wxWindow* savePose = FindWindow(XRCID("savePose"));
-	wxWindow* deletePose = FindWindow(XRCID("deletePose"));
+void PosePanel::UpdatePoseButtonStates() {
+	wxComboBox* cPoseName = (wxComboBox*)frame.FindWindowByName("cPoseName");
+	wxWindow* savePose = frame.FindWindow(XRCID("savePose"));
+	wxWindow* deletePose = frame.FindWindow(XRCID("deletePose"));
 	if (!cPoseName)
 		return;
 
@@ -324,8 +362,8 @@ void OutfitStudioFrame::UpdatePoseButtonStates() {
 		deletePose->Enable(enableDelete);
 }
 
-void OutfitStudioFrame::OnSavePose(wxCommandEvent& WXUNUSED(event)) {
-	wxComboBox* cPoseName = (wxComboBox*)FindWindowByName("cPoseName");
+void PosePanel::OnSavePose(wxCommandEvent& WXUNUSED(event)) {
+	wxComboBox* cPoseName = (wxComboBox*)frame.FindWindowByName("cPoseName");
 
 	wxString poseName = cPoseName->GetValue();
 	poseName.Trim(true).Trim(false);
@@ -339,8 +377,8 @@ void OutfitStudioFrame::OnSavePose(wxCommandEvent& WXUNUSED(event)) {
 		wxMessageBox(wxString::FromUTF8(error), _("Save Pose"), wxICON_ERROR);
 }
 
-void OutfitStudioFrame::OnDeletePose(wxCommandEvent& WXUNUSED(event)) {
-	wxComboBox* cPoseName = (wxComboBox*)FindWindowByName("cPoseName");
+void PosePanel::OnDeletePose(wxCommandEvent& WXUNUSED(event)) {
+	wxComboBox* cPoseName = (wxComboBox*)frame.FindWindowByName("cPoseName");
 	int poseSel = cPoseName->GetSelection();
 	if (poseSel != wxNOT_FOUND) {
 		auto poseData = reinterpret_cast<PoseData*>(cPoseName->GetClientData(poseSel));
@@ -350,7 +388,7 @@ void OutfitStudioFrame::OnDeletePose(wxCommandEvent& WXUNUSED(event)) {
 			return;
 
 		wxString prompt = wxString::Format(_("Are you sure you wish to delete the pose '%s'?"), cPoseName->GetStringSelection());
-		int result = wxMessageBox(prompt, _("Confirm pose delete"), wxYES_NO | wxICON_WARNING, this);
+		int result = wxMessageBox(prompt, _("Confirm pose delete"), wxYES_NO | wxICON_WARNING, &frame);
 		if (result != wxYES)
 			return;
 
@@ -363,9 +401,9 @@ void OutfitStudioFrame::OnDeletePose(wxCommandEvent& WXUNUSED(event)) {
 	}
 }
 
-void OutfitStudioFrame::OnSaveHkxPose(wxCommandEvent& WXUNUSED(event)) {
+void PosePanel::OnSaveHkxPose(wxCommandEvent& WXUNUSED(event)) {
 	wxString defaultFileStem = "pose";
-	if (wxComboBox* cPoseName = (wxComboBox*)FindWindowByName("cPoseName")) {
+	if (wxComboBox* cPoseName = (wxComboBox*)frame.FindWindowByName("cPoseName")) {
 		wxString poseName = cPoseName->GetValue();
 		poseName.Trim(true).Trim(false);
 		if (!poseName.empty() && poseName != "<New>")
@@ -373,7 +411,7 @@ void OutfitStudioFrame::OnSaveHkxPose(wxCommandEvent& WXUNUSED(event)) {
 	}
 	defaultFileStem = wxString::FromUTF8(PoseDataCollection::SanitizeFileStem(std::string(defaultFileStem.ToUTF8().data())).c_str());
 
-	wxFileDialog saveDlg(this,
+	wxFileDialog saveDlg(&frame,
 					 _("Save pose file"),
 					 wxEmptyString,
 					 defaultFileStem,
@@ -386,23 +424,23 @@ void OutfitStudioFrame::OnSaveHkxPose(wxCommandEvent& WXUNUSED(event)) {
 	wxString savePath = EnsurePoseFileExtension(saveDlg.GetPath(), saveDlg.GetFilterIndex());
 	std::string error = SaveCurrentPoseFile(savePath.ToUTF8().data());
 	if (!error.empty()) {
-		wxMessageBox(wxString::FromUTF8(error), _("Save Pose File"), wxOK | wxICON_ERROR, this);
+		wxMessageBox(wxString::FromUTF8(error), _("Save Pose File"), wxOK | wxICON_ERROR, &frame);
 		return;
 	}
 
-	if (statusBar)
-		statusBar->SetStatusText(_("Pose file saved."), 0);
+	if (frame.statusBar)
+		frame.statusBar->SetStatusText(_("Pose file saved."), 0);
 }
 
-std::string OutfitStudioFrame::SaveCurrentPose(const std::string& poseName) {
-	wxComboBox* cPoseName = (wxComboBox*)FindWindowByName("cPoseName");
+std::string PosePanel::SaveCurrentPose(const std::string& poseName) {
+	wxComboBox* cPoseName = (wxComboBox*)frame.FindWindowByName("cPoseName");
 	int existingSel = cPoseName ? cPoseName->FindString(wxString::FromUTF8(poseName)) : wxNOT_FOUND;
 
 	PoseData* poseData = nullptr;
 	if (existingSel != wxNOT_FOUND)
 		poseData = reinterpret_cast<PoseData*>(cPoseName->GetClientData(existingSel));
 	if (!poseData) {
-		for (auto& pose : poseDataCollection.poseData)
+		for (auto& pose : frame.poseDataCollection.poseData)
 			if (pose.name == poseName)
 				poseData = &pose;
 	}
@@ -412,7 +450,7 @@ std::string OutfitStudioFrame::SaveCurrentPose(const std::string& poseName) {
 
 	// Kept in the collection, so the pose list can point at it
 	if (!poseData)
-		poseData = poseDataCollection.AddPose(PoseData(poseName));
+		poseData = frame.poseDataCollection.AddPose(PoseData(poseName));
 
 	poseData->boneData.clear();
 	poseData->absoluteLocal = false;
@@ -465,7 +503,7 @@ std::string OutfitStudioFrame::SaveCurrentPose(const std::string& poseName) {
 	return {};
 }
 
-std::string OutfitStudioFrame::SaveCurrentPoseFile(const std::string& fileName) {
+std::string PosePanel::SaveCurrentPoseFile(const std::string& fileName) {
 	PoseFileFormat format = PoseDataCollection::GetPoseFileFormat(fileName);
 	std::string skeletonHkxPath;
 	HKX::Format hkxFormat = HKX::Format::Unknown;
@@ -493,8 +531,8 @@ std::string OutfitStudioFrame::SaveCurrentPoseFile(const std::string& fileName) 
 	return {};
 }
 
-void OutfitStudioFrame::OnLoadHkxPose(wxCommandEvent& WXUNUSED(event)) {
-	wxFileDialog loadDlg(this,
+void PosePanel::OnLoadHkxPose(wxCommandEvent& WXUNUSED(event)) {
+	wxFileDialog loadDlg(&frame,
 						 _("Select pose file"),
 						 wxEmptyString,
 						 wxEmptyString,
@@ -513,7 +551,7 @@ void OutfitStudioFrame::OnLoadHkxPose(wxCommandEvent& WXUNUSED(event)) {
 			return;
 	}
 	else if (format != PoseFileFormat::Json && format != PoseFileFormat::Yaml) {
-		wxMessageBox(_("Please choose a pose file with a .hkx, .json, .yaml or .yml extension."), _("Load Pose File"), wxOK | wxICON_ERROR, this);
+		wxMessageBox(_("Please choose a pose file with a .hkx, .json, .yaml or .yml extension."), _("Load Pose File"), wxOK | wxICON_ERROR, &frame);
 		return;
 	}
 
@@ -521,11 +559,11 @@ void OutfitStudioFrame::OnLoadHkxPose(wxCommandEvent& WXUNUSED(event)) {
 	std::string loadError;
 	if (!PoseDataCollection::LoadPoseFile(std::string(srcPath.ToUTF8().data()), pd, skeletonHkxPath, &loadError)) {
 		wxString message = loadError.empty() ? _("Failed to load the pose file.") : wxString::FromUTF8(loadError);
-		wxMessageBox(message, _("Load Pose File"), wxOK | wxICON_ERROR, this);
+		wxMessageBox(message, _("Load Pose File"), wxOK | wxICON_ERROR, &frame);
 		return;
 	}
 
-	wxComboBox* cPoseName = (wxComboBox*)FindWindowByName("cPoseName");
+	wxComboBox* cPoseName = (wxComboBox*)frame.FindWindowByName("cPoseName");
 	if (!cPoseName)
 		return;
 
@@ -551,29 +589,29 @@ void OutfitStudioFrame::OnLoadHkxPose(wxCommandEvent& WXUNUSED(event)) {
 		}
 		else {
 			pd.name = std::string(makeUniquePoseName(pd.name).ToUTF8().data());
-			PoseData* added = poseDataCollection.AddPose(std::move(pd));
+			PoseData* added = frame.poseDataCollection.AddPose(std::move(pd));
 			int idx = cPoseName->Append(wxString::FromUTF8(added->name), added);
 			cPoseName->SetSelection(idx);
 		}
 	}
 	else {
-		PoseData* added = poseDataCollection.AddPose(std::move(pd));
+		PoseData* added = frame.poseDataCollection.AddPose(std::move(pd));
 		int idx = cPoseName->Append(wxString::FromUTF8(added->name), added);
 		cPoseName->SetSelection(idx);
 	}
 
 	wxCommandEvent dummy;
 	OnSelectPose(dummy);
-	if (statusBar)
-		statusBar->SetStatusText(_("Pose file loaded."), 0);
+	if (frame.statusBar)
+		frame.statusBar->SetStatusText(_("Pose file loaded."), 0);
 }
 
-bool OutfitStudioFrame::GetReferenceSkeletonHkxPath(std::string& outPath, const wxString& caption) {
+bool PosePanel::GetReferenceSkeletonHkxPath(std::string& outPath, const wxString& caption) {
 	if (!GetPoseHkxFormat(wxGetApp().targetGame, nullptr)) {
 		wxMessageBox(_("HKX support is currently only available for Skyrim Legendary Edition, Skyrim Special Edition, Skyrim VR, Fallout 4 and Fallout 4 VR."),
 					 caption,
 					 wxOK | wxICON_INFORMATION,
-					 this);
+					 &frame);
 		return false;
 	}
 
@@ -581,6 +619,6 @@ bool OutfitStudioFrame::GetReferenceSkeletonHkxPath(std::string& outPath, const 
 	if (PoseDataCollection::FindReferenceSkeletonHkx(outPath, error))
 		return true;
 
-	wxMessageBox(error, caption, wxOK | wxICON_ERROR, this);
+	wxMessageBox(error, caption, wxOK | wxICON_ERROR, &frame);
 	return false;
 }

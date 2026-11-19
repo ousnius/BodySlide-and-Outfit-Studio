@@ -6,6 +6,7 @@ See the included LICENSE file
 // Outfit Studio window: the view around the viewport such as camera, display options, lights, backgrounds and tabs
 
 #include "OutfitStudioFrame.h"
+#include "PosePanel.h"
 #include "SegmentPartitionEditor.h"
 #include "PhysicsPreview.h"
 #include "OutfitStudioApp.h"
@@ -597,7 +598,7 @@ void OutfitStudioFrame::EnterBoneTab() {
 	SelectTool(ToolID::WeightBrush);
 	glView->SetWeightVisible();
 
-	project->bPose = cbPose->GetValue();
+	project->bPose = posePanel->IsShowPoseChecked();
 
 	if (project->bPose)
 		ApplyPose();

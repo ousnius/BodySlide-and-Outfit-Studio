@@ -6,6 +6,7 @@ See the included LICENSE file
 // Viewport: the transform tool, the pivot and the rotation center
 
 #include "GLPanel.h"
+#include "PosePanel.h"
 #include "OutfitStudioFrame.h"
 #include "components/TweakBrush.h"
 
@@ -275,7 +276,7 @@ void wxGLPanel::UpdateTransform(const wxPoint& screenPos) {
 		}
 
 		// Keep the pose-sliders GUI in sync with the new values.
-		os->PoseToGUI();
+		os->posePanel->PoseToGUI();
 
 		UpdateBones();
 		UpdateNodes();

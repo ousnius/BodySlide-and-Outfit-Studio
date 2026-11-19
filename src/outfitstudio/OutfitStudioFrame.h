@@ -96,6 +96,7 @@ class OutfitStudioFrame;
 class AnimationPlayer;
 class PhysicsPreview;
 class SegmentPartitionEditor;
+class PosePanel;
 class ArchiveBrowser;
 class BrushStrokeController;
 class EditUV;
@@ -145,12 +146,8 @@ public:
 
 	bool HasPendingChanges() const { return pendingChanges; }
 
-	// Saves the current skeleton pose to the pose list and the PoseData folder, replacing a pose of the
-	// same name unless it's read-only. Returns the error, or an empty string.
-	std::string SaveCurrentPose(const std::string& poseName);
-	// Saves the current skeleton pose to a .hkx, .json, .yaml or .yml file. HKX needs the Havok skeleton
-	// next to the reference skeleton. Returns the error, or an empty string.
-	std::string SaveCurrentPoseFile(const std::string& fileName);
+	// The pose pane: posing the bones by hand, and the pose list
+	std::unique_ptr<PosePanel> posePanel;
 
 	void LoadFiles(const wxArrayString& files, const wxString& projectName = "");
 
@@ -200,23 +197,6 @@ public:
 	// an HDRi on by itself, which would otherwise keep overriding somebody who turned it off.
 	bool hdriBackgroundCleared = false;
 	wxChoice* cXMirrorBone = nullptr;
-	wxChoice* cPoseBone = nullptr;
-	wxSlider* rxPoseSlider = nullptr;
-	wxSlider* ryPoseSlider = nullptr;
-	wxSlider* rzPoseSlider = nullptr;
-	wxSlider* txPoseSlider = nullptr;
-	wxSlider* tyPoseSlider = nullptr;
-	wxSlider* tzPoseSlider = nullptr;
-	wxSlider* scPoseSlider = nullptr;
-	wxTextCtrl* rxPoseText = nullptr;
-	wxTextCtrl* ryPoseText = nullptr;
-	wxTextCtrl* rzPoseText = nullptr;
-	wxTextCtrl* txPoseText = nullptr;
-	wxTextCtrl* tyPoseText = nullptr;
-	wxTextCtrl* tzPoseText = nullptr;
-	wxTextCtrl* scPoseText = nullptr;
-	wxCheckBox* cbPose = nullptr;
-	wxButton* poseToMesh = nullptr;
 	wxScrolledWindow* sliderScroll = nullptr;
 	wxMenuBar* menuBar = nullptr;
 	wxToolBar* toolBarH = nullptr;
@@ -335,7 +315,6 @@ public:
 	void HighlightSliderData();
 	void HighlightBoneNamesWithWeights();
 	void RefreshGUIWeightColors();
-	void PoseToGUI();
 	void GetNormalizeBones(std::vector<std::string>* normBones, std::vector<std::string>* notNormBones);
 	std::vector<std::string> GetSelectedBones();
 	void CalcAutoXMirrorBone();
@@ -784,35 +763,11 @@ public:
 	// that any newly-introduced bad-bones state is visible.
 	void UpdateBoneTransformToolEnabled();
 	void RefreshBoneTreeBadBoneIcons();
-	void ResetAllPoseBones();
-	void ActivatePose(bool checked);
-	// Updates enabled state of the Save/Delete pose buttons based on
-	// whether the currently selected pose is read-only (e.g. SAM YAML).
-	void UpdatePoseButtonStates();
 	// Enables/disables everything that could edit meshes, bones or the project
 	// while an animation is playing. The player controls stay usable.
 	void SetAnimationPlaybackLock(bool locked);
-	// Resolves the .hkx file next to the configured reference skeleton, showing
-	// an error dialog with the given caption on failure.
-	bool GetReferenceSkeletonHkxPath(std::string& outPath, const wxString& caption);
 
 private:
-	AnimBone* GetPoseBonePtr();
-	void OnPoseBoneChanged(wxCommandEvent& event);
-	void OnPoseValChanged(int cind, float val);
-	void OnAnyPoseSlider(wxScrollEvent& e, wxTextCtrl* t, int cind);
-	void OnPoseSlider(wxScrollEvent& event);
-	void OnAnyPoseTextChanged(wxTextCtrl* t, wxSlider* s, int cind);
-	void OnPoseTextChanged(wxCommandEvent& event);
-	void OnResetBonePose(wxCommandEvent& event);
-	void OnResetAllPose(wxCommandEvent& event);
-	void OnPoseToMesh(wxCommandEvent& event);
-	void OnPoseCheckBox(wxCommandEvent& event);
-	void OnSelectPose(wxCommandEvent& event);
-	void OnSavePose(wxCommandEvent& event);
-	void OnDeletePose(wxCommandEvent& event);
-	void OnSaveHkxPose(wxCommandEvent& event);
-	void OnLoadHkxPose(wxCommandEvent& event);
 
 	// Bound while an animation plays; swallows every menu, toolbar and
 	// accelerator command so nothing can edit the project.

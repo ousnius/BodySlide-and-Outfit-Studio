@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "OutfitStudioFrame.h"
+#include "PosePanel.h"
 #include "SegmentPartitionEditor.h"
 #include "PhysicsPreview.h"
 #include "AnimationPlayer.h"
@@ -128,31 +129,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_COLLAPSIBLEPANE_CHANGED(XRCID("physicsPane"), OutfitStudioFrame::OnPaneCollapse)
 	EVT_COLLAPSIBLEPANE_CHANGED(XRCID("animationPane"), OutfitStudioFrame::OnPaneCollapse)
 	EVT_COLLAPSIBLEPANE_CHANGED(XRCID("notesPane"), OutfitStudioFrame::OnPaneCollapse)
-	EVT_CHOICE(XRCID("cPoseBone"), OutfitStudioFrame::OnPoseBoneChanged)
-	EVT_COMMAND_SCROLL(XRCID("rxPoseSlider"), OutfitStudioFrame::OnPoseSlider)
-	EVT_COMMAND_SCROLL(XRCID("ryPoseSlider"), OutfitStudioFrame::OnPoseSlider)
-	EVT_COMMAND_SCROLL(XRCID("rzPoseSlider"), OutfitStudioFrame::OnPoseSlider)
-	EVT_COMMAND_SCROLL(XRCID("txPoseSlider"), OutfitStudioFrame::OnPoseSlider)
-	EVT_COMMAND_SCROLL(XRCID("tyPoseSlider"), OutfitStudioFrame::OnPoseSlider)
-	EVT_COMMAND_SCROLL(XRCID("tzPoseSlider"), OutfitStudioFrame::OnPoseSlider)
-	EVT_COMMAND_SCROLL(XRCID("scPoseSlider"), OutfitStudioFrame::OnPoseSlider)
-	EVT_TEXT(XRCID("rxPoseText"), OutfitStudioFrame::OnPoseTextChanged)
-	EVT_TEXT(XRCID("ryPoseText"), OutfitStudioFrame::OnPoseTextChanged)
-	EVT_TEXT(XRCID("rzPoseText"), OutfitStudioFrame::OnPoseTextChanged)
-	EVT_TEXT(XRCID("txPoseText"), OutfitStudioFrame::OnPoseTextChanged)
-	EVT_TEXT(XRCID("tyPoseText"), OutfitStudioFrame::OnPoseTextChanged)
-	EVT_TEXT(XRCID("tzPoseText"), OutfitStudioFrame::OnPoseTextChanged)
-	EVT_TEXT(XRCID("scPoseText"), OutfitStudioFrame::OnPoseTextChanged)
-	EVT_BUTTON(XRCID("resetBonePose"), OutfitStudioFrame::OnResetBonePose)
-	EVT_BUTTON(XRCID("resetAllPose"), OutfitStudioFrame::OnResetAllPose)
-	EVT_BUTTON(XRCID("poseToMesh"), OutfitStudioFrame::OnPoseToMesh)
-	EVT_CHECKBOX(XRCID("cbPose"), OutfitStudioFrame::OnPoseCheckBox)
 
-	EVT_COMBOBOX(XRCID("cPoseName"), OutfitStudioFrame::OnSelectPose)
-	EVT_BUTTON(XRCID("savePose"), OutfitStudioFrame::OnSavePose)
-	EVT_BUTTON(XRCID("deletePose"), OutfitStudioFrame::OnDeletePose)
-	EVT_BUTTON(XRCID("exportPoseFile"), OutfitStudioFrame::OnSaveHkxPose)
-	EVT_BUTTON(XRCID("importPoseFile"), OutfitStudioFrame::OnLoadHkxPose)
 
 
 	EVT_CHECKBOX(XRCID("selectSliders"), OutfitStudioFrame::OnSelectSliders)
@@ -414,6 +391,7 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	animation = std::make_unique<AnimationPlayer>(*this);
 	physicsPreview = std::make_unique<PhysicsPreview>(*this);
 	segPartEditor = std::make_unique<SegmentPartitionEditor>(*this);
+	posePanel = std::make_unique<PosePanel>(*this);
 
 	wxLogMessage("Loading Outfit Studio frame at X:%d Y:%d with W:%d H:%d...", pos.x, pos.y, size.GetWidth(), size.GetHeight());
 
@@ -607,23 +585,7 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 		bottomSplitPanel->Bind(wxEVT_SIZE, &OutfitStudioFrame::OnBottomPanelResize, this);
 
 	cXMirrorBone = (wxChoice*)FindWindowByName("cXMirrorBone");
-	cPoseBone = (wxChoice*)FindWindowByName("cPoseBone");
-	rxPoseSlider = (wxSlider*)FindWindowByName("rxPoseSlider");
-	ryPoseSlider = (wxSlider*)FindWindowByName("ryPoseSlider");
-	rzPoseSlider = (wxSlider*)FindWindowByName("rzPoseSlider");
-	txPoseSlider = (wxSlider*)FindWindowByName("txPoseSlider");
-	tyPoseSlider = (wxSlider*)FindWindowByName("tyPoseSlider");
-	tzPoseSlider = (wxSlider*)FindWindowByName("tzPoseSlider");
-	scPoseSlider = (wxSlider*)FindWindowByName("scPoseSlider");
-	rxPoseText = (wxTextCtrl*)FindWindowByName("rxPoseText");
-	ryPoseText = (wxTextCtrl*)FindWindowByName("ryPoseText");
-	rzPoseText = (wxTextCtrl*)FindWindowByName("rzPoseText");
-	txPoseText = (wxTextCtrl*)FindWindowByName("txPoseText");
-	tyPoseText = (wxTextCtrl*)FindWindowByName("tyPoseText");
-	tzPoseText = (wxTextCtrl*)FindWindowByName("tzPoseText");
-	scPoseText = (wxTextCtrl*)FindWindowByName("scPoseText");
-	cbPose = (wxCheckBox*)FindWindowByName("cbPose");
-	poseToMesh = (wxButton*)FindWindowByName("poseToMesh");
+	posePanel->Init();
 
 	// Nothing is loaded yet, and only meshes that reference a physics XML can be
 	// simulated: UpdatePhysicsControlsVisibility reveals the pane again when one
@@ -1142,12 +1104,9 @@ void OutfitStudioFrame::ApplyRefresh(RefreshFlags flags) {
 	}
 
 	if (HasRefresh(flags, RefreshFlags::Pose)) {
-		if (cbPose)
-			cbPose->SetValue(project->bPose);
-		if (poseToMesh)
-			poseToMesh->Enable(project->bPose);
+		posePanel->ShowProjectPoseState();
 
-		PoseToGUI();
+		posePanel->PoseToGUI();
 		physicsPreview->UpdateState();
 		ApplyPose();
 	}

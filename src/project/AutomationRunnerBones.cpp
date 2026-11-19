@@ -6,6 +6,7 @@ See the included LICENSE file
 // Automation steps: bones, bone weights and poses
 
 #include "AutomationRunner.h"
+#include "outfitstudio/PosePanel.h"
 #include "OutfitProject.h"
 #include "outfitstudio/OutfitStudioFrame.h"
 #include "outfitstudio/GLPanel.h"
@@ -236,7 +237,7 @@ int AutomationRunner::ExecuteStepApplyPose(const AutomationStep& step) {
 		bone->UpdatePoseTransform();
 	}
 
-	outfitStudio->PoseToGUI();
+	outfitStudio->posePanel->PoseToGUI();
 	outfitStudio->glView->UpdateBones();
 	outfitStudio->glView->ApplyUndoState(&usp, false);
 	project->bPose = false;

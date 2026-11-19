@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
+#include "outfitstudio/PosePanel.h"
 #include "McpHelpers.h"
 #include "McpSnapshots.h"
 #include "project/AutomationRunner.h"
@@ -1733,7 +1734,7 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 			if (existing != poses.end() && !overwrite)
 				throw McpToolError("There already is a pose '" + name + "'. Pass overwrite: true to replace it.");
 
-			std::string error = frame->SaveCurrentPose(name);
+			std::string error = frame->posePanel->SaveCurrentPose(name);
 			if (!error.empty())
 				throw McpToolError(error);
 			result.data["name"] = name;
@@ -1744,7 +1745,7 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 			if (wxFileName::FileExists(wxString::FromUTF8(file)) && !overwrite)
 				throw McpToolError("The file '" + file + "' exists. Pass overwrite: true to replace it.");
 
-			std::string error = frame->SaveCurrentPoseFile(file);
+			std::string error = frame->posePanel->SaveCurrentPoseFile(file);
 			if (!error.empty())
 				throw McpToolError(error);
 			result.data["file"] = file;

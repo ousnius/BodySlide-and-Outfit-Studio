@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "PhysicsPreview.h"
+#include "PosePanel.h"
 #include "AnimationPlayer.h"
 #include "FrameHelpers.h"
 #include "GLPanel.h"
@@ -82,7 +83,7 @@ void PhysicsPreview::OnPhysicsCheckBox(wxCommandEvent& e) {
 	// Physics only simulates while posing or playing; make checking the box
 	// take effect immediately by enabling pose mode along with it.
 	if (e.IsChecked() && !frame.project->bPose && !frame.animation->IsPlaying())
-		frame.ActivatePose(true);
+		frame.posePanel->ActivatePose(true);
 	else
 		UpdateState();
 }

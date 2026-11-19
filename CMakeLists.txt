@@ -537,8 +537,8 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/outfitstudio/FrameImportExport.cpp
 	src/outfitstudio/FrameMasks.cpp
 	src/outfitstudio/FramePack.cpp
-	src/outfitstudio/PhysicsPreview.cpp
-	src/outfitstudio/FramePose.cpp
+	src/outfitstudio/PhysicsPreview.cpp
+	src/outfitstudio/PosePanel.cpp
 	src/outfitstudio/FrameProjectFile.cpp
 	src/outfitstudio/SegmentPartitionEditor.cpp
 	src/outfitstudio/FrameShapeOps.cpp

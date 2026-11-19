@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "AnimationPlayer.h"
+#include "PosePanel.h"
 #include "PhysicsPreview.h"
 #include "FrameHelpers.h"
 #include "OutfitStudioApp.h"
@@ -120,10 +121,10 @@ void AnimationPlayer::ApplyFrame(double framePos, bool updatePoseGUI) {
 	// Updating the pose sliders is skipped during playback; they are synced
 	// once when playback pauses.
 	if (updatePoseGUI)
-		frame.PoseToGUI();
+		frame.posePanel->PoseToGUI();
 
 	if (!frame.project->bPose)
-		frame.ActivatePose(true);
+		frame.posePanel->ActivatePose(true);
 	else
 		frame.ApplyPose();
 
@@ -260,7 +261,7 @@ void AnimationPlayer::Pause() {
 
 	// The frame stays applied, so a paused animation behaves like a pose. Sync
 	// the pose sliders that were skipped while playing.
-	frame.PoseToGUI();
+	frame.posePanel->PoseToGUI();
 	UpdateUI();
 
 	// Back to the physics pump if physics stays enabled with pose mode on
@@ -351,13 +352,13 @@ void AnimationPlayer::OnSelect(wxCommandEvent& WXUNUSED(event)) {
 	}
 	else {
 		// "<None>" sentinel: reset all bones like the "<New>" pose entry.
-		frame.ResetAllPoseBones();
-		frame.PoseToGUI();
+		frame.posePanel->ResetAllPoseBones();
+		frame.posePanel->PoseToGUI();
 		frame.ApplyPose();
 	}
 
 	UpdateUI();
-	frame.UpdatePoseButtonStates();
+	frame.posePanel->UpdatePoseButtonStates();
 }
 
 void AnimationPlayer::OnLoadHkx(wxCommandEvent& WXUNUSED(event)) {
@@ -366,7 +367,7 @@ void AnimationPlayer::OnLoadHkx(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	std::string skeletonHkxPath;
-	if (!frame.GetReferenceSkeletonHkxPath(skeletonHkxPath, _("Load Animation File")))
+	if (!frame.posePanel->GetReferenceSkeletonHkxPath(skeletonHkxPath, _("Load Animation File")))
 		return;
 
 	// A file that's listed already, as a favorite or loaded before, is selected

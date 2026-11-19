@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "WeightCopyDialog.h"
+#include "outfitstudio/PosePanel.h"
 
 #include "project/OutfitProject.h"
 #include "outfitstudio/OutfitStudioFrame.h"
@@ -248,7 +249,7 @@ void WeightCopyDialog::RestorePoseState() {
 	glView->UpdateBones();
 	glView->Render();
 
-	static_cast<OutfitStudioFrame*>(GetParent())->PoseToGUI();
+	static_cast<OutfitStudioFrame*>(GetParent())->posePanel->PoseToGUI();
 }
 
 void WeightCopyDialog::OnPoseSelected(wxCommandEvent&) {

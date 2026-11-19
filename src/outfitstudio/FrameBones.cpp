@@ -6,6 +6,8 @@ See the included LICENSE file
 // Outfit Studio window: the bone list, bones, skinning and bone weights
 
 #include "OutfitStudioFrame.h"
+#include "PosePanel.h"
+#include "AnimationPlayer.h"
 #include "PhysicsPreview.h"
 #include "ShapeTreeItems.h"
 #include "GLPanel.h"
@@ -165,9 +167,9 @@ void OutfitStudioFrame::UpdateAnimationGUI() {
 		manualXMirrorBone = cXMirrorBone->GetString(xMChoice);
 
 	std::string poseBone;
-	int poseBoneSel = cPoseBone->GetSelection();
+	int poseBoneSel = posePanel->GetBoneChoice()->GetSelection();
 	if (poseBoneSel != wxNOT_FOUND)
-		poseBone = cPoseBone->GetString(poseBoneSel).ToStdString();
+		poseBone = posePanel->GetBoneChoice()->GetString(poseBoneSel).ToStdString();
 
 	if (editor.lastSelectedBones.count(editor.activeBone) == 0)
 		editor.activeBone.clear();
@@ -180,8 +182,8 @@ void OutfitStudioFrame::UpdateAnimationGUI() {
 	cXMirrorBone->AppendString("Auto");
 	cXMirrorBone->SetSelection(xMChoice == 1 ? 1 : 0);
 
-	cPoseBone->Freeze();
-	cPoseBone->Clear();
+	posePanel->GetBoneChoice()->Freeze();
+	posePanel->GetBoneChoice()->Clear();
 
 	std::vector<std::string> activeBones;
 	project->GetActiveBones(activeBones);
@@ -191,7 +193,7 @@ void OutfitStudioFrame::UpdateAnimationGUI() {
 		activeBonesArr.Add(wxString::FromUTF8(bone));
 
 	cXMirrorBone->Append(activeBonesArr);
-	cPoseBone->Append(activeBonesArr);
+	posePanel->GetBoneChoice()->Append(activeBonesArr);
 
 	// Re-fill mirror and pose bone lists
 	for (auto& bone : activeBones) {
@@ -199,16 +201,16 @@ void OutfitStudioFrame::UpdateAnimationGUI() {
 			cXMirrorBone->SetSelection(cXMirrorBone->GetCount() - 1);
 
 		if (poseBone == bone)
-			cPoseBone->SetSelection(cPoseBone->GetCount() - 1);
+			posePanel->GetBoneChoice()->SetSelection(posePanel->GetBoneChoice()->GetCount() - 1);
 	}
 
 	CalcAutoXMirrorBone();
 
-	if (cPoseBone->GetSelection() == wxNOT_FOUND && cPoseBone->GetCount() > 0)
-		cPoseBone->SetSelection(0);
+	if (posePanel->GetBoneChoice()->GetSelection() == wxNOT_FOUND && posePanel->GetBoneChoice()->GetCount() > 0)
+		posePanel->GetBoneChoice()->SetSelection(0);
 
 	cXMirrorBone->Thaw();
-	cPoseBone->Thaw();
+	posePanel->GetBoneChoice()->Thaw();
 
 	auto cPoseName = (wxComboBox*)FindWindowByName("cPoseName");
 	cPoseName->Clear();
@@ -242,10 +244,10 @@ void OutfitStudioFrame::UpdateAnimationGUI() {
 	cPoseName->SetStringSelection("<New>");
 
 	// Reflect the read-only state of the initially selected pose (if any).
-	UpdatePoseButtonStates();
+	posePanel->UpdatePoseButtonStates();
 
 	RefreshGUIWeightColors();
-	PoseToGUI();
+	posePanel->PoseToGUI();
 	physicsPreview->UpdateControlsVisibility();
 
 	glView->UpdateNodes();
@@ -386,12 +388,12 @@ void OutfitStudioFrame::OnBoneSelect(wxTreeEvent& event) {
 	}
 
 	// Sync with pose panel choice if the active bone exists there
-	if (!editor.activeBone.empty() && cPoseBone) {
+	if (!editor.activeBone.empty() && posePanel->GetBoneChoice()) {
 		wxString activeBoneStr = wxString::FromUTF8(editor.activeBone);
-		for (unsigned int i = 0; i < cPoseBone->GetCount(); ++i) {
-			if (cPoseBone->GetString(i) == activeBoneStr) {
-				cPoseBone->SetSelection(i);
-				PoseToGUI();  // Update sliders and text values for the selected bone
+		for (unsigned int i = 0; i < posePanel->GetBoneChoice()->GetCount(); ++i) {
+			if (posePanel->GetBoneChoice()->GetString(i) == activeBoneStr) {
+				posePanel->GetBoneChoice()->SetSelection(i);
+				posePanel->PoseToGUI();  // Update sliders and text values for the selected bone
 				break;
 			}
 		}
@@ -592,7 +594,7 @@ void OutfitStudioFrame::OnAddBone(wxCommandEvent& WXUNUSED(event)) {
 			wxTreeItemId item = outfitBones->AppendItem(bonesRoot, bone);
 			UpdateBoneItemState(item, bone);
 			cXMirrorBone->AppendString(bone);
-			cPoseBone->AppendString(bone);
+			posePanel->GetBoneChoice()->AppendString(bone);
 			lastAdded = bone;
 		}
 
@@ -811,7 +813,7 @@ wxTreeItemId OutfitStudioFrame::AddBoneItemToGUI(const std::string& bone) {
 	UpdateBoneItemState(item, bone);
 
 	cXMirrorBone->AppendString(bone);
-	cPoseBone->AppendString(bone);
+	posePanel->GetBoneChoice()->AppendString(bone);
 	return item;
 }
 
@@ -1071,16 +1073,16 @@ void OutfitStudioFrame::OnDeleteBone(wxCommandEvent& WXUNUSED(event)) {
 		if (idxMirrorBone != wxNOT_FOUND)
 			cXMirrorBone->Delete(idxMirrorBone);
 
-		int idxPoseBone = cPoseBone->FindString(boneText);
+		int idxPoseBone = posePanel->GetBoneChoice()->FindString(boneText);
 		if (idxPoseBone != wxNOT_FOUND)
-			cPoseBone->Delete(idxPoseBone);
+			posePanel->GetBoneChoice()->Delete(idxPoseBone);
 	}
 
 	if (cXMirrorBone->GetStringSelection().IsEmpty())
 		cXMirrorBone->SetSelection(0);
 
-	if (cPoseBone->GetStringSelection().IsEmpty())
-		cPoseBone->SetSelection(wxNOT_FOUND);
+	if (posePanel->GetBoneChoice()->GetStringSelection().IsEmpty())
+		posePanel->GetBoneChoice()->SetSelection(wxNOT_FOUND);
 
 	glView->UpdateBones();
 	ReselectBone();
@@ -1493,4 +1495,28 @@ void OutfitStudioFrame::RefreshBoneTreeBadBoneIcons() {
 		UpdateBoneItemState(item, outfitBones->GetItemText(item).ToStdString());
 		item = outfitBones->GetNextChild(bonesRoot, cookie);
 	}
+}
+
+void OutfitStudioFrame::ApplyPose() {
+	// While an animation plays there is no separate physics pump; the
+	// simulation advances in lockstep with each displayed frame, using the
+	// wall-clock time since the last step.
+	physicsPreview->StepWithAnimation();
+
+	// Asking for a BVH update queues the shape with wxGLPanel::OnIdle, which
+	// rebuilds a whole AABB tree over every triangle of it - far too expensive
+	// to pay once per displayed animation frame. The tree only serves picking
+	// and brush hit tests, both locked out during playback, so the rebuild is
+	// deferred to the single ApplyPose that AnimationPlayer::Pause does.
+	const bool updateBVH = !animation->IsPlaying() && !physicsPreview->IsPumping();
+
+	for (auto& shape : project->GetWorkNif()->GetShapes())
+		UpdateLiveMesh(shape, updateBVH);
+
+	// Bone overlays cost one GL mesh created and destroyed per bone, not worth
+	// paying for every frame while they are not being drawn.
+	if (!animation->IsPlaying() || glView->GetBonesMode() || glView->GetNodesMode())
+		glView->UpdateBones();
+
+	glView->Render();
 }
