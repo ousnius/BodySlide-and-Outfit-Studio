@@ -337,8 +337,8 @@ endfunction()
 #   bsos_physics  src/physics, the Bullet based physics preview, drawn through bsos_render
 #   bsos_ui       src/ui, dialogs and widgets both applications use
 #   bsos_fbx      the FBX SDK wrapper, only for Outfit Studio
-#   bsos_project  src/project, the Outfit Studio project and its operations without the window
-#   bsos_mcp      the MCP protocol and HTTP server without the tools
+#   bsos_project  src/project, the Outfit Studio project, its operations and automation without the window
+#   bsos_mcp      src/mcp, the MCP server and its tools, which work on an IStudioSession
 # Each source file is compiled once and shared by the applications and the tests.
 
 add_library(bsos_vendor STATIC
@@ -503,6 +503,13 @@ add_library(bsos_fbx STATIC
 target_link_libraries(bsos_fbx PUBLIC bsos_core)
 
 add_library(bsos_project STATIC
+	src/project/AutomationRunner.cpp
+	src/project/AutomationRunnerBones.cpp
+	src/project/AutomationRunnerMasks.cpp
+	src/project/AutomationRunnerProject.cpp
+	src/project/AutomationRunnerProperties.cpp
+	src/project/AutomationRunnerShapes.cpp
+	src/project/AutomationRunnerSliders.cpp
 	src/project/BrushStrokeController.cpp
 	src/project/GameImport.cpp
 	src/project/ProjectPacker.cpp
@@ -525,8 +532,27 @@ target_link_libraries(bsos_project PUBLIC bsos_core bsos_fbx)
 add_library(bsos_mcp STATIC
 	src/mcp/McpProtocol.cpp
 	src/mcp/McpServer.cpp
+	src/mcp/McpSnapshots.cpp
+	src/mcp/McpToolsAnalysis.cpp
+	src/mcp/McpToolsArchives.cpp
+	src/mcp/McpToolsAutomation.cpp
+	src/mcp/McpToolsBones.cpp
+	src/mcp/McpToolsEdit.cpp
+	src/mcp/McpToolsFitting.cpp
+	src/mcp/McpToolsGames.cpp
+	src/mcp/McpToolsGuides.cpp
+	src/mcp/McpToolsMeasure.cpp
+	src/mcp/McpToolsPhysics.cpp
+	src/mcp/McpToolsProject.cpp
+	src/mcp/McpToolsQuality.cpp
+	src/mcp/McpToolsShapes.cpp
+	src/mcp/McpToolsSliderFiles.cpp
+	src/mcp/McpToolsSliders.cpp
+	src/mcp/McpToolsTextures.cpp
+	src/mcp/McpToolsView.cpp
+	src/mcp/OutfitStudioMcp.cpp
 )
-target_link_libraries(bsos_mcp PUBLIC bsos_core)
+target_link_libraries(bsos_mcp PUBLIC bsos_project bsos_render bsos_physics)
 
 set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/outfitstudio/DropTargets.cpp
@@ -558,32 +584,6 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/outfitstudio/OutfitStudioApp.cpp
 	src/outfitstudio/OutfitStudioFrame.cpp
 	src/outfitstudio/OutfitStudioProjectHost.cpp
-	src/mcp/McpSnapshots.cpp
-	src/mcp/McpToolsAnalysis.cpp
-	src/mcp/McpToolsArchives.cpp
-	src/mcp/McpToolsAutomation.cpp
-	src/mcp/McpToolsBones.cpp
-	src/mcp/McpToolsEdit.cpp
-	src/mcp/McpToolsFitting.cpp
-	src/mcp/McpToolsGames.cpp
-	src/mcp/McpToolsGuides.cpp
-	src/mcp/McpToolsMeasure.cpp
-	src/mcp/McpToolsPhysics.cpp
-	src/mcp/McpToolsProject.cpp
-	src/mcp/McpToolsQuality.cpp
-	src/mcp/McpToolsShapes.cpp
-	src/mcp/McpToolsSliderFiles.cpp
-	src/mcp/McpToolsSliders.cpp
-	src/mcp/McpToolsTextures.cpp
-	src/mcp/McpToolsView.cpp
-	src/mcp/OutfitStudioMcp.cpp
-	src/project/AutomationRunner.cpp
-	src/project/AutomationRunnerMasks.cpp
-	src/project/AutomationRunnerProperties.cpp
-	src/project/AutomationRunnerShapes.cpp
-	src/project/AutomationRunnerBones.cpp
-	src/project/AutomationRunnerSliders.cpp
-	src/project/AutomationRunnerProject.cpp
 	src/ui/outfitstudio/AddProjectDialog.cpp
 	src/ui/outfitstudio/ArchiveBrowser.cpp
 	src/ui/outfitstudio/AutomationDialog.cpp
@@ -679,6 +679,7 @@ if(BSOS_BUILD_TESTS)
 		tests/SliderSetTest.cpp
 		tests/StarfieldDataTest.cpp
 		tests/StarfieldSpaceTest.cpp
+		tests/StudioSessionTest.cpp
 		tests/SurfaceFitTest.cpp
 		tests/TextureConvertTest.cpp
 	)

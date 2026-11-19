@@ -149,6 +149,13 @@ void OutfitStudioMcp::AddTool(McpTool tool, std::chrono::milliseconds timeout) {
 	registry.Add(std::move(tool));
 }
 
+McpToolResult OutfitStudioMcp::CallTool(const std::string& name, const json& args) {
+	const McpTool* tool = registry.Find(name);
+	if (!tool)
+		return McpToolResult::Error("There is no tool '" + name + "'.");
+	return tool->progressHandler(args, nullptr);
+}
+
 OutfitStudioMcp::ProgressHandler OutfitStudioMcp::OnMainThread(Handler handler, const std::string& toolName, std::chrono::milliseconds timeout, bool autoSnapshot) {
 	IStudioSession* owner = &session;
 	auto stoppingFlag = stopping;

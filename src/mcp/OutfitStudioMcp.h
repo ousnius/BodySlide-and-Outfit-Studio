@@ -63,6 +63,9 @@ public:
 	// window can't undo get an automatic snapshot before they run.
 	void AddTool(McpTool tool, std::chrono::milliseconds timeout = std::chrono::minutes(10));
 
+	// Calls a tool the way a client's call runs it, without the server. Unknown tools give an error result.
+	McpToolResult CallTool(const std::string& name, const nlohmann::json& args);
+
 	McpSnapshotStore& Snapshots() { return *snapshots; }
 
 	// Vertices left out of clipping measurements and protected from clipping fixes, by shape name: parts that are
