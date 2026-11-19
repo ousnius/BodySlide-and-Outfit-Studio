@@ -23,8 +23,6 @@ See the included LICENSE file
 #include <cmath>
 #include <set>
 
-extern ConfigurationManager Config;
-
 using nlohmann::json;
 using namespace nifly;
 

@@ -11,8 +11,6 @@ See the included LICENSE file
 #include <cfloat>
 #include <map>
 
-extern ConfigurationManager Config;
-
 using namespace nifly;
 
 namespace {

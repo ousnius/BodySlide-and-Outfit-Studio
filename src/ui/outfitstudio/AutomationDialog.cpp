@@ -35,7 +35,6 @@ See the included LICENSE file
 
 using namespace nifly;
 
-extern ConfigurationManager Config;
 extern ConfigurationManager OutfitStudioConfig;
 
 // Popup for the step type combo: the step types grouped by category in a tree,

@@ -22,8 +22,6 @@ See the included LICENSE file
 #include <variant>
 #include <vector>
 
-extern ConfigurationManager Config;
-
 using nlohmann::json;
 using namespace nifly;
 

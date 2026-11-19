@@ -6,9 +6,8 @@ See the included LICENSE file
 #ifdef USE_FBXSDK
 
 #include "FBXWrangler.h"
+#include "utils/ConfigurationManager.h"
 #include <fbxsdk.h>
-
-extern ConfigurationManager Config;
 
 using namespace nifly;
 

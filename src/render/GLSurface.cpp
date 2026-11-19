@@ -18,8 +18,6 @@ See the included LICENSE file
 
 using namespace nifly;
 
-extern ConfigurationManager Config;
-
 namespace {
 const IntersectResult* NearestVisibleFacet(const Mesh* mesh, const std::vector<IntersectResult>& results) {
 	const IntersectResult* nearest = nullptr;

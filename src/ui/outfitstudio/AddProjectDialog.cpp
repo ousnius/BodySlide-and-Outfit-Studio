@@ -8,8 +8,6 @@ See the included LICENSE file
 #include "utils/ConfigurationManager.h"
 #include "ui/ConfigDialogUtil.h"
 
-extern ConfigurationManager Config;
-
 wxBEGIN_EVENT_TABLE(AddProjectDialog, wxDialog)
 	EVT_BUTTON(wxID_OK, AddProjectDialog::OnAdd)
 wxEND_EVENT_TABLE()

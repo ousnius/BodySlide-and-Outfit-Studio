@@ -4,9 +4,9 @@ See the included LICENSE file
 */
 
 #include "PreviewWindow.h"
+#include "utils/ConfigurationManager.h"
 #include "BodySlideApp.h"
 
-extern ConfigurationManager Config;
 extern ConfigurationManager BodySlideConfig;
 
 wxBEGIN_EVENT_TABLE(PreviewWindow, wxFrame)

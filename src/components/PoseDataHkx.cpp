@@ -18,8 +18,6 @@ See the included LICENSE file
 #include <wx/intl.h>
 #include <wx/log.h>
 
-extern ConfigurationManager Config;
-
 namespace {
 
 struct HkxQuaternion {

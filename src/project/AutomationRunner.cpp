@@ -42,8 +42,6 @@ See the included LICENSE file
 
 using namespace nifly;
 
-extern ConfigurationManager Config;
-
 namespace {
 int ExpectedBSShaderTextureCount(const NiVersion& version) {
 	if (version.User() == 12 && version.Stream() == 155)

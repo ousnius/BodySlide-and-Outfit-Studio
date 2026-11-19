@@ -13,7 +13,6 @@ See the included LICENSE file
 
 using namespace nifly;
 
-extern ConfigurationManager Config;
 extern ConfigurationManager OutfitStudioConfig;
 
 

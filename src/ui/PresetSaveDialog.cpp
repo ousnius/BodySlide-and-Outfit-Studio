@@ -9,8 +9,6 @@ See the included LICENSE file
 
 #include <regex>
 
-extern ConfigurationManager Config;
-
 wxBEGIN_EVENT_TABLE(PresetSaveDialog, wxDialog)
 	EVT_TEXT_ENTER(XRCID("spFilter"), PresetSaveDialog::FilterChanged)
 	EVT_TEXT(XRCID("spFilter"), PresetSaveDialog::FilterChanged)

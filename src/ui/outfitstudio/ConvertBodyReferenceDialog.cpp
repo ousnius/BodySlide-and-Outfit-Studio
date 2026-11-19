@@ -18,8 +18,6 @@ See the included LICENSE file
 
 using namespace std;
 class RefTemplate;
-extern ConfigurationManager Config;
-
 wxBEGIN_EVENT_TABLE(ConvertBodyReferenceDialog, wxWizard)
 
 wxEND_EVENT_TABLE()

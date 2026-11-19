@@ -14,8 +14,6 @@ See the included LICENSE file
 
 #include <cmath>
 
-extern ConfigurationManager Config;
-
 ResourceLoader::ResourceLoader() {}
 
 ResourceLoader::~ResourceLoader() {

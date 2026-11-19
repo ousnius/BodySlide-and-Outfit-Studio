@@ -17,8 +17,6 @@ See the included LICENSE file
 	#include <wx/msw/registry.h>
 #endif
 
-extern ConfigurationManager Config;
-
 // TargetGames mapping - must match enum in BodySlideApp.h and OutfitStudio.h
 // enum TargetGame { FO3, FONV, SKYRIM, FO4, SKYRIMSE, FO4VR, SKYRIMVR, FO76, OB, SF };
 namespace GameUtil {

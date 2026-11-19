@@ -20,8 +20,6 @@ See the included LICENSE file
 
 #include <wx/buffer.h>
 
-extern ConfigurationManager Config;
-
 namespace GameDataStream {
 std::vector<std::string> DataFolders() {
 	return DataFolders(Config["GameDataPath"]);

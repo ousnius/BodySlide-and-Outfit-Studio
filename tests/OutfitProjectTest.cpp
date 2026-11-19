@@ -17,8 +17,6 @@
 #include <memory>
 #include <random>
 
-extern ConfigurationManager Config;
-
 using nifly::NifFile;
 using nifly::NiShape;
 using nifly::Triangle;

@@ -8,8 +8,6 @@ See the included LICENSE file
 
 using namespace nifly;
 
-extern ConfigurationManager Config;
-
 
 wxBEGIN_EVENT_TABLE(GLDialog, wxDialog)
 	EVT_CLOSE(GLDialog::OnClose)

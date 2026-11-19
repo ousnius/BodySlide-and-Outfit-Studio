@@ -11,8 +11,6 @@ See the included LICENSE file
 #include <wx/filename.h>
 #include <wx/tokenzr.h>
 
-extern ConfigurationManager Config;
-
 using nlohmann::json;
 
 namespace {

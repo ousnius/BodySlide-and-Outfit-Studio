@@ -15,8 +15,6 @@ See the included LICENSE file
 #include <cstring>
 #include <vector>
 
-extern ConfigurationManager Config;
-
 namespace {
 // Edge length of a face of the reflection cube map. Reflections are small and mostly blurred, and
 // this still leaves a full mip chain for roughness to pick from.

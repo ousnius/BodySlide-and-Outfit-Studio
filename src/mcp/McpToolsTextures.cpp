@@ -20,8 +20,6 @@ extern "C" {
 #include <wx/filename.h>
 #include <wx/utils.h>
 
-extern ConfigurationManager Config;
-
 using nlohmann::json;
 using namespace TextureConvert;
 

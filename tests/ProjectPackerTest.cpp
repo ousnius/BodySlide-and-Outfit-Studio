@@ -13,8 +13,6 @@
 #include <wx/wfstream.h>
 #include <wx/zipstrm.h>
 
-extern ConfigurationManager Config;
-
 namespace {
 // A project folder with two projects (a robe and a variant of it) and an output folder, set as the project path
 struct PackFolder {

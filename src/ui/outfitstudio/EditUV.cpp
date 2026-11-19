@@ -4,14 +4,13 @@ See the included LICENSE file
 */
 
 #include "EditUV.h"
+#include "utils/ConfigurationManager.h"
 #include "outfitstudio/GLPanel.h"
 #include "outfitstudio/OutfitStudioFrame.h"
 #include "render/GLOffscreenBuffer.h"
 #include "files/GameDataStream.h"
 
 #include <regex>
-
-extern ConfigurationManager Config;
 
 using namespace nifly;
 

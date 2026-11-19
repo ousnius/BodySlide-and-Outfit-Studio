@@ -20,8 +20,6 @@ See the included LICENSE file
 #include <algorithm>
 #include <set>
 
-extern ConfigurationManager Config;
-
 namespace {
 enum TreeImage { ImageFolder, ImageFolderOpen, ImageFile };
 

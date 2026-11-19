@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "ShapeProperties.h"
+#include "utils/ConfigurationManager.h"
 #include "outfitstudio/GLPanel.h"
 #include "outfitstudio/OutfitStudioFrame.h"
 #include "files/GameDataStream.h"
@@ -13,8 +14,6 @@ See the included LICENSE file
 
 #include <algorithm>
 #include <cctype>
-
-extern ConfigurationManager Config;
 
 using namespace nifly;
 

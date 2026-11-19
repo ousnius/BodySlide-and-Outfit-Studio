@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "OutfitProject.h"
+#include "utils/ConfigurationManager.h"
 #include "ProjectNifHelpers.h"
 #include "components/AddOnSliders.h"
 #include "components/ClippingFixer.h"
@@ -32,8 +33,6 @@ See the included LICENSE file
 #include <regex>
 #include <sstream>
 #include <wx/log.h>
-extern ConfigurationManager Config;
-
 using namespace nifly;
 
 namespace {

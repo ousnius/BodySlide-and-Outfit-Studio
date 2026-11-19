@@ -22,8 +22,6 @@ See the included LICENSE file
 #include <algorithm>
 #include <cctype>
 
-extern ConfigurationManager Config;
-
 using nlohmann::json;
 using nifly::NiShape;
 

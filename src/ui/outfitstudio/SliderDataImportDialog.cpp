@@ -9,8 +9,6 @@ See the included LICENSE file
 #include "utils/ConfigurationManager.h"
 #include "ui/ConfigDialogUtil.h"
 
-extern ConfigurationManager Config;
-
 wxBEGIN_EVENT_TABLE(SliderDataImportDialog, wxDialog)
 	EVT_BUTTON(wxID_OK, SliderDataImportDialog::OnImport)
 wxEND_EVENT_TABLE()

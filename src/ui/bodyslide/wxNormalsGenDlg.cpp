@@ -8,8 +8,6 @@ See the included LICENSE file
 
 #include <wx/xrc/xmlres.h>
 
-extern ConfigurationManager Config;
-
 wxBEGIN_EVENT_TABLE(wxNormalsGenDlg, wxDialog)
 	EVT_RIGHT_DOWN(wxNormalsGenDlg::ShowPresetContextMenu)
 	EVT_BUTTON(XRCID("bpPreset"), wxNormalsGenDlg::doShowPresetContext)

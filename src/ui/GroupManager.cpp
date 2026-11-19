@@ -9,8 +9,6 @@ See the included LICENSE file
 
 #include <wx/srchctrl.h>
 
-extern ConfigurationManager Config;
-
 wxBEGIN_EVENT_TABLE(GroupManager, wxDialog)
 	EVT_FILEPICKER_CHANGED(XRCID("fpGroupXML"), GroupManager::OnLoadGroup)
 	EVT_LISTBOX(XRCID("listGroups"), GroupManager::OnSelectGroup)

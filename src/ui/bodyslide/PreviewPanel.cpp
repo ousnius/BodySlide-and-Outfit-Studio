@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "PreviewPanel.h"
+#include "utils/ConfigurationManager.h"
 #include "files/GameDataStream.h"
 #include "physics/Controller.h"
 #include "physics/PumpClock.h"
@@ -18,7 +19,6 @@ See the included LICENSE file
 
 using namespace nifly;
 
-extern ConfigurationManager Config;
 extern ConfigurationManager BodySlideConfig;
 
 wxDEFINE_EVENT(EVT_PREVIEW_POPOUT, wxCommandEvent);

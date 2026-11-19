@@ -10,8 +10,6 @@ See the included LICENSE file
 
 class BodySlideApp;
 
-extern ConfigurationManager Config;
-
 // Standalone preview window (pop-out mode).
 // Hosts a PreviewPanel as its only child and delegates all preview operations to it.
 class PreviewWindow : public wxFrame {

@@ -7,8 +7,6 @@
 #include <random>
 #include <string>
 
-extern ConfigurationManager Config;
-
 namespace {
 // Temporary folder with an app dir, a project dir and a game data dir, restoring the config afterwards
 struct PathScope {

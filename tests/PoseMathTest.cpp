@@ -10,8 +10,6 @@
 
 using namespace nifly;
 
-extern ConfigurationManager Config;
-
 namespace {
 
 // A small arm: shoulder -> upper arm -> forearm -> hand -> finger, with two twist bones along the forearm. The

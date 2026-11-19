@@ -29,8 +29,6 @@ See the included LICENSE file
 class BodySlideApp;
 class PreviewCanvas;
 
-extern ConfigurationManager Config;
-
 struct PreviewProjectEntry {
 	std::string projectFile;
 	std::string setName;

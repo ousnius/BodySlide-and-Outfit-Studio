@@ -9,8 +9,6 @@ See the included LICENSE file
 
 #include <wx/dir.h>
 
-extern ConfigurationManager Config;
-
 std::string ProjectUtil::GetProjectPath() {
 	std::string projectPath = Config["ProjectPath"];
 	std::string appDir = Config["AppDir"];
