@@ -529,17 +529,17 @@ add_library(bsos_mcp STATIC
 target_link_libraries(bsos_mcp PUBLIC bsos_core)
 
 set(BSOS_OUTFIT_STUDIO_SOURCES
-	src/outfitstudio/DropTargets.cpp
+	src/outfitstudio/DropTargets.cpp
 	src/outfitstudio/AnimationPlayer.cpp
 	src/outfitstudio/FrameBones.cpp
 	src/outfitstudio/FrameConform.cpp
 	src/outfitstudio/FrameHelpers.cpp
 	src/outfitstudio/FrameImportExport.cpp
 	src/outfitstudio/FrameMasks.cpp
-	src/outfitstudio/FramePack.cpp
-	src/outfitstudio/PhysicsPreview.cpp
+	src/outfitstudio/FramePack.cpp
+	src/outfitstudio/PhysicsPreview.cpp
 	src/outfitstudio/PosePanel.cpp
-	src/outfitstudio/FrameProjectFile.cpp
+	src/outfitstudio/FrameProjectFile.cpp
 	src/outfitstudio/SegmentPartitionEditor.cpp
 	src/outfitstudio/FrameShapeOps.cpp
 	src/outfitstudio/FrameShapes.cpp

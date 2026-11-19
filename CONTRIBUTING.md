@@ -35,7 +35,9 @@ Each folder may only use the folders above it in this list. CMake builds each on
 | `src/ui/outfitstudio`, `src/ui/bodyslide` | Dialogs and widgets of one application |
 | `src/outfitstudio`, `src/bodyslide` | The applications and their windows |
 
-Large classes are split into one file per feature, named after the class. For example `OutfitStudioFrame.cpp` and `FrameSliders.cpp` both implement `OutfitStudioFrame`, and `OutfitProject.cpp` and `OutfitProjectSave.cpp` both implement `OutfitProject`.
+Two exceptions still use the Outfit Studio window, so CMake builds them into the Outfit Studio application instead of their library: `AutomationRunner*.cpp` in `src/project`, and the MCP tools (`McpTools*.cpp`, `McpSnapshots.cpp`, `OutfitStudioMcp.cpp`) in `src/mcp`.
+
+Large classes are split into one file per feature, named after the class. For example `OutfitStudioFrame.cpp` and `FrameSliders.cpp` both implement `OutfitStudioFrame`, and `OutfitProject.cpp` and `OutfitProjectSave.cpp` both implement `OutfitProject`. Panes of the Outfit Studio window with state of their own have a class that binds its own events, like `PosePanel` and `PhysicsPreview`.
 
 ## Adding or moving a source file
 
@@ -45,4 +47,4 @@ The file lists of CMake and of the Visual Studio projects are kept by hand. A ne
 - `OutfitStudio.vcxproj` and `BodySlide.vcxproj` for the applications that use it, and `BSOSTests.vcxproj` if the tests use it
 - the matching `.vcxproj.filters` files, so the file shows up in its folder in Visual Studio
 
-Source files use Windows (CRLF) line endings.
+Git stores the source files with LF line endings. On Windows, check them out with `core.autocrlf` set to `true`, so they have CRLF line endings on disk.
