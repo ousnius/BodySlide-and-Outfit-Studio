@@ -517,21 +517,34 @@ add_library(bsos_mcp STATIC
 target_link_libraries(bsos_mcp PUBLIC bsos_core)
 
 set(BSOS_OUTFIT_STUDIO_SOURCES
+	src/outfitstudio/DropTargets.cpp
+	src/outfitstudio/FrameAnimation.cpp
+	src/outfitstudio/FrameBones.cpp
+	src/outfitstudio/FrameConform.cpp
+	src/outfitstudio/FrameHelpers.cpp
+	src/outfitstudio/FrameImportExport.cpp
+	src/outfitstudio/FrameMasks.cpp
+	src/outfitstudio/FramePack.cpp
+	src/outfitstudio/FramePhysics.cpp
+	src/outfitstudio/FramePose.cpp
+	src/outfitstudio/FrameProjectFile.cpp
+	src/outfitstudio/FrameSegments.cpp
+	src/outfitstudio/FrameShapeOps.cpp
+	src/outfitstudio/FrameShapes.cpp
+	src/outfitstudio/FrameSliderFiles.cpp
+	src/outfitstudio/FrameSliders.cpp
+	src/outfitstudio/FrameTools.cpp
+	src/outfitstudio/FrameView.cpp
+	src/outfitstudio/GLPanel.cpp
+	src/outfitstudio/GLPanelInput.cpp
+	src/outfitstudio/GLPanelMasks.cpp
+	src/outfitstudio/GLPanelOverlays.cpp
+	src/outfitstudio/GLPanelTools.cpp
+	src/outfitstudio/GLPanelTransform.cpp
+	src/outfitstudio/GLPanelUndo.cpp
+	src/outfitstudio/OutfitStudioApp.cpp
 	src/outfitstudio/OutfitStudioFrame.cpp
-	src/outfitstudio/OutfitStudioProjectHost.cpp	src/outfitstudio/OutfitStudioApp.cpp	src/outfitstudio/GLPanel.cpp	src/outfitstudio/FrameView.cpp	src/outfitstudio/FrameTools.cpp	src/outfitstudio/FrameSliders.cpp	src/outfitstudio/FrameSliderFiles.cpp	src/outfitstudio/FrameShapes.cpp	src/outfitstudio/FrameShapeOps.cpp	src/outfitstudio/FrameSegments.cpp	src/outfitstudio/FrameProjectFile.cpp	src/outfitstudio/FramePose.cpp	src/outfitstudio/FramePhysics.cpp	src/outfitstudio/FramePack.cpp	src/outfitstudio/FrameMasks.cpp	src/outfitstudio/FrameImportExport.cpp	src/outfitstudio/FrameConform.cpp	src/outfitstudio/FrameBones.cpp	src/outfitstudio/FrameAnimation.cpp	src/outfitstudio/DropTargets.cpp	src/outfitstudio/FrameHelpers.cpp	src/project/AutomationRunner.cpp
-	src/ui/outfitstudio/AddProjectDialog.cpp
-	src/ui/outfitstudio/ArchiveBrowser.cpp
-	src/ui/outfitstudio/AutomationDialog.cpp
-	src/ui/outfitstudio/BadBonesDialog.cpp
-	src/ui/outfitstudio/ConvertBodyReferenceDialog.cpp
-	src/ui/outfitstudio/EditUV.cpp
-	src/ui/outfitstudio/FBXImportDialog.cpp
-	src/ui/outfitstudio/ObjImportDialog.cpp
-	src/ui/outfitstudio/ShapeProperties.cpp
-	src/ui/outfitstudio/SliderDataDialog.cpp
-	src/ui/outfitstudio/SliderDataImportDialog.cpp
-	src/ui/outfitstudio/WeightCopyDialog.cpp
-	src/ui/outfitstudio/wxBrushSettingsPopup.cpp
+	src/outfitstudio/OutfitStudioProjectHost.cpp
 	src/mcp/McpSnapshots.cpp
 	src/mcp/McpToolsAnalysis.cpp
 	src/mcp/McpToolsArchives.cpp
@@ -551,6 +564,20 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/mcp/McpToolsTextures.cpp
 	src/mcp/McpToolsView.cpp
 	src/mcp/OutfitStudioMcp.cpp
+	src/project/AutomationRunner.cpp
+	src/ui/outfitstudio/AddProjectDialog.cpp
+	src/ui/outfitstudio/ArchiveBrowser.cpp
+	src/ui/outfitstudio/AutomationDialog.cpp
+	src/ui/outfitstudio/BadBonesDialog.cpp
+	src/ui/outfitstudio/ConvertBodyReferenceDialog.cpp
+	src/ui/outfitstudio/EditUV.cpp
+	src/ui/outfitstudio/FBXImportDialog.cpp
+	src/ui/outfitstudio/ObjImportDialog.cpp
+	src/ui/outfitstudio/ShapeProperties.cpp
+	src/ui/outfitstudio/SliderDataDialog.cpp
+	src/ui/outfitstudio/SliderDataImportDialog.cpp
+	src/ui/outfitstudio/WeightCopyDialog.cpp
+	src/ui/outfitstudio/wxBrushSettingsPopup.cpp
 )
 
 set(BSOS_BODYSLIDE_SOURCES

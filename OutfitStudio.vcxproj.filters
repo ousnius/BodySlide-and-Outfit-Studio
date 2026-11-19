@@ -2445,6 +2445,24 @@
     <ClCompile Include="src\outfitstudio\GLPanel.cpp">
       <Filter>Outfit Studio</Filter>
     </ClCompile>
+    <ClCompile Include="src\outfitstudio\GLPanelUndo.cpp">
+      <Filter>Outfit Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\outfitstudio\GLPanelOverlays.cpp">
+      <Filter>Outfit Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\outfitstudio\GLPanelMasks.cpp">
+      <Filter>Outfit Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\outfitstudio\GLPanelTransform.cpp">
+      <Filter>Outfit Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\outfitstudio\GLPanelTools.cpp">
+      <Filter>Outfit Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\outfitstudio\GLPanelInput.cpp">
+      <Filter>Outfit Studio</Filter>
+    </ClCompile>
     <ClCompile Include="src\outfitstudio\FrameView.cpp">
       <Filter>Outfit Studio</Filter>
     </ClCompile>

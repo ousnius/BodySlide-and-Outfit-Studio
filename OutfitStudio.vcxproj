@@ -1066,6 +1066,12 @@
     <ClCompile Include="src\outfitstudio\OutfitStudioProjectHost.cpp" />
     <ClCompile Include="src\outfitstudio\OutfitStudioApp.cpp" />
     <ClCompile Include="src\outfitstudio\GLPanel.cpp" />
+    <ClCompile Include="src\outfitstudio\GLPanelUndo.cpp" />
+    <ClCompile Include="src\outfitstudio\GLPanelOverlays.cpp" />
+    <ClCompile Include="src\outfitstudio\GLPanelMasks.cpp" />
+    <ClCompile Include="src\outfitstudio\GLPanelTransform.cpp" />
+    <ClCompile Include="src\outfitstudio\GLPanelTools.cpp" />
+    <ClCompile Include="src\outfitstudio\GLPanelInput.cpp" />
     <ClCompile Include="src\outfitstudio\FrameView.cpp" />
     <ClCompile Include="src\outfitstudio\FrameTools.cpp" />
     <ClCompile Include="src\outfitstudio\FrameSliders.cpp" />
