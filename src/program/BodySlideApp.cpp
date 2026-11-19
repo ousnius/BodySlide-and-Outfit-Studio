@@ -3249,7 +3249,9 @@ bool BodySlideApp::EnsurePreviewSkeleton() {
 
 	// BodySlide has no use for the skeleton outside of the preview, so it's
 	// only loaded once something there needs it
-	if (LoadDefaultSkeletonReference() != 0) {
+	wxString skeletonError;
+	if (LoadDefaultSkeletonReference(&skeletonError) != 0) {
+		wxMessageBox(skeletonError);
 		wxLogError("The preview needs the reference skeleton, which could not be loaded.");
 		return false;
 	}

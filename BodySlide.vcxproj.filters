@@ -715,6 +715,9 @@
     <ClInclude Include="src\render\ResourceLoader.h">
       <Filter>Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="src\render\MeshBuffers.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
     <ClInclude Include="src\files\SFMaterialDatabase.h">
       <Filter>Files</Filter>
     </ClInclude>

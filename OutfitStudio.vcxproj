@@ -855,6 +855,7 @@
     <ClInclude Include="src\files\ObjFile.h" />
     <ClInclude Include="src\files\PhysicsXmlFile.h" />
     <ClInclude Include="src\render\ResourceLoader.h" />
+    <ClInclude Include="src\render\MeshBuffers.h" />
     <ClInclude Include="src\files\SFMorphFile.h" />
     <ClInclude Include="src\files\TriFile.h" />
     <ClInclude Include="src\files\MaskFile.h" />

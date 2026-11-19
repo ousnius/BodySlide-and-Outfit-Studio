@@ -244,7 +244,8 @@ public:
 
 	void Clear();
 
-	int LoadFromNif(const std::string& fileName);
+	// Loads the reference skeleton. On failure returns non-zero and, if given, sets errorMessage to a translated message for the user.
+	int LoadFromNif(const std::string& fileName, wxString* errorMessage = nullptr);
 	AnimBone& AddStandardBone(const std::string& boneName);
 	AnimBone& AddCustomBone(const std::string& boneName);
 	std::string GenerateBoneName();
@@ -275,7 +276,7 @@ std::vector<AnimBone*> SortBonesParentsFirst(std::vector<AnimBone*> bones);
 // Loads the skeleton configured as "Anim/DefaultSkeletonReference" into the
 // AnimSkeleton singleton, resolving a relative path against the application
 // directory. Returns 0 on success.
-int LoadDefaultSkeletonReference();
+int LoadDefaultSkeletonReference(wxString* errorMessage = nullptr);
 
 // Bone name -> replacement pose-to-global transform, e.g. produced by the
 // physics preview simulation.

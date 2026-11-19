@@ -225,7 +225,7 @@ TEST_CASE("Meshes are built from shapes without GL", "[OutfitProject]") {
 	REQUIRE(m);
 	CHECK(m->nVerts == 49);
 	CHECK(m->nTris == 72);
-	CHECK_FALSE(m->genBuffers);
+	CHECK_FALSE(m->HasBuffers());
 	CHECK(m->bvh);
 }
 

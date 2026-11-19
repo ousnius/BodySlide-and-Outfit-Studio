@@ -10,7 +10,6 @@ See the included LICENSE file
 #include <unordered_set>
 #include <wx/filename.h>
 #include <wx/log.h>
-#include <wx/msgdlg.h>
 
 extern ConfigurationManager Config;
 
@@ -1004,13 +1003,14 @@ void AnimSkeleton::Clear() {
 	unknownCount = 0;
 }
 
-int AnimSkeleton::LoadFromNif(const std::string& fileName) {
+int AnimSkeleton::LoadFromNif(const std::string& fileName, wxString* errorMessage) {
 	Clear();
 
 	int error = refSkeletonNif.Load(fileName);
 	if (error) {
 		wxLogError("Failed to load skeleton '%s'!", fileName);
-		wxMessageBox(wxString::Format(_("Failed to load skeleton '%s'!"), fileName));
+		if (errorMessage)
+			*errorMessage = wxString::Format(_("Failed to load skeleton '%s'!"), fileName);
 		return 1;
 	}
 
@@ -1018,7 +1018,8 @@ int AnimSkeleton::LoadFromNif(const std::string& fileName) {
 	uint32_t nodeID = refSkeletonNif.GetBlockID(refSkeletonNif.FindBlockByName<NiNode>(rootBone));
 	if (nodeID == 0xFFFFFFFF) {
 		wxLogError("Root '%s' not found in skeleton '%s'!", rootBone, fileName);
-		wxMessageBox(wxString::Format(_("Root '%s' not found in skeleton '%s'!"), rootBone, fileName));
+		if (errorMessage)
+			*errorMessage = wxString::Format(_("Root '%s' not found in skeleton '%s'!"), rootBone, fileName);
 		return 2;
 	}
 
@@ -1259,12 +1260,12 @@ std::vector<AnimBone*> SortBonesParentsFirst(std::vector<AnimBone*> bones) {
 	return bones;
 }
 
-int LoadDefaultSkeletonReference() {
+int LoadDefaultSkeletonReference(wxString* errorMessage) {
 	std::string defSkelFile = Config["Anim/DefaultSkeletonReference"];
 	if (wxFileName(wxString::FromUTF8(defSkelFile)).IsRelative())
-		return AnimSkeleton::getInstance().LoadFromNif(Config["AppDir"] + PathSepStr + defSkelFile);
+		return AnimSkeleton::getInstance().LoadFromNif(Config["AppDir"] + PathSepStr + defSkelFile, errorMessage);
 
-	return AnimSkeleton::getInstance().LoadFromNif(defSkelFile);
+	return AnimSkeleton::getInstance().LoadFromNif(defSkelFile, errorMessage);
 }
 
 void ApplySkinningToVerts(AnimInfo& anim,

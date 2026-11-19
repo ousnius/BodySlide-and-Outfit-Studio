@@ -299,8 +299,11 @@ OutfitProject::OutfitProject(IProjectHost* inHost, bool loadSkeleton) {
 
 	workAnim.SetRefNif(&workNif);
 
-	if (loadSkeleton)
-		LoadDefaultSkeletonReference();
+	if (loadSkeleton) {
+		wxString skeletonError;
+		if (LoadDefaultSkeletonReference(&skeletonError) != 0)
+			host->ShowMessage(HostMessageLevel::Error, skeletonError, _("Error"));
+	}
 
 	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 	if (targetGame == SKYRIM || targetGame == SKYRIMSE || targetGame == SKYRIMVR)
@@ -3994,10 +3997,6 @@ void OutfitProject::DeleteSlider(const std::string& sliderName) {
 		activeSet.AddRemovedSlider(sliderName);
 
 	activeSet.DeleteSlider(sliderName);
-}
-
-int OutfitProject::LoadSkeletonReference(const std::string& skeletonFileName) {
-	return AnimSkeleton::getInstance().LoadFromNif(skeletonFileName);
 }
 
 int OutfitProject::LoadReferenceTemplate(

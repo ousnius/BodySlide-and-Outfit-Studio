@@ -666,7 +666,6 @@ public:
 	void ClearUnmaskedDiff(nifly::NiShape* shape, const std::string& sliderName, std::unordered_map<uint16_t, float>* mask);
 	void DeleteSlider(const std::string& sliderName);
 
-	int LoadSkeletonReference(const std::string& skeletonFileName);
 	int LoadReferenceTemplate(const std::string& sourceFile,
 							  const std::string& set,
 							  const std::string& shape,

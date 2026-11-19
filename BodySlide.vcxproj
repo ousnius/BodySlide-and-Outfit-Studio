@@ -812,6 +812,7 @@
     <ClInclude Include="src\files\EXRImage.h" />
     <ClInclude Include="src\files\ObjFile.h" />
     <ClInclude Include="src\render\ResourceLoader.h" />
+    <ClInclude Include="src\render\MeshBuffers.h" />
     <ClInclude Include="src\files\SFMaterialDatabase.h" />
     <ClInclude Include="src\files\SFMaterialFile.h" />
     <ClInclude Include="src\files\SFLayeredMaterial.h" />
