@@ -937,6 +937,9 @@
     <ClInclude Include="src\outfitstudio\OutfitStudioFrame.h">
       <Filter>Outfit Studio</Filter>
     </ClInclude>
+    <ClInclude Include="src\outfitstudio\FrameHelpers.h">
+      <Filter>Outfit Studio</Filter>
+    </ClInclude>
     <ClInclude Include="src\outfitstudio\ViewState.h">
       <Filter>Outfit Studio</Filter>
     </ClInclude>
@@ -2430,7 +2433,70 @@
     <ClCompile Include="src\physics\hdt\hdtVertex.cpp">
       <Filter>Physics\hdt</Filter>
     </ClCompile>
-    <ClCompile Include="src\outfitstudio\OutfitStudio.cpp">
+    <ClCompile Include="src\outfitstudio\OutfitStudioFrame.cpp">
+      <Filter>Outfit Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\outfitstudio\OutfitStudioProjectHost.cpp">
+      <Filter>Outfit Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\outfitstudio\OutfitStudioApp.cpp">
+      <Filter>Outfit Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\outfitstudio\GLPanel.cpp">
+      <Filter>Outfit Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\outfitstudio\FrameView.cpp">
+      <Filter>Outfit Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\outfitstudio\FrameTools.cpp">
+      <Filter>Outfit Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\outfitstudio\FrameSliders.cpp">
+      <Filter>Outfit Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\outfitstudio\FrameSliderFiles.cpp">
+      <Filter>Outfit Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\outfitstudio\FrameShapes.cpp">
+      <Filter>Outfit Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\outfitstudio\FrameShapeOps.cpp">
+      <Filter>Outfit Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\outfitstudio\FrameSegments.cpp">
+      <Filter>Outfit Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\outfitstudio\FrameProjectFile.cpp">
+      <Filter>Outfit Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\outfitstudio\FramePose.cpp">
+      <Filter>Outfit Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\outfitstudio\FramePhysics.cpp">
+      <Filter>Outfit Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\outfitstudio\FramePack.cpp">
+      <Filter>Outfit Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\outfitstudio\FrameMasks.cpp">
+      <Filter>Outfit Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\outfitstudio\FrameImportExport.cpp">
+      <Filter>Outfit Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\outfitstudio\FrameConform.cpp">
+      <Filter>Outfit Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\outfitstudio\FrameBones.cpp">
+      <Filter>Outfit Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\outfitstudio\FrameAnimation.cpp">
+      <Filter>Outfit Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\outfitstudio\DropTargets.cpp">
+      <Filter>Outfit Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\outfitstudio\FrameHelpers.cpp">
       <Filter>Outfit Studio</Filter>
     </ClCompile>
     <ClCompile Include="src\ui\PresetSaveDialog.cpp">

@@ -1,0 +1,992 @@
+/*
+BodySlide and Outfit Studio
+See the included LICENSE file
+*/
+
+// Outfit Studio window: the view around the viewport such as camera, display options, lights, backgrounds and tabs
+
+#include "OutfitStudioFrame.h"
+#include "OutfitStudioApp.h"
+#include "GLPanel.h"
+#include "ShapeTreeItems.h"
+#include "ViewState.h"
+#include "utils/ConfigurationManager.h"
+#include "ui/wxStateButton.h"
+#include "mcp/OutfitStudioMcp.h"
+#include "components/SliderPresets.h"
+#include "files/HkxFile.h"
+#include "files/SFMorphFile.h"
+#include "files/GameDataStream.h"
+#include "utils/PlatformUtil.h"
+#include "ui/outfitstudio/AutomationDialog.h"
+
+#include <cmath>
+#include <cstdlib>
+#include <iterator>
+#include <sstream>
+#include <wx/dir.h>
+#include <wx/textctrl.h>
+
+using namespace nifly;
+
+bool OutfitStudioFrame::FrameShapes(const std::vector<std::string>& shapeNames) {
+	std::vector<Vector3> points;
+	for (auto& shapeName : shapeNames) {
+		Mesh* m = glView->GetMesh(shapeName);
+		if (!m)
+			continue;
+
+		for (int i = 0; i < m->nVerts; i++)
+			points.push_back(m->TransformPosMeshToModel(m->verts[i]));
+	}
+
+	if (points.empty())
+		return false;
+
+	glView->gls.FrameModelPoints(points);
+	glView->Render();
+	return true;
+}
+
+bool OutfitStudioFrame::FrameVertices(const std::string& shapeName, const std::vector<int>& vertices) {
+	Mesh* m = glView->GetMesh(shapeName);
+	if (!m)
+		return false;
+
+	std::vector<Vector3> points;
+	for (int v : vertices)
+		if (v >= 0 && v < m->nVerts)
+			points.push_back(m->TransformPosMeshToModel(m->verts[v]));
+
+	if (points.empty())
+		return false;
+
+	glView->gls.FrameModelPoints(points);
+	glView->Render();
+	return true;
+}
+
+bool OutfitStudioFrame::FrameBone(const std::string& boneName, float minWeight) {
+	std::vector<Vector3> points;
+	for (auto& shapeName : project->GetWorkNif()->GetShapeNames()) {
+		Mesh* m = glView->GetMesh(shapeName);
+		auto weights = project->GetWorkAnim()->GetWeightsPtr(shapeName, boneName);
+		if (!m || !weights)
+			continue;
+
+		for (auto& w : *weights)
+			if (w.second >= minWeight && w.first < m->nVerts)
+				points.push_back(m->TransformPosMeshToModel(m->verts[w.first]));
+	}
+
+	if (points.empty())
+		return false;
+
+	glView->gls.FrameModelPoints(points);
+	glView->Render();
+	return true;
+}
+
+ViewState OutfitStudioFrame::GetViewState() {
+	ViewState state;
+	state.camera = glView->gls.GetCamera();
+	state.display = glView->gls.GetDisplaySettings();
+
+	for (auto& shapeName : project->GetWorkNif()->GetShapeNames()) {
+		ShapeDisplayMode mode;
+		if (GetShapeDisplayMode(shapeName, mode))
+			state.shapes[shapeName] = mode;
+	}
+
+	return state;
+}
+
+void OutfitStudioFrame::SetViewState(const ViewState& state) {
+	const bool hadVertexColors = glView->gls.GetDisplaySettings().vertexColors;
+
+	glView->gls.SetCamera(state.camera);
+	glView->gls.SetDisplaySettings(state.display);
+
+	// Leaving the colors tab with vertex colors off clears them, so they need filling again
+	if (state.display.vertexColors && !hadVertexColors && !colorSettings->IsShown())
+		FillVertexColors();
+
+	CheckDisplayToggle(XRCID("btnShowWireframe"), state.display.wireframe);
+	CheckDisplayToggle(XRCID("btnEnableLighting"), state.display.lighting);
+	CheckDisplayToggle(XRCID("btnEnableTextures"), state.display.textures);
+	// The colors tab always shows vertex colors, that isn't the choice to keep for the other tabs
+	if (!colorSettings->IsShown())
+		CheckDisplayToggle(XRCID("btnEnableVertexColors"), state.display.vertexColors);
+	CheckDisplayToggle(XRCID("btnEnableTints"), state.display.tints);
+
+	for (auto& shape : state.shapes)
+		SetShapeDisplayMode(shape.first, shape.second);
+
+	glView->Render();
+}
+
+void OutfitStudioFrame::OnSetView(wxCommandEvent& event) {
+	int id = event.GetId();
+
+	if (id == XRCID("btnViewFront"))
+		glView->SetView('F');
+	else if (id == XRCID("btnViewBack"))
+		glView->SetView('B');
+	else if (id == XRCID("btnViewLeft"))
+		glView->SetView('L');
+	else if (id == XRCID("btnViewRight"))
+		glView->SetView('R');
+}
+
+void OutfitStudioFrame::OnTogglePerspective(wxCommandEvent& event) {
+	bool enabled = event.IsChecked();
+	menuBar->Check(event.GetId(), enabled);
+	toolBarV->ToggleTool(event.GetId(), enabled);
+
+	glView->SetPerspective(enabled);
+	OutfitStudioConfig.SetBoolValue("Rendering/PerspectiveView", enabled);
+}
+
+void OutfitStudioFrame::OnToggleRotationCenter(wxCommandEvent& WXUNUSED(event)) {
+	autoFrameSelected = false;
+
+	if (glView->rotationCenterMode != RotationCenterMode::Zero) {
+		glView->rotationCenterMode = RotationCenterMode::Zero;
+		glView->gls.camRotOffset.Zero();
+	}
+	else {
+		glView->rotationCenterMode = RotationCenterMode::MeshCenter;
+		glView->gls.camRotOffset = glView->gls.GetActiveCenter();
+	}
+
+	glView->Render();
+}
+
+void OutfitStudioFrame::OnFrameSelected(wxCommandEvent& WXUNUSED(event)) {
+	autoFrameSelected = !autoFrameSelected;
+	FrameSelected();
+}
+
+void OutfitStudioFrame::FrameSelected() {
+	auto& gls = glView->gls;
+	const auto& meshes = gls.GetActiveMeshes();
+	if (meshes.empty())
+		return;
+
+	nifly::Vector3 bbMin(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
+	nifly::Vector3 bbMax(std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest());
+	int count = 0;
+
+	for (auto& m : meshes) {
+		for (int i = 0; i < m->nVerts; i++) {
+			if (m->mask && m->mask[i] != 0.0f)
+				continue;
+			nifly::Vector3 v = m->TransformPosMeshToModel(m->verts[i]);
+			bbMin.x = std::min(bbMin.x, v.x);
+			bbMin.y = std::min(bbMin.y, v.y);
+			bbMin.z = std::min(bbMin.z, v.z);
+			bbMax.x = std::max(bbMax.x, v.x);
+			bbMax.y = std::max(bbMax.y, v.y);
+			bbMax.z = std::max(bbMax.z, v.z);
+			count++;
+		}
+	}
+
+	if (count == 0)
+		return;
+
+	nifly::Vector3 center = (bbMin + bbMax) / 2.0f;
+	float extentX = bbMax.x - bbMin.x;
+	float extentY = bbMax.y - bbMin.y;
+	float extentZ = bbMax.z - bbMin.z;
+	float radius = std::max({extentX, extentY, extentZ}) / 2.0f;
+	if (radius < 0.001f)
+		radius = 0.001f;
+
+	gls.camRotOffset = center;
+	glView->rotationCenterMode = RotationCenterMode::MeshCenter;
+
+	gls.camPos.x = -center.x;
+	gls.camPos.y = -center.y;
+
+	if (gls.perspective) {
+		float fovRad = gls.mFov * DEG2RAD;
+		float distance = radius / std::tan(fovRad / 2.0f);
+		gls.camPos.z = -(distance + radius);
+	}
+	else {
+		gls.camPos.z = -(radius * 2.5f);
+	}
+
+	glView->Render();
+}
+
+void OutfitStudioFrame::OnShowNodes(wxCommandEvent& event) {
+	bool enabled = event.IsChecked();
+	menuBar->Check(event.GetId(), enabled);
+	toolBarV->ToggleTool(event.GetId(), enabled);
+	glView->ShowNodes(enabled);
+	UpdateBoneTransformToolEnabled();
+}
+
+void OutfitStudioFrame::OnShowBones(wxCommandEvent& event) {
+	bool enabled = event.IsChecked();
+	menuBar->Check(event.GetId(), enabled);
+	toolBarV->ToggleTool(event.GetId(), enabled);
+	glView->ShowBones(enabled);
+	UpdateBoneTransformToolEnabled();
+}
+
+void OutfitStudioFrame::OnShowFloor(wxCommandEvent& event) {
+	bool enabled = event.IsChecked();
+	menuBar->Check(event.GetId(), enabled);
+	toolBarV->ToggleTool(event.GetId(), enabled);
+	glView->ShowFloor(enabled);
+}
+
+void OutfitStudioFrame::OnFieldOfViewSlider(wxCommandEvent& WXUNUSED(event)) {
+	int fieldOfView = fovSlider->GetValue();
+
+	wxStaticText* fovLabel = (wxStaticText*)toolBarH->FindWindowByName("fovLabel");
+	fovLabel->SetLabel(wxString::Format(_("Field of View: %d"), fieldOfView));
+
+	glView->SetFieldOfView(fieldOfView);
+}
+
+void OutfitStudioFrame::OnDepthClip(wxCommandEvent& WXUNUSED(event)) {
+	float zNear = cbDepthClip->IsChecked() ? 0.001f : 0.1f;
+	glView->SetDepthClip(zNear, glView->gls.zFar);
+}
+
+void OutfitStudioFrame::OnUpdateLights(wxCommandEvent& WXUNUSED(event)) {
+	wxSlider* ambientSlider = (wxSlider*)lightSettings->FindWindowByName("lightAmbientSlider");
+	wxSlider* frontalSlider = (wxSlider*)lightSettings->FindWindowByName("lightFrontalSlider");
+	wxSlider* directional0Slider = (wxSlider*)lightSettings->FindWindowByName("lightDirectional0Slider");
+	wxSlider* directional1Slider = (wxSlider*)lightSettings->FindWindowByName("lightDirectional1Slider");
+	wxSlider* directional2Slider = (wxSlider*)lightSettings->FindWindowByName("lightDirectional2Slider");
+
+	int ambient = ambientSlider->GetValue();
+	int frontal = frontalSlider->GetValue();
+	int directional0 = directional0Slider->GetValue();
+	int directional1 = directional1Slider->GetValue();
+	int directional2 = directional2Slider->GetValue();
+	glView->UpdateLights(ambient, frontal, directional0, directional1, directional2);
+
+	Config.SetValue("Lights/Ambient", ambient);
+	Config.SetValue("Lights/Frontal", frontal);
+	Config.SetValue("Lights/Directional0", directional0);
+	Config.SetValue("Lights/Directional1", directional1);
+	Config.SetValue("Lights/Directional2", directional2);
+}
+
+void OutfitStudioFrame::OnResetLights(wxCommandEvent& WXUNUSED(event)) {
+	int ambient = 15;
+	int frontal = 100;
+	int directional0 = 0;
+	int directional1 = 0;
+	int directional2 = 0;
+
+	glView->UpdateLights(ambient, frontal, directional0, directional1, directional2);
+
+	wxSlider* lightAmbientSlider = (wxSlider*)lightSettings->FindWindowByName("lightAmbientSlider");
+	lightAmbientSlider->SetValue(ambient);
+
+	wxSlider* lightFrontalSlider = (wxSlider*)lightSettings->FindWindowByName("lightFrontalSlider");
+	lightFrontalSlider->SetValue(frontal);
+
+	wxSlider* lightDirectional0Slider = (wxSlider*)lightSettings->FindWindowByName("lightDirectional0Slider");
+	lightDirectional0Slider->SetValue(directional0);
+
+	wxSlider* lightDirectional1Slider = (wxSlider*)lightSettings->FindWindowByName("lightDirectional1Slider");
+	lightDirectional1Slider->SetValue(directional1);
+
+	wxSlider* lightDirectional2Slider = (wxSlider*)lightSettings->FindWindowByName("lightDirectional2Slider");
+	lightDirectional2Slider->SetValue(directional2);
+
+	Config.SetValue("Lights/Ambient", ambient);
+	Config.SetValue("Lights/Frontal", frontal);
+	Config.SetValue("Lights/Directional0", directional0);
+	Config.SetValue("Lights/Directional1", directional1);
+	Config.SetValue("Lights/Directional2", directional2);
+}
+
+void OutfitStudioFrame::OnSaveLights(wxCommandEvent& event) {
+	// Make sure the current slider values are in the configuration before writing it out
+	OnUpdateLights(event);
+
+	int ret = Config.SaveConfig(Config["AppDir"] + "/Config.xml");
+	if (ret)
+		wxLogWarning("Failed to save configuration (%d)!", ret);
+}
+
+void OutfitStudioFrame::PopulateHDRiBackgrounds() {
+	if (!hdriBackground)
+		return;
+
+	hdriBackground->Clear();
+
+	// Client data carries the file name; an empty one is what turns the environment off.
+	hdriBackground->Append(_("No background"), new wxStringClientData(""));
+
+#ifdef USE_OPENEXR
+	wxArrayString files;
+	wxDir::GetAllFiles(wxString::FromUTF8(Config["AppDir"]) + "/res/hdri", &files, "*.exr", wxDIR_FILES);
+	files.Sort();
+
+	for (auto& file : files) {
+		const wxFileName fileName(file);
+
+		// The name on disk, not a translated one - these are files the user can add to and rename.
+		hdriBackground->Append(fileName.GetName(), new wxStringClientData(fileName.GetFullName()));
+	}
+#else
+	// Nothing can be loaded without an EXR decoder, and a choice with one entry reads as broken.
+	hdriBackground->Hide();
+
+	if (lightSettings) {
+		if (auto label = lightSettings->FindWindowByName("hdriBackgroundLabel"))
+			label->Hide();
+	}
+#endif
+
+	hdriBackground->SetSelection(0);
+}
+
+bool OutfitStudioFrame::SetHDRiBackground(const std::string& fileName, const bool remember) {
+	if (!glView->SetHDRiBackground(fileName) && !fileName.empty()) {
+		// The environment failed to load and was left off, so the choice has to say so too.
+		if (hdriBackground)
+			hdriBackground->SetSelection(0);
+
+		return false;
+	}
+
+	// Only a background the user picked is worth writing down. The automatic one is a convenience
+	// for the project at hand, and remembering it would make the setting say the user chose an HDRi
+	// they never asked for - and would rewrite the config on every project that has a Complex
+	// Material in it.
+	if (remember) {
+		Config.SetValue("Rendering/HDRIBackground", fileName);
+
+		int ret = Config.SaveConfig(Config["AppDir"] + "/Config.xml");
+		if (ret)
+			wxLogWarning("Failed to save configuration (%d)!", ret);
+	}
+
+	if (!hdriBackground)
+		return true;
+
+	for (unsigned int i = 0; i < hdriBackground->GetCount(); i++) {
+		auto data = static_cast<wxStringClientData*>(hdriBackground->GetClientObject(i));
+		if (data && data->GetData().ToStdString() == fileName) {
+			hdriBackground->SetSelection(i);
+			break;
+		}
+	}
+
+	return true;
+}
+
+void OutfitStudioFrame::OnHDRiBackground(wxCommandEvent& WXUNUSED(event)) {
+	if (!hdriBackground)
+		return;
+
+	auto data = static_cast<wxStringClientData*>(hdriBackground->GetClientObject(hdriBackground->GetSelection()));
+	const std::string fileName = data ? data->GetData().ToStdString() : std::string();
+
+	// Turning it off by hand is a decision the automatic activation must not talk the user out of.
+	hdriBackgroundCleared = fileName.empty();
+
+	// Only a background the user asked for is worth interrupting them over. The automatic one below
+	// leaves its reason in the log and moves on.
+	if (!SetHDRiBackground(fileName, true))
+		wxMessageBox(wxString::Format(_("Failed to load the HDRi '%s'. See the log for details."), fileName), _("Error"), wxICON_ERROR, this);
+}
+
+void OutfitStudioFrame::ApplyAutoHDRiBackground() {
+#ifndef USE_OPENEXR
+	// Nothing to activate, and trying would log a failure for every project that has a Complex
+	// Material in it.
+	return;
+#else
+	if (hdriBackgroundCleared || !hdriBackground || glView->HasHDRiBackground())
+		return;
+
+	// Complex Material and True PBR shading both live off what they reflect, so a project full of
+	// either is nearly impossible to judge against the flat background. A True PBR shape has the
+	// stronger claim of the two: its cube map slot is deliberately empty, so without an HDRi there is
+	// no image based lighting for it at all. Starfield materials are in the same position, since they
+	// are lit the True PBR way and never have a cube map of their own. Anything else is left as it was.
+	const auto& meshes = glView->gls.GetMeshes();
+	if (std::none_of(meshes.begin(), meshes.end(), [](const Mesh* m) { return m->complexMaterial || m->pbr || (m->sfLayered && m->sfRenderData && m->sfRenderData->HasAnyTexture()); }))
+		return;
+
+	// Whatever the user last picked by hand, which is the only thing that ever gets written there.
+	std::string fileName = Config["Rendering/HDRIBackground"];
+	if (fileName.empty() || !PlatformUtil::FileExists(Config["AppDir"] + "/res/hdri/" + fileName))
+		fileName = "sunrise.exr";
+
+	SetHDRiBackground(fileName, false);
+#endif
+}
+
+void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
+	int id = event.GetId();
+
+	if (currentTabButton && currentTabButton->HasPendingChanges()) {
+		wxMessageDialog dlg(this,
+							_("Your changes were not applied yet. Do you want to apply or reset them?"),
+							_("Pending Changes"),
+							wxYES_NO | wxCANCEL | wxICON_WARNING | wxCANCEL_DEFAULT);
+		dlg.SetYesNoCancelLabels(_("Apply"), _("Reset"), _("Cancel"));
+
+		int res = dlg.ShowModal();
+		if (res == wxID_YES) {
+			if (currentTabButton == partitionTabButton)
+				ApplyPartitions();
+			else if (currentTabButton == segmentTabButton)
+				ApplySegments();
+		}
+		else if (res == wxID_NO) {
+			if (currentTabButton == partitionTabButton)
+				ResetPartitions();
+			else if (currentTabButton == segmentTabButton)
+				ResetSegments();
+		}
+		else {
+			event.Skip();
+			return;
+		}
+	}
+
+	if ((id == segmentTabButton->GetId() || id == partitionTabButton->GetId()) && selectedItems.size() != 1) {
+		wxMessageBox(_("You must have exactly one mesh selected in order to edit partitions or segments."), _("Info"), wxICON_INFORMATION, this);
+		event.Skip();
+		return;
+	}
+
+	if (id != meshTabButton->GetId())
+		masksPane->Hide();
+
+	if (id != segmentTabButton->GetId()) {
+		wxStaticText* segmentTypeLabel = (wxStaticText*)FindWindowByName("segmentTypeLabel");
+		wxChoice* segmentType = (wxChoice*)FindWindowByName("segmentType");
+		wxStaticText* segmentSlotLabel = (wxStaticText*)FindWindowByName("segmentSlotLabel");
+		wxChoice* segmentSlot = (wxChoice*)FindWindowByName("segmentSlot");
+		wxStaticText* segmentSSFLabel = (wxStaticText*)FindWindowByName("segmentSSFLabel");
+		wxButton* segmentSSFEdit = (wxButton*)FindWindowByName("segmentSSFEdit");
+		wxTextCtrl* segmentSSF = (wxTextCtrl*)FindWindowByName("segmentSSF");
+		wxButton* segmentApply = (wxButton*)FindWindowByName("segmentApply");
+		wxButton* segmentReset = (wxButton*)FindWindowByName("segmentReset");
+
+		segmentTypeLabel->Show(false);
+		segmentType->Show(false);
+		segmentSlotLabel->Show(false);
+		segmentSlot->Show(false);
+		segmentSSFLabel->Show(false);
+		segmentSSFEdit->Show(false);
+		segmentSSF->Show(false);
+		segmentApply->Show(false);
+		segmentReset->Show(false);
+
+		if (currentTabButton == segmentTabButton)
+			ResetSegmentVisibility();
+
+		glView->SetSegmentMode(false);
+		glView->SetMaskVisible();
+
+		menuBar->Enable(XRCID("btnSelect"), true);
+		menuBar->Enable(XRCID("btnClearMask"), true);
+		menuBar->Enable(XRCID("btnInvertMask"), true);
+		menuBar->Enable(XRCID("deleteVerts"), true);
+		menuBar->Enable(XRCID("refineMesh"), true);
+
+		toolBarH->EnableTool(XRCID("btnSelect"), true);
+	}
+
+	if (id != partitionTabButton->GetId()) {
+		wxStaticText* partitionTypeLabel = (wxStaticText*)FindWindowByName("partitionTypeLabel");
+		wxChoice* partitionType = (wxChoice*)FindWindowByName("partitionType");
+		wxButton* partitionApply = (wxButton*)FindWindowByName("partitionApply");
+		wxButton* partitionReset = (wxButton*)FindWindowByName("partitionReset");
+
+		partitionTypeLabel->Show(false);
+		partitionType->Show(false);
+		partitionApply->Show(false);
+		partitionReset->Show(false);
+
+		if (currentTabButton == partitionTabButton)
+			ResetPartitionVisibility();
+
+		glView->SetSegmentMode(false);
+		glView->SetMaskVisible();
+
+		menuBar->Enable(XRCID("btnSelect"), true);
+		menuBar->Enable(XRCID("btnClearMask"), true);
+		menuBar->Enable(XRCID("btnInvertMask"), true);
+		menuBar->Enable(XRCID("deleteVerts"), true);
+		menuBar->Enable(XRCID("refineMesh"), true);
+
+		toolBarH->EnableTool(XRCID("btnSelect"), true);
+	}
+
+	if (id != boneTabButton->GetId()) {
+		boneTransformSuspended = false;
+		cXMirrorBone->Show(false);
+
+		wxStaticText* totalBoneCountLabel = (wxStaticText*)FindWindowByName("totalBoneCountLabel");
+		wxStaticText* selectedBoneCountLabel = (wxStaticText*)FindWindowByName("selectedBoneCountLabel");
+		wxCheckBox* cbFixedWeight = (wxCheckBox*)FindWindowByName("cbFixedWeight");
+		wxCheckBox* cbNormalizeWeights = (wxCheckBox*)FindWindowByName("cbNormalizeWeights");
+		wxStaticText* xMirrorBoneLabel = (wxStaticText*)FindWindowByName("xMirrorBoneLabel");
+
+		totalBoneCountLabel->Show(false);
+		selectedBoneCountLabel->Show(false);
+		cbFixedWeight->Show(false);
+		cbNormalizeWeights->Show(false);
+		xMirrorBoneLabel->Show(false);
+		posePane->Show(false);
+		if (physicsPane)
+			physicsPane->Show(false);
+		if (animationPane)
+			animationPane->Show(false);
+		bonesFilter->GetParent()->Show(false);
+
+		if (project->bPose) {
+			project->bPose = false;
+			UpdatePhysicsState();
+			ApplyPose();
+		}
+
+		glView->SetWeightVisible(false);
+	}
+
+	if (id != colorsTabButton->GetId()) {
+		UpdateVertexColors();
+	}
+
+	if (id != boneTabButton->GetId() && id != colorsTabButton->GetId()) {
+		menuBar->Check(XRCID("btnInflateBrush"), true);
+		menuBar->Enable(XRCID("btnTransform"), true);
+		menuBar->Enable(XRCID("btnPivot"), true);
+		menuBar->Enable(XRCID("btnVertexEdit"), true);
+		menuBar->Enable(XRCID("btnWeightBrush"), false);
+		menuBar->Enable(XRCID("btnColorBrush"), false);
+		menuBar->Enable(XRCID("btnAlphaBrush"), false);
+		menuBar->Enable(XRCID("btnInflateBrush"), true);
+		menuBar->Enable(XRCID("btnDeflateBrush"), true);
+		menuBar->Enable(XRCID("btnMoveBrush"), true);
+		menuBar->Enable(XRCID("btnSmoothBrush"), true);
+		menuBar->Enable(XRCID("btnUndiffBrush"), true);
+		menuBar->Enable(XRCID("btnCollapseVertex"), true);
+		menuBar->Enable(XRCID("btnFlipEdgeTool"), true);
+		menuBar->Enable(XRCID("btnSplitEdgeTool"), true);
+		menuBar->Enable(XRCID("btnMoveVertexTool"), true);
+		menuBar->Enable(XRCID("deleteVerts"), true);
+		menuBar->Enable(XRCID("refineMesh"), true);
+
+		toolBarH->ToggleTool(XRCID("btnInflateBrush"), true);
+		toolBarH->EnableTool(XRCID("btnWeightBrush"), false);
+		toolBarH->EnableTool(XRCID("btnColorBrush"), false);
+		toolBarH->EnableTool(XRCID("btnAlphaBrush"), false);
+		toolBarV->EnableTool(XRCID("btnTransform"), true);
+		toolBarV->EnableTool(XRCID("btnPivot"), true);
+		toolBarV->EnableTool(XRCID("btnVertexEdit"), true);
+		toolBarH->EnableTool(XRCID("btnInflateBrush"), true);
+		toolBarH->EnableTool(XRCID("btnDeflateBrush"), true);
+		toolBarH->EnableTool(XRCID("btnMoveBrush"), true);
+		toolBarH->EnableTool(XRCID("btnSmoothBrush"), true);
+		toolBarH->EnableTool(XRCID("btnUndiffBrush"), true);
+		toolBarH->EnableTool(XRCID("btnCollapseVertex"), true);
+		toolBarH->EnableTool(XRCID("btnFlipEdgeTool"), true);
+		toolBarH->EnableTool(XRCID("btnSplitEdgeTool"), true);
+		toolBarH->EnableTool(XRCID("btnMoveVertexTool"), true);
+	}
+
+	if (id == meshTabButton->GetId()) {
+		currentTabButton = meshTabButton;
+
+		outfitBones->Hide();
+		colorSettings->Hide();
+		segmentTree->Hide();
+		partitionTree->Hide();
+		lightSettings->Hide();
+		outfitShapes->Show();
+
+		boneTabButton->SetCheck(false);
+		colorsTabButton->SetCheck(false);
+		segmentTabButton->SetCheck(false);
+		partitionTabButton->SetCheck(false);
+		lightsTabButton->SetCheck(false);
+
+		masksPane->Show();
+
+		SetNoSubMeshes();
+		SelectTool(glView->GetLastTool());
+	}
+	else if (id == boneTabButton->GetId()) {
+		currentTabButton = boneTabButton;
+
+		outfitShapes->Hide();
+		colorSettings->Hide();
+		segmentTree->Hide();
+		partitionTree->Hide();
+		lightSettings->Hide();
+		outfitBones->Show();
+
+		meshTabButton->SetCheck(false);
+		colorsTabButton->SetCheck(false);
+		segmentTabButton->SetCheck(false);
+		partitionTabButton->SetCheck(false);
+		lightsTabButton->SetCheck(false);
+
+		cXMirrorBone->Show();
+
+		wxStaticText* totalBoneCountLabel = (wxStaticText*)FindWindowByName("totalBoneCountLabel");
+		wxStaticText* selectedBoneCountLabel = (wxStaticText*)FindWindowByName("selectedBoneCountLabel");
+		wxCheckBox* cbFixedWeight = (wxCheckBox*)FindWindowByName("cbFixedWeight");
+		wxCheckBox* cbNormalizeWeights = (wxCheckBox*)FindWindowByName("cbNormalizeWeights");
+		wxStaticText* xMirrorBoneLabel = (wxStaticText*)FindWindowByName("xMirrorBoneLabel");
+
+		totalBoneCountLabel->Show();
+		selectedBoneCountLabel->Show();
+		cbFixedWeight->Show();
+		cbNormalizeWeights->Show();
+		xMirrorBoneLabel->Show();
+		posePane->Show();
+		if (physicsPane)
+			physicsPane->Show(physicsAvailable);
+		if (animationPane)
+			animationPane->Show();
+		bonesFilter->GetParent()->Show();
+
+		UpdateBoneTransformToolEnabled();
+
+		SelectTool(ToolID::WeightBrush);
+		glView->SetWeightVisible();
+
+		project->bPose = cbPose->GetValue();
+
+		if (project->bPose)
+			ApplyPose();
+
+		menuBar->Check(XRCID("btnWeightBrush"), true);
+		menuBar->Enable(XRCID("btnWeightBrush"), true);
+		menuBar->Enable(XRCID("btnColorBrush"), false);
+		menuBar->Enable(XRCID("btnAlphaBrush"), false);
+		menuBar->Enable(XRCID("btnPivot"), false);
+		menuBar->Enable(XRCID("btnVertexEdit"), false);
+		menuBar->Enable(XRCID("btnInflateBrush"), true);
+		menuBar->Enable(XRCID("btnDeflateBrush"), true);
+		menuBar->Enable(XRCID("btnMoveBrush"), true);
+		menuBar->Enable(XRCID("btnSmoothBrush"), true);
+		menuBar->Enable(XRCID("btnUndiffBrush"), true);
+		menuBar->Enable(XRCID("btnCollapseVertex"), false);
+		menuBar->Enable(XRCID("btnFlipEdgeTool"), false);
+		menuBar->Enable(XRCID("btnSplitEdgeTool"), false);
+		menuBar->Enable(XRCID("btnMoveVertexTool"), true);
+		menuBar->Enable(XRCID("deleteVerts"), false);
+		menuBar->Enable(XRCID("refineMesh"), false);
+
+		toolBarH->ToggleTool(XRCID("btnWeightBrush"), true);
+		toolBarH->EnableTool(XRCID("btnWeightBrush"), true);
+		toolBarH->EnableTool(XRCID("btnColorBrush"), false);
+		toolBarH->EnableTool(XRCID("btnAlphaBrush"), false);
+		toolBarV->EnableTool(XRCID("btnPivot"), false);
+		toolBarV->EnableTool(XRCID("btnVertexEdit"), false);
+		toolBarH->EnableTool(XRCID("btnInflateBrush"), true);
+		toolBarH->EnableTool(XRCID("btnDeflateBrush"), true);
+		toolBarH->EnableTool(XRCID("btnMoveBrush"), true);
+		toolBarH->EnableTool(XRCID("btnSmoothBrush"), true);
+		toolBarH->EnableTool(XRCID("btnUndiffBrush"), true);
+		toolBarH->EnableTool(XRCID("btnCollapseVertex"), false);
+		toolBarH->EnableTool(XRCID("btnFlipEdgeTool"), false);
+		toolBarH->EnableTool(XRCID("btnSplitEdgeTool"), false);
+		toolBarH->EnableTool(XRCID("btnMoveVertexTool"), true);
+
+		SetNoSubMeshes();
+
+		ReselectBone();
+		UpdateUndoTools();
+	}
+	else if (id == colorsTabButton->GetId()) {
+		currentTabButton = colorsTabButton;
+
+		outfitShapes->Hide();
+		outfitBones->Hide();
+		segmentTree->Hide();
+		partitionTree->Hide();
+		lightSettings->Hide();
+		colorSettings->Show();
+
+		meshTabButton->SetCheck(false);
+		boneTabButton->SetCheck(false);
+		segmentTabButton->SetCheck(false);
+		partitionTabButton->SetCheck(false);
+		lightsTabButton->SetCheck(false);
+
+		glView->SetTransformMode(false);
+		SelectTool(ToolID::ColorBrush);
+		glView->SetColorsVisible();
+
+		wxButton* btnSwapBrush = (wxButton*)FindWindowById(XRCID("btnSwapBrush"), colorSettings);
+		btnSwapBrush->SetLabel(_("Edit Alpha"));
+
+		FillVertexColors();
+
+		menuBar->Check(XRCID("btnColorBrush"), true);
+		menuBar->Enable(XRCID("btnColorBrush"), true);
+		menuBar->Enable(XRCID("btnAlphaBrush"), true);
+		menuBar->Enable(XRCID("btnWeightBrush"), false);
+		menuBar->Enable(XRCID("btnTransform"), false);
+		menuBar->Enable(XRCID("btnPivot"), false);
+		menuBar->Enable(XRCID("btnVertexEdit"), false);
+		menuBar->Enable(XRCID("btnInflateBrush"), false);
+		menuBar->Enable(XRCID("btnDeflateBrush"), false);
+		menuBar->Enable(XRCID("btnMoveBrush"), false);
+		menuBar->Enable(XRCID("btnSmoothBrush"), false);
+		menuBar->Enable(XRCID("btnUndiffBrush"), false);
+		menuBar->Enable(XRCID("btnCollapseVertex"), false);
+		menuBar->Enable(XRCID("btnFlipEdgeTool"), false);
+		menuBar->Enable(XRCID("btnSplitEdgeTool"), false);
+		menuBar->Enable(XRCID("btnMoveVertexTool"), false);
+		menuBar->Enable(XRCID("deleteVerts"), false);
+		menuBar->Enable(XRCID("refineMesh"), false);
+
+		toolBarH->ToggleTool(XRCID("btnColorBrush"), true);
+		toolBarH->EnableTool(XRCID("btnColorBrush"), true);
+		toolBarH->EnableTool(XRCID("btnAlphaBrush"), true);
+		toolBarH->EnableTool(XRCID("btnWeightBrush"), false);
+		toolBarV->EnableTool(XRCID("btnTransform"), false);
+		toolBarV->EnableTool(XRCID("btnPivot"), false);
+		toolBarV->EnableTool(XRCID("btnVertexEdit"), false);
+		toolBarH->EnableTool(XRCID("btnInflateBrush"), false);
+		toolBarH->EnableTool(XRCID("btnDeflateBrush"), false);
+		toolBarH->EnableTool(XRCID("btnMoveBrush"), false);
+		toolBarH->EnableTool(XRCID("btnSmoothBrush"), false);
+		toolBarH->EnableTool(XRCID("btnUndiffBrush"), false);
+		toolBarH->EnableTool(XRCID("btnCollapseVertex"), false);
+		toolBarH->EnableTool(XRCID("btnFlipEdgeTool"), false);
+		toolBarH->EnableTool(XRCID("btnSplitEdgeTool"), false);
+		toolBarH->EnableTool(XRCID("btnMoveVertexTool"), false);
+
+		SetNoSubMeshes();
+	}
+	else if (id == segmentTabButton->GetId()) {
+		currentTabButton = segmentTabButton;
+
+		outfitShapes->Hide();
+		outfitBones->Hide();
+		colorSettings->Hide();
+		partitionTree->Hide();
+		lightSettings->Hide();
+		segmentTree->Show();
+
+		meshTabButton->SetCheck(false);
+		boneTabButton->SetCheck(false);
+		colorsTabButton->SetCheck(false);
+		partitionTabButton->SetCheck(false);
+		lightsTabButton->SetCheck(false);
+
+		wxStaticText* segmentTypeLabel = (wxStaticText*)FindWindowByName("segmentTypeLabel");
+		wxChoice* segmentType = (wxChoice*)FindWindowByName("segmentType");
+		wxStaticText* segmentSlotLabel = (wxStaticText*)FindWindowByName("segmentSlotLabel");
+		wxChoice* segmentSlot = (wxChoice*)FindWindowByName("segmentSlot");
+		wxStaticText* segmentSSFLabel = (wxStaticText*)FindWindowByName("segmentSSFLabel");
+		wxButton* segmentSSFEdit = (wxButton*)FindWindowByName("segmentSSFEdit");
+		wxTextCtrl* segmentSSF = (wxTextCtrl*)FindWindowByName("segmentSSF");
+		wxButton* segmentApply = (wxButton*)FindWindowByName("segmentApply");
+		wxButton* segmentReset = (wxButton*)FindWindowByName("segmentReset");
+
+		segmentTypeLabel->Show();
+		segmentType->Show();
+		segmentSlotLabel->Show();
+		segmentSlot->Show();
+		segmentSSFLabel->Show();
+		segmentSSFEdit->Show();
+		segmentSSF->Show();
+		segmentApply->Show();
+		segmentReset->Show();
+
+		glView->SetSegmentMode();
+		SelectTool(ToolID::MaskBrush); // Use mask brush for segment editing (but with custom painting function 'PaintSegmentPartitionTriangles')
+		glView->SetMaskVisible(false);
+
+		menuBar->Check(XRCID("btnMaskBrush"), true);
+		menuBar->Enable(XRCID("btnSelect"), false);
+		menuBar->Enable(XRCID("btnTransform"), false);
+		menuBar->Enable(XRCID("btnPivot"), false);
+		menuBar->Enable(XRCID("btnVertexEdit"), false);
+		menuBar->Enable(XRCID("btnInflateBrush"), false);
+		menuBar->Enable(XRCID("btnDeflateBrush"), false);
+		menuBar->Enable(XRCID("btnMoveBrush"), false);
+		menuBar->Enable(XRCID("btnSmoothBrush"), false);
+		menuBar->Enable(XRCID("btnUndiffBrush"), false);
+		menuBar->Enable(XRCID("btnClearMask"), false);
+		menuBar->Enable(XRCID("btnInvertMask"), false);
+		menuBar->Enable(XRCID("btnCollapseVertex"), false);
+		menuBar->Enable(XRCID("btnFlipEdgeTool"), false);
+		menuBar->Enable(XRCID("btnSplitEdgeTool"), false);
+		menuBar->Enable(XRCID("btnMoveVertexTool"), false);
+		menuBar->Enable(XRCID("deleteVerts"), false);
+		menuBar->Enable(XRCID("refineMesh"), false);
+
+		toolBarH->ToggleTool(XRCID("btnMaskBrush"), true);
+		toolBarH->EnableTool(XRCID("btnSelect"), false);
+		toolBarV->EnableTool(XRCID("btnTransform"), false);
+		toolBarV->EnableTool(XRCID("btnPivot"), false);
+		toolBarV->EnableTool(XRCID("btnVertexEdit"), false);
+		toolBarH->EnableTool(XRCID("btnInflateBrush"), false);
+		toolBarH->EnableTool(XRCID("btnDeflateBrush"), false);
+		toolBarH->EnableTool(XRCID("btnMoveBrush"), false);
+		toolBarH->EnableTool(XRCID("btnSmoothBrush"), false);
+		toolBarH->EnableTool(XRCID("btnUndiffBrush"), false);
+		toolBarH->EnableTool(XRCID("btnCollapseVertex"), false);
+		toolBarH->EnableTool(XRCID("btnFlipEdgeTool"), false);
+		toolBarH->EnableTool(XRCID("btnSplitEdgeTool"), false);
+		toolBarH->EnableTool(XRCID("btnMoveVertexTool"), false);
+
+		ResetSegmentVisibility();
+		ShowSegment(segmentTree->GetSelection());
+	}
+	else if (id == partitionTabButton->GetId()) {
+		currentTabButton = partitionTabButton;
+
+		outfitShapes->Hide();
+		outfitBones->Hide();
+		colorSettings->Hide();
+		segmentTree->Hide();
+		lightSettings->Hide();
+		partitionTree->Show();
+
+		meshTabButton->SetCheck(false);
+		boneTabButton->SetCheck(false);
+		colorsTabButton->SetCheck(false);
+		segmentTabButton->SetCheck(false);
+		lightsTabButton->SetCheck(false);
+
+		wxStaticText* partitionTypeLabel = (wxStaticText*)FindWindowByName("partitionTypeLabel");
+		wxChoice* partitionType = (wxChoice*)FindWindowByName("partitionType");
+		wxButton* partitionApply = (wxButton*)FindWindowByName("partitionApply");
+		wxButton* partitionReset = (wxButton*)FindWindowByName("partitionReset");
+
+		partitionTypeLabel->Show();
+		partitionType->Show();
+		partitionApply->Show();
+		partitionReset->Show();
+
+		glView->SetSegmentMode();
+		SelectTool(ToolID::MaskBrush); // Use mask brush for partition editing (but with custom painting function 'PaintSegmentPartitionTriangles')
+		glView->SetMaskVisible(false);
+
+		menuBar->Check(XRCID("btnMaskBrush"), true);
+		menuBar->Enable(XRCID("btnSelect"), false);
+		menuBar->Enable(XRCID("btnTransform"), false);
+		menuBar->Enable(XRCID("btnPivot"), false);
+		menuBar->Enable(XRCID("btnVertexEdit"), false);
+		menuBar->Enable(XRCID("btnInflateBrush"), false);
+		menuBar->Enable(XRCID("btnDeflateBrush"), false);
+		menuBar->Enable(XRCID("btnMoveBrush"), false);
+		menuBar->Enable(XRCID("btnSmoothBrush"), false);
+		menuBar->Enable(XRCID("btnUndiffBrush"), false);
+		menuBar->Enable(XRCID("btnClearMask"), false);
+		menuBar->Enable(XRCID("btnInvertMask"), false);
+		menuBar->Enable(XRCID("btnCollapseVertex"), false);
+		menuBar->Enable(XRCID("btnFlipEdgeTool"), false);
+		menuBar->Enable(XRCID("btnSplitEdgeTool"), false);
+		menuBar->Enable(XRCID("btnMoveVertexTool"), false);
+		menuBar->Enable(XRCID("deleteVerts"), false);
+		menuBar->Enable(XRCID("refineMesh"), false);
+
+		toolBarH->ToggleTool(XRCID("btnMaskBrush"), true);
+		toolBarH->EnableTool(XRCID("btnSelect"), false);
+		toolBarV->EnableTool(XRCID("btnTransform"), false);
+		toolBarV->EnableTool(XRCID("btnPivot"), false);
+		toolBarV->EnableTool(XRCID("btnVertexEdit"), false);
+		toolBarH->EnableTool(XRCID("btnInflateBrush"), false);
+		toolBarH->EnableTool(XRCID("btnDeflateBrush"), false);
+		toolBarH->EnableTool(XRCID("btnMoveBrush"), false);
+		toolBarH->EnableTool(XRCID("btnSmoothBrush"), false);
+		toolBarH->EnableTool(XRCID("btnUndiffBrush"), false);
+		toolBarH->EnableTool(XRCID("btnCollapseVertex"), false);
+		toolBarH->EnableTool(XRCID("btnFlipEdgeTool"), false);
+		toolBarH->EnableTool(XRCID("btnSplitEdgeTool"), false);
+		toolBarH->EnableTool(XRCID("btnMoveVertexTool"), false);
+
+		ResetPartitionVisibility();
+		ShowPartition(partitionTree->GetSelection());
+	}
+	else if (id == lightsTabButton->GetId()) {
+		currentTabButton = lightsTabButton;
+
+		outfitShapes->Hide();
+		outfitBones->Hide();
+		colorSettings->Hide();
+		segmentTree->Hide();
+		partitionTree->Hide();
+		lightSettings->Show();
+
+		meshTabButton->SetCheck(false);
+		boneTabButton->SetCheck(false);
+		colorsTabButton->SetCheck(false);
+		segmentTabButton->SetCheck(false);
+		partitionTabButton->SetCheck(false);
+
+		SetNoSubMeshes();
+		SelectTool(glView->GetLastTool());
+	}
+
+	CheckBrushBounds();
+	UpdateBrushSettings();
+
+	wxPanel* topSplitPanel = (wxPanel*)FindWindowByName("topSplitPanel");
+	topSplitPanel->Layout();
+
+	UpdateToolScrollLayout();
+
+	Refresh();
+}
+
+void OutfitStudioFrame::CheckDisplayToggle(int id, bool enabled) {
+	menuBar->Check(id, enabled);
+	toolBarV->ToggleTool(id, enabled);
+}
+
+void OutfitStudioFrame::OnShowWireframe(wxCommandEvent& event) {
+	CheckDisplayToggle(event.GetId(), event.IsChecked());
+	glView->SetWireframe(event.IsChecked());
+	glView->Render();
+}
+
+void OutfitStudioFrame::OnEnableLighting(wxCommandEvent& event) {
+	CheckDisplayToggle(event.GetId(), event.IsChecked());
+	glView->SetLighting(event.IsChecked());
+	glView->Render();
+}
+
+void OutfitStudioFrame::OnEnableTextures(wxCommandEvent& event) {
+	CheckDisplayToggle(event.GetId(), event.IsChecked());
+	glView->SetTextures(event.IsChecked());
+	glView->Render();
+}
+
+void OutfitStudioFrame::OnEnableTints(wxCommandEvent& event) {
+	CheckDisplayToggle(event.GetId(), event.IsChecked());
+	glView->SetTints(event.IsChecked());
+	glView->Render();
+}
+
+void OutfitStudioFrame::OnEnableVertexColors(wxCommandEvent& e) {
+	// The colors tab always shows them, the choice applies when leaving it
+	CheckDisplayToggle(e.GetId(), e.IsChecked());
+	if (colorSettings->IsShown())
+		return;
+
+	glView->SetColorsVisible(e.IsChecked());
+	if (e.IsChecked())
+		FillVertexColors();
+	else
+		glView->ClearColors();
+
+	glView->Render();
+}

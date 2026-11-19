@@ -517,8 +517,8 @@ add_library(bsos_mcp STATIC
 target_link_libraries(bsos_mcp PUBLIC bsos_core)
 
 set(BSOS_OUTFIT_STUDIO_SOURCES
-	src/outfitstudio/OutfitStudio.cpp
-	src/project/AutomationRunner.cpp
+	src/outfitstudio/OutfitStudioFrame.cpp
+	src/outfitstudio/OutfitStudioProjectHost.cpp	src/outfitstudio/OutfitStudioApp.cpp	src/outfitstudio/GLPanel.cpp	src/outfitstudio/FrameView.cpp	src/outfitstudio/FrameTools.cpp	src/outfitstudio/FrameSliders.cpp	src/outfitstudio/FrameSliderFiles.cpp	src/outfitstudio/FrameShapes.cpp	src/outfitstudio/FrameShapeOps.cpp	src/outfitstudio/FrameSegments.cpp	src/outfitstudio/FrameProjectFile.cpp	src/outfitstudio/FramePose.cpp	src/outfitstudio/FramePhysics.cpp	src/outfitstudio/FramePack.cpp	src/outfitstudio/FrameMasks.cpp	src/outfitstudio/FrameImportExport.cpp	src/outfitstudio/FrameConform.cpp	src/outfitstudio/FrameBones.cpp	src/outfitstudio/FrameAnimation.cpp	src/outfitstudio/DropTargets.cpp	src/outfitstudio/FrameHelpers.cpp	src/project/AutomationRunner.cpp
 	src/ui/outfitstudio/AddProjectDialog.cpp
 	src/ui/outfitstudio/ArchiveBrowser.cpp
 	src/ui/outfitstudio/AutomationDialog.cpp

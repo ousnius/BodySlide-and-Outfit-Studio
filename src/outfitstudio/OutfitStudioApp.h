@@ -5,6 +5,7 @@ See the included LICENSE file
 
 #pragma once
 
+#include "utils/ConfigurationManager.h"
 #include "utils/Log.h"
 #include "utils/TargetGame.h"
 
@@ -66,5 +67,8 @@ private:
 	wxSingleInstanceChecker* singleChecker = nullptr;
 	wxServer* ipcServer = nullptr;
 };
+
+// Outfit Studio's own settings (OutfitStudio.xml)
+extern ConfigurationManager OutfitStudioConfig;
 
 wxDECLARE_APP(OutfitStudio);
