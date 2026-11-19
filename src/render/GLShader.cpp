@@ -549,6 +549,14 @@ void GLShader::SetProperties(const Mesh::ShaderProperties& prop) {
 	loc = glGetUniformLocation(progID, "prop.paletteScale");
 	if (loc >= 0)
 		glUniform1f(loc, prop.paletteScale);
+
+	loc = glGetUniformLocation(progID, "prop.pbrSpecularLevel");
+	if (loc >= 0)
+		glUniform1f(loc, prop.pbrSpecularLevel);
+
+	loc = glGetUniformLocation(progID, "prop.pbrRoughnessScale");
+	if (loc >= 0)
+		glUniform1f(loc, prop.pbrRoughnessScale);
 }
 
 void GLShader::ShowLighting(bool bShow) {

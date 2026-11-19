@@ -98,27 +98,12 @@ std::unique_ptr<Mesh> Mesh::CreateFromShape(NifFile* nif, const std::string& sha
 		m->prop.alpha = shader->GetAlpha();
 
 		// Everything that has to come off the lighting shader property itself rather than off the
-		// NiShader interface: the tint colors of the shader types that have one, and the True PBR flag.
+		// NiShader interface: the tint colors of the shader types that have one. True PBR is no longer
+		// among it - a shape asks for that through a Community Shaders material (.csm) its shader is
+		// named after, see UpdateFromCSMaterial.
 		if (!nif->GetHeader().GetVersion().IsSF()) {
 			auto* bslsp = dynamic_cast<BSLightingShaderProperty*>(shader);
 			if (bslsp) {
-				// Community Shaders "True PBR", which a shape asks for with Shader Flags 2 bit 23 - the bit
-				// NifSkope shows as "Unused 01". Only asked of Skyrim: Fallout 4 shares the block type and
-				// spends that bit on something else, and its shapes have their own shader either way.
-				// The multi layer parallax shader type counts alongside the default one, since True PBR
-				// borrows it purely as somewhere to keep its coat, fuzz and glint parameters. Such a shape
-				// still holds its RMAOS map in slot 5, and reading that as one is far closer than falling
-				// back to vanilla, which would take the same map for an environment mask.
-				if (nif->GetHeader().GetVersion().Stream() < 130) {
-					const uint32_t bslspType = bslsp->GetShaderType();
-					m->pbr = (bslsp->shaderFlags2 & SLSF2_UNUSED01) != 0
-							 && (bslspType == BSLightingShaderPropertyShaderType::BSLSP_DEFAULT
-								 || bslspType == BSLightingShaderPropertyShaderType::BSLSP_MULTILAYERPARALLAX);
-
-					if (m->pbr)
-						wxLogMessage("Shape '%s' was detected as a True PBR material.", shapeName);
-				}
-
 				// Face tint map (FaceGen) of the face tint shader type, always in texture slot 6
 				m->faceTint = bslsp->GetShaderType() == BSLightingShaderPropertyShaderType::BSLSP_FACE;
 
@@ -435,6 +420,38 @@ void Mesh::UpdateFromMaterialFile(const MaterialFile& matFile) {
 	prop.subsurfaceRolloff = matFile.subsurfaceLightingRolloff;
 	prop.fresnelPower = matFile.fresnelPower;
 	prop.paletteScale = matFile.grayscaleToPaletteScale;
+}
+
+void Mesh::UpdateFromCSMaterial(const std::shared_ptr<const CSMaterial>& csMat) {
+	csMaterial = csMat;
+
+	// Without a material - or one that couldn't be read - the shape is whatever its NIF says, and
+	// a NIF can't ask for True PBR on its own any more
+	pbr = false;
+	prop.pbrSpecularLevel = 0.04f;
+	prop.pbrRoughnessScale = 1.0f;
+
+	if (!csMat)
+		return;
+
+	// Every key a material leaves out keeps the value the NIF had
+	const CSMaterial& mat = *csMat;
+	doublesided = mat.twoSided.value_or(doublesided);
+	modelSpace = mat.modelSpaceNormals.value_or(modelSpace);
+	vertexColors = mat.vertexColors.value_or(vertexColors);
+
+	prop.uvOffset.u = static_cast<float>(mat.uOffset.value_or(prop.uvOffset.u));
+	prop.uvOffset.v = static_cast<float>(mat.vOffset.value_or(prop.uvOffset.v));
+	prop.uvScale.u = static_cast<float>(mat.uScale.value_or(prop.uvScale.u));
+	prop.uvScale.v = static_cast<float>(mat.vScale.value_or(prop.uvScale.v));
+	prop.alpha = static_cast<float>(mat.alpha.value_or(prop.alpha));
+
+	prop.emissiveColor = mat.emittanceColor.value_or(prop.emissiveColor);
+	prop.emissiveMultiple = static_cast<float>(mat.emittanceMult.value_or(prop.emissiveMultiple));
+
+	pbr = mat.IsPBR();
+	prop.pbrSpecularLevel = static_cast<float>(mat.pbrSpecularLevel.value_or(0.04));
+	prop.pbrRoughnessScale = static_cast<float>(mat.pbrRoughnessScale.value_or(1.0));
 }
 
 bool Mesh::HasTintColor() const {

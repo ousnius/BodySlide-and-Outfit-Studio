@@ -7,8 +7,10 @@
  * http://www.niftools.org/
  */
 
-// Community Shaders "True PBR" for Skyrim. A shape reaches this shader by carrying Shader Flags 2
-// bit 23, which NifSkope calls "Unused 01"; see GLSurface::AddMeshFromNif. Its texture slots do not
+// Community Shaders "True PBR" for Skyrim. A shape reaches this shader through the Community Shaders
+// material (.csm) its shader is named after, when that has PBREnabled; see Mesh::UpdateFromCSMaterial.
+// Only the base layer of it is rendered here: subsurface, thin surface, coat, fuzz, glint, hair and
+// displacement are read but not drawn. Its texture slots do not
 // mean what they do in vanilla: slot 5 holds an RMAOS map rather than an environment mask, slot 2 an
 // emissive color rather than a glow map, and slot 4 is left empty, so the only thing there is to
 // reflect is the cube map generated from the HDRi.
@@ -47,17 +49,17 @@ struct Properties
 {
 	vec2 uvOffset;
 	vec2 uvScale;
-	// Specular Level under True PBR: the reflectance of the surface where it isn't metal. Scales the
-	// alpha of the RMAOS map. 0.04 describes most materials, 0.08 a specular map authored for Unreal.
-	float shininess;
-	// Roughness Scale under True PBR: scales the red channel of the RMAOS map. Usually left at 1.
-	float specularStrength;
+	// PBRSpecularLevel: the reflectance of the surface where it isn't metal. Scales the alpha of the
+	// RMAOS map. 0.04 describes most materials, 0.08 a specular map authored for Unreal.
+	float pbrSpecularLevel;
+	// PBRRoughnessScale: scales the red channel of the RMAOS map. Usually left at 1.
+	float pbrRoughnessScale;
 	vec3 emissiveColor;
 	float emissiveMultiple;
 	float alpha;
 };
-// The skin and hair tint colors have no entry here: True PBR needs the default or the multi layer
-// parallax shader type, and a tint only ever comes from the skin tint or hair tint types.
+// The skin and hair tint colors have no entry here: the viewport renders True PBR without the tint
+// of the skin tint and hair tint shader types.
 uniform Properties prop;
 uniform float alphaThreshold;
 
@@ -108,13 +110,13 @@ void readMaterial(void)
 	if (bRMAOS)
 		rmaos = texture(texRMAOS, uv);
 
-	roughness = clamp(rmaos.r * prop.specularStrength, MIN_ROUGHNESS, 1.0);
+	roughness = clamp(rmaos.r * prop.pbrRoughnessScale, MIN_ROUGHNESS, 1.0);
 	ao = clamp(rmaos.b, 0.0, 1.0);
 
 	// Metal reflects its own color and has no diffuse of its own, so the albedo becomes the
 	// reflectance and what is left to scatter goes to black.
 	float metallic = clamp(rmaos.g, 0.0, 1.0);
-	float dielectricF0 = clamp(rmaos.a * prop.shininess, 0.0, 1.0);
+	float dielectricF0 = clamp(rmaos.a * prop.pbrSpecularLevel, 0.0, 1.0);
 	f0 = mix(vec3(dielectricF0), albedo, metallic);
 	diffuseColor = albedo * (1.0 - metallic);
 }
@@ -169,13 +171,14 @@ void main(void)
 
 			imageBasedLight(outDiffuse, outSpecular);
 
-			// Emissive
-			if (bEmissive)
+			// Emissive. Under True PBR a shape is emissive exactly when it has an emissive map in slot 2,
+			// whatever its own emit flag says.
+			if (bPBREmissive)
 			{
 				emissive += prop.emissiveColor * prop.emissiveMultiple;
 
 				// Emissive map
-				if (bPBREmissive && bShowTexture)
+				if (bShowTexture)
 				{
 					vec3 emissiveMap = texture(texEmissive, uv).rgb;
 					emissive *= bEmissiveSRGB ? emissiveMap : srgbToLinear(emissiveMap);

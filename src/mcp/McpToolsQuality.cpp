@@ -1692,9 +1692,11 @@ McpToolResult ValidateProject(OutfitStudioMcp& mcp, const json& args) {
 			f.Add(f.warnings, name, "notSkinned", "The shape isn't skinned, so it won't move with the body.");
 		}
 
-		// Textures, where the shader takes them from the NIF
+		// Textures, where the shader takes them from the NIF rather than from a material
 		MaterialFile materialFile;
-		if (bsShader && game != SF && !project.GetShapeMaterialFile(shape, materialFile)) {
+		auto csMaterial = project.GetShapeCSMaterial(shape);
+		const bool csDiffuse = csMaterial && csMaterial->diffuseTexture && !csMaterial->diffuseTexture->empty();
+		if (bsShader && game != SF && !csDiffuse && !project.GetShapeMaterialFile(shape, materialFile)) {
 			auto textures = nif->GetTexturePathRefs(shape);
 			if (!textures.empty() && textures[0].get().empty())
 				f.Add(f.warnings, name, "noDiffuse", "The shape has no diffuse texture (slot 0).");

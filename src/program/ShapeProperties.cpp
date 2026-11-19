@@ -212,6 +212,12 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, std::vector<
 		btnMaterialChooser->Show();
 		pgShader->Layout();
 	}
+	else if (version.IsSK() || version.IsSSE()) {
+		// A Skyrim shader's name is only a material when it is a Community Shaders one (.csm), so the
+		// field keeps its name and only gains the chooser
+		btnMaterialChooser->Show();
+		pgShader->Layout();
+	}
 
 	if (version.IsSF()) {
 		XRCCTRL(*this, "lbShaderType", wxStaticText)->Hide();
@@ -894,11 +900,13 @@ void ShapeProperties::UpdateShaderTypeFields(uint32_t shaderTypeVal) {
 }
 
 void ShapeProperties::OnChooseMaterial(wxCommandEvent& WXUNUSED(event)) {
-	bool isSF = nif->GetHeader().GetVersion().IsSF();
-	wxString defaultExt = isSF ? ".mat" : ".bgsm";
+	auto& version = nif->GetHeader().GetVersion();
+	bool isSF = version.IsSF();
+	bool isSkyrim = version.IsSK() || version.IsSSE();
+	wxString defaultExt = isSF ? ".mat" : (isSkyrim ? ".csm" : ".bgsm");
 	wxString wildcard = isSF
 		? "Starfield material files (*.mat)|*.mat|All material files (*.mat;*.bgsm;*.bgem)|*.mat;*.bgsm;*.bgem"
-		: "Material files (*.bgsm;*.bgem)|*.bgsm;*.bgem";
+		: (isSkyrim ? "Community Shaders material files (*.csm)|*.csm" : "Material files (*.bgsm;*.bgem)|*.bgsm;*.bgem");
 	wxString fileName = wxFileSelector(_("Choose material file"), wxEmptyString, wxEmptyString, defaultExt, wildcard, wxFD_FILE_MUST_EXIST, this);
 	if (fileName.empty())
 		return;
@@ -1122,7 +1130,7 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 
 			for (auto& shape : shapes) {
 				os->project->SetTextures(shape, texFiles);
-				os->glView->SetMeshTextures(shape->name.get(), texFiles, false, MaterialFile(), true, os->project->GetShapeSFMaterial(shape));
+				os->glView->SetMeshTextures(shape->name.get(), texFiles, false, MaterialFile(), true, os->project->GetShapeSFMaterial(shape), os->project->GetShapeCSMaterial(shape));
 			}
 
 			os->glView->Render();

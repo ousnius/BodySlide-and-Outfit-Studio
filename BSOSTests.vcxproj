@@ -218,6 +218,7 @@
     <ClInclude Include="src\files\GameDataStream.h" />
     <ClInclude Include="src\files\PhysicsXmlFile.h" />
     <ClInclude Include="src\files\SFMaterialResolver.h" />
+    <ClInclude Include="src\files\CSMaterialFile.h" />
     <ClInclude Include="src\utils\ConfigurationManager.h" />
     <ClInclude Include="lib\FSEngine\FSEngine.h" />
     <ClInclude Include="lib\FSEngine\FSManager.h" />
@@ -254,6 +255,7 @@
     <ClCompile Include="tests\BuildSelectionTest.cpp" />
     <ClCompile Include="tests\HkxFileTest.cpp" />
     <ClCompile Include="tests\MaterialFileTest.cpp" />
+    <ClCompile Include="tests\CSMaterialFileTest.cpp" />
     <ClCompile Include="tests\AutomationJsonTest.cpp" />
     <ClCompile Include="tests\MainThreadDispatcherTest.cpp" />
     <ClCompile Include="tests\MaskTransferTest.cpp" />
@@ -331,6 +333,7 @@
     <ClCompile Include="src\files\GameDataStream.cpp" />
     <ClCompile Include="src\files\PhysicsXmlFile.cpp" />
     <ClCompile Include="src\files\SFMaterialResolver.cpp" />
+    <ClCompile Include="src\files\CSMaterialFile.cpp" />
     <ClCompile Include="src\utils\ConfigurationManager.cpp" />
     <ClCompile Include="lib\FSEngine\FSEngine.cpp" />
     <ClCompile Include="lib\FSEngine\FSManager.cpp" />

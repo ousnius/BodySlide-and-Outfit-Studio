@@ -523,7 +523,7 @@
 								<flag>wxEXPAND|wxALL</flag>
 								<border>5</border>
 								<object class="wxCheckBox" name="cbTruePBR">
-									<tooltip>Enables/disables True PBR shading for Skyrim (Community Shaders), used by shapes with the "Unused 01" shader flag set. Their texture slots hold a roughness/metalness/AO/specular map instead of an environment mask. Turn this off to render such shapes the way vanilla does.</tooltip>
+									<tooltip>Enables/disables True PBR shading for Skyrim (Community Shaders), used by shapes whose shader name is a Community Shaders material (.csm) with PBR enabled. Their texture slots hold a roughness/metalness/AO/specular map instead of an environment mask. Turn this off to render such shapes the way vanilla does.</tooltip>
 									<label>True PBR</label>
 									<checked>1</checked>
 								</object>
