@@ -506,6 +506,16 @@ add_library(bsos_project STATIC
 	src/project/GameImport.cpp
 	src/project/ProjectPacker.cpp
 	src/project/OutfitProject.cpp
+	src/project/OutfitProjectSymmetry.cpp
+	src/project/OutfitProjectSliders.cpp
+	src/project/OutfitProjectSave.cpp
+	src/project/OutfitProjectReference.cpp
+	src/project/OutfitProjectMorphFiles.cpp
+	src/project/OutfitProjectMeshEdit.cpp
+	src/project/OutfitProjectIO.cpp
+	src/project/OutfitProjectConform.cpp
+	src/project/OutfitProjectBones.cpp
+	src/project/ProjectNifHelpers.cpp
 	src/project/ProjectHost.cpp
 	src/project/ProjectOperations.cpp
 )

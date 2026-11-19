@@ -416,6 +416,36 @@
     <ClCompile Include="src\project\OutfitProject.cpp">
       <Filter>Project</Filter>
     </ClCompile>
+    <ClCompile Include="src\project\OutfitProjectSymmetry.cpp">
+      <Filter>Project</Filter>
+    </ClCompile>
+    <ClCompile Include="src\project\OutfitProjectSliders.cpp">
+      <Filter>Project</Filter>
+    </ClCompile>
+    <ClCompile Include="src\project\OutfitProjectSave.cpp">
+      <Filter>Project</Filter>
+    </ClCompile>
+    <ClCompile Include="src\project\OutfitProjectReference.cpp">
+      <Filter>Project</Filter>
+    </ClCompile>
+    <ClCompile Include="src\project\OutfitProjectMorphFiles.cpp">
+      <Filter>Project</Filter>
+    </ClCompile>
+    <ClCompile Include="src\project\OutfitProjectMeshEdit.cpp">
+      <Filter>Project</Filter>
+    </ClCompile>
+    <ClCompile Include="src\project\OutfitProjectIO.cpp">
+      <Filter>Project</Filter>
+    </ClCompile>
+    <ClCompile Include="src\project\OutfitProjectConform.cpp">
+      <Filter>Project</Filter>
+    </ClCompile>
+    <ClCompile Include="src\project\OutfitProjectBones.cpp">
+      <Filter>Project</Filter>
+    </ClCompile>
+    <ClCompile Include="src\project\ProjectNifHelpers.cpp">
+      <Filter>Project</Filter>
+    </ClCompile>
     <ClCompile Include="src\project\ProjectHost.cpp">
       <Filter>Project</Filter>
     </ClCompile>

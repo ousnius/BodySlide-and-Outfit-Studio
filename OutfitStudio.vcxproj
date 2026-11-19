@@ -896,6 +896,7 @@
     <ClInclude Include="src\ui\GroupManager.h" />
     <ClInclude Include="src\ui\outfitstudio\ObjImportDialog.h" />
     <ClInclude Include="src\project\OutfitProject.h" />
+    <ClInclude Include="src\project\ProjectNifHelpers.h" />
     <ClInclude Include="src\project\ProjectHost.h" />
     <ClInclude Include="src\project\ProjectOperations.h" />
     <ClInclude Include="src\project\BrushStrokeController.h" />
@@ -1060,6 +1061,16 @@
     <ClCompile Include="src\ui\GroupManager.cpp" />
     <ClCompile Include="src\ui\outfitstudio\ObjImportDialog.cpp" />
     <ClCompile Include="src\project\OutfitProject.cpp" />
+    <ClCompile Include="src\project\OutfitProjectSymmetry.cpp" />
+    <ClCompile Include="src\project\OutfitProjectSliders.cpp" />
+    <ClCompile Include="src\project\OutfitProjectSave.cpp" />
+    <ClCompile Include="src\project\OutfitProjectReference.cpp" />
+    <ClCompile Include="src\project\OutfitProjectMorphFiles.cpp" />
+    <ClCompile Include="src\project\OutfitProjectMeshEdit.cpp" />
+    <ClCompile Include="src\project\OutfitProjectIO.cpp" />
+    <ClCompile Include="src\project\OutfitProjectConform.cpp" />
+    <ClCompile Include="src\project\OutfitProjectBones.cpp" />
+    <ClCompile Include="src\project\ProjectNifHelpers.cpp" />
     <ClCompile Include="src\project\ProjectHost.cpp" />
     <ClCompile Include="src\project\ProjectOperations.cpp" />
     <ClCompile Include="src\project\BrushStrokeController.cpp" />
