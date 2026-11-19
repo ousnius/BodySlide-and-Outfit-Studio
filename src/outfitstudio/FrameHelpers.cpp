@@ -5,6 +5,9 @@ See the included LICENSE file
 
 #include "FrameHelpers.h"
 
+#include <algorithm>
+#include <wx/display.h>
+#include <wx/scrolbar.h>
 #include <wx/textdlg.h>
 
 #ifdef __WXMSW__
@@ -23,6 +26,33 @@ void SetHighResolutionTimers(bool enable) {
 #else
 	(void)enable;
 #endif
+}
+
+std::array<wxEventTypeTag<wxScrollEvent>, 9> CommandScrollEventTypes() {
+	return {wxEVT_SCROLL_TOP,
+			wxEVT_SCROLL_BOTTOM,
+			wxEVT_SCROLL_LINEUP,
+			wxEVT_SCROLL_LINEDOWN,
+			wxEVT_SCROLL_PAGEUP,
+			wxEVT_SCROLL_PAGEDOWN,
+			wxEVT_SCROLL_THUMBTRACK,
+			wxEVT_SCROLL_THUMBRELEASE,
+			wxEVT_SCROLL_CHANGED};
+}
+
+int GetTargetFps(wxWindow* window) {
+	int refresh = 0;
+
+	const int displayIndex = wxDisplay::GetFromWindow(window);
+	if (displayIndex != wxNOT_FOUND) {
+		wxVideoMode mode = wxDisplay(static_cast<unsigned int>(displayIndex)).GetCurrentMode();
+		refresh = mode.refresh;
+	}
+
+	if (refresh <= 0)
+		refresh = 60;
+
+	return std::min(refresh, 120);
 }
 
 bool GetPoseHkxFormat(TargetGame targetGame, HKX::Format* outFormat) {

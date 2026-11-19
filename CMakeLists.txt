@@ -529,8 +529,8 @@ add_library(bsos_mcp STATIC
 target_link_libraries(bsos_mcp PUBLIC bsos_core)
 
 set(BSOS_OUTFIT_STUDIO_SOURCES
-	src/outfitstudio/DropTargets.cpp
-	src/outfitstudio/FrameAnimation.cpp
+	src/outfitstudio/DropTargets.cpp
+	src/outfitstudio/AnimationPlayer.cpp
 	src/outfitstudio/FrameBones.cpp
 	src/outfitstudio/FrameConform.cpp
 	src/outfitstudio/FrameHelpers.cpp

@@ -6,6 +6,7 @@ See the included LICENSE file
 // Outfit Studio window: the physics preview
 
 #include "OutfitStudioFrame.h"
+#include "AnimationPlayer.h"
 #include "FrameHelpers.h"
 #include "GLPanel.h"
 #include "ui/wxStateButton.h"
@@ -29,7 +30,7 @@ void OutfitStudioFrame::InjectPhysicsCameraYaw(float deltaDegrees) {
 void OutfitStudioFrame::OnPhysicsCheckBox(wxCommandEvent& e) {
 	// Physics only simulates while posing or playing; make checking the box
 	// take effect immediately by enabling pose mode along with it.
-	if (e.IsChecked() && !project->bPose && !animPlaying)
+	if (e.IsChecked() && !project->bPose && !animation->IsPlaying())
 		ActivatePose(true);
 	else
 		UpdatePhysicsState();
@@ -296,7 +297,7 @@ void OutfitStudioFrame::ShutdownPhysics() {
 }
 
 void OutfitStudioFrame::UpdatePhysicsState() {
-	const bool desired = cbPhysics && cbPhysics->IsChecked() && project && (project->bPose || animPlaying);
+	const bool desired = cbPhysics && cbPhysics->IsChecked() && project && (project->bPose || animation->IsPlaying());
 
 	if (desired && !physicsRunning) {
 		if (!physics)
@@ -331,7 +332,7 @@ void OutfitStudioFrame::UpdatePhysicsState() {
 
 		// The step clock must be valid for the lockstep path too, where
 		// StartPhysicsPump never runs
-		physicsClock.Reset(GetAnimTargetFps());
+		physicsClock.Reset(GetTargetFps(this));
 
 		// The controller is fresh; re-apply the current wind settings
 		ApplyPhysicsWind();
@@ -342,7 +343,7 @@ void OutfitStudioFrame::UpdatePhysicsState() {
 		UpdatePhysicsGrabControl(true);
 		UpdatePhysicsProbeControl(true);
 
-		if (!animPlaying)
+		if (!animation->IsPlaying())
 			StartPhysicsPump();
 	}
 	else if (!desired && physicsRunning) {
@@ -371,9 +372,9 @@ void OutfitStudioFrame::UpdatePhysicsState() {
 	else if (physicsRunning) {
 		// Animation playback took over or ended: while playing, ApplyPose
 		// steps the simulation in lockstep instead of the pump.
-		if (animPlaying && physicsPumpActive)
+		if (animation->IsPlaying() && physicsPumpActive)
 			StopPhysicsPump();
-		else if (!animPlaying && !physicsPumpActive)
+		else if (!animation->IsPlaying() && !physicsPumpActive)
 			StartPhysicsPump();
 	}
 
@@ -402,7 +403,7 @@ void OutfitStudioFrame::StartPhysicsPump() {
 		return;
 
 	physicsPumpActive = true;
-	physicsClock.Reset(GetAnimTargetFps());
+	physicsClock.Reset(GetTargetFps(this));
 	SetHighResolutionTimers(true);
 	Bind(wxEVT_IDLE, &OutfitStudioFrame::OnPhysicsIdle, this);
 	physicsTimer.Start(Physics::PumpTimerIntervalMS);

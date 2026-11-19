@@ -6,6 +6,7 @@ See the included LICENSE file
 // Outfit Studio window: posing the skeleton and pose files
 
 #include "OutfitStudioFrame.h"
+#include "AnimationPlayer.h"
 #include "FrameHelpers.h"
 #include "GLPanel.h"
 #include "OutfitStudioApp.h"
@@ -63,22 +64,22 @@ void OutfitStudioFrame::ApplyPose() {
 	// While an animation plays there is no separate physics pump; the
 	// simulation advances in lockstep with each displayed frame, using the
 	// wall-clock time since the last step.
-	if (physicsRunning && animPlaying)
+	if (physicsRunning && animation->IsPlaying())
 		physics->Step(physicsClock.TakeElapsed());
 
 	// Asking for a BVH update queues the shape with wxGLPanel::OnIdle, which
 	// rebuilds a whole AABB tree over every triangle of it - far too expensive
 	// to pay once per displayed animation frame. The tree only serves picking
 	// and brush hit tests, both locked out during playback, so the rebuild is
-	// deferred to the single ApplyPose that PauseAnimationPlayback does.
-	const bool updateBVH = !animPlaying && !physicsPumpActive;
+	// deferred to the single ApplyPose that AnimationPlayer::Pause does.
+	const bool updateBVH = !animation->IsPlaying() && !physicsPumpActive;
 
 	for (auto& shape : project->GetWorkNif()->GetShapes())
 		UpdateLiveMesh(shape, updateBVH);
 
 	// Bone overlays cost one GL mesh created and destroyed per bone, not worth
 	// paying for every frame while they are not being drawn.
-	if (!animPlaying || glView->GetBonesMode() || glView->GetNodesMode())
+	if (!animation->IsPlaying() || glView->GetBonesMode() || glView->GetNodesMode())
 		glView->UpdateBones();
 
 	glView->Render();
@@ -269,12 +270,7 @@ void OutfitStudioFrame::OnPoseCheckBox(wxCommandEvent& e) {
 
 void OutfitStudioFrame::OnSelectPose(wxCommandEvent& WXUNUSED(event)) {
 	// Selecting a pose takes over the skeleton from any selected animation.
-	if (GetSelectedAnimation()) {
-		PauseAnimationPlayback();
-		animCurrentFrame = 0;
-		cAnimationName->SetSelection(0); // "<None>"
-		UpdateAnimationPlayerUI();
-	}
+	animation->Deselect();
 
 	wxComboBox* cPoseName = (wxComboBox*)FindWindowByName("cPoseName");
 	int poseSel = cPoseName->GetSelection();

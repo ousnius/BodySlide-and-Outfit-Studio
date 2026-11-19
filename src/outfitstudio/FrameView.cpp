@@ -798,3 +798,58 @@ void OutfitStudioFrame::OnEnableVertexColors(wxCommandEvent& e) {
 
 	glView->Render();
 }
+
+void OutfitStudioFrame::SetAnimationPlaybackLock(bool locked) {
+	const bool enable = !locked;
+
+	if (menuBar) {
+		for (size_t i = 0; i < menuBar->GetMenuCount(); ++i)
+			menuBar->EnableTop(i, enable);
+	}
+
+	// Disabling a container disables its children without discarding their own
+	// enabled state, so whatever the current tab, tool and pose selection had
+	// decided (per-tool toolbar entries, the save/delete pose buttons, Pose to
+	// Mesh) comes back unchanged on unlock.
+	const std::initializer_list<wxWindow*> lockedWindows = {toolBarH,
+															toolBarV,
+															meshTabButton,
+															boneTabButton,
+															colorsTabButton,
+															segmentTabButton,
+															partitionTabButton,
+															lightsTabButton,
+															outfitShapes,
+															outfitBones,
+															sliderScroll,
+															sliderFilter,
+															bonesFilter,
+															masksPane,
+															notesPane,
+															posePane,
+															physicsPane,
+															FindWindow(XRCID("cbFixedWeight")),
+															FindWindow(XRCID("cbNormalizeWeights")),
+															// The player itself stays usable; only the
+															// controls that would swap the animation out
+															// from under it are locked.
+															FindWindow(XRCID("cAnimationName")),
+															FindWindow(XRCID("importAnimationFile"))};
+
+	for (wxWindow* w : lockedWindows) {
+		if (w)
+			w->Enable(enable);
+	}
+
+	// Swallow every menu, toolbar and accelerator command while playing.
+	// Dynamically bound handlers run before the static event table, so this
+	// blocks all of them in one place.
+	if (locked)
+		Bind(wxEVT_MENU, &OutfitStudioFrame::OnBlockedCommandDuringPlayback, this);
+	else
+		Unbind(wxEVT_MENU, &OutfitStudioFrame::OnBlockedCommandDuringPlayback, this);
+}
+
+void OutfitStudioFrame::OnBlockedCommandDuringPlayback(wxCommandEvent& WXUNUSED(event)) {
+	// Intentionally empty: not calling Skip() drops the command.
+}

@@ -6,6 +6,7 @@ See the included LICENSE file
 // Viewport: overlays - hover highlight, nodes, bones, floor and vertex edit points
 
 #include "GLPanel.h"
+#include "AnimationPlayer.h"
 #include "OutfitStudioFrame.h"
 #include "ShapeTreeItems.h"
 
@@ -356,7 +357,7 @@ void wxGLPanel::SetHoverBone(const std::string& bone) {
 }
 
 std::string wxGLPanel::PickBone(int x, int y, bool includeConnectors) {
-	if (!bonesMode || !os || os->IsAnimationPlaying())
+	if (!bonesMode || !os || os->animation->IsPlaying())
 		return std::string();
 
 	const float pointRadius = FromDIP(8);

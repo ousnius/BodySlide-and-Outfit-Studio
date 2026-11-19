@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "OutfitStudioFrame.h"
+#include "AnimationPlayer.h"
 #include "ui/AppSetup.h"
 #include "FrameHelpers.h"
 #include "GLPanel.h"
@@ -166,14 +167,6 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_BUTTON(XRCID("exportPoseFile"), OutfitStudioFrame::OnSaveHkxPose)
 	EVT_BUTTON(XRCID("importPoseFile"), OutfitStudioFrame::OnLoadHkxPose)
 
-	EVT_COMBOBOX(XRCID("cAnimationName"), OutfitStudioFrame::OnSelectAnimation)
-	EVT_BUTTON(XRCID("importAnimationFile"), OutfitStudioFrame::OnLoadHkxAnimation)
-	EVT_BUTTON(XRCID("animFavorite"), OutfitStudioFrame::OnAnimationFavorite)
-	EVT_BUTTON(XRCID("animPlayPause"), OutfitStudioFrame::OnAnimPlayPause)
-	EVT_COMMAND_SCROLL(XRCID("animFrameSlider"), OutfitStudioFrame::OnAnimFrameSlider)
-	EVT_CHOICE(XRCID("animSpeed"), OutfitStudioFrame::OnAnimSpeedChanged)
-	EVT_CHECKBOX(XRCID("animInterpolate"), OutfitStudioFrame::OnAnimInterpolateChanged)
-	EVT_TIMER(ANIM_PLAYBACK_TIMER, OutfitStudioFrame::OnAnimPlaybackTimer)
 
 	EVT_CHECKBOX(XRCID("selectSliders"), OutfitStudioFrame::OnSelectSliders)
 	EVT_TEXT_ENTER(XRCID("sliderFilter"), OutfitStudioFrame::OnSliderFilterChanged)
@@ -454,6 +447,7 @@ OutfitStudioFrame::~OutfitStudioFrame() {}
 OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	// Other threads wake the dispatcher through the event queue, which wx makes thread safe
 	dispatcher = std::make_unique<MainThreadDispatcher>([this]() { CallAfter([this]() { dispatcher->ProcessPending(); }); });
+	animation = std::make_unique<AnimationPlayer>(*this);
 
 	wxLogMessage("Loading Outfit Studio frame at X:%d Y:%d with W:%d H:%d...", pos.x, pos.y, size.GetWidth(), size.GetHeight());
 
@@ -714,17 +708,9 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	if (physicsPane)
 		physicsPane->Hide();
 
-	cAnimationName = (wxComboBox*)FindWindowByName("cAnimationName");
-	animFavoriteButton = (wxButton*)FindWindowByName("animFavorite");
-	animPlayPauseButton = (wxButton*)FindWindowByName("animPlayPause");
-	animFrameSlider = (wxSlider*)FindWindowByName("animFrameSlider");
-	animFrameText = dynamic_cast<wxStaticText*>(FindWindowByName("animFrameText"));
-	animSpeedChoice = (wxChoice*)FindWindowByName("animSpeed");
-	animInterpolateCheck = (wxCheckBox*)FindWindowByName("animInterpolate");
+	animation->Init();
+	animation->ResetList();
 
-	ResetAnimationList();
-
-	animPlaybackTimer.SetOwner(this, ANIM_PLAYBACK_TIMER);
 	physicsTimer.SetOwner(this, PHYSICS_TIMER);
 
 	wxWindow* leftPanel = FindWindowByName("leftSplitPanel");
@@ -834,7 +820,7 @@ void OutfitStudioFrame::OnExit(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
-	PauseAnimationPlayback();
+	animation->Pause();
 
 	if (!CheckPendingChanges())
 		return;
@@ -1178,7 +1164,7 @@ std::string OutfitStudioFrame::GetBusyReason() {
 	if (glView && glView->IsStrokeActive())
 		return "A brush stroke or transform is in progress.";
 
-	if (IsAnimationPlaying())
+	if (animation->IsPlaying())
 		return "An animation is playing.";
 
 	if (!progressStack.empty())

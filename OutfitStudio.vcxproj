@@ -910,6 +910,7 @@
     <ClInclude Include="src\outfitstudio\OutfitStudioProjectHost.h" />
     <ClInclude Include="src\outfitstudio\OutfitStudioApp.h" />
     <ClInclude Include="src\outfitstudio\GLPanel.h" />
+    <ClInclude Include="src\outfitstudio\AnimationPlayer.h" />
     <ClInclude Include="src\outfitstudio\DropTargets.h" />
     <ClInclude Include="src\ui\PresetSaveDialog.h" />
     <ClInclude Include="src\ui\outfitstudio\ShapeProperties.h" />
@@ -1108,7 +1109,7 @@
     <ClCompile Include="src\outfitstudio\FrameImportExport.cpp" />
     <ClCompile Include="src\outfitstudio\FrameConform.cpp" />
     <ClCompile Include="src\outfitstudio\FrameBones.cpp" />
-    <ClCompile Include="src\outfitstudio\FrameAnimation.cpp" />
+    <ClCompile Include="src\outfitstudio\AnimationPlayer.cpp" />
     <ClCompile Include="src\outfitstudio\DropTargets.cpp" />
     <ClCompile Include="src\outfitstudio\FrameHelpers.cpp" />
     <ClCompile Include="src\ui\PresetSaveDialog.cpp" />

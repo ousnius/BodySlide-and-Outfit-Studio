@@ -6,6 +6,7 @@ See the included LICENSE file
 // Outfit Studio window: creating, loading, saving and closing projects
 
 #include "OutfitStudioFrame.h"
+#include "AnimationPlayer.h"
 #include "ui/outfitstudio/EditUV.h"
 #include "ShapeTreeItems.h"
 #include "GLPanel.h"
@@ -1704,7 +1705,7 @@ void OutfitStudioFrame::ClearProject() {
 	cPoseName->Append("<New>", (void*)nullptr);
 	cPoseName->SetStringSelection("<New>");
 
-	ResetAnimationList();
+	animation->ResetList();
 
 	if (projectNotes && notesPane) {
 		projectNotes->Clear();

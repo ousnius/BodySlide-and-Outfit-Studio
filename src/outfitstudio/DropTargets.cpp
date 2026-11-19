@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "DropTargets.h"
+#include "AnimationPlayer.h"
 #include "OutfitStudioFrame.h"
 #include "ShapeTreeItems.h"
 
@@ -15,7 +16,7 @@ See the included LICENSE file
 using namespace nifly;
 
 bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
-	if (owner && owner->IsAnimationPlaying())
+	if (owner && owner->animation->IsPlaying())
 		return false;
 
 	if (owner) {
@@ -73,7 +74,7 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 }
 
 bool DnDSliderFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
-	if (owner && owner->IsAnimationPlaying())
+	if (owner && owner->animation->IsPlaying())
 		return false;
 
 	if (owner) {

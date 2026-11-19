@@ -6,6 +6,7 @@ See the included LICENSE file
 // Viewport: keyboard and mouse input
 
 #include "GLPanel.h"
+#include "AnimationPlayer.h"
 #include "OutfitStudioFrame.h"
 #include "ui/outfitstudio/wxBrushSettingsPopup.h"
 #include "utils/ConfigurationManager.h"
@@ -22,7 +23,7 @@ using namespace nifly;
 
 void wxGLPanel::OnKeys(wxKeyEvent& event) {
 	// No editing shortcuts while an animation is playing.
-	if (os && os->IsAnimationPlaying()) {
+	if (os && os->animation->IsPlaying()) {
 		event.Skip();
 		return;
 	}
@@ -182,7 +183,7 @@ void wxGLPanel::OnMouseWheel(wxMouseEvent& event) {
 
 	// Switching the edited slider and resizing the brush are both locked out
 	// during playback; zooming falls through.
-	const bool playing = os && os->IsAnimationPlaying();
+	const bool playing = os && os->animation->IsPlaying();
 
 	if (!playing && event.ControlDown()) {
 		std::string sliderName = os->editor.lastActiveSlider;
@@ -251,7 +252,7 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 	// Mouse motion floods the message queue, which starves both the idle events
 	// and the WM_TIMER that drive playback and physics, so tick them from here
 	// as well.
-	os->PumpAnimationPlayback();
+	os->animation->Pump();
 	os->PumpPhysics();
 
 	bool cursorExists = false;
@@ -363,7 +364,7 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		// anyway, and it would hit-test against the mesh BVHs that playback
 		// leaves stale, reporting vertices that are not where it draws them.
 		// It is also hidden over a bone, as a click there selects the bone.
-		if (editMode && !(os && os->IsAnimationPlaying()) && hoverBone.empty()) {
+		if (editMode && !(os && os->animation->IsPlaying()) && hoverBone.empty()) {
 			cursorExists = gls.UpdateCursor(x, y, true, &hitResult);
 		}
 		else {
@@ -467,7 +468,7 @@ void wxGLPanel::OnLeftDown(wxMouseEvent& event) {
 
 	// No tool may start editing while an animation plays; the click still falls
 	// through to camera navigation.
-	if (os && os->IsAnimationPlaying())
+	if (os && os->animation->IsPlaying())
 		return;
 
 	// A grab feeds the running simulation and never touches the mesh data, so
@@ -575,7 +576,7 @@ void wxGLPanel::OnLeftUp(wxMouseEvent& event) {
 	// OnLeftDown bails out during playback, so none of the edit states below can
 	// be set; only the click-to-select path would still run, and it would pick
 	// against the mesh BVHs that playback leaves stale.
-	const bool playing = os && os->IsAnimationPlaying();
+	const bool playing = os && os->animation->IsPlaying();
 
 	if (!playing && !isLDragging && !isPainting && !isPhysicsGrabbing && !isPickingBone && activeTool == ToolID::Select) {
 		int x, y;

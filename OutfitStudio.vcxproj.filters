@@ -961,6 +961,9 @@
     <ClInclude Include="src\outfitstudio\GLPanel.h">
       <Filter>Outfit Studio</Filter>
     </ClInclude>
+    <ClInclude Include="src\outfitstudio\AnimationPlayer.h">
+      <Filter>Outfit Studio</Filter>
+    </ClInclude>
     <ClInclude Include="src\outfitstudio\DropTargets.h">
       <Filter>Outfit Studio</Filter>
     </ClInclude>
@@ -2523,7 +2526,7 @@
     <ClCompile Include="src\outfitstudio\FrameBones.cpp">
       <Filter>Outfit Studio</Filter>
     </ClCompile>
-    <ClCompile Include="src\outfitstudio\FrameAnimation.cpp">
+    <ClCompile Include="src\outfitstudio\AnimationPlayer.cpp">
       <Filter>Outfit Studio</Filter>
     </ClCompile>
     <ClCompile Include="src\outfitstudio\DropTargets.cpp">
