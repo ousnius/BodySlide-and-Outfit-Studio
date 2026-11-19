@@ -3,7 +3,7 @@ BodySlide and Outfit Studio
 See the included LICENSE file
 */
 
-#include "../render/GLMaterial.h"
+#include "GLMaterial.h"
 #include "../utils/ConfigurationManager.h"
 
 #include "FSEngine/FSEngine.h"

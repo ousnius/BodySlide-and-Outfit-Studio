@@ -811,7 +811,7 @@
     <ClInclude Include="src\files\MaterialFile.h" />
     <ClInclude Include="src\files\EXRImage.h" />
     <ClInclude Include="src\files\ObjFile.h" />
-    <ClInclude Include="src\files\ResourceLoader.h" />
+    <ClInclude Include="src\render\ResourceLoader.h" />
     <ClInclude Include="src\files\SFMaterialDatabase.h" />
     <ClInclude Include="src\files\SFMaterialFile.h" />
     <ClInclude Include="src\files\SFLayeredMaterial.h" />
@@ -930,7 +930,7 @@
     <ClCompile Include="src\files\MaterialFile.cpp" />
     <ClCompile Include="src\files\EXRImage.cpp" />
     <ClCompile Include="src\files\ObjFile.cpp" />
-    <ClCompile Include="src\files\ResourceLoader.cpp" />
+    <ClCompile Include="src\render\ResourceLoader.cpp" />
     <ClCompile Include="src\files\SFMaterialDatabase.cpp" />
     <ClCompile Include="src\files\SFMaterialFile.cpp" />
     <ClCompile Include="src\files\SFLayeredMaterial.cpp" />

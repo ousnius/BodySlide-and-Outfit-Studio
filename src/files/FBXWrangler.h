@@ -9,7 +9,6 @@ See the included LICENSE file
 
 #include "../components/Anim.h"
 #include "../components/Mesh.h"
-#include "../program/FBXImportOptions.h"
 #include "NifFile.hpp"
 
 #include <cstdint>

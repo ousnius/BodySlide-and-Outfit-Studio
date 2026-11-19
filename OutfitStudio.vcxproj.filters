@@ -811,8 +811,8 @@
     <ClInclude Include="src\files\PhysicsXmlFile.h">
       <Filter>Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\files\ResourceLoader.h">
-      <Filter>Files</Filter>
+    <ClInclude Include="src\render\ResourceLoader.h">
+      <Filter>Rendering</Filter>
     </ClInclude>
     <ClInclude Include="src\files\TriFile.h">
       <Filter>Files</Filter>
@@ -2310,8 +2310,8 @@
     <ClCompile Include="src\files\PhysicsXmlFile.cpp">
       <Filter>Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\files\ResourceLoader.cpp">
-      <Filter>Files</Filter>
+    <ClCompile Include="src\render\ResourceLoader.cpp">
+      <Filter>Rendering</Filter>
     </ClCompile>
     <ClCompile Include="src\files\TriFile.cpp">
       <Filter>Files</Filter>

@@ -361,7 +361,7 @@ set(BSOS_COMMON_SOURCES
 	src/files/GameDataStream.cpp
 	src/files/HkxFile.cpp
 	src/files/MaterialFile.cpp
-	src/files/ResourceLoader.cpp
+	src/render/ResourceLoader.cpp
 	src/files/TriFile.cpp
 	src/program/GroupManager.cpp
 	src/program/PresetSaveDialog.cpp

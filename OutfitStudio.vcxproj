@@ -854,7 +854,7 @@
     <ClInclude Include="src\files\EXRImage.h" />
     <ClInclude Include="src\files\ObjFile.h" />
     <ClInclude Include="src\files\PhysicsXmlFile.h" />
-    <ClInclude Include="src\files\ResourceLoader.h" />
+    <ClInclude Include="src\render\ResourceLoader.h" />
     <ClInclude Include="src\files\SFMorphFile.h" />
     <ClInclude Include="src\files\TriFile.h" />
     <ClInclude Include="src\files\MaskFile.h" />
@@ -1017,7 +1017,7 @@
     <ClCompile Include="src\files\EXRImage.cpp" />
     <ClCompile Include="src\files\ObjFile.cpp" />
     <ClCompile Include="src\files\PhysicsXmlFile.cpp" />
-    <ClCompile Include="src\files\ResourceLoader.cpp" />
+    <ClCompile Include="src\render\ResourceLoader.cpp" />
     <ClCompile Include="src\files\SFMorphFile.cpp" />
     <ClCompile Include="src\files\TriFile.cpp" />
     <ClCompile Include="src\files\MaskFile.cpp" />
