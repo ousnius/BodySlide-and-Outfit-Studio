@@ -577,6 +577,12 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/mcp/McpToolsView.cpp
 	src/mcp/OutfitStudioMcp.cpp
 	src/project/AutomationRunner.cpp
+	src/project/AutomationRunnerMasks.cpp
+	src/project/AutomationRunnerProperties.cpp
+	src/project/AutomationRunnerShapes.cpp
+	src/project/AutomationRunnerBones.cpp
+	src/project/AutomationRunnerSliders.cpp
+	src/project/AutomationRunnerProject.cpp
 	src/ui/outfitstudio/AddProjectDialog.cpp
 	src/ui/outfitstudio/ArchiveBrowser.cpp
 	src/ui/outfitstudio/AutomationDialog.cpp

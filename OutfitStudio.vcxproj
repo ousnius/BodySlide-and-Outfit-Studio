@@ -1056,6 +1056,12 @@
     <ClCompile Include="src\ui\outfitstudio\ConvertBodyReferenceDialog.cpp" />
     <ClCompile Include="src\ui\outfitstudio\AutomationDialog.cpp" />
     <ClCompile Include="src\project\AutomationRunner.cpp" />
+    <ClCompile Include="src\project\AutomationRunnerMasks.cpp" />
+    <ClCompile Include="src\project\AutomationRunnerProperties.cpp" />
+    <ClCompile Include="src\project\AutomationRunnerShapes.cpp" />
+    <ClCompile Include="src\project\AutomationRunnerBones.cpp" />
+    <ClCompile Include="src\project\AutomationRunnerSliders.cpp" />
+    <ClCompile Include="src\project\AutomationRunnerProject.cpp" />
     <ClCompile Include="src\components\Automation.cpp" />
     <ClCompile Include="src\components\AutomationJson.cpp" />
     <ClCompile Include="src\ui\outfitstudio\EditUV.cpp" />

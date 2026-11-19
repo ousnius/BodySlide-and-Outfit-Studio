@@ -2748,6 +2748,24 @@
     <ClCompile Include="src\project\AutomationRunner.cpp">
       <Filter>Project</Filter>
     </ClCompile>
+    <ClCompile Include="src\project\AutomationRunnerMasks.cpp">
+      <Filter>Project</Filter>
+    </ClCompile>
+    <ClCompile Include="src\project\AutomationRunnerProperties.cpp">
+      <Filter>Project</Filter>
+    </ClCompile>
+    <ClCompile Include="src\project\AutomationRunnerShapes.cpp">
+      <Filter>Project</Filter>
+    </ClCompile>
+    <ClCompile Include="src\project\AutomationRunnerBones.cpp">
+      <Filter>Project</Filter>
+    </ClCompile>
+    <ClCompile Include="src\project\AutomationRunnerSliders.cpp">
+      <Filter>Project</Filter>
+    </ClCompile>
+    <ClCompile Include="src\project\AutomationRunnerProject.cpp">
+      <Filter>Project</Filter>
+    </ClCompile>
     <ClCompile Include="src\components\Automation.cpp">
       <Filter>Components</Filter>
     </ClCompile>
