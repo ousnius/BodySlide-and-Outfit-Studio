@@ -543,6 +543,31 @@ public:
 						bool forceNormals = false,
 						const std::string& custPath = "");
 	int ShowBuildOverrideWithPreview(wxDialog* dlg, wxTreeListCtrl* treeListCtrl);
+	// Lets the user choose which of the outfits that write the same file are built, and removes the others from
+	// outfitList. False if the user cancelled.
+	bool ChooseBuildOutputs(const std::vector<std::string>& outFileList,
+							std::vector<wxArrayString>& choicesList,
+							BuildSelection& buildSelection,
+							const std::string& datapath,
+							std::vector<std::string>& outfitList);
+	// Moves the shapes of the built NIF files out of their reference body shape, if the clipping fix is on.
+	// nifSmall is the low weight NIF, null without one.
+	void FixBuildClipping(nifly::NifFile& nifBig, nifly::NifFile* nifSmall, const SliderSet& set);
+	// Recalculates the normals and tangents of the shapes of the built NIF files and removes their zapped vertices
+	void FinishBuiltShapes(nifly::NifFile& nifBig,
+						   nifly::NifFile* nifSmall,
+						   const SliderSet& set,
+						   const std::unordered_map<std::string, std::vector<uint16_t>>& zapIndices,
+						   bool forceNormals);
+	// Writes the morph file of a built outfit (TRI, or morph.dat for Starfield) and links the NIF files to it,
+	// or removes the body TRI file of an earlier build without morphs. False if the TRI file couldn't be written.
+	bool WriteBuildMorphs(SliderSet& set,
+						  nifly::NifFile& nifBig,
+						  nifly::NifFile* nifSmall,
+						  const std::string& outFileName,
+						  const std::string& dataPath,
+						  bool tri,
+						  std::unordered_map<std::string, std::vector<uint16_t>>& zapIndices);
 
 	// True if any of the command-line options that select outfits for a build was given.
 	bool HasCmdLineBuild() const { return !cmdGroupBuild.empty() || !cmdBuildOutfits.empty() || !cmdBuildFilter.empty(); }

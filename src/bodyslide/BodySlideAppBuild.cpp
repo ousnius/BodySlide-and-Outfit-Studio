@@ -68,6 +68,370 @@ void BodySlideApp::ApplySliders(
 	}
 }
 
+// Moves the shapes of a built NIF file out of its reference body shape. False if the body shape has no geometry.
+static bool FixClippingAgainst(NifFile& nif, NiShape* refShape, const SliderSet& set, const ClippingFixOptions& fixOpts) {
+	std::vector<Vector3> bodyVerts;
+	std::vector<Triangle> bodyTris;
+	nif.GetVertsForShape(refShape, bodyVerts);
+	refShape->GetTriangles(bodyTris);
+
+	if (bodyVerts.empty() || bodyTris.empty())
+		return false;
+
+	for (auto it = set.ShapesBegin(); it != set.ShapesEnd(); ++it) {
+		auto shape = nif.FindBlockByName<NiShape>(it->first);
+		if (shape == refShape || !ClippingFixer::IsEligibleForFix(nif, shape))
+			continue;
+
+		std::vector<Vector3> outfitVerts;
+		std::vector<Triangle> outfitTris;
+		if (!nif.GetVertsForShape(shape, outfitVerts))
+			continue;
+		shape->GetTriangles(outfitTris);
+
+		ClippingFixer::FixClipping(bodyVerts, bodyTris, outfitVerts, outfitTris, fixOpts);
+		nif.SetVertsForShape(shape, outfitVerts);
+	}
+
+	return true;
+}
+
+void BodySlideApp::FixBuildClipping(NifFile& nifBig, NifFile* nifSmall, const SliderSet& set) {
+	if (clippingFixStrength <= 0.0f)
+		return;
+
+	auto refShape = ClippingFixer::FindReferenceShape(nifBig);
+	if (!refShape)
+		return;
+
+	ClippingFixOptions fixOpts;
+	fixOpts.strength = clippingFixStrength / 100.0f;
+
+	if (!FixClippingAgainst(nifBig, refShape, set, fixOpts) || !nifSmall)
+		return;
+
+	// The small/low weight NIF is fixed against the same body shape
+	auto refShapeSmall = nifSmall->FindBlockByName<NiShape>(refShape->name.get());
+	if (refShapeSmall)
+		FixClippingAgainst(*nifSmall, refShapeSmall, set, fixOpts);
+}
+
+void BodySlideApp::FinishBuiltShapes(NifFile& nifBig,
+									 NifFile* nifSmall,
+									 const SliderSet& set,
+									 const std::unordered_map<std::string, std::vector<uint16_t>>& zapIndices,
+									 bool forceNormals) {
+	const bool keepZappedShapes = set.KeepZappedShapes();
+	const std::vector<uint16_t> noZaps;
+	std::vector<Vector3> verts;
+
+	// False if the shape doesn't exist or has no vertices
+	auto finishShape = [&](NifFile& nif, NiShape* shape, const SliderSetShape& shapeData, const std::vector<uint16_t>& zaps) {
+		if (!shape)
+			return false;
+
+		if (!nif.GetVertsForShape(shape, verts))
+			return false;
+
+		if (!shapeData.lockNormals) {
+			nif.CalcNormalsForShape(shape, forceNormals, shapeData.smoothSeamNormals);
+
+			if (forceNormals)
+				ApplyReferenceNormals(nif);
+		}
+
+		nif.CalcTangentsForShape(shape);
+
+		if (keepZappedShapes && zaps.size() == verts.size()) {
+			shape->flags |= 1; // Set hidden flag when shape would otherwise be fully zapped
+		}
+		else {
+			if (nif.DeleteVertsForShape(shape, zaps))
+				nif.DeleteShape(shape); // Delete fully zapped shape
+		}
+		return true;
+	};
+
+	for (auto it = set.ShapesBegin(); it != set.ShapesEnd(); ++it) {
+		auto zapIt = zapIndices.find(it->first);
+		auto& shapeZaps = zapIt != zapIndices.end() ? zapIt->second : noZaps;
+
+		if (!finishShape(nifBig, nifBig.FindBlockByName<NiShape>(it->first), it->second, shapeZaps))
+			continue;
+
+		if (nifSmall)
+			finishShape(*nifSmall, nifSmall->FindBlockByName<NiShape>(it->first), it->second, shapeZaps);
+	}
+}
+
+bool BodySlideApp::WriteBuildMorphs(SliderSet& set,
+									NifFile& nifBig,
+									NifFile* nifSmall,
+									const std::string& outFileName,
+									const std::string& dataPath,
+									bool tri,
+									std::unordered_map<std::string, std::vector<uint16_t>>& zapIndices) {
+	bool triKeep = set.PreventMorphFile();
+
+	if (targetGame == SF) {
+		/* Write Starfield morph.dat file */
+		std::string sfMorphPath = set.GetSFMorphPath();
+		std::string sfMorphTargetShape = set.GetSFMorphTargetShape();
+		if (tri && !triKeep && !sfMorphPath.empty() && !sfMorphTargetShape.empty()) {
+			std::string morphFolder = dataPath + sfMorphPath;
+			WriteSFMorphFile(morphFolder, set, nifBig, zapIndices);
+		}
+		return true;
+	}
+
+	if (tri && !triKeep) {
+		std::string triFilePath = outFileName + ".tri";
+
+		// TRI file already exists but isn't a body TRI file, don't overwrite!
+		if (wxFileName::FileExists(wxString::FromUTF8(triFilePath)) && !IsBodyTriFile(triFilePath))
+			triKeep = true;
+	}
+
+	if (!tri || triKeep) {
+		if (!triKeep) {
+			wxString triPath = wxString::FromUTF8(outFileName + ".tri");
+			if (IsBodyTriFile(triPath.ToUTF8().data()))
+				wxRemoveFile(triPath);
+		}
+		return true;
+	}
+
+	/* Add TRI path for in-game morphs */
+	std::string triPath = set.GetOutputFilePath() + ".tri";
+	std::string triPathTrimmed = triPath;
+	// Replace multiple backslashes or forward slashes with one backslash
+	triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex("/+|\\\\+"), "\\");
+
+	// Remove everything before and including the meshes path
+	triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex(".*meshes\\\\", std::regex_constants::icase), "");
+
+	bool written = WriteMorphTRI(outFileName, set, nifBig, zapIndices);
+
+	bool triToRoot = targetGame == FO4 || targetGame == FO4VR || targetGame == FO76;
+
+	SetTriData(nifBig, triPathTrimmed, triToRoot);
+	if (nifSmall)
+		SetTriData(*nifSmall, triPathTrimmed, triToRoot);
+
+	// Set all shapes to dynamic/mutable
+	for (auto it = set.ShapesBegin(); it != set.ShapesEnd(); ++it) {
+		nifBig.SetShapeDynamic(it->first);
+		if (nifSmall)
+			nifSmall->SetShapeDynamic(it->first);
+	}
+
+	// RaceMenu recalculates normals after applying morphs unless they're locked
+	if (targetGame == SKYRIMSE || targetGame == SKYRIMVR) {
+		SetLockedNormalsData(nifBig, set);
+		if (nifSmall)
+			SetLockedNormalsData(*nifSmall, set);
+	}
+
+	return written;
+}
+
+bool BodySlideApp::ChooseBuildOutputs(const std::vector<std::string>& outFileList,
+									  std::vector<wxArrayString>& choicesList,
+									  BuildSelection& buildSelection,
+									  const std::string& datapath,
+									  std::vector<std::string>& outfitList) {
+	wxXmlResource* rsrc = wxXmlResource::Get();
+	wxDialog* dlgBuildOverride = rsrc->LoadDialog(sliderView, "dlgBuildOverride");
+	dlgBuildOverride->SetSize(dlgBuildOverride->FromDIP(wxSize(800, 400)));
+	dlgBuildOverride->SetSizeHints(dlgBuildOverride->FromDIP(wxSize(400, 400)), dlgBuildOverride->FromDIP(wxSize(-1, -1)));
+	dlgBuildOverride->CenterOnParent();
+
+	wxScrolledWindow* scrollOverrides = XRCCTRL(*dlgBuildOverride, "scrollOverrides", wxScrolledWindow);
+	wxBoxSizer* choicesSizer = (wxBoxSizer*)scrollOverrides->GetSizer();
+
+	// Create the treelist with checkbox support
+	auto treeListCtrl = new wxTreeListCtrl(scrollOverrides, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTL_SINGLE | wxTL_CHECKBOX | wxTL_3STATE);
+	treeListCtrl->AppendColumn(_("Choice"), wxCOL_WIDTH_AUTOSIZE, wxALIGN_LEFT);
+	treeListCtrl->AppendColumn(_("Source File"), wxCOL_WIDTH_AUTOSIZE, wxALIGN_LEFT);
+
+	// Add root items directly under the (hidden) root
+	for (size_t i = 0; i < choicesList.size(); i++) {
+		auto& outFile = outFileList[i];
+		auto& choices = choicesList[i];
+		bool hasDefaultSet = false;
+
+		wxTreeListItem rootItem = treeListCtrl->AppendItem(treeListCtrl->GetRootItem(), wxString::FromUTF8(outFile));
+		treeListCtrl->CheckItem(rootItem, wxCheckBoxState::wxCHK_UNDETERMINED);
+
+		// Add children with checkboxes
+		for (size_t j = 0; j < choices.size(); j++) {
+			wxString choice = choices[j];
+			wxString defaultSet;
+
+			// Check previous choices to see if radio button should be checked by default
+			std::string outputChoice = GetDefaultOutputChoice(buildSelection, outFile, datapath);
+			if (!outputChoice.empty()) {
+				wxString c = wxString::FromUTF8(outputChoice);
+				if (choices.Index(c) != wxNOT_FOUND) {
+					defaultSet = c;
+					hasDefaultSet = true;
+				}
+			}
+
+			if (!hasDefaultSet && j == 0)
+				defaultSet = choice;
+
+			wxTreeListItem child = treeListCtrl->AppendItem(rootItem, choice);
+
+			auto outfitSrc = outfitNameSource.find(choice.ToUTF8().data());
+			if (outfitSrc != outfitNameSource.end()) {
+				wxFileName outfitFileName(wxString::FromUTF8(outfitSrc->second));
+				treeListCtrl->SetItemText(child, 1, outfitFileName.GetFullName());
+			}
+			else
+				treeListCtrl->SetItemText(child, 1, _("<no source>"));
+
+			if (!defaultSet.IsEmpty() && choice == defaultSet)
+				treeListCtrl->CheckItem(child, wxCheckBoxState::wxCHK_CHECKED);
+			else
+				treeListCtrl->CheckItem(child, wxCheckBoxState::wxCHK_UNCHECKED);
+		}
+
+		treeListCtrl->Expand(rootItem);
+	}
+
+	bool checkBoxReverting = false;
+	auto handler = [&](wxTreeListEvent& e) {
+		if (checkBoxReverting) {
+			e.Skip();
+			return;
+		}
+
+		const wxTreeListItem item = e.GetItem();
+		const wxTreeListItem parent = treeListCtrl->GetItemParent(item);
+
+		// Level 1 items are direct children of the (hidden) root: make them non-checkable.
+		if (parent == treeListCtrl->GetRootItem()) {
+			checkBoxReverting = true;
+			treeListCtrl->CheckItem(item, wxCheckBoxState::wxCHK_UNDETERMINED);
+			checkBoxReverting = false;
+			return;
+		}
+
+		// Only enforce the 'radio per level' rule for level-2 items:
+		checkBoxReverting = true;
+
+		auto checkedState = treeListCtrl->GetCheckedState(item);
+		if (checkedState == wxCheckBoxState::wxCHK_CHECKED) {
+			// Uncheck all siblings
+			for (wxTreeListItem sib = treeListCtrl->GetFirstChild(parent); sib.IsOk(); sib = treeListCtrl->GetNextSibling(sib)) {
+				if (sib != item && treeListCtrl->GetCheckedState(sib) == wxCheckBoxState::wxCHK_CHECKED)
+					treeListCtrl->CheckItem(sib, wxCheckBoxState::wxCHK_UNCHECKED);
+			}
+		}
+		else if (checkedState == wxCheckBoxState::wxCHK_UNCHECKED) {
+			// Ensure at least one remains checked in this level
+			bool anyChecked = false;
+			for (wxTreeListItem sib = treeListCtrl->GetFirstChild(parent); sib.IsOk(); sib = treeListCtrl->GetNextSibling(sib)) {
+				if (treeListCtrl->GetCheckedState(sib) == wxCheckBoxState::wxCHK_CHECKED) {
+					anyChecked = true;
+					break;
+				}
+			}
+
+			if (!anyChecked) {
+				// Re-check the one user tried to uncheck
+				treeListCtrl->CheckItem(item, wxCheckBoxState::wxCHK_CHECKED);
+			}
+		}
+
+		checkBoxReverting = false;
+		e.Skip();
+	};
+
+	treeListCtrl->Bind(wxEVT_TREELIST_ITEM_CHECKED, handler);
+
+	wxTextCtrl* chooseText = XRCCTRL(*dlgBuildOverride, "chooseText", wxTextCtrl);
+	if (chooseText) {
+		chooseText->Bind(wxEVT_TEXT_ENTER, [&](wxCommandEvent& WXUNUSED(event)) {
+			wxString text = chooseText->GetValue().MakeLower();
+			if (!text.IsEmpty()) {
+				wxTreeListItem root = treeListCtrl->GetRootItem();
+
+				for (wxTreeListItem level1 = treeListCtrl->GetFirstChild(root); level1.IsOk(); level1 = treeListCtrl->GetNextSibling(level1)) {
+					wxTreeListItem firstMatch;
+
+					// Find first matching item
+					for (wxTreeListItem level2 = treeListCtrl->GetFirstChild(level1); level2.IsOk(); level2 = treeListCtrl->GetNextSibling(level2)) {
+						wxString label = treeListCtrl->GetItemText(level2).Lower();
+
+						if (label.Contains(text)) {
+							firstMatch = level2;
+							break;
+						}
+					}
+
+					if (firstMatch.IsOk()) {
+						// Check the matched item
+						treeListCtrl->CheckItem(firstMatch, wxCheckBoxState::wxCHK_CHECKED);
+
+						// Uncheck all siblings except the matched one
+						for (wxTreeListItem level2 = treeListCtrl->GetFirstChild(level1); level2.IsOk(); level2 = treeListCtrl->GetNextSibling(level2)) {
+							if (level2 != firstMatch)
+								treeListCtrl->CheckItem(level2, wxCheckBoxState::wxCHK_UNCHECKED);
+						}
+					}
+					// else: no match found, do nothing / keep existing checks
+				}
+			}
+		});
+	}
+
+	choicesSizer->Add(treeListCtrl, 1, wxEXPAND, 0);
+	scrollOverrides->FitInside();
+
+	if (ShowBuildOverrideWithPreview(dlgBuildOverride, treeListCtrl) == wxID_CANCEL) {
+		delete dlgBuildOverride;
+		return false;
+	}
+
+	wxTreeListItem root = treeListCtrl->GetRootItem();
+
+	// Iterate level 1 roots (should correspond to choicesList size)
+	size_t index = 0;
+	for (wxTreeListItem level1 = treeListCtrl->GetFirstChild(root); level1.IsOk() && index < choicesList.size(); level1 = treeListCtrl->GetNextSibling(level1), ++index) {
+		wxString checkedItemText;
+
+		// Find the checked child (level 2)
+		for (wxTreeListItem level2 = treeListCtrl->GetFirstChild(level1); level2.IsOk(); level2 = treeListCtrl->GetNextSibling(level2)) {
+			if (treeListCtrl->GetCheckedState(level2) == wxCheckBoxState::wxCHK_CHECKED) {
+				checkedItemText = treeListCtrl->GetItemText(level2);
+				break; // assuming only one checked per level 1
+			}
+		}
+
+		if (!checkedItemText.IsEmpty()) {
+			wxString choiceSel = checkedItemText;
+
+			// Add output choice to file
+			buildSelection.SetOutputChoice(outFileList[index], choiceSel.ToUTF8().data());
+
+			// Remove the selected choice from choicesList[i]
+			choicesList[index].Remove(choiceSel);
+
+			// Remove from outfitList all outfits in choicesList[index]
+			for (auto& outfit : choicesList[index]) {
+				auto result = std::find(outfitList.begin(), outfitList.end(), outfit.ToStdString());
+				if (result != outfitList.end())
+					outfitList.erase(result);
+			}
+		}
+	}
+
+	delete dlgBuildOverride;
+	return true;
+}
+
 int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNormals) {
 	if (projects.empty())
 		return 1;
@@ -185,8 +549,6 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 	dataSets.Clear();
 	activeSet.LoadSetDiffData(dataSets);
 
-	bool keepZappedShapes = activeSet.KeepZappedShapes();
-
 	std::vector<Vector3> vertsLow;
 	std::vector<Vector3> vertsHigh;
 	std::vector<Vector2> uvsLow;
@@ -229,181 +591,14 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 		zapIdx.clear();
 	}
 
-	// Phase 2: Apply clipping fix when strength is above zero
-	if (clippingFixStrength > 0.0f) {
-		auto refShape = ClippingFixer::FindReferenceShape(nifBig);
-		if (refShape) {
-			std::vector<Vector3> bodyVerts;
-			std::vector<Triangle> bodyTris;
-			nifBig.GetVertsForShape(refShape, bodyVerts);
-			refShape->GetTriangles(bodyTris);
+	NifFile* builtSmall = activeSet.GenWeights() ? &nifSmall : nullptr;
+	FixBuildClipping(nifBig, builtSmall, activeSet);
+	FinishBuiltShapes(nifBig, builtSmall, activeSet, zapIdxAll, forceNormals);
 
-			if (!bodyVerts.empty() && !bodyTris.empty()) {
-				ClippingFixOptions fixOpts;
-				fixOpts.strength = clippingFixStrength / 100.0f;
-
-				for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
-					auto shape = nifBig.FindBlockByName<NiShape>(it->first);
-					if (shape == refShape || !ClippingFixer::IsEligibleForFix(nifBig, shape))
-						continue;
-
-					std::vector<Vector3> outfitVerts;
-					std::vector<Triangle> outfitTris;
-					if (!nifBig.GetVertsForShape(shape, outfitVerts))
-						continue;
-					shape->GetTriangles(outfitTris);
-
-					ClippingFixer::FixClipping(bodyVerts, bodyTris, outfitVerts, outfitTris, fixOpts);
-					nifBig.SetVertsForShape(shape, outfitVerts);
-				}
-
-				// Also fix the small/low weight NIF
-				if (activeSet.GenWeights()) {
-					auto refShapeSmall = nifSmall.FindBlockByName<NiShape>(refShape->name.get());
-					if (refShapeSmall) {
-						std::vector<Vector3> bodyVertsSmall;
-						std::vector<Triangle> bodyTrisSmall;
-						nifSmall.GetVertsForShape(refShapeSmall, bodyVertsSmall);
-						refShapeSmall->GetTriangles(bodyTrisSmall);
-
-						if (!bodyVertsSmall.empty() && !bodyTrisSmall.empty()) {
-							for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
-								auto shapeSmall = nifSmall.FindBlockByName<NiShape>(it->first);
-								if (shapeSmall == refShapeSmall || !ClippingFixer::IsEligibleForFix(nifSmall, shapeSmall))
-									continue;
-
-								std::vector<Vector3> outfitVerts;
-								std::vector<Triangle> outfitTris;
-								if (!nifSmall.GetVertsForShape(shapeSmall, outfitVerts))
-									continue;
-								shapeSmall->GetTriangles(outfitTris);
-
-								ClippingFixer::FixClipping(bodyVertsSmall, bodyTrisSmall, outfitVerts, outfitTris, fixOpts);
-								nifSmall.SetVertsForShape(shapeSmall, outfitVerts);
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	// Phase 3: Recalculate normals, tangents, and handle zapping
-	for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
-		auto shape = nifBig.FindBlockByName<NiShape>(it->first);
-		if (!shape)
-			continue;
-
-		if (!nifBig.GetVertsForShape(shape, vertsHigh))
-			continue;
-
-		if (!it->second.lockNormals) {
-			nifBig.CalcNormalsForShape(shape, forceNormals, it->second.smoothSeamNormals);
-
-			if (forceNormals)
-				ApplyReferenceNormals(nifBig);
-		}
-
-		nifBig.CalcTangentsForShape(shape);
-
-		auto zapIt = zapIdxAll.find(it->first);
-		auto& shapeZapIdx = zapIt != zapIdxAll.end() ? zapIt->second : zapIdx;
-
-		if (keepZappedShapes && shapeZapIdx.size() == vertsHigh.size()) {
-			shape->flags |= 1; // Set hidden flag when shape would otherwise be fully zapped
-		}
-		else {
-			if (nifBig.DeleteVertsForShape(shape, shapeZapIdx))
-				nifBig.DeleteShape(shape); // Delete fully zapped shape
-		}
-
-		if (activeSet.GenWeights()) {
-			auto shapeSmall = nifSmall.FindBlockByName<NiShape>(it->first);
-			if (!shapeSmall)
-				continue;
-
-			if (!nifSmall.GetVertsForShape(shapeSmall, vertsLow))
-				continue;
-
-			if (!it->second.lockNormals) {
-				nifSmall.CalcNormalsForShape(shapeSmall, forceNormals, it->second.smoothSeamNormals);
-
-				if (forceNormals)
-					ApplyReferenceNormals(nifSmall);
-			}
-
-			nifSmall.CalcTangentsForShape(shapeSmall);
-
-			if (keepZappedShapes && shapeZapIdx.size() == vertsLow.size()) {
-				shapeSmall->flags |= 1; // Set hidden flag when shape would otherwise be fully zapped
-			}
-			else {
-				if (nifSmall.DeleteVertsForShape(shapeSmall, shapeZapIdx))
-					nifSmall.DeleteShape(shapeSmall); // Delete fully zapped shape
-			}
-		}
-	}
-
-	bool triKeep = activeSet.PreventMorphFile();
-
-	if (targetGame == SF) {
-		/* Write Starfield morph.dat file */
-		std::string sfMorphPath = activeSet.GetSFMorphPath();
-		std::string sfMorphTargetShape = activeSet.GetSFMorphTargetShape();
-		if (tri && !triKeep && !sfMorphPath.empty() && !sfMorphTargetShape.empty()) {
-			std::string morphFolder = GetOutputDataPath() + sfMorphPath;
-			WriteSFMorphFile(morphFolder, activeSet, nifBig, zapIdxAll);
-		}
-	}
-	else {
-		if (tri && !triKeep) {
-			std::string triFilePath = outFileNameBig + ".tri";
-
-			// TRI file already exists but isn't a body TRI file, don't overwrite!
-			if (wxFileName::FileExists(wxString::FromUTF8(triFilePath)) && !IsBodyTriFile(triFilePath))
-				triKeep = true;
-		}
-
-		/* Add TRI path for in-game morphs */
-		if (tri && !triKeep) {
-			std::string triPath = activeSet.GetOutputFilePath() + ".tri";
-			std::string triPathTrimmed = triPath;
-			// Replace multiple backslashes or forward slashes with one backslash
-			triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex("/+|\\\\+"), "\\");
-
-			// Remove everything before and including the meshes path
-			triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex(".*meshes\\\\", std::regex_constants::icase), "");
-
-			if (!WriteMorphTRI(outFileNameBig, activeSet, nifBig, zapIdxAll)) {
-				wxLogError("Failed to write TRI file to '%s'!", triPath);
-				wxMessageBox(wxString().Format(_("Failed to write TRI file to the following location\n\n%s"), triPath), _("Unable to process"), wxOK | wxICON_ERROR);
-			}
-
-			bool triToRoot = targetGame == FO4 || targetGame == FO4VR || targetGame == FO76;
-
-			SetTriData(nifBig, triPathTrimmed, triToRoot);
-			if (activeSet.GenWeights())
-				SetTriData(nifSmall, triPathTrimmed, triToRoot);
-
-			// Set all shapes to dynamic/mutable
-			for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
-				nifBig.SetShapeDynamic(it->first);
-				if (activeSet.GenWeights())
-					nifSmall.SetShapeDynamic(it->first);
-			}
-
-			// RaceMenu recalculates normals after applying morphs unless they're locked
-			if (targetGame == SKYRIMSE || targetGame == SKYRIMVR) {
-				SetLockedNormalsData(nifBig, activeSet);
-				if (activeSet.GenWeights())
-					SetLockedNormalsData(nifSmall, activeSet);
-			}
-		}
-		else if (!triKeep) {
-			wxString triPath = wxString::FromUTF8(outFileNameBig + ".tri");
-			if (IsBodyTriFile(triPath.ToUTF8().data()))
-				wxRemoveFile(triPath);
-		}
+	if (!WriteBuildMorphs(activeSet, nifBig, builtSmall, outFileNameBig, GetOutputDataPath(), tri, zapIdxAll)) {
+		std::string triPath = activeSet.GetOutputFilePath() + ".tri";
+		wxLogError("Failed to write TRI file to '%s'!", triPath);
+		wxMessageBox(wxString().Format(_("Failed to write TRI file to the following location\n\n%s"), triPath), _("Unable to process"), wxOK | wxICON_ERROR);
 	}
 
 	wxString savedLow;
@@ -699,197 +894,9 @@ int BodySlideApp::BuildListBodies(
 		choicesList.clear();
 	}
 
-	if (!choicesList.empty()) {
-		wxXmlResource* rsrc = wxXmlResource::Get();
-		wxDialog* dlgBuildOverride = rsrc->LoadDialog(sliderView, "dlgBuildOverride");
-		dlgBuildOverride->SetSize(dlgBuildOverride->FromDIP(wxSize(800, 400)));
-		dlgBuildOverride->SetSizeHints(dlgBuildOverride->FromDIP(wxSize(400, 400)), dlgBuildOverride->FromDIP(wxSize(-1, -1)));
-		dlgBuildOverride->CenterOnParent();
-
-		wxScrolledWindow* scrollOverrides = XRCCTRL(*dlgBuildOverride, "scrollOverrides", wxScrolledWindow);
-		wxBoxSizer* choicesSizer = (wxBoxSizer*)scrollOverrides->GetSizer();
-
-		// Create the treelist with checkbox support
-		auto treeListCtrl = new wxTreeListCtrl(scrollOverrides, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTL_SINGLE | wxTL_CHECKBOX | wxTL_3STATE);
-		treeListCtrl->AppendColumn(_("Choice"), wxCOL_WIDTH_AUTOSIZE, wxALIGN_LEFT);
-		treeListCtrl->AppendColumn(_("Source File"), wxCOL_WIDTH_AUTOSIZE, wxALIGN_LEFT);
-
-		// Add root items directly under the (hidden) root
-		for (size_t i = 0; i < choicesList.size(); i++) {
-			auto& outFile = outFileList[i];
-			auto& choices = choicesList[i];
-			bool hasDefaultSet = false;
-
-			wxTreeListItem rootItem = treeListCtrl->AppendItem(treeListCtrl->GetRootItem(), wxString::FromUTF8(outFile));
-			treeListCtrl->CheckItem(rootItem, wxCheckBoxState::wxCHK_UNDETERMINED);
-
-			// Add children with checkboxes
-			for (size_t j = 0; j < choices.size(); j++) {
-				wxString choice = choices[j];
-				wxString defaultSet;
-
-				// Check previous choices to see if radio button should be checked by default
-				std::string outputChoice = GetDefaultOutputChoice(buildSelection, outFile, datapath);
-				if (!outputChoice.empty()) {
-					wxString c = wxString::FromUTF8(outputChoice);
-					if (choices.Index(c) != wxNOT_FOUND) {
-						defaultSet = c;
-						hasDefaultSet = true;
-					}
-				}
-
-				if (!hasDefaultSet && j == 0)
-					defaultSet = choice;
-
-				wxTreeListItem child = treeListCtrl->AppendItem(rootItem, choice);
-
-				auto outfitSrc = outfitNameSource.find(choice.ToUTF8().data());
-				if (outfitSrc != outfitNameSource.end()) {
-					wxFileName outfitFileName(wxString::FromUTF8(outfitSrc->second));
-					treeListCtrl->SetItemText(child, 1, outfitFileName.GetFullName());
-				}
-				else
-					treeListCtrl->SetItemText(child, 1, _("<no source>"));
-
-				if (!defaultSet.IsEmpty() && choice == defaultSet)
-					treeListCtrl->CheckItem(child, wxCheckBoxState::wxCHK_CHECKED);
-				else
-					treeListCtrl->CheckItem(child, wxCheckBoxState::wxCHK_UNCHECKED);
-			}
-
-			treeListCtrl->Expand(rootItem);
-		}
-
-		bool checkBoxReverting = false;
-		auto handler = [&](wxTreeListEvent& e) {
-			if (checkBoxReverting) {
-				e.Skip();
-				return;
-			}
-
-			const wxTreeListItem item = e.GetItem();
-			const wxTreeListItem parent = treeListCtrl->GetItemParent(item);
-
-			// Level 1 items are direct children of the (hidden) root: make them non-checkable.
-			if (parent == treeListCtrl->GetRootItem()) {
-				checkBoxReverting = true;
-				treeListCtrl->CheckItem(item, wxCheckBoxState::wxCHK_UNDETERMINED);
-				checkBoxReverting = false;
-				return;
-			}
-
-			// Only enforce the 'radio per level' rule for level-2 items:
-			checkBoxReverting = true;
-
-			auto checkedState = treeListCtrl->GetCheckedState(item);
-			if (checkedState == wxCheckBoxState::wxCHK_CHECKED) {
-				// Uncheck all siblings
-				for (wxTreeListItem sib = treeListCtrl->GetFirstChild(parent); sib.IsOk(); sib = treeListCtrl->GetNextSibling(sib)) {
-					if (sib != item && treeListCtrl->GetCheckedState(sib) == wxCheckBoxState::wxCHK_CHECKED)
-						treeListCtrl->CheckItem(sib, wxCheckBoxState::wxCHK_UNCHECKED);
-				}
-			}
-			else if (checkedState == wxCheckBoxState::wxCHK_UNCHECKED) {
-				// Ensure at least one remains checked in this level
-				bool anyChecked = false;
-				for (wxTreeListItem sib = treeListCtrl->GetFirstChild(parent); sib.IsOk(); sib = treeListCtrl->GetNextSibling(sib)) {
-					if (treeListCtrl->GetCheckedState(sib) == wxCheckBoxState::wxCHK_CHECKED) {
-						anyChecked = true;
-						break;
-					}
-				}
-
-				if (!anyChecked) {
-					// Re-check the one user tried to uncheck
-					treeListCtrl->CheckItem(item, wxCheckBoxState::wxCHK_CHECKED);
-				}
-			}
-
-			checkBoxReverting = false;
-			e.Skip();
-		};
-
-		treeListCtrl->Bind(wxEVT_TREELIST_ITEM_CHECKED, handler);
-
-		wxTextCtrl* chooseText = XRCCTRL(*dlgBuildOverride, "chooseText", wxTextCtrl);
-		if (chooseText) {
-			chooseText->Bind(wxEVT_TEXT_ENTER, [&](wxCommandEvent& WXUNUSED(event)) {
-				wxString text = chooseText->GetValue().MakeLower();
-				if (!text.IsEmpty()) {
-					wxTreeListItem root = treeListCtrl->GetRootItem();
-
-					for (wxTreeListItem level1 = treeListCtrl->GetFirstChild(root); level1.IsOk(); level1 = treeListCtrl->GetNextSibling(level1)) {
-						wxTreeListItem firstMatch;
-
-						// Find first matching item
-						for (wxTreeListItem level2 = treeListCtrl->GetFirstChild(level1); level2.IsOk(); level2 = treeListCtrl->GetNextSibling(level2)) {
-							wxString label = treeListCtrl->GetItemText(level2).Lower();
-
-							if (label.Contains(text)) {
-								firstMatch = level2;
-								break;
-							}
-						}
-
-						if (firstMatch.IsOk()) {
-							// Check the matched item
-							treeListCtrl->CheckItem(firstMatch, wxCheckBoxState::wxCHK_CHECKED);
-
-							// Uncheck all siblings except the matched one
-							for (wxTreeListItem level2 = treeListCtrl->GetFirstChild(level1); level2.IsOk(); level2 = treeListCtrl->GetNextSibling(level2)) {
-								if (level2 != firstMatch)
-									treeListCtrl->CheckItem(level2, wxCheckBoxState::wxCHK_UNCHECKED);
-							}
-						}
-						// else: no match found, do nothing / keep existing checks
-					}
-				}
-			});
-		}
-
-		choicesSizer->Add(treeListCtrl, 1, wxEXPAND, 0);
-		scrollOverrides->FitInside();
-
-		if (ShowBuildOverrideWithPreview(dlgBuildOverride, treeListCtrl) == wxID_CANCEL) {
-			wxLogMessage("Aborted batch build by not choosing a file override.");
-			delete dlgBuildOverride;
-			return 1;
-		}
-
-		wxTreeListItem root = treeListCtrl->GetRootItem();
-
-		// Iterate level 1 roots (should correspond to choicesList size)
-		size_t index = 0;
-		for (wxTreeListItem level1 = treeListCtrl->GetFirstChild(root); level1.IsOk() && index < choicesList.size(); level1 = treeListCtrl->GetNextSibling(level1), ++index) {
-			wxString checkedItemText;
-
-			// Find the checked child (level 2)
-			for (wxTreeListItem level2 = treeListCtrl->GetFirstChild(level1); level2.IsOk(); level2 = treeListCtrl->GetNextSibling(level2)) {
-				if (treeListCtrl->GetCheckedState(level2) == wxCheckBoxState::wxCHK_CHECKED) {
-					checkedItemText = treeListCtrl->GetItemText(level2);
-					break; // assuming only one checked per level 1
-				}
-			}
-
-			if (!checkedItemText.IsEmpty()) {
-				wxString choiceSel = checkedItemText;
-
-				// Add output choice to file
-				buildSelection.SetOutputChoice(outFileList[index], choiceSel.ToUTF8().data());
-
-				// Remove the selected choice from choicesList[i]
-				choicesList[index].Remove(choiceSel);
-
-				// Remove from outfitList all outfits in choicesList[index]
-				for (auto& outfit : choicesList[index]) {
-					auto result = std::find(outfitList.begin(), outfitList.end(), outfit.ToStdString());
-					if (result != outfitList.end())
-						outfitList.erase(result);
-				}
-			}
-		}
-
-		delete dlgBuildOverride;
+	if (!choicesList.empty() && !ChooseBuildOutputs(outFileList, choicesList, buildSelection, datapath, outfitList)) {
+		wxLogMessage("Aborted batch build by not choosing a file override.");
+		return 1;
 	}
 
 	if ((!choicesList.empty() || !implicitChoices.empty()) && !cmdQuiet) {
@@ -1037,8 +1044,6 @@ int BodySlideApp::BuildListBodies(
 		BuildSelectionFile buildSelFile;
 		BuildSelection buildSelection;
 		GetBuildSelection(buildSelFile, buildSelection);
-
-		bool keepZappedShapes = currentSet.KeepZappedShapes();
 
 		/* Shape the NIF files */
 		std::vector<Vector3> vertsLow;
@@ -1239,119 +1244,9 @@ int BodySlideApp::BuildListBodies(
 			zapIdx.clear();
 		}
 
-		// Phase 2: Apply clipping fix when strength is above zero
-		if (clippingFixStrength > 0.0f) {
-			auto refShape = ClippingFixer::FindReferenceShape(nifBig);
-			if (refShape) {
-				std::vector<Vector3> bodyVerts;
-				std::vector<Triangle> bodyTris;
-				nifBig.GetVertsForShape(refShape, bodyVerts);
-				refShape->GetTriangles(bodyTris);
-
-				if (!bodyVerts.empty() && !bodyTris.empty()) {
-					ClippingFixOptions fixOpts;
-					fixOpts.strength = clippingFixStrength / 100.0f;
-
-					for (auto it = currentSet.ShapesBegin(); it != currentSet.ShapesEnd(); ++it) {
-						auto shape = nifBig.FindBlockByName<NiShape>(it->first);
-						if (shape == refShape || !ClippingFixer::IsEligibleForFix(nifBig, shape))
-							continue;
-
-						std::vector<Vector3> outfitVerts;
-						std::vector<Triangle> outfitTris;
-						if (!nifBig.GetVertsForShape(shape, outfitVerts))
-							continue;
-						shape->GetTriangles(outfitTris);
-
-						ClippingFixer::FixClipping(bodyVerts, bodyTris, outfitVerts, outfitTris, fixOpts);
-						nifBig.SetVertsForShape(shape, outfitVerts);
-					}
-
-					if (currentSet.GenWeights()) {
-						auto refShapeSmall = nifSmall.FindBlockByName<NiShape>(refShape->name.get());
-						if (refShapeSmall) {
-							std::vector<Vector3> bodyVertsSmall;
-							std::vector<Triangle> bodyTrisSmall;
-							nifSmall.GetVertsForShape(refShapeSmall, bodyVertsSmall);
-							refShapeSmall->GetTriangles(bodyTrisSmall);
-
-							if (!bodyVertsSmall.empty() && !bodyTrisSmall.empty()) {
-								for (auto it = currentSet.ShapesBegin(); it != currentSet.ShapesEnd(); ++it) {
-									auto shapeSmall = nifSmall.FindBlockByName<NiShape>(it->first);
-									if (shapeSmall == refShapeSmall || !ClippingFixer::IsEligibleForFix(nifSmall, shapeSmall))
-										continue;
-
-									std::vector<Vector3> outfitVerts;
-									std::vector<Triangle> outfitTris;
-									if (!nifSmall.GetVertsForShape(shapeSmall, outfitVerts))
-										continue;
-									shapeSmall->GetTriangles(outfitTris);
-
-									ClippingFixer::FixClipping(bodyVertsSmall, bodyTrisSmall, outfitVerts, outfitTris, fixOpts);
-									nifSmall.SetVertsForShape(shapeSmall, outfitVerts);
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-
-		// Phase 3: Recalculate normals, tangents, and handle zapping
-		for (auto it = currentSet.ShapesBegin(); it != currentSet.ShapesEnd(); ++it) {
-			auto shape = nifBig.FindBlockByName<NiShape>(it->first);
-			if (!shape)
-				continue;
-
-			if (!nifBig.GetVertsForShape(shape, vertsHigh))
-				continue;
-
-			if (!it->second.lockNormals) {
-				nifBig.CalcNormalsForShape(shape, forceNormals, it->second.smoothSeamNormals);
-
-				if (forceNormals)
-					ApplyReferenceNormals(nifBig);
-			}
-
-			nifBig.CalcTangentsForShape(shape);
-
-			auto zapIt = zapIdxAll.find(it->first);
-			auto& shapeZapIdx = zapIt != zapIdxAll.end() ? zapIt->second : zapIdx;
-
-			if (keepZappedShapes && shapeZapIdx.size() == vertsHigh.size()) {
-				shape->flags |= 1; // Set hidden flag when shape would otherwise be fully zapped
-			}
-			else {
-				if (nifBig.DeleteVertsForShape(shape, shapeZapIdx))
-					nifBig.DeleteShape(shape); // Delete fully zapped shape
-			}
-
-			if (currentSet.GenWeights()) {
-				auto shapeSmall = nifSmall.FindBlockByName<NiShape>(it->first);
-				if (!shapeSmall)
-					continue;
-
-				if (!nifSmall.GetVertsForShape(shapeSmall, vertsLow))
-					continue;
-
-				if (!it->second.lockNormals) {
-					nifSmall.CalcNormalsForShape(shapeSmall, forceNormals, it->second.smoothSeamNormals);
-
-					if (forceNormals)
-						ApplyReferenceNormals(nifSmall);
-				}
-
-				nifSmall.CalcTangentsForShape(shapeSmall);
-
-				if (keepZappedShapes && shapeZapIdx.size() == vertsLow.size()) {
-					shapeSmall->flags |= 1; // Set hidden flag when shape would otherwise be fully zapped
-				}
-				else {
-					if (nifSmall.DeleteVertsForShape(shapeSmall, shapeZapIdx))
-						nifSmall.DeleteShape(shapeSmall); // Delete fully zapped shape
-				}
-			}
-		}
+		NifFile* builtSmall = currentSet.GenWeights() ? &nifSmall : nullptr;
+		FixBuildClipping(nifBig, builtSmall, currentSet);
+		FinishBuiltShapes(nifBig, builtSmall, currentSet, zapIdxAll, forceNormals);
 
 		currentDiffs.Clear();
 
@@ -1367,65 +1262,8 @@ int BodySlideApp::BuildListBodies(
 		std::string outFileNameSmall = datapath + currentSet.GetOutputFilePath();
 		std::string outFileNameBig = outFileNameSmall;
 
-		bool triKeep = currentSet.PreventMorphFile();
-
-		if (targetGame == SF) {
-			/* Write Starfield morph.dat file */
-			std::string sfMorphPath = currentSet.GetSFMorphPath();
-			std::string sfMorphTargetShape = currentSet.GetSFMorphTargetShape();
-			if (tri && !triKeep && !sfMorphPath.empty() && !sfMorphTargetShape.empty()) {
-				std::string morphFolder = datapath + sfMorphPath;
-				WriteSFMorphFile(morphFolder, currentSet, nifBig, zapIdxAll);
-			}
-		}
-		else {
-			if (tri && !triKeep) {
-				std::string triFilePath = outFileNameBig + ".tri";
-
-				// TRI file already exists but isn't a body TRI file, don't overwrite!
-				if (wxFileName::FileExists(wxString::FromUTF8(triFilePath)) && !IsBodyTriFile(triFilePath))
-					triKeep = true;
-			}
-
-			/* Add TRI path for in-game morphs */
-			if (tri && !triKeep) {
-				std::string triPath = currentSet.GetOutputFilePath() + ".tri";
-				std::string triPathTrimmed = triPath;
-				triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex("/+|\\\\+"),
-													"\\"); // Replace multiple backslashes or forward slashes with one backslash
-				triPathTrimmed = std::regex_replace(triPathTrimmed,
-													std::regex(".*meshes\\\\", std::regex_constants::icase),
-													""); // Remove everything before and including the meshes path
-
-				if (!WriteMorphTRI(outFileNameBig, currentSet, nifBig, zapIdxAll))
-					wxLogError("Failed to create TRI file to '%s'!", triPath);
-
-				bool triToRoot = targetGame == FO4 || targetGame == FO4VR || targetGame == FO76;
-
-				SetTriData(nifBig, triPathTrimmed, triToRoot);
-				if (currentSet.GenWeights())
-					SetTriData(nifSmall, triPathTrimmed, triToRoot);
-
-				// Set all shapes to dynamic/mutable
-				for (auto it = currentSet.ShapesBegin(); it != currentSet.ShapesEnd(); ++it) {
-					nifBig.SetShapeDynamic(it->first);
-					if (currentSet.GenWeights())
-						nifSmall.SetShapeDynamic(it->first);
-				}
-
-				// RaceMenu recalculates normals after applying morphs unless they're locked
-				if (targetGame == SKYRIMSE || targetGame == SKYRIMVR) {
-					SetLockedNormalsData(nifBig, currentSet);
-					if (currentSet.GenWeights())
-						SetLockedNormalsData(nifSmall, currentSet);
-				}
-			}
-			else if (!triKeep) {
-				std::string triPath = outFileNameBig + ".tri";
-				if (IsBodyTriFile(triPath))
-					wxRemoveFile(triPath);
-			}
-		}
+		if (!WriteBuildMorphs(currentSet, nifBig, builtSmall, outFileNameBig, datapath, tri, zapIdxAll))
+			wxLogError("Failed to create TRI file to '%s'!", currentSet.GetOutputFilePath() + ".tri");
 
 		NifSaveOptions nifOptions;
 		nifOptions.optimize = false;

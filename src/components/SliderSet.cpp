@@ -940,15 +940,15 @@ std::string SliderSet::GetOutputFilePath() {
 	return outputpath + PathSepStr + outputfile;
 }
 
-bool SliderSet::GenWeights() {
+bool SliderSet::GenWeights() const {
 	return genWeights;
 }
 
-bool SliderSet::PreventMorphFile() {
+bool SliderSet::PreventMorphFile() const {
 	return preventMorphFile;
 }
 
-bool SliderSet::KeepZappedShapes() {
+bool SliderSet::KeepZappedShapes() const {
 	return keepZappedShapes;
 }
 
