@@ -941,7 +941,7 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 		{"maxResults", McpProp("integer", "Most reference vertices to blend. Default 10.")},
 		{"copySkinTransform", McpProp("boolean", "Give the shapes the skin transform of the reference. Default false.")},
 		{"transformGeometry", McpProp("boolean", "With copySkinTransform, move the geometry along so it stays in place. Default false.")},
-		{"cleanup", McpProp("boolean", "Limit the copied vertices to the bones per vertex each shape keeps when saved (4, or the count its Starfield mesh stores) and normalize them. Default true.")},
+		{"cleanup", McpProp("boolean", "Limit the copied vertices to the bones per vertex each shape keeps when saved (4, Starfield 8 or the bones per vertex the shape is locked to) and normalize them. Default true.")},
 		{"removeEmptyBones", McpProp("boolean", "Remove the bones the copy added to a shape that ended up without weights on it, e.g. the leg bones of a top. Default true.")},
 		{"keepOtherBones",
 		 McpProp("boolean",
@@ -1044,7 +1044,7 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 		size_t cleaned = 0;
 		if (usp && result.ok && McpArgs::Bool(args, "cleanup", true)) {
 			for (auto& uss : usp->usss) {
-				const size_t limit = static_cast<size_t>(McpInfluenceLimit(project.GetWorkNif()->FindBlockByName<NiShape>(uss.shapeName)));
+				const size_t limit = static_cast<size_t>(McpInfluenceLimit(mcp, project.GetWorkNif()->FindBlockByName<NiShape>(uss.shapeName)));
 				std::set<uint16_t> vertices;
 				for (auto& bw : uss.boneWeights)
 					for (auto& w : bw.weights)
@@ -1155,7 +1155,7 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 					added.push_back(bone);
 
 			MeshAnalysis::WeightStats stats;
-			mcp.Ops().AnalyzeWeights(shape, stats, McpInfluenceLimit(shape));
+			mcp.Ops().AnalyzeWeights(shape, stats, McpInfluenceLimit(mcp, shape));
 			tool.data["shapes"][name] = {
 				{"bonesAdded", added},
 				{"unweighted", stats.unweighted},

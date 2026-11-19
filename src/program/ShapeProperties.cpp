@@ -188,6 +188,10 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, std::vector<
 	subIndex = XRCCTRL(*this, "subIndex", wxCheckBox);
 	skinned = XRCCTRL(*this, "skinned", wxCheckBox);
 	dynamic = XRCCTRL(*this, "dynamic", wxCheckBox);
+	lbBonesPerVertex = XRCCTRL(*this, "lbBonesPerVertex", wxStaticText);
+	bonesPerVertex = XRCCTRL(*this, "bonesPerVertex", wxSpinCtrl);
+	bonesPerVertexLock = XRCCTRL(*this, "bonesPerVertexLock", wxCheckBox);
+	bonesPerVertexLock->Bind(wxEVT_CHECKBOX, &ShapeProperties::OnBonesPerVertexLock, this);
 
 	pgExtraData = XRCCTRL(*this, "pgExtraData", wxPanel);
 	extraDataGrid = (wxFlexGridSizer*)XRCCTRL(*this, "btnAddExtraData", wxButton)->GetContainingSizer();
@@ -226,6 +230,7 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, std::vector<
 	GetShader();
 	GetTransparency();
 	GetGeometry();
+	GetBonesPerVertex();
 	GetExtraData();
 	GetCoordTrans();
 
@@ -2127,6 +2132,69 @@ void ShapeProperties::RefreshMesh() {
 	os->UpdateActiveShape();
 }
 
+void ShapeProperties::GetBonesPerVertex() {
+	// Only Starfield meshes store their own bones per vertex count, other games always use 4
+	if (!nif->GetHeader().GetVersion().IsSF())
+		return;
+
+	lbBonesPerVertex->Show();
+	bonesPerVertex->Show();
+	bonesPerVertexLock->Show();
+
+	OutfitProject* project = os->project;
+	bool available = std::all_of(shapes.begin(), shapes.end(), [project](NiShape* s) { return project->HasBonesPerVertexCount(s); });
+	if (!available) {
+		bonesPerVertexLock->Disable();
+		pgGeometry->Layout();
+		return;
+	}
+
+	NiShape* firstShape = shapes[0];
+	bool locked = project->GetLockedBonesPerVertex(firstShape) > 0;
+	initialBonesPerVertexLock = locked ? wxCHK_CHECKED : wxCHK_UNCHECKED;
+	for (auto& shape : shapes) {
+		if ((project->GetLockedBonesPerVertex(shape) > 0) != locked) {
+			initialBonesPerVertexLock = wxCHK_UNDETERMINED;
+			break;
+		}
+	}
+
+	initialBonesPerVertex = project->GetBonesPerVertex(firstShape);
+	bonesPerVertex->SetRange(1, nif->GetShapeMaxBonesPerVertex(firstShape));
+	bonesPerVertex->SetValue(initialBonesPerVertex);
+	bonesPerVertexLock->Set3StateValue(initialBonesPerVertexLock);
+	bonesPerVertex->Enable(initialBonesPerVertexLock == wxCHK_CHECKED);
+	pgGeometry->Layout();
+}
+
+void ShapeProperties::OnBonesPerVertexLock(wxCommandEvent& WXUNUSED(event)) {
+	// Unlocked, the field shows the count the mesh will be saved with
+	bool locked = bonesPerVertexLock->Get3StateValue() == wxCHK_CHECKED;
+	if (!locked)
+		bonesPerVertex->SetValue(os->project->GetNeededBonesPerVertex(shapes[0]));
+
+	bonesPerVertex->Enable(locked);
+}
+
+void ShapeProperties::ApplyBonesPerVertex() {
+	if (!bonesPerVertexLock->IsShown() || !bonesPerVertexLock->IsEnabled())
+		return;
+
+	wxCheckBoxState lockState = bonesPerVertexLock->Get3StateValue();
+	if (lockState == wxCHK_UNDETERMINED)
+		return;
+
+	// Several shapes only get the lock or value that was changed, not the first shape's
+	bool lockChanged = lockState != initialBonesPerVertexLock;
+	bool valueChanged = lockState == wxCHK_CHECKED && bonesPerVertex->GetValue() != initialBonesPerVertex;
+	if (!lockChanged && !valueChanged)
+		return;
+
+	uint8_t lockedCount = lockState == wxCHK_CHECKED ? static_cast<uint8_t>(bonesPerVertex->GetValue()) : 0;
+	for (auto& shape : shapes)
+		os->project->SetLockedBonesPerVertex(shape, lockedCount);
+}
+
 void ShapeProperties::OnApply(wxCommandEvent& WXUNUSED(event)) {
 	ApplyChanges();
 	RefreshMesh();
@@ -2526,6 +2594,8 @@ void ShapeProperties::ApplyChanges() {
 			}
 		}
 	}
+
+	ApplyBonesPerVertex();
 
 	os->SetPendingChanges();
 }

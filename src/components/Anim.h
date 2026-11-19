@@ -11,6 +11,7 @@ See the included LICENSE file
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <map>
 #include <optional>
 #include <string>
@@ -200,11 +201,18 @@ public:
 	void FindBonesWithInconsistentTransforms(const std::string& shape, std::unordered_map<std::string, nifly::MatTransform>& badStandard, std::unordered_map<std::string, nifly::MatTransform>& badCustom);
 	void RecalcCustomBoneXFormsFromSkin(const std::string& shape, const std::string& boneName);
 	bool CalcShapeSkinBounds(const std::string& shapeName, const int& boneIndex);
+	// Most bones any vertex of the shape is weighted to. Weights too small to survive the 16 bits of a Starfield mesh
+	// don't count.
+	uint8_t GetMostBonesPerVertex(const std::string& shapeName) const;
 	void CleanupBones();
 	void WriteNodesToNif(nifly::NifFile* nif, const std::string& shapeException = "");
 	// Returns false if a skinned bone is missing from the reference skeleton.
 	// Starfield BSGeometry binds bones by name, so only its bones without a known bind count as missing.
-	bool WriteToNif(nifly::NifFile* nif, const std::string& shapeException = "");
+	// A Starfield BSGeometry is saved with the bones per vertex lockedBonesPerVertex gives for it, or, without one or
+	// when it gives 0, the most any of its vertices needs, up to 8.
+	bool WriteToNif(nifly::NifFile* nif,
+					const std::string& shapeException = "",
+					const std::function<uint8_t(const std::string&)>& lockedBonesPerVertex = {});
 
 	void RenameShape(const std::string& shapeName, const std::string& newShapeName);
 

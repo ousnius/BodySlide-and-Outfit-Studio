@@ -658,7 +658,35 @@ void AnimInfo::WriteNodesToNif(NifFile* nif, const std::string& shapeException) 
 	}
 }
 
-bool AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
+uint8_t AnimInfo::GetMostBonesPerVertex(const std::string& shapeName) const {
+	auto skin = shapeSkinning.find(shapeName);
+	if (skin == shapeSkinning.end())
+		return 0;
+
+	// Rounds to 0 in the 16 bit weights of a Starfield mesh
+	constexpr float minWeight = 0.5f / 65535.0f;
+
+	std::vector<uint8_t> boneCounts;
+	uint8_t most = 0;
+	for (auto& bw : skin->second.boneWeights) {
+		for (auto& vw : bw.second.weights) {
+			if (vw.second < minWeight)
+				continue;
+
+			if (vw.first >= boneCounts.size())
+				boneCounts.resize(vw.first + 1, 0);
+
+			uint8_t& count = boneCounts[vw.first];
+			if (count < 0xFF)
+				count++;
+			most = std::max(most, count);
+		}
+	}
+
+	return most;
+}
+
+bool AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException, const std::function<uint8_t(const std::string&)>& lockedBonesPerVertex) {
 	// Add/remove nodes and set transforms
 	WriteNodesToNif(nif, shapeException);
 
@@ -741,6 +769,15 @@ bool AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 
 			if (CalcShapeSkinBounds(shapeBoneList.first, bid))
 				nif->SetShapeBoneBounds(shapeBoneList.first, bid, bw.bounds);
+		}
+
+		if (isSFShape) {
+			// Each Starfield mesh stores its own number of bones per vertex
+			uint8_t bonesPerVertex = lockedBonesPerVertex ? lockedBonesPerVertex(shapeBoneList.first) : 0;
+			if (bonesPerVertex == 0)
+				bonesPerVertex = std::max<uint8_t>(GetMostBonesPerVertex(shapeBoneList.first), 1);
+
+			nif->SetShapeBonesPerVertex(shape, std::min(bonesPerVertex, nif->GetShapeMaxBonesPerVertex(shape)));
 		}
 
 		if (isBSShape) {

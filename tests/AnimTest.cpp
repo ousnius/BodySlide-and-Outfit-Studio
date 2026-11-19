@@ -134,6 +134,121 @@ TEST_CASE("Starfield export writes weights independently of the editing skeleton
 	AnimSkeleton::getInstance().Clear();
 }
 
+TEST_CASE("Starfield export saves the bones per vertex the shape needs or is locked to", "[anim][export][starfield]") {
+	AnimSkeleton::getInstance().Clear();
+	NifFile nif;
+	nif.Create(NiVersion::getSF());
+	auto shapeBlock = std::make_unique<BSGeometry>();
+	auto shape = shapeBlock.get();
+	shape->name.get() = "Cloth";
+	shape->SetInternalGeomData(true);
+	auto mesh = shape->AddMesh();
+	mesh->meshData.version = 2;
+	mesh->meshData.scale = 1.0f;
+	mesh->meshData.nVertices = 3;
+	mesh->meshData.vertices = {{0, 0, 0}, {1, 0, 0}, {0, 1, 0}};
+	mesh->meshData.nWeightsPerVert = 2;
+	mesh->meshData.skinWeights = {{{0, 65535}, {0, 0}}, {{1, 65535}, {0, 0}}, {{1, 65535}, {0, 0}}};
+	nif.GetRootNode()->childRefs.AddBlockRef(nif.GetHeader().AddBlock(std::move(shapeBlock)));
+
+	std::vector<std::string> names;
+	for (int i = 0; i < 9; i++)
+		names.push_back("Cloth_" + std::to_string(i));
+	auto attach = std::make_unique<SkinAttach>();
+	attach->bones.resize(names.size());
+	for (size_t i = 0; i < names.size(); ++i)
+		attach->bones[i].get() = names[i];
+	nif.AssignExtraData(shape, std::move(attach));
+	auto data = std::make_unique<BSSkinBoneData>();
+	data->nBones = static_cast<uint32_t>(names.size());
+	data->boneXforms.resize(names.size());
+	auto skin = std::make_unique<BSSkinInstance>();
+	skin->dataRef.index = nif.GetHeader().AddBlock(std::move(data));
+	skin->targetRef.index = nif.GetBlockID(nif.GetRootNode());
+	for (size_t i = 0; i < names.size(); ++i)
+		skin->boneRefs.AddBlockRef(NIF_NPOS);
+	shape->SkinInstanceRef()->index = nif.GetHeader().AddBlock(std::move(skin));
+
+	AnimInfo anim;
+	REQUIRE(anim.LoadFromNif(&nif));
+	REQUIRE(anim.GetMostBonesPerVertex("Cloth") == 1);
+
+	// Vertex 0 is weighted to six bones, the strongest first
+	const float vertexWeights[] = {0.3f, 0.25f, 0.2f, 0.12f, 0.08f, 0.05f};
+	for (int i = 0; i < 6; i++) {
+		std::unordered_map<uint16_t, float> weights;
+		anim.GetWeights("Cloth", names[i], weights);
+		weights[0] = vertexWeights[i];
+		anim.SetWeights("Cloth", names[i], weights);
+	}
+	REQUIRE(anim.GetMostBonesPerVertex("Cloth") == 6);
+
+	NifFile output(nif);
+	auto outputShape = output.FindBlockByName<BSGeometry>("Cloth");
+	REQUIRE(outputShape);
+	auto outputData = dynamic_cast<BSGeometryMeshData*>(outputShape->GetGeomData());
+	REQUIRE(outputData);
+
+	SECTION("Without a lock, the most any vertex needs") {
+		// Weights that round to 0 in the mesh don't count
+		std::unordered_map<uint16_t, float> weights{{0, 0.000001f}};
+		anim.SetWeights("Cloth", names[6], weights);
+		REQUIRE(anim.GetMostBonesPerVertex("Cloth") == 6);
+
+		REQUIRE(anim.WriteToNif(&output));
+		REQUIRE(output.GetShapeBonesPerVertex(outputShape) == 6);
+
+		std::stringstream stream(std::ios::in | std::ios::out | std::ios::binary);
+		REQUIRE(output.Save(stream) == 0);
+		NifFile reloaded;
+		REQUIRE(reloaded.Load(stream) == 0);
+		auto reloadedShape = reloaded.FindBlockByName<BSGeometry>("Cloth");
+		REQUIRE(reloadedShape);
+		REQUIRE(reloaded.GetShapeBonesPerVertex(reloadedShape) == 6);
+		std::unordered_map<uint16_t, float> reloadedWeights;
+		reloaded.GetShapeBoneWeights(reloadedShape, 5, reloadedWeights);
+		REQUIRE(reloadedWeights.count(0) == 1);
+		CHECK(std::abs(reloadedWeights[0] - 0.05f) < 0.001f);
+	}
+
+	SECTION("All 8 bones of a vertex are kept") {
+		for (int i = 6; i < 9; i++) {
+			std::unordered_map<uint16_t, float> weights{{0, 0.05f}};
+			anim.SetWeights("Cloth", names[i], weights);
+		}
+		REQUIRE(anim.GetMostBonesPerVertex("Cloth") == 9);
+
+		REQUIRE(anim.WriteToNif(&output));
+		REQUIRE(output.GetShapeBonesPerVertex(outputShape) == 8);
+		const auto& vw = outputData->skinWeights[0];
+		REQUIRE(vw.size() == 8);
+		CHECK(vw[7].weight > 0);
+	}
+
+	SECTION("A lock below the need keeps the strongest bones") {
+		REQUIRE(anim.WriteToNif(&output, "", [](const std::string& shapeName) { return shapeName == "Cloth" ? uint8_t(4) : uint8_t(0); }));
+		REQUIRE(output.GetShapeBonesPerVertex(outputShape) == 4);
+		const auto& vw = outputData->skinWeights[0];
+		REQUIRE(vw.size() == 4);
+		uint32_t sum = 0;
+		for (size_t i = 0; i < vw.size(); i++) {
+			CHECK(vw[i].boneIndex == i);
+			sum += vw[i].weight;
+		}
+		CHECK(sum >= 65533);
+		CHECK(sum <= 65537);
+		CHECK(vw[0].weight == static_cast<uint16_t>(std::lround(0.3f / 0.87f * 65535.0f)));
+	}
+
+	SECTION("A lock above the need adds empty slots") {
+		REQUIRE(anim.WriteToNif(&output, "", [](const std::string&) { return uint8_t(8); }));
+		REQUIRE(output.GetShapeBonesPerVertex(outputShape) == 8);
+		REQUIRE(outputData->skinWeights[1].size() == 8);
+		CHECK(outputData->skinWeights[1][0].boneIndex == 1);
+		CHECK(outputData->skinWeights[1][1].weight == 0);
+	}
+}
+
 TEST_CASE("Starfield import keeps SkinAttach bones when a node shares a bone's name", "[anim][import][starfield]") {
 	AnimSkeleton::getInstance().Clear();
 	NifFile source;

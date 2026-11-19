@@ -815,7 +815,10 @@ McpToolResult GetShapeProperties(OutfitStudioMcp& mcp, const json& args) {
 		{"vertexColors", shape->HasVertexColors()},
 		{"uvs", shape->HasUVs()},
 		{"normals", shape->HasNormals()},
+		{"bonesPerVertex", project.GetBonesPerVertex(shape)},
 	};
+	if (project.HasBonesPerVertexCount(shape))
+		data["geometry"]["bonesPerVertexLocked"] = project.GetLockedBonesPerVertex(shape) > 0;
 	data["flags"] = ShapeFlags(nif, shape);
 
 	NiShader* shader = nif->GetShader(shape);
@@ -2149,13 +2152,19 @@ void AddShapeTools(OutfitStudioMcp& mcp) {
 	geometryProps.description =
 		"Changes the geometry type of shapes like the Geometry tab of the Shape Properties dialog: skinned (false "
 		"removes the skinning), full precision vertices (Fallout 4 and 76), sub index shape (Fallout 4 and 76 "
-		"segments) and dynamic shape (Skyrim SE head parts). Properties a shape can't have are skipped with a log entry.";
+		"segments), dynamic shape (Skyrim SE head parts) and the bones per vertex of Starfield shapes. Properties a shape "
+		"can't have are skipped with a log entry.";
 	geometryProps.inputSchema = McpSchema({
 		{"shapes", ShapesProp},
 		{"skinned", McpProp("boolean", "Skinned to bones")},
 		{"fullPrecision", McpProp("boolean", "Full precision vertices")},
 		{"subIndex", McpProp("boolean", "BSSubIndexTriShape with segments")},
 		{"dynamic", McpProp("boolean", "BSDynamicTriShape")},
+		{"bonesPerVertex",
+		 McpProp("integer",
+				 "Starfield: lock the bones per vertex the shape is saved with, 1 to 8; vertices weighted to more bones keep "
+				 "the strongest ones. 0 unlocks it, then it's saved with the most any vertex needs, up to 8. Other games "
+				 "always keep 4.")},
 	});
 	geometryProps.handler = [&mcp](const json& args) {
 		json list = json::array();
@@ -2163,11 +2172,33 @@ void AddShapeTools(OutfitStudioMcp& mcp) {
 		for (auto& name : properties)
 			if (McpArgs::Has(args, name.first))
 				list.push_back({{"name", name.second}, {"enabled", McpArgs::Bool(args, name.first, false)}});
-		if (list.empty())
-			throw McpToolError("Give at least one of skinned, fullPrecision, subIndex and dynamic.");
+		const bool setBonesPerVertex = McpArgs::Has(args, "bonesPerVertex");
+		if (list.empty() && !setBonesPerVertex)
+			throw McpToolError("Give at least one of skinned, fullPrecision, subIndex, dynamic and bonesPerVertex.");
+
 		// The step can replace the shape blocks, so only the names are kept
 		json names = Names(mcp.Shapes(args, "shapes", true));
-		McpRunStep(mcp, {{"type", "SetGeometryProperties"}, {"TargetMeshes", names}, {"GeometryProperties", list}});
+		if (setBonesPerVertex) {
+			const int bonesPerVertex = McpArgs::Int(args, "bonesPerVertex", 0);
+			if (bonesPerVertex < 0 || bonesPerVertex > 8)
+				throw McpToolError("bonesPerVertex must be from 1 to 8, or 0 to unlock it.");
+
+			OutfitProject& project = mcp.Project();
+			for (auto* shape : mcp.Shapes(args, "shapes", true)) {
+				if (!project.HasBonesPerVertexCount(shape)) {
+					wxLogMessage("MCP: set_geometry_properties - '%s' always keeps 4 bones per vertex; skipped bonesPerVertex.", shape->name.get());
+					continue;
+				}
+				project.SetLockedBonesPerVertex(shape, static_cast<uint8_t>(bonesPerVertex));
+			}
+
+			OpResult changed;
+			changed.refresh = RefreshFlags::PendingChanges;
+			mcp.Apply(changed);
+		}
+
+		if (!list.empty())
+			McpRunStep(mcp, {{"type", "SetGeometryProperties"}, {"TargetMeshes", names}, {"GeometryProperties", list}});
 		return GetShapeProperties(mcp, {{"shape", names.front()}});
 	};
 	mcp.AddTool(std::move(geometryProps));

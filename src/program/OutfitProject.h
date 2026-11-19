@@ -797,6 +797,19 @@ public:
 	void RemoveSkinning(nifly::NiShape* s);
 	void RemoveSkinning();
 
+	// Whether the shape stores its own bones per vertex count (Starfield BSGeometry). Other shapes always keep 4.
+	bool HasBonesPerVertexCount(nifly::NiShape* s);
+	// Most bones any vertex of the shape needs, from 1 up to the game's limit
+	uint8_t GetNeededBonesPerVertex(nifly::NiShape* s);
+	// Bones per vertex the shape's weights are saved with: the count it's locked to, or the most any of its vertices
+	// needs, from 1 up to the game's limit.
+	uint8_t GetBonesPerVertex(nifly::NiShape* s);
+	// Most bones per vertex the shape keeps when saved: the count it's locked to, or the game's limit.
+	uint8_t GetBonesPerVertexLimit(nifly::NiShape* s);
+	// Bones per vertex a Starfield shape is locked to (1-8), 0 to unlock it again.
+	uint8_t GetLockedBonesPerVertex(nifly::NiShape* s);
+	void SetLockedBonesPerVertex(nifly::NiShape* s, uint8_t bonesPerVertex);
+
 	// Finds bones with inconsistent transforms and recommends a fix for each of them.
 	BadBonesReport FindBadBones();
 	void FixBadBones(const BadBonesReport& report);

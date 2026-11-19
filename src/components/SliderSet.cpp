@@ -383,6 +383,7 @@ int SliderSet::LoadSliderSet(XMLElement* element, bool appendNewSliders, const s
 			shape.smoothSeamNormals = shapeName->BoolAttribute("SmoothSeamNormals", true);
 			shape.smoothSeamNormalsAngle = shapeName->FloatAttribute("SmoothSeamNormalsAngle", SliderSetShape::SliderSetDefaultSmoothAngle);
 			shape.lockNormals = shapeName->BoolAttribute("LockNormals", false);
+			shape.bonesPerVertex = static_cast<uint8_t>(std::min(shapeName->UnsignedAttribute("BonesPerVertex", 0), 0xFFu));
 			shape.vertexCount = onlyShapeName.empty() ? shapeName->UnsignedAttribute("vertexCount") : 0;
 		}
 
@@ -812,6 +813,9 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 
 		if (s.second.lockNormals)
 			baseShapeElement->SetAttribute("LockNormals", s.second.lockNormals);
+
+		if (s.second.bonesPerVertex > 0)
+			baseShapeElement->SetAttribute("BonesPerVertex", static_cast<unsigned int>(s.second.bonesPerVertex));
 
 		if (addOn && s.second.vertexCount > 0)
 			baseShapeElement->SetAttribute("vertexCount", s.second.vertexCount);

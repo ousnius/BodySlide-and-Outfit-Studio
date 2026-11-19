@@ -31,6 +31,7 @@ public:
 	bool smoothSeamNormals = true;
 	float smoothSeamNormalsAngle = SliderSetDefaultSmoothAngle;
 	bool lockNormals = false;
+	uint8_t bonesPerVertex = 0; // Starfield: bones per vertex the shape is saved with, 0 for the most any vertex needs.
 	uint32_t vertexCount = 0; // Add-ons: vertices of the base project's shape that their data was made for, 0 if unknown.
 };
 
@@ -328,6 +329,22 @@ public:
 
 		auto& shape = shapeAttributes[shapeName];
 		shape.lockNormals = lock;
+	}
+
+	// Bones per vertex a Starfield shape is locked to, 0 when it uses the most any vertex needs.
+	uint8_t GetBonesPerVertex(const std::string& shapeName) const {
+		auto shape = shapeAttributes.find(shapeName);
+		if (shape != shapeAttributes.end())
+			return shape->second.bonesPerVertex;
+
+		return 0;
+	}
+
+	void SetBonesPerVertex(const std::string& shapeName, uint8_t bonesPerVertex) {
+		AddMissingTarget(shapeName);
+
+		auto& shape = shapeAttributes[shapeName];
+		shape.bonesPerVertex = bonesPerVertex;
 	}
 
 	// Gets the target names in the targetdatafolders map - these are the shapes with non-local or referenced data.

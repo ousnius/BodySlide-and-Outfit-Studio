@@ -16,6 +16,7 @@ See the included LICENSE file
 #include <wx/clrpicker.h>
 #include <wx/collpane.h>
 #include <wx/notebook.h>
+#include <wx/spinctrl.h>
 
 class ShapeProperties : public wxDialog {
 public:
@@ -113,6 +114,11 @@ private:
 	wxCheckBox* subIndex = nullptr;
 	wxCheckBox* skinned = nullptr;
 	wxCheckBox* dynamic = nullptr;
+	wxStaticText* lbBonesPerVertex = nullptr;
+	wxSpinCtrl* bonesPerVertex = nullptr;
+	wxCheckBox* bonesPerVertexLock = nullptr;
+	wxCheckBoxState initialBonesPerVertexLock = wxCHK_UNCHECKED;
+	int initialBonesPerVertex = 4;
 
 	std::vector<int> extraDataIndices;
 	wxPanel* pgExtraData = nullptr;
@@ -155,6 +161,9 @@ private:
 	void RemoveTransparency(nifly::NiShape* shape);
 
 	void GetGeometry();
+	void GetBonesPerVertex();
+	void OnBonesPerVertexLock(wxCommandEvent& event);
+	void ApplyBonesPerVertex();
 
 	void GetExtraData();
 	void AddExtraData(nifly::NiShape* shape, nifly::NiExtraData* extraData, bool uiOnly = false);

@@ -518,7 +518,7 @@ McpToolResult MakePhysicsChains(OutfitStudioMcp& mcp, const json& args) {
 	}
 
 	for (size_t i = 0; i < shapeNames.size(); i++) {
-		const int maxInfluences = McpArgs::Int(args, "maxInfluences", McpInfluenceLimit(mcp.Shape(shapeNames[i])));
+		const int maxInfluences = McpArgs::Int(args, "maxInfluences", McpInfluenceLimit(mcp, mcp.Shape(shapeNames[i])));
 		for (size_t v = offsets[i]; v < offsets[i + 1]; v++)
 			if (influence[v] > 0.0f)
 				MeshAnalysis::LimitWeights(after[v], maxInfluences, 0.01f);
@@ -1135,7 +1135,7 @@ void AddPhysicsTools(OutfitStudioMcp& mcp) {
 			{"smoothRadius", McpProp("number", "Blends the chains' weights over this distance where strands touch. 0 for off. Default 2.")},
 			{"borderRadius", McpProp("number", "Blends the chains and the anchor bone over this distance where a chain's vertices meet hair that stays, so planes across the border don't stretch. 0 for off. Default 3.")},
 			{"fadeBodyBones", McpProp("boolean", "On a chain, move what the vertices keep of body bones other than the anchor (spine, neck) to the anchor, the more the further down the chain, so hair over the chest follows only the head and the chain. Default true.")},
-			{"maxInfluences", McpProp("integer", "Most bones per vertex. Default what each shape keeps when saved: 4, or the count its Starfield mesh stores.")},
+			{"maxInfluences", McpProp("integer", "Most bones per vertex. Default what each shape keeps when saved: 4, Starfield 8 or the bones per vertex the shape is locked to.")},
 			{"replace", McpProp("boolean", "Delete bones named '<prefix> ...' from an earlier run first, their weights going to the bone they hang on. Default false, which refuses.")},
 			{"preview", McpProp("boolean", "Only find and report the chains. Default false.")},
 		},

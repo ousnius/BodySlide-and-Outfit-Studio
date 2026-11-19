@@ -539,6 +539,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 		outSet.SetSmoothSeamNormals(baseShapeName, activeSet.GetSmoothSeamNormals(baseShapeName));
 		outSet.SetSmoothSeamNormalsAngle(baseShapeName, activeSet.GetSmoothSeamNormalsAngle(baseShapeName));
 		outSet.SetLockNormals(baseShapeName, activeSet.GetLockNormals(baseShapeName));
+		outSet.SetBonesPerVertex(baseShapeName, activeSet.GetBonesPerVertex(baseShapeName));
 		UpdateProgress(prog += step, _("Adding reference shapes..."));
 	}
 
@@ -570,6 +571,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 		outSet.SetSmoothSeamNormals(shapeName, activeSet.GetSmoothSeamNormals(shapeName));
 		outSet.SetSmoothSeamNormalsAngle(shapeName, activeSet.GetSmoothSeamNormalsAngle(shapeName));
 		outSet.SetLockNormals(shapeName, activeSet.GetLockNormals(shapeName));
+		outSet.SetBonesPerVertex(shapeName, activeSet.GetBonesPerVertex(shapeName));
 		UpdateProgress(prog += step, _("Adding outfit shapes..."));
 	}
 
@@ -6762,8 +6764,13 @@ NiShape* OutfitProject::DuplicateShape(NiShape* sourceShape, const std::string& 
 	workAnim.CloneShape(&workNif, sourceShape, destShapeName);
 
 	auto newShape = workNif.CloneShape(sourceShape, destShapeName);
-	if (newShape)
+	if (newShape) {
 		clothData.SetShapeSources(destShapeName, clothData.GetShapeSources(sourceShape->name.get()));
+
+		// The copy is saved with the same bones per vertex
+		if (uint8_t locked = GetLockedBonesPerVertex(sourceShape))
+			SetLockedBonesPerVertex(newShape, locked);
+	}
 
 	std::string shapeName = sourceShape->name.get();
 	std::string srcTarget = ShapeToTarget(shapeName);
@@ -8276,8 +8283,51 @@ int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<Mesh
 }
 
 
+bool OutfitProject::HasBonesPerVertexCount(NiShape* s) {
+	return s && workNif.GetShapeMaxBonesPerVertex(s) > 4;
+}
+
+uint8_t OutfitProject::GetNeededBonesPerVertex(NiShape* s) {
+	if (!HasBonesPerVertexCount(s))
+		return 4;
+
+	return std::clamp<uint8_t>(workAnim.GetMostBonesPerVertex(s->name.get()), 1, workNif.GetShapeMaxBonesPerVertex(s));
+}
+
+uint8_t OutfitProject::GetBonesPerVertex(NiShape* s) {
+	if (uint8_t locked = GetLockedBonesPerVertex(s))
+		return locked;
+
+	return GetNeededBonesPerVertex(s);
+}
+
+uint8_t OutfitProject::GetBonesPerVertexLimit(NiShape* s) {
+	if (!HasBonesPerVertexCount(s))
+		return 4;
+
+	if (uint8_t locked = GetLockedBonesPerVertex(s))
+		return locked;
+
+	return workNif.GetShapeMaxBonesPerVertex(s);
+}
+
+uint8_t OutfitProject::GetLockedBonesPerVertex(NiShape* s) {
+	if (!HasBonesPerVertexCount(s))
+		return 0;
+
+	return std::min(activeSet.GetBonesPerVertex(s->name.get()), workNif.GetShapeMaxBonesPerVertex(s));
+}
+
+void OutfitProject::SetLockedBonesPerVertex(NiShape* s, uint8_t bonesPerVertex) {
+	if (!HasBonesPerVertexCount(s))
+		return;
+
+	activeSet.SetBonesPerVertex(s->name.get(), std::min(bonesPerVertex, workNif.GetShapeMaxBonesPerVertex(s)));
+}
+
 void OutfitProject::WriteAnimToNif(NifFile& nif, const std::string& shapeException) {
-	if (workAnim.WriteToNif(&nif, shapeException))
+	auto lockedBonesPerVertex = [this](const std::string& shapeName) { return activeSet.GetBonesPerVertex(shapeName); };
+	if (workAnim.WriteToNif(&nif, shapeException, lockedBonesPerVertex))
 		return;
 
 	wxString message = _("Bone information incomplete. Exported data will not contain correct bone entries! Be sure to load a reference NIF prior to export.");

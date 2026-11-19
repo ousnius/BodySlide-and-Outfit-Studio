@@ -177,6 +177,25 @@ TEST_CASE("Project files stay at version 1 without version 2 features", "[Slider
 	CHECK(SliderSetFile(folder.SetFile("Plain.osp")).GetVersion() == 2);
 }
 
+TEST_CASE("Project files keep the bones per vertex a shape is locked to", "[SliderSet]") {
+	ProjectFolder folder;
+	SliderSet set = MakeSet("Suit", "Suit", "Suit.nif", {"Suit", "Helmet"});
+	set.SetBonesPerVertex("Suit", 6);
+	SaveSets(folder.SetFile("Suit.osp"), {set});
+
+	SliderSet loaded = LoadSet(folder.SetFile("Suit.osp"), "Suit");
+	CHECK(loaded.GetBonesPerVertex("Suit") == 6);
+	CHECK(loaded.GetBonesPerVertex("Helmet") == 0);
+	CHECK(SliderSetFile(folder.SetFile("Suit.osp")).GetVersion() == 1);
+
+	// Unlocking removes it again
+	loaded.SetBonesPerVertex("Suit", 0);
+	SaveSets(folder.SetFile("Suit.osp"), {loaded});
+	std::ifstream file(folder.SetFile("Suit.osp"));
+	std::string text((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	CHECK(text.find("BonesPerVertex") == std::string::npos);
+}
+
 TEST_CASE("Project IDs are random version 4 GUIDs", "[SliderSet]") {
 	std::string id = SliderSet::GenerateProjectID();
 	REQUIRE(id.size() == 36);

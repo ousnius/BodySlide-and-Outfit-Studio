@@ -941,7 +941,7 @@ void AddAnalysisTools(OutfitStudioMcp& mcp) {
 		"when they fit at rest. mask_ops from_analysis with metric weight_deviation masks them for copy_bone_weights.";
 	weights.inputSchema = McpSchema({
 		{"shapes", ShapesProp},
-		{"influenceLimit", McpProp("integer", "Most bones per vertex. Default what each shape keeps when saved: 4, or the count its Starfield mesh stores.")},
+		{"influenceLimit", McpProp("integer", "Most bones per vertex. Default what each shape keeps when saved: 4, Starfield 8 or the bones per vertex the shape is locked to.")},
 		{"compareToReference", McpProp("boolean", "Also compare the weights with the reference's (or 'against'). Default false.")},
 		{"against", McpProp("string", "Shape to compare the weights with. Default the reference.")},
 		{"maxDistance", McpProp("number", "Only vertices this close to the body are compared. Default 2.")},
@@ -952,7 +952,7 @@ void AddAnalysisTools(OutfitStudioMcp& mcp) {
 	weights.handler = [&mcp](const json& args) {
 		McpToolResult result;
 		for (auto* shape : mcp.Shapes(args, "shapes")) {
-			const int limit = McpArgs::Int(args, "influenceLimit", McpInfluenceLimit(shape));
+			const int limit = McpArgs::Int(args, "influenceLimit", McpInfluenceLimit(mcp, shape));
 			MeshAnalysis::WeightStats stats;
 			mcp.Apply(mcp.Ops().AnalyzeWeights(shape, stats, limit));
 			json entry = {
