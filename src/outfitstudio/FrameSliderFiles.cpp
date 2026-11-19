@@ -18,6 +18,7 @@ See the included LICENSE file
 #include "ui/outfitstudio/SliderDataImportDialog.h"
 #include "utils/ProjectUtil.h"
 
+#include <functional>
 #include <cmath>
 #include <cstdlib>
 #include <iterator>
@@ -624,7 +625,17 @@ void OutfitStudioFrame::OnSliderImportFBX(wxCommandEvent& WXUNUSED(event)) {
 #endif
 }
 
-void OutfitStudioFrame::OnSliderExportNIF(wxCommandEvent& WXUNUSED(event)) {
+// One format the data of the slider in edit mode exports to
+struct SliderDataExportFormat {
+	const char* name;		  // For the log, like NIF
+	const char* extension;	  // Without the dot
+	wxString directoryTitle;  // For several shapes, which export into a folder
+	wxString fileTitle;		  // For one shape
+	wxString failedMessage;	  // Shown if exporting one shape failed, empty to not check
+	std::function<int(NiShape*, const std::string&)> save;
+};
+
+void OutfitStudioFrame::ExportActiveSliderData(const SliderDataExportFormat& format) {
 	if (!ShapeSelectionCheck())
 		return;
 
@@ -634,96 +645,56 @@ void OutfitStudioFrame::OnSliderExportNIF(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	if (selectedItems.size() > 1) {
-		wxString dir = wxDirSelector(_("Export .nif slider data to directory"), wxEmptyString, wxDD_DEFAULT_STYLE, wxDefaultPosition, this);
+		wxString dir = wxDirSelector(format.directoryTitle, wxEmptyString, wxDD_DEFAULT_STYLE, wxDefaultPosition, this);
 		if (dir.IsEmpty())
 			return;
 
 		for (auto& i : selectedItems) {
-			std::string targetFile = std::string(dir.ToUTF8()) + PathSepStr + i->GetShape()->name.get() + "_" + editor.activeSlider + ".nif";
-			wxLogMessage("Exporting NIF slider data of '%s' for shape '%s' to '%s'...", editor.activeSlider, i->GetShape()->name.get(), targetFile);
-			project->SaveSliderNIF(editor.activeSlider, i->GetShape(), targetFile);
+			std::string targetFile = std::string(dir.ToUTF8()) + PathSepStr + i->GetShape()->name.get() + "_" + editor.activeSlider + "." + format.extension;
+			wxLogMessage("Exporting %s slider data of '%s' for shape '%s' to '%s'...", format.name, editor.activeSlider, i->GetShape()->name.get(), targetFile);
+			format.save(i->GetShape(), targetFile);
 		}
 	}
 	else {
-		wxString fn = wxFileSelector(_("Export .nif slider data"), wxEmptyString, wxEmptyString, ".nif", "*.nif", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+		wxString fn = wxFileSelector(format.fileTitle, wxEmptyString, wxEmptyString, wxString(".") + format.extension, wxString("*.") + format.extension, wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
 		if (fn.IsEmpty())
 			return;
 
-		wxLogMessage("Exporting NIF slider data of '%s' for shape '%s' to '%s'...", editor.activeSlider, activeItem->GetShape()->name.get(), fn);
-		if (project->SaveSliderNIF(editor.activeSlider, activeItem->GetShape(), fn.ToUTF8().data())) {
-			wxLogError("Failed to export NIF file '%s'!", fn);
-			wxMessageBox(_("Failed to export NIF file!"), _("Error"), wxICON_ERROR);
+		wxLogMessage("Exporting %s slider data of '%s' for shape '%s' to '%s'...", format.name, editor.activeSlider, activeItem->GetShape()->name.get(), fn);
+		if (format.save(activeItem->GetShape(), fn.ToUTF8().data()) && !format.failedMessage.IsEmpty()) {
+			wxLogError("Failed to export %s file '%s'!", format.name, fn);
+			wxMessageBox(format.failedMessage, _("Error"), wxICON_ERROR);
 		}
 	}
 
 	ApplySliders();
+}
+
+void OutfitStudioFrame::OnSliderExportNIF(wxCommandEvent& WXUNUSED(event)) {
+	ExportActiveSliderData({"NIF",
+							"nif",
+							_("Export .nif slider data to directory"),
+							_("Export .nif slider data"),
+							_("Failed to export NIF file!"),
+							[this](NiShape* shape, const std::string& file) { return project->SaveSliderNIF(editor.activeSlider, shape, file); }});
 }
 
 void OutfitStudioFrame::OnSliderExportBSD(wxCommandEvent& WXUNUSED(event)) {
-	if (!ShapeSelectionCheck())
-		return;
-
-	if (!editor.bEditSlider) {
-		wxMessageBox(_("There is no slider in edit mode to export data from!"), _("Error"));
-		return;
-	}
-
-	if (selectedItems.size() > 1) {
-		wxString dir = wxDirSelector(_("Export .bsd slider data to directory"), wxEmptyString, wxDD_DEFAULT_STYLE, wxDefaultPosition, this);
-		if (dir.IsEmpty())
-			return;
-
-		for (auto& i : selectedItems) {
-			std::string targetFile = std::string(dir.ToUTF8()) + PathSepStr + i->GetShape()->name.get() + "_" + editor.activeSlider + ".bsd";
-			wxLogMessage("Exporting BSD slider data of '%s' for shape '%s' to '%s'...", editor.activeSlider, i->GetShape()->name.get(), targetFile);
-			project->SaveSliderBSD(editor.activeSlider, i->GetShape(), targetFile);
-		}
-	}
-	else {
-		wxString fn = wxFileSelector(_("Export .bsd slider data"), wxEmptyString, wxEmptyString, ".bsd", "*.bsd", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
-		if (fn.IsEmpty())
-			return;
-
-		wxLogMessage("Exporting BSD slider data of '%s' for shape '%s' to '%s'...", editor.activeSlider, activeItem->GetShape()->name.get(), fn);
-		project->SaveSliderBSD(editor.activeSlider, activeItem->GetShape(), fn.ToUTF8().data());
-	}
-
-	ApplySliders();
+	ExportActiveSliderData({"BSD",
+							"bsd",
+							_("Export .bsd slider data to directory"),
+							_("Export .bsd slider data"),
+							wxEmptyString,
+							[this](NiShape* shape, const std::string& file) { return project->SaveSliderBSD(editor.activeSlider, shape, file); }});
 }
 
 void OutfitStudioFrame::OnSliderExportOBJ(wxCommandEvent& WXUNUSED(event)) {
-	if (!ShapeSelectionCheck())
-		return;
-
-	if (!editor.bEditSlider) {
-		wxMessageBox(_("There is no slider in edit mode to export data from!"), _("Error"));
-		return;
-	}
-
-	if (selectedItems.size() > 1) {
-		wxString dir = wxDirSelector(_("Export .obj slider data to directory"), wxEmptyString, wxDD_DEFAULT_STYLE, wxDefaultPosition, this);
-		if (dir.IsEmpty())
-			return;
-
-		for (auto& i : selectedItems) {
-			std::string targetFile = std::string(dir.ToUTF8()) + PathSepStr + i->GetShape()->name.get() + "_" + editor.activeSlider + ".obj";
-			wxLogMessage("Exporting OBJ slider data of '%s' for shape '%s' to '%s'...", editor.activeSlider, i->GetShape()->name.get(), targetFile);
-			project->SaveSliderOBJ(editor.activeSlider, i->GetShape(), targetFile);
-		}
-	}
-	else {
-		wxString fn = wxFileSelector(_("Export .obj slider data"), wxEmptyString, wxEmptyString, ".obj", "*.obj", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
-		if (fn.IsEmpty())
-			return;
-
-		wxLogMessage("Exporting OBJ slider data of '%s' for shape '%s' to '%s'...", editor.activeSlider, activeItem->GetShape()->name.get(), fn);
-		if (project->SaveSliderOBJ(editor.activeSlider, activeItem->GetShape(), fn.ToUTF8().data())) {
-			wxLogError("Failed to export OBJ file '%s'!", fn);
-			wxMessageBox(_("Failed to export OBJ file!"), _("Error"), wxICON_ERROR);
-		}
-	}
-
-	ApplySliders();
+	ExportActiveSliderData({"OBJ",
+							"obj",
+							_("Export .obj slider data to directory"),
+							_("Export .obj slider data"),
+							_("Failed to export OBJ file!"),
+							[this](NiShape* shape, const std::string& file) { return project->SaveSliderOBJ(editor.activeSlider, shape, file); }});
 }
 
 void OutfitStudioFrame::OnSliderExportOSD(wxCommandEvent& WXUNUSED(event)) {

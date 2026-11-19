@@ -90,6 +90,7 @@ struct GrabTarget;
 } // namespace Physics
 
 struct ShapeTransformDialogSpec;
+struct SliderDataExportFormat;
 struct ConformOptions;
 struct ClippingFixOptions;
 class OutfitStudioFrame;
@@ -476,6 +477,14 @@ private:
 	void OnImportOBJ(wxCommandEvent& event);
 	void OnExportOBJ(wxCommandEvent& event);
 	void OnExportShapeOBJ(wxCommandEvent& event);
+	std::vector<nifly::NiShape*> GetSelectedShapes();
+	// Asks whether to transform the shapes to global coordinates if any has a skin coordinate system of its own.
+	// False if the user cancelled.
+	bool AskTransformToGlobal(const std::vector<nifly::NiShape*>& shapes, const wxString& question, bool& transToGlobal);
+	// Asks for the file to export the selected shapes to. One shape suggests its own name for the file.
+	wxString ChooseShapeExportFile(const wxString& severalTitle, const wxString& oneTitle, const wxString& extension, const wxString& wildcard);
+	// The selected shapes, or the active shape if only one is selected, for exporting them to the file
+	std::vector<nifly::NiShape*> GetShapesToExport(const wxString& fileName, const char* format);
 
 	void OnImportFBX(wxCommandEvent& event);
 	void OnExportFBX(wxCommandEvent& event);
@@ -595,6 +604,9 @@ private:
 	void OnSliderImportTRI(wxCommandEvent& event);
 	void OnSliderImportMorphsSF(wxCommandEvent& event);
 	void OnSliderImportFBX(wxCommandEvent& event);
+	// Exports the data of the slider in edit mode for the selected shapes: to a chosen file for one shape,
+	// or into a chosen folder as <shape>_<slider>.<extension> for several
+	void ExportActiveSliderData(const SliderDataExportFormat& format);
 	void OnSliderExportNIF(wxCommandEvent& event);
 	void OnSliderExportBSD(wxCommandEvent& event);
 	void OnSliderExportOBJ(wxCommandEvent& event);
