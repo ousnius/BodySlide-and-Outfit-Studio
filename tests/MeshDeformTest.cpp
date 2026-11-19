@@ -1,5 +1,5 @@
-#include "../src/components/MeshAnalysis.h"
-#include "../src/components/MeshDeform.h"
+#include "components/MeshAnalysis.h"
+#include "components/MeshDeform.h"
 
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>

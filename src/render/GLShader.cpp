@@ -4,7 +4,7 @@ See the included LICENSE file
 */
 
 #include "GLShader.h"
-#include "../utils/PlatformUtil.h"
+#include "utils/PlatformUtil.h"
 #include "Object3d.hpp"
 
 #include <algorithm>

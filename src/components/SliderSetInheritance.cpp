@@ -4,9 +4,9 @@ See the included LICENSE file
 */
 
 #include "SliderSetInheritance.h"
-#include "../utils/PlatformUtil.h"
-#include "../utils/ProjectUtil.h"
-#include "../utils/StringStuff.h"
+#include "utils/PlatformUtil.h"
+#include "utils/ProjectUtil.h"
+#include "utils/StringStuff.h"
 
 #include <algorithm>
 #include <filesystem>

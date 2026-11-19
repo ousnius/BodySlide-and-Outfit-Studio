@@ -4,18 +4,20 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
-#include "../components/ClippingFixer.h"
-#include "../components/MaskOps.h"
-#include "../components/StarfieldSpace.h"
-#include "../program/OutfitStudio.h"
-#include "../utils/ConfigurationManager.h"
+#include "McpHelpers.h"
+#include "components/ClippingFixer.h"
+#include "components/MaskOps.h"
+#include "components/StarfieldSpace.h"
+#include "outfitstudio/OutfitStudioFrame.h"
+#include "outfitstudio/GLPanel.h"
+#include "components/UndoHistory.h"
+#include "utils/TargetGame.h"
+#include "utils/ConfigurationManager.h"
 
 #include <algorithm>
 #include <cfloat>
 #include <cmath>
 #include <set>
-
-extern ConfigurationManager Config;
 
 using nlohmann::json;
 using namespace nifly;
@@ -23,29 +25,6 @@ using namespace nifly;
 namespace {
 
 constexpr float SeamTolerance = 0.001f;
-
-Mesh* ShapeMesh(OutfitStudioMcp& mcp, NiShape* shape) {
-	Mesh* m = mcp.Project().GetHost().GetShapeMesh(shape->name.get());
-	if (!m)
-		throw McpToolError("The shape '" + shape->name.get() + "' has no mesh in the view.");
-	return m;
-}
-
-json VectorToJson(const Vector3& v) {
-	return json::array({v.x, v.y, v.z});
-}
-
-std::vector<Vector3> RestVerts(OutfitProject& project, NiShape* shape) {
-	std::vector<Vector3> verts;
-	project.GetWorkNif()->GetVertsForShape(shape, verts);
-	return verts;
-}
-
-std::vector<Triangle> Triangles(NiShape* shape) {
-	std::vector<Triangle> tris;
-	shape->GetTriangles(tris);
-	return tris;
-}
 
 void CheckMorphSlider(OutfitProject& project, const std::string& slider) {
 	size_t index = 0;
@@ -319,7 +298,7 @@ McpToolResult ListMeshParts(OutfitStudioMcp& mcp, const json& args) {
 	const size_t limit = static_cast<size_t>(std::clamp(McpArgs::Int(args, "limit", 50), 1, 1000));
 
 	auto verts = RestVerts(project, shape);
-	auto tris = Triangles(shape);
+	auto tris = ShapeTriangles(shape);
 	int count = 0;
 	auto parts = MeshAnalysis::ConnectedParts(verts, tris, McpArgs::Float(args, "weldDistance", SeamTolerance), nullptr, &count);
 
@@ -367,9 +346,9 @@ McpToolResult ListMeshParts(OutfitStudioMcp& mcp, const json& args) {
 			{"part", i},
 			{"vertices", p.vertices},
 			{"triangles", p.triangles},
-			{"center", VectorToJson(p.sum / static_cast<float>(p.vertices))},
-			{"min", VectorToJson(p.lo)},
-			{"max", VectorToJson(p.hi)},
+			{"center", McpVector(p.sum / static_cast<float>(p.vertices))},
+			{"min", McpVector(p.lo)},
+			{"max", McpVector(p.hi)},
 			{"firstVertex", p.first},
 		};
 		if (p.masked)
@@ -818,7 +797,7 @@ McpToolResult MirrorWeights(OutfitStudioMcp& mcp, const json& args) {
 	for (auto* shape : mcp.Shapes(args, "shapes")) {
 		const std::string shapeName = shape->name.get();
 		auto verts = RestVerts(project, shape);
-		auto tris = Triangles(shape);
+		auto tris = ShapeTriangles(shape);
 		auto bones = ShapeBones(anim, shapeName);
 		std::vector<float> influence;
 		if (useMask)
@@ -1056,7 +1035,7 @@ McpToolResult AnalyzePoses(OutfitStudioMcp& mcp, const json& args) {
 		auto bones = ShapeBones(anim, reference->name.get());
 		auto verts = MorphedVerts(project, reference);
 		PoseSkinner skinner(mcp, reference, bones, poses);
-		referenceStats = PoseStrain(skinner, poses.size(), verts, Triangles(reference), DenseShapeWeights(anim, reference->name.get(), bones, verts.size()), threshold);
+		referenceStats = PoseStrain(skinner, poses.size(), verts, ShapeTriangles(reference), DenseShapeWeights(anim, reference->name.get(), bones, verts.size()), threshold);
 	}
 
 	McpToolResult result;
@@ -1065,7 +1044,7 @@ McpToolResult AnalyzePoses(OutfitStudioMcp& mcp, const json& args) {
 		auto bones = ShapeBones(anim, shapeName);
 		auto verts = MorphedVerts(project, shape);
 		PoseSkinner skinner(mcp, shape, bones, poses);
-		auto stats = PoseStrain(skinner, poses.size(), verts, Triangles(shape), DenseShapeWeights(anim, shapeName, bones, verts.size()), threshold);
+		auto stats = PoseStrain(skinner, poses.size(), verts, ShapeTriangles(shape), DenseShapeWeights(anim, shapeName, bones, verts.size()), threshold);
 
 		std::vector<size_t> order(poses.size());
 		for (size_t i = 0; i < order.size(); i++)
@@ -1115,7 +1094,7 @@ McpToolResult SmoothShapeWeights(OutfitStudioMcp& mcp, const json& args) {
 		if (bones.empty())
 			throw McpToolError("'" + shapeName + "' has no bone weights to smooth.");
 		auto verts = RestVerts(project, shape);
-		auto neighbors = VertexNeighbors(verts, Triangles(shape));
+		auto neighbors = VertexNeighbors(verts, ShapeTriangles(shape));
 
 		std::vector<bool> boneFilter;
 		if (!onlyBones.empty()) {
@@ -1288,7 +1267,7 @@ McpToolResult AutoFixWeights(OutfitStudioMcp& mcp, const json& args) {
 		if (bones.empty())
 			throw McpToolError("'" + shapeName + "' has no bone weights.");
 		auto verts = MorphedVerts(project, shape);
-		auto tris = Triangles(shape);
+		auto tris = ShapeTriangles(shape);
 		auto neighbors = VertexNeighbors(verts, tris);
 		const float meanEdge = MeanEdgeLength(verts, neighbors);
 
@@ -1365,7 +1344,7 @@ McpToolResult AutoFixWeights(OutfitStudioMcp& mcp, const json& args) {
 			auto referenceBones = ShapeBones(anim, reference->name.get());
 			auto referenceVerts = MorphedVerts(project, reference);
 			PoseSkinner referenceSkinner(mcp, reference, referenceBones, poses);
-			auto referenceStats = PoseStrain(referenceSkinner, poses.size(), referenceVerts, Triangles(reference),
+			auto referenceStats = PoseStrain(referenceSkinner, poses.size(), referenceVerts, ShapeTriangles(reference),
 											 DenseShapeWeights(anim, reference->name.get(), referenceBones, referenceVerts.size()), threshold);
 			for (size_t i = 0; i < poses.size(); i++) {
 				poseThreshold[i] = std::max(threshold, referenceStats[i].maxStrain);
@@ -1564,7 +1543,7 @@ McpToolResult ValidateProject(OutfitStudioMcp& mcp, const json& args) {
 	for (auto* shape : shapes) {
 		const std::string name = shape->name.get();
 		std::vector<Vector3> verts = RestVerts(project, shape);
-		std::vector<Triangle> tris = Triangles(shape);
+		std::vector<Triangle> tris = ShapeTriangles(shape);
 		std::vector<Vector2> uvs;
 		nif->GetUvsForShape(shape, uvs);
 
@@ -1704,7 +1683,7 @@ McpToolResult ValidateProject(OutfitStudioMcp& mcp, const json& args) {
 		// elsewhere (the hips for a top) don't count.
 		if (reference) {
 			auto refVerts = RestVerts(project, reference);
-			auto refTris = Triangles(reference);
+			auto refTris = ShapeTriangles(reference);
 			std::set<uint16_t> under;
 			for (auto& sp : MeshAnalysis::ClosestSurfacePoints(refVerts, refTris, verts, 3.0f)) {
 				if (sp.triangle < 0)
@@ -1920,7 +1899,7 @@ McpToolResult AnalysisExclusions(OutfitStudioMcp& mcp, const json& args) {
 			std::vector<Vector3> verts, surface;
 			project.GetMorphedVerts(shape, verts);
 			project.GetMorphedVerts(against, surface);
-			auto distances = ClippingFixer::SignedDistancesToBody(surface, Triangles(against), verts, 5.0f);
+			auto distances = ClippingFixer::SignedDistancesToBody(surface, ShapeTriangles(against), verts, 5.0f);
 			for (size_t v = 0; v < count && v < distances.size(); v++)
 				selected[v] = distances[v] != FLT_MAX && distances[v] < -minDepth;
 		}
@@ -1928,7 +1907,7 @@ McpToolResult AnalysisExclusions(OutfitStudioMcp& mcp, const json& args) {
 			// Where the body ends (neck, wrists, ankles), inside and outside can't be told apart
 			NiShape* against = McpAgainstShape(mcp, args, shape);
 			auto surface = RestVerts(project, against);
-			auto surfaceTris = Triangles(against);
+			auto surfaceTris = ShapeTriangles(against);
 			auto nearEdge = NearOpenEdges(surface, surfaceTris, McpArgs::Float(args, "edgeDistance", 1.5f));
 			auto closest = MeshAnalysis::ClosestSurfacePoints(surface, surfaceTris, RestVerts(project, shape), 5.0f);
 			for (size_t v = 0; v < count && v < closest.size(); v++) {
@@ -1942,7 +1921,7 @@ McpToolResult AnalysisExclusions(OutfitStudioMcp& mcp, const json& args) {
 			McpArgs::Wrong("op", "from_mask, vertices, deep_at_rest, reference_edges, show or clear");
 
 		if (grow > 0)
-			GrowSelection(selected, VertexNeighbors(RestVerts(project, shape), Triangles(shape)), grow);
+			GrowSelection(selected, VertexNeighbors(RestVerts(project, shape), ShapeTriangles(shape)), grow);
 
 		const size_t found = static_cast<size_t>(std::count(selected.begin(), selected.end(), true));
 		const std::vector<bool>* existing = mcp.Excluded(shape);
@@ -2045,7 +2024,7 @@ std::vector<float> McpSignedDistances(OutfitStudioMcp& mcp, NiShape* shape, NiSh
 	std::vector<Vector3> verts, surfaceVerts;
 	project.GetLiveVerts(shape, verts);
 	project.GetLiveVerts(against, surfaceVerts);
-	auto distances = ClippingFixer::SignedDistancesToBody(surfaceVerts, Triangles(against), verts, searchRadius);
+	auto distances = ClippingFixer::SignedDistancesToBody(surfaceVerts, ShapeTriangles(against), verts, searchRadius);
 	McpDropHiddenSurface(mcp, against, surfaceVerts, verts, distances);
 	McpMergePokeThrough(mcp, shape, verts, against, surfaceVerts, distances);
 
@@ -2058,7 +2037,7 @@ std::vector<float> McpSignedDistances(OutfitStudioMcp& mcp, NiShape* shape, NiSh
 }
 
 void McpDropHiddenSurface(OutfitStudioMcp& mcp, NiShape* against, const std::vector<Vector3>& surfaceVerts, const std::vector<Vector3>& verts, std::vector<float>& distances) {
-	std::vector<Triangle> tris = Triangles(against);
+	std::vector<Triangle> tris = ShapeTriangles(against);
 	std::vector<bool> hidden = mcp.HiddenSurfaceTriangles(against, tris);
 	if (std::find(hidden.begin(), hidden.end(), true) == hidden.end())
 		return;
@@ -2076,7 +2055,7 @@ McpPokeStats McpMergePokeThrough(OutfitStudioMcp& mcp,
 								 const std::vector<Vector3>& surfaceVerts,
 								 std::vector<float>& distances) {
 	McpPokeStats stats;
-	std::vector<Triangle> tris = Triangles(shape);
+	std::vector<Triangle> tris = ShapeTriangles(shape);
 	// Pokes deeper than this are the outfit's own parts inside the body, which the vertices show already
 	constexpr float maxPokeDepth = 1.0f;
 	auto pokes = ClippingFixer::BodyPokeThrough(surfaceVerts, mcp.SurfaceTriangles(against), verts, tris, maxPokeDepth);
@@ -2271,7 +2250,7 @@ std::vector<float> McpVertexMetric(OutfitStudioMcp& mcp, NiShape* shape, const j
 	else if (metric == "roughness") {
 		std::vector<Vector3> deltas;
 		mcp.Apply(ops.GetSliderDeltas(shape, sliderArg(), deltas));
-		values = MeshAnalysis::VertexRoughness(Triangles(shape), deltas);
+		values = MeshAnalysis::VertexRoughness(ShapeTriangles(shape), deltas);
 		threshold = 0.05f;
 	}
 	else if (metric == "flipped") {
@@ -2281,7 +2260,7 @@ std::vector<float> McpVertexMetric(OutfitStudioMcp& mcp, NiShape* shape, const j
 		auto after = before;
 		for (size_t v = 0; v < after.size() && v < deltas.size(); v++)
 			after[v] += deltas[v] * value;
-		auto tris = Triangles(shape);
+		auto tris = ShapeTriangles(shape);
 		for (size_t t : MeshAnalysis::FlippedTriangles(before, after, tris)) {
 			values[tris[t].p1] = 1.0f;
 			values[tris[t].p2] = 1.0f;
@@ -2292,8 +2271,8 @@ std::vector<float> McpVertexMetric(OutfitStudioMcp& mcp, NiShape* shape, const j
 	else if (metric == "weight_deviation") {
 		NiShape* against = McpAgainstShape(mcp, args, shape);
 		AnimInfo* anim = project.GetWorkAnim();
-		auto closest = MeshAnalysis::ClosestSurfacePoints(RestVerts(project, against), Triangles(against), RestVerts(project, shape), McpArgs::Float(args, "maxDistance", 2.0f));
-		auto deviation = MeshAnalysis::WeightDeviation(closest, Triangles(against), WeightMap(anim, against->name.get()), WeightMap(anim, shape->name.get()));
+		auto closest = MeshAnalysis::ClosestSurfacePoints(RestVerts(project, against), ShapeTriangles(against), RestVerts(project, shape), McpArgs::Float(args, "maxDistance", 2.0f));
+		auto deviation = MeshAnalysis::WeightDeviation(closest, ShapeTriangles(against), WeightMap(anim, against->name.get()), WeightMap(anim, shape->name.get()));
 		for (size_t v = 0; v < count && v < deviation.size(); v++)
 			values[v] = std::max(deviation[v], 0.0f);
 		threshold = 0.25f;
@@ -2345,7 +2324,7 @@ std::vector<float> McpVertexMetric(OutfitStudioMcp& mcp, NiShape* shape, const j
 		auto verts = MorphedVerts(project, shape);
 		PoseSkinner skinner(mcp, shape, bones, {pose});
 		auto weights = DenseShapeWeights(anim, shape->name.get(), bones, verts.size());
-		auto stats = MeshAnalysis::AnalyzeStrain(verts, skinner.Posed(0, verts, weights), Triangles(shape));
+		auto stats = MeshAnalysis::AnalyzeStrain(verts, skinner.Posed(0, verts, weights), ShapeTriangles(shape));
 		for (size_t v = 0; v < count && v < stats.vertexStrain.size(); v++)
 			values[v] = stats.vertexStrain[v];
 		threshold = 0.5f;
@@ -2354,7 +2333,7 @@ std::vector<float> McpVertexMetric(OutfitStudioMcp& mcp, NiShape* shape, const j
 		AnimInfo* anim = project.GetWorkAnim();
 		auto verts = RestVerts(project, shape);
 		auto jump = MeshAnalysis::WeightJump(DenseShapeWeights(anim, shape->name.get(), ShapeBones(anim, shape->name.get()), verts.size()),
-											 VertexNeighbors(verts, Triangles(shape)));
+											 VertexNeighbors(verts, ShapeTriangles(shape)));
 		for (size_t v = 0; v < count && v < jump.size(); v++)
 			values[v] = jump[v];
 		threshold = 0.5f;
@@ -2405,7 +2384,7 @@ McpToolResult McpMaskFromMetric(OutfitStudioMcp& mcp, const json& args) {
 		}
 
 		auto verts = RestVerts(project, shape);
-		GrowSelection(found, VertexNeighbors(verts, Triangles(shape)), grow);
+		GrowSelection(found, VertexNeighbors(verts, ShapeTriangles(shape)), grow);
 
 		// "fix" leaves only what was found unmasked, so fixes change nothing else; "protect" masks it. Excluded
 		// vertices (analysis_exclusions) always stay masked.

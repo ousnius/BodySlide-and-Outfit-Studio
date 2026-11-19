@@ -17,3 +17,34 @@ if (true) {
   doThing(2);
 }
 ```
+5. Include headers from `src`, like `#include "components/Mesh.h"`. Headers in the same folder are included by their name only.
+
+## Source layout
+
+Each folder may only use the folders above it in this list. CMake builds each one as a static library (`bsos_*`), so a wrong dependency fails to link on Linux.
+
+| Folder | What it holds |
+|---|---|
+| `lib` | Third-party code (nifly, FSEngine, TinyXML-2, ...) |
+| `src/utils`, `src/files`, `src/components` | File formats, meshes, sliders, skeletons and brushes. No GL and no windows. |
+| `src/render` | OpenGL drawing |
+| `src/physics` | The physics preview, drawn through `src/render` |
+| `src/ui` | Dialogs and widgets that both applications use |
+| `src/project` | The Outfit Studio project and its operations, without the window. The tests use it. |
+| `src/mcp` | The MCP server of Outfit Studio and its tools |
+| `src/ui/outfitstudio`, `src/ui/bodyslide` | Dialogs and widgets of one application |
+| `src/outfitstudio`, `src/bodyslide` | The applications and their windows |
+
+Two exceptions still use the Outfit Studio window, so CMake builds them into the Outfit Studio application instead of their library: `AutomationRunner*.cpp` in `src/project`, and the MCP tools (`McpTools*.cpp`, `McpSnapshots.cpp`, `OutfitStudioMcp.cpp`) in `src/mcp`.
+
+Large classes are split into one file per feature, named after the class. For example `OutfitStudioFrame.cpp` and `FrameSliders.cpp` both implement `OutfitStudioFrame`, and `OutfitProject.cpp` and `OutfitProjectSave.cpp` both implement `OutfitProject`. Panes of the Outfit Studio window with state of their own have a class that binds its own events, like `PosePanel` and `PhysicsPreview`.
+
+## Adding or moving a source file
+
+The file lists of CMake and of the Visual Studio projects are kept by hand. A new or moved file goes into each list that builds it:
+
+- `CMakeLists.txt`: the library or application source list of its folder, and the `BSOSTests` list for a test
+- `OutfitStudio.vcxproj` and `BodySlide.vcxproj` for the applications that use it, and `BSOSTests.vcxproj` if the tests use it
+- the matching `.vcxproj.filters` files, so the file shows up in its folder in Visual Studio
+
+Git stores the source files with LF line endings. On Windows, check them out with `core.autocrlf` set to `true`, so they have CRLF line endings on disk.

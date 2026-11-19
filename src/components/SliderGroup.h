@@ -12,7 +12,6 @@ See the included LICENSE file
 #include <string>
 #include <unordered_set>
 #include <vector>
-#include <wx/dir.h>
 
 using namespace tinyxml2;
 

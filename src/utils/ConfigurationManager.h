@@ -133,3 +133,6 @@ public:
 		*/
 	void ReplaceVars(std::string& inoutStr);
 };
+
+// The settings of the running application (Config.xml), defined by each application
+extern ConfigurationManager Config;

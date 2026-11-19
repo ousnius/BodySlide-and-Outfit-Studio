@@ -5,7 +5,8 @@ See the included LICENSE file
 
 #include "GLSurface.h"
 #include "GLOffscreenBuffer.h"
-#include "../utils/ConfigurationManager.h"
+#include "MeshBuffers.h"
+#include "utils/ConfigurationManager.h"
 
 #include <wx/log.h>
 #include <wx/msgdlg.h>
@@ -16,8 +17,6 @@ See the included LICENSE file
 #include <set>
 
 using namespace nifly;
-
-extern ConfigurationManager Config;
 
 namespace {
 const IntersectResult* NearestVisibleFacet(const Mesh* mesh, const std::vector<IntersectResult>& results) {
@@ -1064,7 +1063,7 @@ void GLSurface::RenderScene() {
 void GLSurface::RenderMesh(Mesh* m) {
 	m->UpdateBuffers();
 
-	if (!m->genBuffers || !m->material)
+	if (!m->HasBuffers() || !m->material)
 		return;
 
 	GLShader& shader = m->material->GetShader();
@@ -1086,7 +1085,7 @@ void GLSurface::RenderMesh(Mesh* m) {
 		else
 			glDisable(GL_CULL_FACE);
 
-		glCullFace(m->cullMode);
+		glCullFace(m->cullMode == Mesh::CullMode::Front ? GL_FRONT : GL_BACK);
 	}
 
 	shader.SetAlphaProperties(m->alphaFlags, m->alphaThreshold / 255.0f, m->prop.alpha);
@@ -1128,7 +1127,7 @@ void GLSurface::RenderMesh(Mesh* m) {
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glEnable(GL_DEPTH_TEST);
 
-	glBindVertexArray(m->vao);
+	glBindVertexArray(m->gpu->vao);
 
 	if (m->rendermode == Mesh::RenderMode::Normal || m->rendermode == Mesh::RenderMode::LitWire || m->rendermode == Mesh::RenderMode::UnlitSolid
 		|| m->rendermode == Mesh::RenderMode::LitSolid) {
@@ -1147,44 +1146,44 @@ void GLSurface::RenderMesh(Mesh* m) {
 		if (m->rendermode == Mesh::RenderMode::UnlitSolid)
 			shader.SetLightingEnabled(false);
 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->gpu->ibo);
 
-		glBindBuffer(GL_ARRAY_BUFFER, m->vbo[0]);
+		glBindBuffer(GL_ARRAY_BUFFER, m->gpu->vbo[0]);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Positions
 
 		if (m->norms) {
-			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[1]);
+			glBindBuffer(GL_ARRAY_BUFFER, m->gpu->vbo[1]);
 			glEnableVertexAttribArray(1);
 			glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Normals
 		}
 
 		if (m->tangents) {
-			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[2]);
+			glBindBuffer(GL_ARRAY_BUFFER, m->gpu->vbo[2]);
 			glEnableVertexAttribArray(2);
 			glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Tangents
 		}
 
 		if (m->bitangents) {
-			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[3]);
+			glBindBuffer(GL_ARRAY_BUFFER, m->gpu->vbo[3]);
 			glEnableVertexAttribArray(3);
 			glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Bitangents
 		}
 
 		if (m->vcolors) {
-			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[4]);
+			glBindBuffer(GL_ARRAY_BUFFER, m->gpu->vbo[4]);
 			glEnableVertexAttribArray(4);
 			glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Colors
 		}
 
 		if (m->valpha) {
-			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[5]);
+			glBindBuffer(GL_ARRAY_BUFFER, m->gpu->vbo[5]);
 			glEnableVertexAttribArray(5);
 			glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Alpha
 		}
 
 		if (useTexture) {
-			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[6]);
+			glBindBuffer(GL_ARRAY_BUFFER, m->gpu->vbo[6]);
 			glEnableVertexAttribArray(6);
 			glVertexAttribPointer(6, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Texture Coordinates
 
@@ -1192,7 +1191,7 @@ void GLSurface::RenderMesh(Mesh* m) {
 				// Without its own buffer the second UV channel stands in as the first
 				shader.SetUniform("bUV2", m->texcoord2 ? 1 : 0);
 				if (m->texcoord2) {
-					glBindBuffer(GL_ARRAY_BUFFER, m->vbo[9]);
+					glBindBuffer(GL_ARRAY_BUFFER, m->gpu->vbo[9]);
 					glEnableVertexAttribArray(9);
 					glVertexAttribPointer(9, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Second texture coordinates
 				}
@@ -1212,19 +1211,19 @@ void GLSurface::RenderMesh(Mesh* m) {
 		}
 
 		if (m->mask) {
-			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[7]);
+			glBindBuffer(GL_ARRAY_BUFFER, m->gpu->vbo[7]);
 			glEnableVertexAttribArray(7);
 			glVertexAttribPointer(7, 1, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Mask
 		}
 
 		if (m->weight) {
-			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[8]);
+			glBindBuffer(GL_ARRAY_BUFFER, m->gpu->vbo[8]);
 			glEnableVertexAttribArray(8);
 			glVertexAttribPointer(8, 1, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Weight
 		}
 
 		if (m->poseRotations) {
-			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[10]);
+			glBindBuffer(GL_ARRAY_BUFFER, m->gpu->vbo[10]);
 			glEnableVertexAttribArray(10);
 			glVertexAttribPointer(10, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Pose rotations
 		}
@@ -1292,8 +1291,8 @@ void GLSurface::RenderMesh(Mesh* m) {
 		if (m->rendermode != Mesh::RenderMode::UnlitWireDepth)
 			glDisable(GL_DEPTH_TEST);
 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
-		glBindBuffer(GL_ARRAY_BUFFER, m->vbo[0]);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->gpu->ibo);
+		glBindBuffer(GL_ARRAY_BUFFER, m->gpu->vbo[0]);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
 
@@ -1318,7 +1317,7 @@ void GLSurface::RenderMesh(Mesh* m) {
 void GLSurface::RenderMeshAsPoints(Mesh* m) {
 	m->UpdateBuffers();
 
-	if (!m->genBuffers)
+	if (!m->HasBuffers())
 		return;
 
 	auto material = GetPointsMaterial();
@@ -1343,7 +1342,7 @@ void GLSurface::RenderMeshAsPoints(Mesh* m) {
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glEnable(GL_DEPTH_TEST);
 
-	glBindVertexArray(m->vao);
+	glBindVertexArray(m->gpu->vao);
 
 	if (m->rendermode == Mesh::RenderMode::Normal || m->rendermode == Mesh::RenderMode::LitWire || m->rendermode == Mesh::RenderMode::UnlitSolid
 		|| m->rendermode == Mesh::RenderMode::LitSolid) {
@@ -1358,44 +1357,44 @@ void GLSurface::RenderMeshAsPoints(Mesh* m) {
 			shader.SetPointSizeParams(pointSizeMin, pointSizeMax, pointSizeScale);
 			shader.SetViewportSize(static_cast<float>(vpW), static_cast<float>(vpH));
 
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->gpu->ibo);
 
-			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[0]);
+			glBindBuffer(GL_ARRAY_BUFFER, m->gpu->vbo[0]);
 			glEnableVertexAttribArray(0);
 			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Positions
 
 			if (m->norms) {
-				glBindBuffer(GL_ARRAY_BUFFER, m->vbo[1]);
+				glBindBuffer(GL_ARRAY_BUFFER, m->gpu->vbo[1]);
 				glEnableVertexAttribArray(1);
 				glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Normals
 			}
 
 			if (m->tangents) {
-				glBindBuffer(GL_ARRAY_BUFFER, m->vbo[2]);
+				glBindBuffer(GL_ARRAY_BUFFER, m->gpu->vbo[2]);
 				glEnableVertexAttribArray(2);
 				glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Tangents
 			}
 
 			if (m->bitangents) {
-				glBindBuffer(GL_ARRAY_BUFFER, m->vbo[3]);
+				glBindBuffer(GL_ARRAY_BUFFER, m->gpu->vbo[3]);
 				glEnableVertexAttribArray(3);
 				glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Bitangents
 			}
 
 			if (m->vcolors) {
-				glBindBuffer(GL_ARRAY_BUFFER, m->vbo[4]);
+				glBindBuffer(GL_ARRAY_BUFFER, m->gpu->vbo[4]);
 				glEnableVertexAttribArray(4);
 				glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Colors
 			}
 
 			if (m->valpha) {
-				glBindBuffer(GL_ARRAY_BUFFER, m->vbo[5]);
+				glBindBuffer(GL_ARRAY_BUFFER, m->gpu->vbo[5]);
 				glEnableVertexAttribArray(5);
 				glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Alpha
 			}
 
 			if (bTextured && m->textured && m->texcoord) {
-				glBindBuffer(GL_ARRAY_BUFFER, m->vbo[6]);
+				glBindBuffer(GL_ARRAY_BUFFER, m->gpu->vbo[6]);
 				glEnableVertexAttribArray(6);
 				glVertexAttribPointer(6, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Texture Coordinates
 
@@ -1403,13 +1402,13 @@ void GLSurface::RenderMeshAsPoints(Mesh* m) {
 			}
 
 			if (m->mask) {
-				glBindBuffer(GL_ARRAY_BUFFER, m->vbo[7]);
+				glBindBuffer(GL_ARRAY_BUFFER, m->gpu->vbo[7]);
 				glEnableVertexAttribArray(7);
 				glVertexAttribPointer(7, 1, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Mask
 			}
 
 			if (m->weight) {
-				glBindBuffer(GL_ARRAY_BUFFER, m->vbo[8]);
+				glBindBuffer(GL_ARRAY_BUFFER, m->gpu->vbo[8]);
 				glEnableVertexAttribArray(8);
 				glVertexAttribPointer(8, 1, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Weight
 			}
@@ -1438,7 +1437,7 @@ void GLSurface::RenderMeshAsPoints(Mesh* m) {
 		if (m->rendermode != Mesh::RenderMode::UnlitPointsDepth)
 			glDisable(GL_DEPTH_TEST);
 
-		glBindBuffer(GL_ARRAY_BUFFER, m->vbo[0]);
+		glBindBuffer(GL_ARRAY_BUFFER, m->gpu->vbo[0]);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
 
@@ -2356,6 +2355,15 @@ Mesh::RenderMode GLSurface::SetMeshRenderMode(const std::string& name, Mesh::Ren
 	return r;
 }
 
+// Logs and shows the compile or link error of a material's shader, if there is one
+static void ReportShaderError(GLMaterial* mat) {
+	std::string shaderError;
+	if (mat && mat->GetShader().GetError(&shaderError)) {
+		wxLogError(wxString(shaderError));
+		wxMessageBox(shaderError, _("OpenGL Error"), wxICON_ERROR);
+	}
+}
+
 void GLSurface::AssignSFMaterial(Mesh* m,
 								 const SFLayeredMaterial& material,
 								 const std::string& vShaderFile,
@@ -2371,13 +2379,7 @@ void GLSurface::AssignSFMaterial(Mesh* m,
 											  fShaderFile,
 											  reloadTextures,
 											  loadedTextures);
-	if (mat) {
-		std::string shaderError;
-		if (mat->GetShader().GetError(&shaderError)) {
-			wxLogError(wxString(shaderError));
-			wxMessageBox(shaderError, _("OpenGL Error"), wxICON_ERROR);
-		}
-	}
+	ReportShaderError(mat);
 
 	auto renderData = std::make_shared<SFRenderData>(SFRenderData::Build(material, loadedTextures));
 
@@ -2415,13 +2417,7 @@ GLMaterial* GLSurface::AddMaterial(const std::vector<std::string>& textureFiles,
 		return nullptr;
 
 	GLMaterial* mat = resLoader.AddMaterial(textureFiles, vShaderFile, fShaderFile, reloadTextures, useDefaultTexture, isPBR);
-	if (mat) {
-		std::string shaderError;
-		if (mat->GetShader().GetError(&shaderError)) {
-			wxLogError(wxString(shaderError));
-			wxMessageBox(shaderError, _("OpenGL Error"), wxICON_ERROR);
-		}
-	}
+	ReportShaderError(mat);
 
 	return mat;
 }
@@ -2450,11 +2446,7 @@ GLMaterial* GLSurface::GetPointsMaterial() {
 
 		pointsMat = new GLMaterial(Config["AppDir"] + "/res/shaders/points.vert", Config["AppDir"] + "/res/shaders/points.frag");
 
-		std::string shaderError;
-		if (pointsMat->GetShader().GetError(&shaderError)) {
-			wxLogError(wxString(shaderError));
-			wxMessageBox(shaderError, _("OpenGL Error"), wxICON_ERROR);
-		}
+		ReportShaderError(pointsMat);
 	}
 
 	return pointsMat;
@@ -2467,11 +2459,7 @@ GLMaterial* GLSurface::GetPrimitiveMaterial() {
 
 		primitiveMat = new GLMaterial(Config["AppDir"] + "/res/shaders/primitive.vert", Config["AppDir"] + "/res/shaders/primitive.frag");
 
-		std::string shaderError;
-		if (primitiveMat->GetShader().GetError(&shaderError)) {
-			wxLogError(wxString(shaderError));
-			wxMessageBox(shaderError, _("OpenGL Error"), wxICON_ERROR);
-		}
+		ReportShaderError(primitiveMat);
 	}
 
 	return primitiveMat;

@@ -282,9 +282,9 @@ public:
 	bool TargetHasExternalData(const std::string& targetName) const;
 	bool ClearLocalOnlyDataFolders();
 
-	bool GenWeights();
-	bool PreventMorphFile();
-	bool KeepZappedShapes();
+	bool GenWeights() const;
+	bool PreventMorphFile() const;
+	bool KeepZappedShapes() const;
 
 	bool GetSmoothSeamNormals(const std::string& shapeName) {
 		auto shape = shapeAttributes.find(shapeName);

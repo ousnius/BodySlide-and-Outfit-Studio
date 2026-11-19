@@ -4,12 +4,14 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
+#include "McpHelpers.h"
 #include "McpSnapshots.h"
-#include "../files/MaterialFile.h"
-#include "../files/GameDataStream.h"
-#include "../program/GameImport.h"
-#include "../program/OutfitStudio.h"
-#include "../utils/ConfigurationManager.h"
+#include "files/MaterialFile.h"
+#include "files/GameDataStream.h"
+#include "project/GameImport.h"
+#include "outfitstudio/OutfitStudioFrame.h"
+#include "outfitstudio/GLPanel.h"
+#include "utils/ConfigurationManager.h"
 
 #include <wx/filename.h>
 #include <wx/log.h>
@@ -21,20 +23,10 @@ See the included LICENSE file
 #include <variant>
 #include <vector>
 
-extern ConfigurationManager Config;
-
 using nlohmann::json;
 using namespace nifly;
 
 namespace {
-
-std::string ToUTF8(const wxString& text) {
-	return text.ToUTF8().data();
-}
-
-json Vec(const Vector3& v) {
-	return {v.x, v.y, v.z};
-}
 
 // The dataFolders argument, absolute or relative to the BodySlide folder
 std::vector<std::string> DataFolders(const json& args) {
@@ -215,7 +207,7 @@ json MaterialValue(const MaterialFile& mat, const MaterialMember& member) {
 			if constexpr (std::is_same_v<T, Vector2>)
 				return {value.u, value.v};
 			else if constexpr (std::is_same_v<T, Vector3>)
-				return Vec(value);
+				return McpVector(value);
 			else
 				return value;
 		},

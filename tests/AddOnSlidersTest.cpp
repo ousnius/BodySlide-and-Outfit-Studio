@@ -1,7 +1,7 @@
-#include "../src/components/AddOnSliders.h"
-#include "../src/components/SliderSet.h"
-#include "../src/components/SliderSetIndex.h"
-#include "../src/utils/StringStuff.h"
+#include "components/AddOnSliders.h"
+#include "components/SliderSet.h"
+#include "components/SliderSetIndex.h"
+#include "utils/StringStuff.h"
 
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>

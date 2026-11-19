@@ -1,4 +1,4 @@
-#include "../src/components/ClothData.h"
+#include "components/ClothData.h"
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>

@@ -6,8 +6,8 @@ See the included LICENSE file
 #include "SliderSet.h"
 #include "SliderDataFileUtil.h"
 #include "SliderSetInheritance.h"
-#include "../utils/PlatformUtil.h"
-#include "../utils/StringStuff.h"
+#include "utils/PlatformUtil.h"
+#include "utils/StringStuff.h"
 
 #include <chrono>
 #include <cstdio>
@@ -940,15 +940,15 @@ std::string SliderSet::GetOutputFilePath() {
 	return outputpath + PathSepStr + outputfile;
 }
 
-bool SliderSet::GenWeights() {
+bool SliderSet::GenWeights() const {
 	return genWeights;
 }
 
-bool SliderSet::PreventMorphFile() {
+bool SliderSet::PreventMorphFile() const {
 	return preventMorphFile;
 }
 
-bool SliderSet::KeepZappedShapes() {
+bool SliderSet::KeepZappedShapes() const {
 	return keepZappedShapes;
 }
 

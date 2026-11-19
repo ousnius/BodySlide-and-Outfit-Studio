@@ -1,5 +1,5 @@
-#include "../src/components/PoseFit.h"
-#include "../src/components/PoseMath.h"
+#include "components/PoseFit.h"
+#include "components/PoseMath.h"
 
 #include <catch2/catch_test_macros.hpp>
 

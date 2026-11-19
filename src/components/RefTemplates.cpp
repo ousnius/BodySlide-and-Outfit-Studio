@@ -4,8 +4,10 @@ See the included LICENSE file
 */
 
 #include "RefTemplates.h"
-#include "../utils/PlatformUtil.h"
-#include "../utils/StringStuff.h"
+#include "utils/PlatformUtil.h"
+#include "utils/StringStuff.h"
+
+#include <wx/dir.h>
 
 int RefTemplateCollection::Load(const std::string& basePath) {
 	refTemplates.clear();

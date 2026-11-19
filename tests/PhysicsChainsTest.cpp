@@ -3,7 +3,7 @@ BodySlide and Outfit Studio
 See the included LICENSE file
 */
 
-#include "../src/components/PhysicsChains.h"
+#include "components/PhysicsChains.h"
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>

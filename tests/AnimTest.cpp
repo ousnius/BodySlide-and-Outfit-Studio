@@ -1,6 +1,6 @@
-#include "../src/components/Anim.h"
-#include "../src/components/Mesh.h"
-#include "../src/components/UndoState.h"
+#include "components/Anim.h"
+#include "components/Mesh.h"
+#include "components/UndoState.h"
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>

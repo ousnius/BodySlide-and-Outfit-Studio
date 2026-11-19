@@ -5,7 +5,7 @@ See the included LICENSE file
 
 #pragma once
 
-#include "../utils/ConfigurationManager.h"
+#include "utils/ConfigurationManager.h"
 #include "NifFile.hpp"
 #include "StarfieldSpace.h"
 
@@ -142,6 +142,8 @@ public:
 	std::vector<std::vector<int>> vertBones;	 // Vert order list of bones per vertex.
 };
 
+class AnimSkeleton;
+
 /* Represents animation weighting to a common skeleton across multiple shapes, sourced from nif files*/
 class AnimInfo {
 private:
@@ -154,6 +156,9 @@ private:
 	std::optional<nifly::MatTransform> FindBindOnOtherShape(const std::string& targetShape, const std::string& boneName) const;
 
 public:
+	// The skeleton the shapes are bound to. There is one for the whole application so far.
+	AnimSkeleton& GetSkeleton() const;
+
 	std::map<std::string, std::vector<std::string>> shapeBones;
 	std::unordered_map<std::string, AnimSkin> shapeSkinning; // Shape to skin association.
 
@@ -244,7 +249,8 @@ public:
 
 	void Clear();
 
-	int LoadFromNif(const std::string& fileName);
+	// Loads the reference skeleton. On failure returns non-zero and, if given, sets errorMessage to a translated message for the user.
+	int LoadFromNif(const std::string& fileName, wxString* errorMessage = nullptr);
 	AnimBone& AddStandardBone(const std::string& boneName);
 	AnimBone& AddCustomBone(const std::string& boneName);
 	std::string GenerateBoneName();
@@ -275,7 +281,7 @@ std::vector<AnimBone*> SortBonesParentsFirst(std::vector<AnimBone*> bones);
 // Loads the skeleton configured as "Anim/DefaultSkeletonReference" into the
 // AnimSkeleton singleton, resolving a relative path against the application
 // directory. Returns 0 on success.
-int LoadDefaultSkeletonReference();
+int LoadDefaultSkeletonReference(wxString* errorMessage = nullptr);
 
 // Bone name -> replacement pose-to-global transform, e.g. produced by the
 // physics preview simulation.

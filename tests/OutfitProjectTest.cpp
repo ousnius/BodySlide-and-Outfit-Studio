@@ -1,10 +1,10 @@
-#include "../src/components/AddOnSliders.h"
-#include "../src/components/MaskOps.h"
-#include "../src/components/SliderSetIndex.h"
-#include "../src/program/BrushStrokeController.h"
-#include "../src/program/OutfitProject.h"
-#include "../src/program/ProjectOperations.h"
-#include "../src/utils/ConfigurationManager.h"
+#include "components/AddOnSliders.h"
+#include "components/MaskOps.h"
+#include "components/SliderSetIndex.h"
+#include "project/BrushStrokeController.h"
+#include "project/OutfitProject.h"
+#include "project/ProjectOperations.h"
+#include "utils/ConfigurationManager.h"
 
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
@@ -16,8 +16,6 @@
 #include <map>
 #include <memory>
 #include <random>
-
-extern ConfigurationManager Config;
 
 using nifly::NifFile;
 using nifly::NiShape;
@@ -225,7 +223,7 @@ TEST_CASE("Meshes are built from shapes without GL", "[OutfitProject]") {
 	REQUIRE(m);
 	CHECK(m->nVerts == 49);
 	CHECK(m->nTris == 72);
-	CHECK_FALSE(m->genBuffers);
+	CHECK_FALSE(m->HasBuffers());
 	CHECK(m->bvh);
 }
 

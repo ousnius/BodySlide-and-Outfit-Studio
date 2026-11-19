@@ -4,12 +4,14 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
-#include "../components/ArchiveIndex.h"
-#include "../files/GameDataStream.h"
-#include "../program/OutfitStudio.h"
-#include "../ui/ArchiveBrowser.h"
-#include "../utils/ConfigurationManager.h"
-#include "../utils/GameUtil.h"
+#include "components/ArchiveIndex.h"
+#include "files/GameDataStream.h"
+#include "outfitstudio/OutfitStudioFrame.h"
+#include "outfitstudio/GLPanel.h"
+#include "utils/TargetGame.h"
+#include "ui/outfitstudio/ArchiveBrowser.h"
+#include "utils/ConfigurationManager.h"
+#include "utils/GameUtil.h"
 
 #include "FSEngine/FSEngine.h"
 #include "FSEngine/FSManager.h"
@@ -19,8 +21,6 @@ See the included LICENSE file
 
 #include <algorithm>
 #include <cctype>
-
-extern ConfigurationManager Config;
 
 using nlohmann::json;
 using nifly::NiShape;

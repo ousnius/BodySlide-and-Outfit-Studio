@@ -6,8 +6,8 @@ See the included LICENSE file
 #include "AddOnSliders.h"
 #include "Automorph.h"
 #include "SliderSetIndex.h"
-#include "../utils/PlatformUtil.h"
-#include "../utils/StringStuff.h"
+#include "utils/PlatformUtil.h"
+#include "utils/StringStuff.h"
 
 #include <algorithm>
 #include <filesystem>

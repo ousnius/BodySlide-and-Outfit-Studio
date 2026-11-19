@@ -4,15 +4,19 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
+#include "outfitstudio/PosePanel.h"
+#include "McpHelpers.h"
 #include "McpSnapshots.h"
-#include "../program/AutomationRunner.h"
-#include "../components/ClippingFixer.h"
-#include "../components/PoseMath.h"
-#include "../components/SliderPresets.h"
-#include "../components/StarfieldSpace.h"
-#include "../utils/ConfigurationManager.h"
-#include "../utils/ProjectUtil.h"
-#include "../program/OutfitStudio.h"
+#include "project/AutomationRunner.h"
+#include "components/ClippingFixer.h"
+#include "components/PoseMath.h"
+#include "components/SliderPresets.h"
+#include "components/StarfieldSpace.h"
+#include "utils/ConfigurationManager.h"
+#include "utils/ProjectUtil.h"
+#include "outfitstudio/OutfitStudioFrame.h"
+#include "outfitstudio/GLPanel.h"
+#include "components/UndoHistory.h"
 
 #include <wx/filename.h>
 
@@ -21,8 +25,6 @@ See the included LICENSE file
 #include <cmath>
 #include <set>
 
-extern ConfigurationManager Config;
-
 using nlohmann::json;
 using namespace nifly;
 
@@ -30,10 +32,6 @@ namespace {
 
 // Deltas of more vertices than this are only returned as statistics
 constexpr size_t MaxVerticesPerCall = 20000;
-
-json VectorToJson(const Vector3& v) {
-	return json::array({v.x, v.y, v.z});
-}
 
 Vector3 VectorFromJson(const json& value, const std::string& what) {
 	if (!value.is_array() || value.size() != 3 || !value[0].is_number() || !value[1].is_number() || !value[2].is_number())
@@ -137,7 +135,7 @@ McpToolResult GetDeltas(OutfitStudioMcp& mcp, const json& args) {
 		for (int v : vertices) {
 			if (v < 0 || static_cast<size_t>(v) >= deltas.size())
 				throw McpToolError("Vertex " + std::to_string(v) + " doesn't exist.");
-			list[std::to_string(v)] = VectorToJson(deltas[v]);
+			list[std::to_string(v)] = McpVector(deltas[v]);
 		}
 		result.data["deltas"] = list;
 	}
@@ -194,11 +192,11 @@ Vector3 ToBoneUnits(const Vector3& v, float units) {
 // Where a bone is (in mesh units) and which way it points in the skeleton's global space, with the pose, and how its
 // joint is twisted and bent
 json BoneTransform(AnimBone* bone, const PoseMath::TwistContext& context, float units) {
-	json entry = {{"position", VectorToJson(bone->xformPoseToGlobal.translation * units)}};
+	json entry = {{"position", McpVector(bone->xformPoseToGlobal.translation * units)}};
 
 	Vector3 direction;
 	if (HasAxis(bone) && PoseMath::BoneAxis(bone, direction)) {
-		entry["direction"] = VectorToJson(direction);
+		entry["direction"] = McpVector(direction);
 		if (PoseMath::JointParent(bone))
 			entry["bend"] = Degrees(PoseMath::BendAngle(bone));
 	}
@@ -274,7 +272,7 @@ json Balance(OutfitStudioMcp& mcp) {
 		if (PoseMath::GetBoneRole(bone->boneName).role.rfind("foot", 0) == 0)
 			feet.push_back(bone->xformPoseToGlobal.translation * units);
 
-	json balance = {{"centerOfMass", VectorToJson(center)}};
+	json balance = {{"centerOfMass", McpVector(center)}};
 	if (feet.empty())
 		return balance;
 
@@ -288,7 +286,7 @@ json Balance(OutfitStudioMcp& mcp) {
 
 	const float offsetX = center.x - support.x;
 	const float offsetY = center.y - support.y;
-	balance["feetCenter"] = VectorToJson(support);
+	balance["feetCenter"] = McpVector(support);
 	balance["offset"] = json::array({offsetX, offsetY});
 	// Standing needs the mass over the feet, give or take a foot's length
 	balance["balanced"] = std::hypot(offsetX, offsetY) <= spread + 5.0f;
@@ -394,9 +392,9 @@ McpToolResult GetPose(OutfitStudioMcp& mcp, bool posed, const json& args = json:
 
 		json entry = json::object();
 		if (rotated)
-			entry["rotation"] = VectorToJson(bone.rotation * (1.0f / DEG2RAD));
+			entry["rotation"] = McpVector(bone.rotation * (1.0f / DEG2RAD));
 		if (moved)
-			entry["translation"] = VectorToJson(bone.translation);
+			entry["translation"] = McpVector(bone.translation);
 		if (scaled)
 			entry["scale"] = bone.scale;
 		bones[bone.name] = entry;
@@ -1644,8 +1642,8 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 				reachResults[reach.bone->boneName] = {
 					{"reachable", solved.reachable},
 					{"missed", std::round(solved.missed * units * 100.0f) / 100.0f},
-					{"target", VectorToJson(position * units)},
-					{"middleJoint", VectorToJson(solved.midPosition * units)},
+					{"target", McpVector(position * units)},
+					{"middleJoint", McpVector(solved.midPosition * units)},
 				};
 				if (!solved.reachable)
 					reachResults[reach.bone->boneName]["note"] = "Out of reach: the limb points at the target as far as it goes.";
@@ -1736,7 +1734,7 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 			if (existing != poses.end() && !overwrite)
 				throw McpToolError("There already is a pose '" + name + "'. Pass overwrite: true to replace it.");
 
-			std::string error = frame->SaveCurrentPose(name);
+			std::string error = frame->posePanel->SaveCurrentPose(name);
 			if (!error.empty())
 				throw McpToolError(error);
 			result.data["name"] = name;
@@ -1747,7 +1745,7 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 			if (wxFileName::FileExists(wxString::FromUTF8(file)) && !overwrite)
 				throw McpToolError("The file '" + file + "' exists. Pass overwrite: true to replace it.");
 
-			std::string error = frame->SaveCurrentPoseFile(file);
+			std::string error = frame->posePanel->SaveCurrentPoseFile(file);
 			if (!error.empty())
 				throw McpToolError(error);
 			result.data["file"] = file;

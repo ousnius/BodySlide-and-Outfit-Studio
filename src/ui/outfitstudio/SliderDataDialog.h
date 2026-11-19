@@ -1,0 +1,64 @@
+/*
+BodySlide and Outfit Studio
+See the included LICENSE file
+*/
+
+#pragma once
+
+#include "project/OutfitProject.h"
+
+#include <cstddef>
+#include <functional>
+#include <string>
+#include <vector>
+
+#include <wx/dialog.h>
+#include <wx/string.h>
+
+class OutfitStudioFrame;
+class wxButton;
+class wxChoice;
+class wxListCtrl;
+class wxTextCtrl;
+class wxWindow;
+
+class SliderDataList {
+public:
+	// Where the data of an entry comes from, as the list shows it
+	static wxString SourceLabel(const SliderDataLocation& location);
+	static bool AllOverridden(const std::vector<SliderDataLocation>& rows, const std::vector<size_t>& rowIndices);
+	static bool AnyInherited(const std::vector<SliderDataLocation>& rows, const std::vector<size_t>& rowIndices);
+	static bool RevertToBase(wxWindow* parent, OutfitProject* project, const std::vector<SliderDataLocation>& rows, const std::vector<size_t>& rowIndices);
+	static wxString JoinDataFolders(const std::vector<std::string>& dataFolders);
+	static void Configure(wxListCtrl* list, bool includeSlider);
+	static void Populate(wxListCtrl* list, const std::vector<SliderDataLocation>& rows, const std::vector<size_t>* visibleRows, bool includeSlider);
+	static size_t GetSelectedRows(wxListCtrl* list, const std::vector<SliderDataLocation>& rows, std::vector<size_t>& outRowIndices);
+	static bool AllHaveSource(const std::vector<SliderDataLocation>& rows, const std::vector<size_t>& rowIndices, bool local);
+	static void BindSelectAll(wxWindow* window, wxListCtrl* list, const std::function<void()>& updateButtons);
+	static bool MakeLocal(wxWindow* parent, OutfitProject* project, const std::vector<SliderDataLocation>& rows, const std::vector<size_t>& rowIndices);
+	static bool EditFolders(wxWindow* parent, OutfitProject* project, const std::vector<SliderDataLocation>& rows, const std::vector<size_t>& rowIndices);
+};
+
+class SliderDataLocationsDialog : public wxDialog {
+public:
+	SliderDataLocationsDialog(OutfitStudioFrame* owner, OutfitProject* project);
+
+private:
+	void UpdateButtons();
+	void ApplyFilters();
+	void RefreshRows();
+	void MarkChangedAndRefresh();
+
+	OutfitStudioFrame* owner = nullptr;
+	OutfitProject* project = nullptr;
+	wxTextCtrl* filterText = nullptr;
+	wxChoice* sourceChoice = nullptr;
+	wxChoice* statusChoice = nullptr;
+	wxListCtrl* sliderDataList = nullptr;
+	wxButton* btnMakeLocal = nullptr;
+	wxButton* btnMakeExternal = nullptr;
+	wxButton* btnEditFolders = nullptr;
+	wxButton* btnRevertToBase = nullptr;
+	std::vector<SliderDataLocation> rows;
+	std::vector<size_t> visibleRows;
+};

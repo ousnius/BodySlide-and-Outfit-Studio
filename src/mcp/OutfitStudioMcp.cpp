@@ -5,7 +5,7 @@ See the included LICENSE file
 
 #include "OutfitStudioMcp.h"
 #include "McpSnapshots.h"
-#include "../program/OutfitStudio.h"
+#include "outfitstudio/OutfitStudioFrame.h"
 
 #include <wx/log.h>
 

@@ -7,7 +7,7 @@ See the included LICENSE file
 
 #include "SFMaterialFile.h"
 #include "GameDataStream.h"
-#include "../utils/StringStuff.h"
+#include "utils/StringStuff.h"
 
 #include "FSEngine/FSEngine.h"
 #include "FSEngine/FSManager.h"

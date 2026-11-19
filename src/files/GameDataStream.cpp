@@ -5,10 +5,10 @@ See the included LICENSE file
 
 #include "GameDataStream.h"
 
-#include "../utils/ConfigurationManager.h"
-#include "../utils/GameUtil.h"
-#include "../utils/PlatformUtil.h"
-#include "../utils/StringStuff.h"
+#include "utils/ConfigurationManager.h"
+#include "utils/GameUtil.h"
+#include "utils/PlatformUtil.h"
+#include "utils/StringStuff.h"
 
 #include "FSEngine/FSEngine.h"
 #include "FSEngine/FSManager.h"
@@ -19,8 +19,6 @@ See the included LICENSE file
 #include <sstream>
 
 #include <wx/buffer.h>
-
-extern ConfigurationManager Config;
 
 namespace GameDataStream {
 std::vector<std::string> DataFolders() {

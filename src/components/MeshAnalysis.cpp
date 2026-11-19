@@ -5,8 +5,8 @@ See the included LICENSE file
 
 #include "MeshAnalysis.h"
 #include "ClippingFixer.h"
-#include "../utils/AABBTree.h"
-#include "../utils/ParallelFor.h"
+#include "utils/AABBTree.h"
+#include "utils/ParallelFor.h"
 
 #include <algorithm>
 #include <array>

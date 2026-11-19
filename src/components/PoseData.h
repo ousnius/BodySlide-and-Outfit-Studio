@@ -7,7 +7,7 @@ See the included LICENSE file
 
 #include <tinyxml2.h>
 
-#include "../files/HkxFile.h"
+#include "files/HkxFile.h"
 #include "Object3d.hpp"
 
 class AnimBone;
@@ -19,7 +19,7 @@ class AnimBone;
 #include <string>
 #include <unordered_set>
 #include <vector>
-#include <wx/dir.h>
+#include <wx/string.h>
 
 using namespace tinyxml2;
 

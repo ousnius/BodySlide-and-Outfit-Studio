@@ -8,7 +8,7 @@ See the included LICENSE file
 #include "McpArgs.h"
 #include "McpProtocol.h"
 #include "McpServer.h"
-#include "../components/PoseMath.h"
+#include "components/PoseMath.h"
 
 #include <atomic>
 #include <chrono>

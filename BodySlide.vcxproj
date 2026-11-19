@@ -96,7 +96,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;src;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -125,7 +125,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\bullet3\install\include\bullet;..\wxWidgets\include\msvc;..\wxWidgets\include;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\bullet3\install\include\bullet;..\wxWidgets\include\msvc;..\wxWidgets\include;src;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;USE_BULLET;BT_USE_SSE_IN_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -155,7 +155,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;src;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>
@@ -192,7 +192,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\bullet3\install\include\bullet;..\wxWidgets\include\msvc;..\wxWidgets\include;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\bullet3\install\include\bullet;..\wxWidgets\include\msvc;..\wxWidgets\include;src;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;USE_BULLET;BT_USE_SSE_IN_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>
@@ -811,7 +811,8 @@
     <ClInclude Include="src\files\MaterialFile.h" />
     <ClInclude Include="src\files\EXRImage.h" />
     <ClInclude Include="src\files\ObjFile.h" />
-    <ClInclude Include="src\files\ResourceLoader.h" />
+    <ClInclude Include="src\render\ResourceLoader.h" />
+    <ClInclude Include="src\render\MeshBuffers.h" />
     <ClInclude Include="src\files\SFMaterialDatabase.h" />
     <ClInclude Include="src\files\SFMaterialFile.h" />
     <ClInclude Include="src\files\SFLayeredMaterial.h" />
@@ -821,26 +822,29 @@
     <ClInclude Include="src\files\SFResourceHash.h" />
     <ClInclude Include="src\files\TriFile.h" />
     <ClInclude Include="src\files\wxDDSImage.h" />
-    <ClInclude Include="src\program\BodySlideApp.h" />
-    <ClInclude Include="src\program\GroupManager.h" />
-    <ClInclude Include="src\program\NormalsGenDialog.h" />
-    <ClInclude Include="src\program\PresetSaveDialog.h" />
-    <ClInclude Include="src\program\PreviewWindow.h" />
+    <ClInclude Include="src\bodyslide\BodySlideApp.h" />
+    <ClInclude Include="src\bodyslide\SliderDisplay.h" />
+    <ClInclude Include="src\bodyslide\BodySlideFrame.h" />
+    <ClInclude Include="src\ui\GroupManager.h" />
+    <ClInclude Include="src\ui\bodyslide\NormalsGenDialog.h" />
+    <ClInclude Include="src\ui\PresetSaveDialog.h" />
+    <ClInclude Include="src\bodyslide\PreviewWindow.h" />
     <ClInclude Include="src\render\GLExtensions.h" />
     <ClInclude Include="src\render\GLHDRiEnvironment.h" />
     <ClInclude Include="src\render\GLMaterial.h" />
     <ClInclude Include="src\render\GLOffscreenBuffer.h" />
     <ClInclude Include="src\render\GLShader.h" />
     <ClInclude Include="src\render\GLSurface.h" />
-    <ClInclude Include="src\ui\PreviewPanel.h" />
+    <ClInclude Include="src\ui\bodyslide\PreviewPanel.h" />
     <ClInclude Include="src\ui\wxFavoriteChoice.h" />
-    <ClInclude Include="src\ui\wxNormalsGenDlg.h" />
+    <ClInclude Include="src\ui\bodyslide\wxNormalsGenDlg.h" />
     <ClInclude Include="src\ui\wxStateButton.h" />
     <ClInclude Include="src\utils\AABBTree.h" />
     <ClInclude Include="src\utils\ConfigurationManager.h" />
     <ClInclude Include="src\utils\Log.h" />
     <ClInclude Include="src\utils\PlatformUtil.h" />
-    <ClInclude Include="src\utils\SettingsDialogShared.h" />
+    <ClInclude Include="src\ui\SettingsDialogShared.h" />
+    <ClInclude Include="src\ui\AppSetup.h" />
     <ClInclude Include="src\utils\ProjectUtil.h" />
     <ClInclude Include="src\utils\GameUtil.h" />
     <ClInclude Include="src\utils\MainThreadDispatcher.h" />
@@ -930,7 +934,7 @@
     <ClCompile Include="src\files\MaterialFile.cpp" />
     <ClCompile Include="src\files\EXRImage.cpp" />
     <ClCompile Include="src\files\ObjFile.cpp" />
-    <ClCompile Include="src\files\ResourceLoader.cpp" />
+    <ClCompile Include="src\render\ResourceLoader.cpp" />
     <ClCompile Include="src\files\SFMaterialDatabase.cpp" />
     <ClCompile Include="src\files\SFMaterialFile.cpp" />
     <ClCompile Include="src\files\SFLayeredMaterial.cpp" />
@@ -940,11 +944,26 @@
     <ClCompile Include="src\files\SFResourceHash.cpp" />
     <ClCompile Include="src\files\TriFile.cpp" />
     <ClCompile Include="src\files\wxDDSImage.cpp" />
-    <ClCompile Include="src\program\BodySlideApp.cpp" />
-    <ClCompile Include="src\program\GroupManager.cpp" />
-    <ClCompile Include="src\program\NormalsGenDialog.cpp" />
-    <ClCompile Include="src\program\PresetSaveDialog.cpp" />
-    <ClCompile Include="src\program\PreviewWindow.cpp" />
+    <ClCompile Include="src\bodyslide\BodySlideApp.cpp" />
+    <ClCompile Include="src\bodyslide\BodySlideFrameSliders.cpp" />
+    <ClCompile Include="src\bodyslide\BodySlideFramePreview.cpp" />
+    <ClCompile Include="src\bodyslide\BodySlideFrameOutfits.cpp" />
+    <ClCompile Include="src\bodyslide\BodySlideFrameBuild.cpp" />
+    <ClCompile Include="src\bodyslide\BodySlideFrame.cpp" />
+    <ClCompile Include="src\bodyslide\BodySlideAppSliders.cpp" />
+    <ClCompile Include="src\bodyslide\BodySlideAppPreviewMotion.cpp" />
+    <ClCompile Include="src\bodyslide\BodySlideAppPreview.cpp" />
+    <ClCompile Include="src\bodyslide\BodySlideAppPresets.cpp" />
+    <ClCompile Include="src\bodyslide\BodySlideAppOutfits.cpp" />
+    <ClCompile Include="src\bodyslide\BodySlideAppMorphFiles.cpp" />
+    <ClCompile Include="src\bodyslide\BodySlideAppGroups.cpp" />
+    <ClCompile Include="src\bodyslide\BodySlideAppBuildRecords.cpp" />
+    <ClCompile Include="src\bodyslide\BodySlideAppBuild.cpp" />
+    <ClCompile Include="src\bodyslide\SliderDisplay.cpp" />
+    <ClCompile Include="src\ui\GroupManager.cpp" />
+    <ClCompile Include="src\ui\bodyslide\NormalsGenDialog.cpp" />
+    <ClCompile Include="src\ui\PresetSaveDialog.cpp" />
+    <ClCompile Include="src\bodyslide\PreviewWindow.cpp" />
     <ClCompile Include="src\render\GLExtensions.cpp" />
     <ClCompile Include="src\render\GLHDRiEnvironment.cpp" />
     <ClCompile Include="src\render\GLMaterial.cpp" />
@@ -952,15 +971,16 @@
     <ClCompile Include="src\render\MeshBuffers.cpp" />
     <ClCompile Include="src\render\GLShader.cpp" />
     <ClCompile Include="src\render\GLSurface.cpp" />
-    <ClCompile Include="src\ui\PreviewPanel.cpp" />
+    <ClCompile Include="src\ui\bodyslide\PreviewPanel.cpp" />
     <ClCompile Include="src\ui\wxFavoriteChoice.cpp" />
-    <ClCompile Include="src\ui\wxNormalsGenDlg.cpp" />
+    <ClCompile Include="src\ui\bodyslide\wxNormalsGenDlg.cpp" />
     <ClCompile Include="src\ui\wxStateButton.cpp" />
     <ClCompile Include="src\utils\AABBTree.cpp" />
     <ClCompile Include="src\utils\ConfigurationManager.cpp" />
     <ClCompile Include="src\utils\Log.cpp" />
     <ClCompile Include="src\utils\PlatformUtil.cpp" />
-    <ClCompile Include="src\utils\SettingsDialogShared.cpp" />
+    <ClCompile Include="src\ui\SettingsDialogShared.cpp" />
+    <ClCompile Include="src\ui\AppSetup.cpp" />
     <ClCompile Include="src\utils\ProjectUtil.cpp" />
     <ClCompile Include="src\utils\GameUtil.cpp" />
     <ClCompile Include="src\utils\MainThreadDispatcher.cpp" />

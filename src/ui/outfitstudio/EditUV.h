@@ -1,0 +1,208 @@
+/*
+BodySlide and Outfit Studio
+See the included LICENSE file
+*/
+
+#pragma once
+
+#include "render/GLSurface.h"
+
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <vector>
+#include <wx/frame.h>
+#include <wx/glcanvas.h>
+
+const int EDITUV_MAX_UNDO = 200;
+
+const int EDITUV_DIRECTION_NONE = 0x0;
+const int EDITUV_DIRECTION_RIGHT = 0x1;
+const int EDITUV_DIRECTION_LEFT = 0x2;
+const int EDITUV_DIRECTION_UP = 0x4;
+const int EDITUV_DIRECTION_DOWN = 0x8;
+
+enum class EditUVTool { BoxSelection, RopeSelection, VertexSelection, Move, Scale, Rotate };
+
+class OutfitStudioFrame;
+
+class EditUVAction {
+	Mesh* actionMesh = nullptr;
+	std::unordered_map<int, nifly::Vector2> startState;
+	std::unordered_map<int, nifly::Vector2> endState;
+
+public:
+	void SetActionMesh(Mesh* m) { actionMesh = m; }
+
+	std::unordered_map<int, nifly::Vector2>& GetStartState();
+	std::unordered_map<int, nifly::Vector2>& GetEndState();
+	void SetStartState(std::unordered_map<int, nifly::Vector2>& state);
+	void SetEndState(std::unordered_map<int, nifly::Vector2>& state);
+	void RestoreStartState();
+	void RestoreEndState();
+};
+
+class EditUVHistory {
+	int curState = -1;
+	std::vector<EditUVAction*> actions;
+
+public:
+	EditUVHistory();
+	~EditUVHistory();
+
+	void Add(EditUVAction* action);
+	bool Back();
+	bool Forward();
+	void Clear();
+
+	EditUVAction* GetCurState() {
+		if (curState == -1)
+			return nullptr;
+
+		return actions[curState];
+	}
+};
+
+class EditUVCanvas;
+
+class EditUV : public wxFrame {
+public:
+	OutfitStudioFrame* os = nullptr;
+	EditUVCanvas* canvas = nullptr;
+	nifly::NifFile* nif = nullptr;
+	nifly::NiShape* shape = nullptr;
+	Mesh* shapeMesh = nullptr;
+	std::string sliderName;
+
+	EditUVAction currentAction;
+	EditUVHistory history;
+
+	wxToolBar* uvToolBar = nullptr;
+	wxMenuBar* uvMenuBar = nullptr;
+
+	EditUV(wxWindow*, nifly::NifFile*, nifly::NiShape*, Mesh*, const std::string&);
+	~EditUV();
+
+	void StartTool() { toolActive = toolSelected; }
+
+	EditUVTool GetSelectedTool() { return toolSelected; }
+
+	EditUVTool GetActiveTool() { return toolActive; }
+
+	void SelectTool(EditUVTool tool);
+	void Undo();
+	void Redo();
+
+private:
+	EditUVTool toolSelected = EditUVTool::BoxSelection;
+	EditUVTool toolActive = EditUVTool::BoxSelection;
+
+	void UpdateShapeMesh(bool apply = true);
+
+	void OnSelectTool(wxCommandEvent& event);
+	void OnSeamEdges(wxCommandEvent& event);
+	void OnUndo(wxCommandEvent& event);
+	void OnRedo(wxCommandEvent& event);
+	void OnSelectAll(wxCommandEvent& event);
+	void OnSelectInvert(wxCommandEvent& event);
+	void OnSelectLess(wxCommandEvent& event);
+	void OnSelectMore(wxCommandEvent& event);
+	void OnMaskSelection(wxCommandEvent& event);
+	void OnExportUVTemplate(wxCommandEvent& event);
+	void OnTranslate(wxCommandEvent& event);
+	void OnRotate(wxCommandEvent& event);
+	void OnScale(wxCommandEvent& event);
+	void OnApply(wxCommandEvent& event);
+	void OnCancel(wxCommandEvent& event);
+	void OnClose(wxCloseEvent& event);
+
+	wxDECLARE_EVENT_TABLE();
+};
+
+class EditUVCanvas : public wxGLCanvas {
+public:
+	Mesh* seamEdgesMesh = nullptr;
+	Mesh* planeMesh = nullptr;
+	Mesh* uvGridMesh = nullptr;
+	Mesh* boxSelectMesh = nullptr;
+	Mesh* ropeSelectMesh = nullptr;
+
+	EditUVCanvas(wxWindow* parent, const wxSize& size, const wxGLAttributes& attribs);
+	~EditUVCanvas();
+
+public:
+	void SetNotifyWindow(wxWindow*);
+	void SelectAll();
+	void SelectInvert();
+	void SelectLess();
+	void SelectMore();
+
+	nifly::Vector3 CalcSelectionCenter();
+	void StartMeshAction();
+	void EndMeshAction();
+	void ApplyMeshTransform(const nifly::Matrix4&);
+
+	void SetCursorType(GLSurface::CursorType cursorType) { uvSurface.SetCursorType(cursorType); }
+
+	void Render() { uvSurface.RenderOneFrame(); }
+
+	bool ExportUVTemplate(const std::string& filename, int resolution, const wxColour& wireColor, const wxColour& bgColor, bool transparentBG, bool includeTexture, bool clampUVs, bool antiAliasing);
+
+private:
+	EditUV* editUV = nullptr;
+
+	GLSurface uvSurface;
+	std::unique_ptr<wxGLContext> context;
+
+	bool firstPaint = true;
+
+	bool rbuttonDown = false;
+	bool lbuttonDown = false;
+	bool mbuttonDown = false;
+	bool isLDragging = false;
+	bool isMDragging = false;
+	bool isRDragging = false;
+
+	int clickX = 0;
+	int clickY = 0;
+	int upX = 0;
+	int upY = 0;
+	int lastX = 0;
+	int lastY = 0;
+
+	nifly::Vector3 currentCenter;
+	int lastDirection;
+	float lastAngle;
+
+	int hoverPoint = -1;
+	std::vector<nifly::Vector2> ropeSelectPoints;
+
+	GLMaterial uvGridMaterial;
+	GLMaterial boxSelectMaterial;
+	GLMaterial ropeSelectMaterial;
+
+	void OnShown();
+	void OnPaint(wxPaintEvent& event);
+	void OnSize(wxSizeEvent& event);
+
+	void OnMouseWheel(wxMouseEvent& event);
+	void OnMouseMove(wxMouseEvent& event);
+
+	void OnLeftDown(wxMouseEvent& event);
+	void OnLeftUp(wxMouseEvent& event);
+	void OnMiddleDown(wxMouseEvent& event);
+	void OnMiddleUp(wxMouseEvent& event);
+	void OnRightDown(wxMouseEvent& event);
+	void OnRightUp(wxMouseEvent& event);
+	void OnKeyDown(wxKeyEvent& event);
+
+	void InitMeshes();
+	void UpdateCursor(int ScreenX, int ScreenY, const std::string& meshName);
+	bool SelectVertex(const wxPoint& screenPos, bool unselect = false);
+	bool AddRopeSelectPoint(const nifly::Vector3& point, bool force = false);
+	void UpdateRopeSelectMesh();
+	void ApplyRopeSelection(bool unselect);
+	bool PointInRopeSelection(const nifly::Vector2& point) const;
+
+	wxDECLARE_EVENT_TABLE();
+};

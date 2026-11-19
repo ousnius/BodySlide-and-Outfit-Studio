@@ -4,13 +4,15 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
-#include "../components/AddOnSliders.h"
-#include "../components/AutomationJson.h"
-#include "../program/AutomationRunner.h"
-#include "../program/OutfitStudio.h"
-#include "../utils/ConfigurationManager.h"
-#include "../utils/GameUtil.h"
-#include "../utils/ProjectUtil.h"
+#include "McpHelpers.h"
+#include "components/AddOnSliders.h"
+#include "components/AutomationJson.h"
+#include "project/AutomationRunner.h"
+#include "outfitstudio/OutfitStudioFrame.h"
+#include "utils/TargetGame.h"
+#include "utils/ConfigurationManager.h"
+#include "utils/GameUtil.h"
+#include "utils/ProjectUtil.h"
 
 #include <algorithm>
 #include <cctype>
@@ -24,16 +26,10 @@ See the included LICENSE file
 #include <wx/filename.h>
 #include <wx/utils.h>
 
-extern ConfigurationManager Config;
-
 using nlohmann::json;
 using namespace nifly;
 
 namespace {
-
-std::string ToUTF8(const wxString& text) {
-	return text.ToUTF8().data();
-}
 
 // Path relative to the BodySlide folder, the way the tools take it back
 std::string RelativeToProject(const wxString& path) {

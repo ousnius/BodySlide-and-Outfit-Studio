@@ -5,8 +5,8 @@ See the included LICENSE file
 
 #include "Automation.h"
 
-#include "../utils/PlatformUtil.h"
-#include "../utils/StringStuff.h"
+#include "utils/PlatformUtil.h"
+#include "utils/StringStuff.h"
 
 #include <tinyxml2.h>
 

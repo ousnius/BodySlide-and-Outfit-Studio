@@ -1,13 +1,11 @@
-#include "../src/utils/ConfigurationManager.h"
-#include "../src/utils/ProjectUtil.h"
+#include "utils/ConfigurationManager.h"
+#include "utils/ProjectUtil.h"
 
 #include <catch2/catch_test_macros.hpp>
 
 #include <filesystem>
 #include <random>
 #include <string>
-
-extern ConfigurationManager Config;
 
 namespace {
 // Temporary folder with an app dir, a project dir and a game data dir, restoring the config afterwards

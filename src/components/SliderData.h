@@ -8,7 +8,7 @@ See the included LICENSE file
 #include <tinyxml2.h>
 
 #include "DiffData.h"
-#include "../utils/StringStuff.h"
+#include "utils/StringStuff.h"
 
 #include <algorithm>
 #include <cstddef>

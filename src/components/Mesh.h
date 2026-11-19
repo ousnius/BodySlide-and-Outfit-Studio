@@ -5,10 +5,9 @@ See the included LICENSE file
 
 #pragma once
 
-#include "../files/MaterialFile.h"
-#include "../files/SFLayeredMaterial.h"
-#include "../render/GLExtensions.h"
-#include "../utils/AABBTree.h"
+#include "files/MaterialFile.h"
+#include "files/SFLayeredMaterial.h"
+#include "utils/AABBTree.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -27,6 +26,7 @@ See the included LICENSE file
 #include <vector>
 
 class GLMaterial;
+struct MeshGpuBuffers; // render/MeshBuffers.h
 
 namespace nifly {
 class NifFile;
@@ -125,12 +125,9 @@ public:
 	std::unique_ptr<nifly::Edge[]> edges;
 	int nEdges = 0;
 
-	// The GL buffers are made by CreateBuffers (MeshBuffers.cpp), which also sets releaseBuffers to free them
-	bool genBuffers = false;
-	void (*releaseBuffers)(Mesh&) = nullptr;
-	GLuint vao = 0;
-	std::vector<GLuint> vbo = std::vector<GLuint>(11, 0);
-	GLuint ibo = 0;
+	// GL buffers, made by CreateBuffers (render/MeshBuffers.cpp) together with the function that frees them,
+	// so the mesh data never needs GL itself, e.g. in tests. nullptr until the mesh is drawn.
+	std::unique_ptr<MeshGpuBuffers, void (*)(MeshGpuBuffers*)> gpu{nullptr, nullptr};
 
 	std::vector<std::pair<uint32_t, uint32_t>> subMeshes; // Start index and size of each sub mesh
 	std::vector<nifly::Vector3> subMeshesColor;			  // Color of each sub mesh
@@ -156,7 +153,8 @@ public:
 
 	RenderMode rendermode = RenderMode::Normal;
 	bool doublesided = false;
-	GLenum cullMode = GL_BACK;
+	enum class CullMode { Back, Front };
+	CullMode cullMode = CullMode::Back;
 	bool modelSpace = false;
 	bool emissive = false;
 	bool specular = true;
@@ -252,6 +250,7 @@ public:
 	void CalcWeldVerts();
 
 	void CreateBuffers();
+	bool HasBuffers() const { return gpu != nullptr; }
 	void UpdateBuffers();
 	void QueueUpdate(const UpdateType& type);
 	void UpdateFromMaterialFile(const MaterialFile& matFile);

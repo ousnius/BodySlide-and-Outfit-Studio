@@ -7,7 +7,7 @@ See the included LICENSE file
 
 #ifdef USE_OPENEXR
 
-#include "../utils/PlatformUtil.h"
+#include "utils/PlatformUtil.h"
 
 // The C core rather than the C++ Imf API on purpose. The C++ one drags in Iex, of which the Autodesk
 // FBX SDK statically carries its own copy, and the two can't be linked into Outfit Studio together.

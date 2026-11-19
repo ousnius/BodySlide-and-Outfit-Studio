@@ -1,5 +1,5 @@
-#include "../src/components/PoseMath.h"
-#include "../src/utils/ConfigurationManager.h"
+#include "components/PoseMath.h"
+#include "utils/ConfigurationManager.h"
 
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
@@ -9,8 +9,6 @@
 #include <deque>
 
 using namespace nifly;
-
-extern ConfigurationManager Config;
 
 namespace {
 

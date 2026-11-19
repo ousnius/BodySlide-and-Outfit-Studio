@@ -5,7 +5,7 @@ See the included LICENSE file
 
 #pragma once
 
-#include "../program/ProjectOperations.h"
+#include "project/ProjectOperations.h"
 
 #include <nlohmann/json.hpp>
 

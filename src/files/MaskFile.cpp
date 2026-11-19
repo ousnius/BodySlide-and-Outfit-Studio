@@ -5,7 +5,7 @@ See the included LICENSE file
 
 #include "MaskFile.h"
 
-#include "../utils/PlatformUtil.h"
+#include "utils/PlatformUtil.h"
 
 #include <tinyxml2.h>
 

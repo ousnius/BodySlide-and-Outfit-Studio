@@ -4,7 +4,7 @@ See the included LICENSE file
 */
 
 #include "MaterialFile.h"
-#include "../utils/StringStuff.h"
+#include "utils/StringStuff.h"
 
 #include <algorithm>
 

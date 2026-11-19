@@ -4,9 +4,9 @@ See the included LICENSE file
 */
 
 #include "DiffData.h"
-#include "../utils/PlatformUtil.h"
-#include "../utils/ParallelFor.h"
-#include "../utils/StringStuff.h"
+#include "utils/PlatformUtil.h"
+#include "utils/ParallelFor.h"
+#include "utils/StringStuff.h"
 #include "NifUtil.hpp"
 #include "UndoState.h"
 

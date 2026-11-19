@@ -4,9 +4,11 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
-#include "../components/MaskOps.h"
-#include "../program/AutomationRunner.h"
-#include "../program/OutfitStudio.h"
+#include "components/MaskOps.h"
+#include "project/AutomationRunner.h"
+#include "outfitstudio/OutfitStudioFrame.h"
+#include "outfitstudio/GLPanel.h"
+#include "outfitstudio/ViewState.h"
 
 #include <wx/filename.h>
 

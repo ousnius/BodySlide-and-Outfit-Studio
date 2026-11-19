@@ -5,8 +5,8 @@ See the included LICENSE file
 
 #include "McpSnapshots.h"
 #include "OutfitStudioMcp.h"
-#include "../components/MaskOps.h"
-#include "../program/OutfitStudio.h"
+#include "components/MaskOps.h"
+#include "outfitstudio/OutfitStudioFrame.h"
 
 #include <algorithm>
 #include <cmath>

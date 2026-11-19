@@ -9,7 +9,7 @@ See the included LICENSE file
 #include "ConformOptions.h"
 #include "DiffData.h"
 #include "SliderSet.h"
-#include "../utils/StringStuff.h"
+#include "utils/StringStuff.h"
 
 #include <cstddef>
 #include <functional>

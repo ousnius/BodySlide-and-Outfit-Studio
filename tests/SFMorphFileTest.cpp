@@ -1,4 +1,4 @@
-#include "../src/files/SFMorphFile.h"
+#include "files/SFMorphFile.h"
 
 #include <catch2/catch_test_macros.hpp>
 

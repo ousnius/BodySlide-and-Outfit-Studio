@@ -1,5 +1,5 @@
-#include "../src/files/MaterialFile.h"
-#include "../src/utils/StringStuff.h"
+#include "files/MaterialFile.h"
+#include "utils/StringStuff.h"
 
 #include <catch2/catch_test_macros.hpp>
 

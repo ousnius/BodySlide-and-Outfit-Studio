@@ -4,8 +4,8 @@ See the included LICENSE file
 */
 
 #include "GLHDRiEnvironment.h"
-#include "../files/EXRImage.h"
-#include "../utils/ConfigurationManager.h"
+#include "files/EXRImage.h"
+#include "utils/ConfigurationManager.h"
 #include "GLMaterial.h"
 
 #include <wx/log.h>
@@ -14,8 +14,6 @@ See the included LICENSE file
 #include <cmath>
 #include <cstring>
 #include <vector>
-
-extern ConfigurationManager Config;
 
 namespace {
 // Edge length of a face of the reflection cube map. Reflections are small and mostly blurred, and

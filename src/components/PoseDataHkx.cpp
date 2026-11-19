@@ -4,10 +4,10 @@ See the included LICENSE file
 */
 
 #include "PoseData.h"
-#include "../files/HkxFile.h"
-#include "../utils/ConfigurationManager.h"
-#include "../utils/PlatformUtil.h"
-#include "../utils/StringStuff.h"
+#include "files/HkxFile.h"
+#include "utils/ConfigurationManager.h"
+#include "utils/PlatformUtil.h"
+#include "utils/StringStuff.h"
 
 #include <algorithm>
 #include <cmath>
@@ -17,8 +17,6 @@ See the included LICENSE file
 #include <wx/filename.h>
 #include <wx/intl.h>
 #include <wx/log.h>
-
-extern ConfigurationManager Config;
 
 namespace {
 

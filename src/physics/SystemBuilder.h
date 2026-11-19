@@ -9,12 +9,12 @@ See the included LICENSE file
 
 #include "Controller.h"
 
-#include "hdt/hdtConeTwistConstraint.h"
-#include "hdt/hdtGeneric6DofConstraint.h"
-#include "hdt/hdtSkinnedMeshBody.h"
-#include "hdt/hdtSkinnedMeshBone.h"
-#include "hdt/hdtSkinnedMeshSystem.h"
-#include "hdt/hdtStiffSpringConstraint.h"
+#include "physics/hdt/hdtConeTwistConstraint.h"
+#include "physics/hdt/hdtGeneric6DofConstraint.h"
+#include "physics/hdt/hdtSkinnedMeshBody.h"
+#include "physics/hdt/hdtSkinnedMeshBone.h"
+#include "physics/hdt/hdtSkinnedMeshSystem.h"
+#include "physics/hdt/hdtStiffSpringConstraint.h"
 
 #include <memory>
 #include <string>

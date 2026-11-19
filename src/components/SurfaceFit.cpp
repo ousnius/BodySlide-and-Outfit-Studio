@@ -6,8 +6,8 @@ See the included LICENSE file
 #include "SurfaceFit.h"
 #include "ClippingFixer.h"
 #include "MeshAnalysis.h"
-#include "../utils/AABBTree.h"
-#include "../utils/ParallelFor.h"
+#include "utils/AABBTree.h"
+#include "utils/ParallelFor.h"
 
 #include "KDMatcher.hpp"
 

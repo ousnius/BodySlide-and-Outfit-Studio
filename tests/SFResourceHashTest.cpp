@@ -1,4 +1,4 @@
-#include "../src/files/SFResourceHash.h"
+#include "files/SFResourceHash.h"
 
 #include <catch2/catch_test_macros.hpp>
 

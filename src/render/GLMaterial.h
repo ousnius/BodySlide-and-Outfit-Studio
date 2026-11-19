@@ -3,7 +3,9 @@ BodySlide and Outfit Studio
 See the included LICENSE file
 */
 
-#include "../files/ResourceLoader.h"
+#pragma once
+
+#include "ResourceLoader.h"
 #include "GLShader.h"
 
 #include <cstdint>

@@ -7,9 +7,8 @@ See the included LICENSE file
 
 #ifdef USE_FBXSDK
 
-#include "../components/Anim.h"
-#include "../components/Mesh.h"
-#include "../program/FBXImportOptions.h"
+#include "components/Anim.h"
+#include "components/Mesh.h"
 #include "NifFile.hpp"
 
 #include <cstdint>

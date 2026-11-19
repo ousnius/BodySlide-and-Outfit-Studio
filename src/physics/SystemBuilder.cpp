@@ -14,10 +14,10 @@ The XML parsing semantics are kept identical to upstream.
 #include "SystemBuilder.h"
 
 #include "NiflyBullet.h"
-#include "hdt/XmlReader.h"
-#include "hdt/hdtSkinnedMeshShape.h"
+#include "physics/hdt/XmlReader.h"
+#include "physics/hdt/hdtSkinnedMeshShape.h"
 
-#include "../components/Anim.h"
+#include "components/Anim.h"
 
 #include <NifFile.hpp>
 

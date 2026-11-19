@@ -6,7 +6,8 @@ See the included LICENSE file
 #include "GameUtil.h"
 #include "ConfigurationManager.h"
 #include "StringStuff.h"
-#include "../../lib/FSEngine/FSManager.h"
+#include "TargetGame.h"
+#include "FSEngine/FSManager.h"
 
 #include <wx/dir.h>
 #include <wx/filename.h>
@@ -16,9 +17,7 @@ See the included LICENSE file
 	#include <wx/msw/registry.h>
 #endif
 
-extern ConfigurationManager Config;
-
-// TargetGames mapping - must match enum in BodySlideApp.h and OutfitStudio.h
+// TargetGames mapping - must match the enum in utils/TargetGame.h
 // enum TargetGame { FO3, FONV, SKYRIM, FO4, SKYRIMSE, FO4VR, SKYRIMVR, FO76, OB, SF };
 namespace GameUtil {
 const std::array<wxString, 10> TargetGames = {
@@ -136,4 +135,20 @@ void GameUtil::SetExtraDataFolders(int targ, const std::vector<std::string>& fol
 		value += folder;
 	}
 	Config.SetValue("ExtraDataFolders/" + TargetGames[targ].ToStdString(), value);
+}
+
+GameUtil::DefaultSkeleton GameUtil::GetDefaultSkeleton(int targ) {
+	switch (targ) {
+		case OB: return {"res/skeleton_ob.nif", "Bip01"};
+		case FO3:
+		case FONV: return {"res/skeleton_fo3nv.nif", "Bip01"};
+		case SKYRIM: return {"res/skeleton_female_sk.nif", "NPC Root [Root]"};
+		case SKYRIMSE:
+		case SKYRIMVR: return {"res/skeleton_female_sse.nif", "NPC Root [Root]"};
+		case SF: return {"res/skeleton_female_sf.nif", "Root"};
+		case FO4:
+		case FO4VR:
+		case FO76:
+		default: return {"res/skeleton_fo4.nif", "Root"};
+	}
 }

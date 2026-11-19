@@ -13,10 +13,7 @@ using namespace nifly;
 
 Mesh::Mesh() {}
 
-Mesh::~Mesh() {
-	if (releaseBuffers)
-		releaseBuffers(*this);
-}
+Mesh::~Mesh() {}
 
 std::unique_ptr<Mesh> Mesh::CreateFromShape(NifFile* nif, const std::string& shapeName) {
 	auto shape = nif->FindBlockByName<NiShape>(shapeName);
@@ -155,16 +152,16 @@ std::unique_ptr<Mesh> Mesh::CreateFromShape(NifFile* nif, const std::string& sha
 		switch (drawMode) {
 			case DRAW_CW:
 				m->doublesided = false;
-				m->cullMode = GL_FRONT;
+				m->cullMode = CullMode::Front;
 				break;
 			case DRAW_BOTH:
 				m->doublesided = true;
-				m->cullMode = GL_BACK;
+				m->cullMode = CullMode::Back;
 				break;
 			case DRAW_CCW:
 			default:
 				m->doublesided = false;
-				m->cullMode = GL_BACK;
+				m->cullMode = CullMode::Back;
 				break;
 		}
 	}

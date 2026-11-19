@@ -1,0 +1,1389 @@
+/*
+BodySlide and Outfit Studio
+See the included LICENSE file
+*/
+
+#include "PreviewPanel.h"
+#include "utils/ConfigurationManager.h"
+#include "files/GameDataStream.h"
+#include "physics/Controller.h"
+#include "physics/PumpClock.h"
+#include "bodyslide/BodySlideApp.h"
+#include "FSEngine/FSEngine.h"
+#include "FSEngine/FSManager.h"
+#include "utils/PlatformUtil.h"
+
+#include <regex>
+#include <set>
+#include <sstream>
+
+#include <wx/statline.h>
+
+using namespace nifly;
+
+extern ConfigurationManager BodySlideConfig;
+
+wxDEFINE_EVENT(EVT_PREVIEW_POPOUT, wxCommandEvent);
+
+wxBEGIN_EVENT_TABLE(PreviewPanel, wxPanel)
+	EVT_COMMAND_SCROLL(wxID_ANY, PreviewPanel::OnWeightSlider)
+wxEND_EVENT_TABLE()
+
+PreviewPanel::~PreviewPanel() {
+	// The popup hangs off the frame, not off this panel, and its handlers point
+	// back here
+	DestroyPhysicsWindPopup();
+	DestroyAnimationPopup();
+}
+
+PreviewPanel::PreviewPanel(wxWindow* parent, BodySlideApp* app)
+	: wxPanel(parent, wxID_ANY)
+	, app(app)
+	, refNormalGenLayers(emptyLayers) {
+
+	wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
+	wxBoxSizer* sizerToolBar = new wxBoxSizer(wxHORIZONTAL);
+	wxBoxSizer* sizerProjectSelect = new wxBoxSizer(wxHORIZONTAL);
+
+	wxPanel* projectSelectPanel = new wxPanel(this);
+	projectLabel = new wxStaticText(projectSelectPanel, wxID_ANY, _("Outfit/Body"));
+	projectChoice = new wxChoice(projectSelectPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxArrayString(), 0, wxDefaultValidator, "projectChoice");
+	projectChoice->Hide();
+	projectLabel->Hide();
+
+	presetLabel = new wxStaticText(projectSelectPanel, wxID_ANY, _("Preset"));
+	presetChoice = new wxChoice(projectSelectPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxArrayString(), 0, wxDefaultValidator, "presetChoice");
+	presetChoice->Hide();
+	presetLabel->Hide();
+
+	sizerProjectSelect->Add(projectLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+	sizerProjectSelect->Add(projectChoice, 1, wxALL | wxEXPAND, 5);
+	sizerProjectSelect->Add(presetLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+	sizerProjectSelect->Add(presetChoice, 1, wxALL | wxEXPAND, 5);
+	projectSelectPanel->SetSizer(sizerProjectSelect);
+	projectSelectPanel->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_3DFACE));
+
+	toolBarPanel = new wxPanel(this);
+	toolBarPanel->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_3DFACE));
+
+	weightSlider = new wxSlider(toolBarPanel, wxID_ANY, 100, 0, 100, wxDefaultPosition, wxDefaultSize, wxSL_LABELS, wxDefaultValidator, "weightSlider");
+
+	optButton = new wxButton(toolBarPanel, wxID_ANY, "N", wxDefaultPosition, FromDIP(wxSize(28, 28)));
+	optButton->SetToolTip(_("Show the Normal Map Generator dialog."));
+	optButton->Bind(wxEVT_BUTTON, &PreviewPanel::ShowNormalGenWindow, this);
+	optButton->Hide();
+
+	lockShapeButton = new wxButton(toolBarPanel, wxID_ANY, _("Lock Shape"), wxDefaultPosition, wxDefaultSize);
+	lockShapeButton->SetToolTip(_("Set the current preview shape to both low and high weight sliders."));
+	lockShapeButton->Bind(wxEVT_BUTTON, &PreviewPanel::OnLockShape, this);
+	lockShapeButton->Hide();
+
+	showReferenceCheckbox = new wxCheckBox(toolBarPanel, wxID_ANY, _("Show Reference"), wxDefaultPosition, wxDefaultSize);
+	showReferenceCheckbox->SetToolTip(_("Show the reference shape from the source project for clipping preview."));
+	showReferenceCheckbox->Bind(wxEVT_CHECKBOX, &PreviewPanel::OnShowReference, this);
+	showReferenceCheckbox->Hide();
+
+	showHelperShapesCheckbox = new wxCheckBox(toolBarPanel, wxID_ANY, _("Show Helper Shapes"), wxDefaultPosition, wxDefaultSize);
+	showHelperShapesCheckbox->SetToolTip(_("Show helper shapes (e.g. collisions) - shapes with no shader or with the hidden flag set."));
+	showHelperShapesCheckbox->Bind(wxEVT_CHECKBOX, &PreviewPanel::OnShowHelperShapes, this);
+
+	physicsCheckbox = new wxCheckBox(toolBarPanel, wxID_ANY, _("Physics"), wxDefaultPosition, wxDefaultSize);
+	physicsCheckbox->SetToolTip(_("Simulate HDT-SMP physics XMLs referenced by the previewed meshes"));
+	physicsCheckbox->Bind(wxEVT_CHECKBOX, &PreviewPanel::OnPhysics, this);
+	physicsCheckbox->Hide();
+
+	// The wind settings live in a drop-down so that turning physics on doesn't
+	// re-flow the tool bar around them. The label carries U+25BE as an escape
+	// because the sources are compiled without /utf-8.
+	physicsWindButton = new wxButton(toolBarPanel, wxID_ANY, _("Wind") + wxString(L" \u25BE"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT);
+	physicsWindButton->SetToolTip(_("Wind settings for the physics preview."));
+	physicsWindButton->Bind(wxEVT_BUTTON, &PreviewPanel::OnPhysicsWindButton, this);
+	physicsWindButton->Hide();
+
+	physicsWindDirIndex = static_cast<int>(Physics::WindDirectionNames().size()) - 1;
+
+	poseLabel = new wxStaticText(toolBarPanel, wxID_ANY, _("Pose"));
+
+	// Filled once the preview is first shown, which is when the poses are
+	// loaded. The fixed minimum width keeps the longest pose name from deciding
+	// the width of the whole preview.
+	poseChoice = new wxChoice(toolBarPanel, wxID_ANY, wxDefaultPosition, FromDIP(wxSize(100, -1)), wxArrayString(), 0, wxDefaultValidator, "poseChoice");
+	poseChoice->SetToolTip(_("Shows the meshes skinned to the skeleton, at rest or in a pose. Without a pose the meshes are shown as they are stored."));
+	poseChoice->Bind(wxEVT_CHOICE, &PreviewPanel::OnPoseChoice, this);
+
+	// Same escape as on the wind button
+	animationButton = new wxButton(toolBarPanel, wxID_ANY, _("Animation") + wxString(L" \u25BE"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT);
+	animationButton->SetToolTip(_("Play a Havok (HKX) animation on the preview."));
+	animationButton->Bind(wxEVT_BUTTON, &PreviewPanel::OnAnimationButton, this);
+
+	pumpTimer.SetOwner(this);
+	Bind(wxEVT_TIMER, &PreviewPanel::OnPumpTimer, this);
+
+	popoutButton = new wxBitmapButton(
+		toolBarPanel,
+		wxID_ANY,
+		wxBitmap(wxString::FromUTF8(Config["AppDir"]) + "/res/images/PopOut.png", wxBITMAP_TYPE_PNG),
+		wxDefaultPosition,
+		FromDIP(wxSize(28, 28)));
+	popoutButton->SetMinSize(FromDIP(wxSize(28, 28)));
+	SetPopoutButtonDetachedState(false);
+	popoutButton->Bind(wxEVT_BUTTON, &PreviewPanel::OnPopout, this);
+
+	canvas = new PreviewCanvas(this, GLSurface::GetGLAttribs());
+	context = std::make_unique<wxGLContext>(canvas, nullptr, &GLSurface::GetGLContextAttribs());
+
+	// Tool bar: weight slider on the left, view options in a left-aligned column
+	// next to it, buttons last. Everything is centered on one baseline so hiding
+	// a control doesn't shift the rest around. The slider gets its own
+	// stretching sizer, which keeps the gap when the slider itself is hidden.
+	wxBoxSizer* sizerWeight = new wxBoxSizer(wxHORIZONTAL);
+	sizerWeight->Add(weightSlider, 1, wxALIGN_CENTER_VERTICAL);
+	sizerToolBar->Add(sizerWeight, 1, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+	sizerToolBar->Add(new wxStaticLine(toolBarPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL), 0, wxEXPAND | wxTOP | wxBOTTOM, 4);
+
+	wxBoxSizer* sizerOptions = new wxBoxSizer(wxVERTICAL);
+	sizerOptions->Add(showReferenceCheckbox, 0, wxBOTTOM, 2);
+	sizerOptions->Add(showHelperShapesCheckbox, 0, wxBOTTOM, 2);
+
+	wxBoxSizer* sizerPhysics = new wxBoxSizer(wxHORIZONTAL);
+	sizerPhysics->Add(physicsCheckbox, 0, wxALIGN_CENTER_VERTICAL);
+	sizerPhysics->Add(physicsWindButton, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, 6);
+	sizerOptions->Add(sizerPhysics, 0);
+
+	sizerToolBar->Add(sizerOptions, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+
+	wxBoxSizer* sizerButtons = new wxBoxSizer(wxHORIZONTAL);
+	sizerButtons->Add(lockShapeButton, 0, wxALIGN_CENTER_VERTICAL);
+	sizerButtons->Add(popoutButton, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, 4);
+	sizerButtons->Add(optButton, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, 4);
+	sizerToolBar->Add(sizerButtons, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+
+	// The pose gets a row of its own below, so its long names don't squeeze the
+	// weight slider
+	wxBoxSizer* sizerPose = new wxBoxSizer(wxHORIZONTAL);
+	sizerPose->Add(poseLabel, 0, wxRIGHT | wxALIGN_CENTER_VERTICAL, 4);
+	sizerPose->Add(poseChoice, 1, wxALIGN_CENTER_VERTICAL);
+	sizerPose->Add(animationButton, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, 6);
+
+	wxBoxSizer* sizerToolBarRows = new wxBoxSizer(wxVERTICAL);
+	sizerToolBarRows->Add(sizerToolBar, 0, wxEXPAND);
+	sizerToolBarRows->Add(sizerPose, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 5);
+
+	toolBarPanel->SetSizer(sizerToolBarRows);
+
+	// Loading overlay (hidden by default, positioned over canvas)
+	loadingOverlay = new wxPanel(this, wxID_ANY);
+	loadingOverlay->SetBackgroundColour(wxColour(64, 64, 64));
+	wxBoxSizer* loadingSizer = new wxBoxSizer(wxVERTICAL);
+	loadingSizer->AddStretchSpacer();
+	loadingIndicator = new wxActivityIndicator(loadingOverlay);
+	loadingSizer->Add(loadingIndicator, 0, wxALIGN_CENTER_HORIZONTAL);
+	wxStaticText* loadingText = new wxStaticText(loadingOverlay, wxID_ANY, _("Loading preview..."));
+	loadingText->SetForegroundColour(*wxWHITE);
+	loadingSizer->Add(loadingText, 0, wxALIGN_CENTER_HORIZONTAL | wxTOP, 10);
+	loadingSizer->AddStretchSpacer();
+	loadingOverlay->SetSizer(loadingSizer);
+	loadingOverlay->Hide();
+
+	sizer->Add(projectSelectPanel, 0, wxEXPAND);
+	sizer->Add(toolBarPanel, 0, wxEXPAND);
+	sizer->Add(canvas, 1, wxEXPAND);
+
+	SetSizer(sizer);
+
+	// Reposition floating overlay when canvas resizes
+	canvas->Bind(wxEVT_SIZE, [this](wxSizeEvent& evt) {
+		if (loadingOverlay && loadingOverlay->IsShown()) {
+			loadingOverlay->SetSize(canvas->GetRect());
+		}
+		evt.Skip();
+	});
+
+	projectChoice->Bind(wxEVT_CHOICE, &PreviewPanel::OnProjectChoice, this);
+	presetChoice->Bind(wxEVT_CHOICE, &PreviewPanel::OnPresetChoice, this);
+}
+
+void PreviewPanel::CreatePhysicsWindPopup() {
+	// A popup is a window of its own, owned by the top level window it was
+	// created under. The preview panel moves between the main frame and its own
+	// frame when it's popped out, so the popup has to follow it there.
+	physicsWindPopup = new wxPopupTransientWindow(wxGetTopLevelParent(this), wxBORDER_SIMPLE | wxPU_CONTAINS_CONTROLS);
+
+	wxPanel* windPanel = new wxPanel(physicsWindPopup);
+	windPanel->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW));
+
+	physicsWindSlider = new wxSlider(windPanel, wxID_ANY, physicsWindStrength, 0, 100, wxDefaultPosition, FromDIP(wxSize(140, -1)), wxSL_VALUE_LABEL, wxDefaultValidator, "physicsWindSlider");
+	physicsWindSlider->SetToolTip(_("World wind strength for the physics preview (0 = off)."));
+	physicsWindSlider->Bind(wxEVT_SCROLL_CHANGED, &PreviewPanel::OnPhysicsWind, this);
+	physicsWindSlider->Bind(wxEVT_SCROLL_THUMBTRACK, &PreviewPanel::OnPhysicsWind, this);
+
+	wxArrayString windDirections;
+	for (auto& name : Physics::WindDirectionNames())
+		windDirections.Add(wxGetTranslation(wxString::FromUTF8(name)));
+
+	physicsWindDir = new wxChoice(windPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, windDirections, 0, wxDefaultValidator, "physicsWindDir");
+	physicsWindDir->SetSelection(physicsWindDirIndex);
+	physicsWindDir->SetToolTip(_("Direction the wind blows in, as seen in the viewport. It stays fixed to the mesh while the camera turns."));
+	physicsWindDir->Bind(wxEVT_CHOICE, &PreviewPanel::OnPhysicsWindDir, this);
+
+	wxFlexGridSizer* sizerWind = new wxFlexGridSizer(2, FromDIP(4), FromDIP(8));
+	sizerWind->AddGrowableCol(1);
+	sizerWind->Add(new wxStaticText(windPanel, wxID_ANY, _("Strength")), 0, wxALIGN_CENTER_VERTICAL);
+	sizerWind->Add(physicsWindSlider, 1, wxEXPAND);
+	sizerWind->Add(new wxStaticText(windPanel, wxID_ANY, _("Direction")), 0, wxALIGN_CENTER_VERTICAL);
+	sizerWind->Add(physicsWindDir, 1, wxEXPAND);
+
+	wxBoxSizer* sizerWindBorder = new wxBoxSizer(wxVERTICAL);
+	sizerWindBorder->Add(sizerWind, 1, wxEXPAND | wxALL, FromDIP(8));
+	windPanel->SetSizerAndFit(sizerWindBorder);
+
+	wxBoxSizer* sizerPopup = new wxBoxSizer(wxVERTICAL);
+	sizerPopup->Add(windPanel, 1, wxEXPAND);
+	physicsWindPopup->SetSizerAndFit(sizerPopup);
+}
+
+void PreviewPanel::DestroyPhysicsWindPopup() {
+	if (!physicsWindPopup)
+		return;
+
+	if (physicsWindPopup->IsShown())
+		physicsWindPopup->Dismiss();
+
+	physicsWindPopup->Destroy();
+	physicsWindPopup = nullptr;
+	physicsWindSlider = nullptr;
+	physicsWindDir = nullptr;
+}
+
+void PreviewPanel::LayoutToolBar() {
+	if (toolBarPanel)
+		toolBarPanel->Layout();
+
+	Layout();
+}
+
+void PreviewPanel::ShowLoadingIndicator(bool show) {
+	if (show) {
+		// Position overlay on top of the canvas (canvas stays shown for GL ops)
+		loadingOverlay->SetSize(canvas->GetRect());
+		loadingOverlay->Show();
+		loadingOverlay->Raise();
+		loadingIndicator->Start();
+	}
+	else {
+		loadingIndicator->Stop();
+		loadingOverlay->Hide();
+		canvas->Refresh();
+	}
+}
+
+void PreviewPanel::OnShown() {
+	if (glInitialized)
+		return;
+
+	if (!context->IsOK()) {
+		canvas = nullptr;
+		app->PreviewClosed();
+		wxLogError("Preview failed: OpenGL context is not OK.");
+		wxMessageBox(_("Preview failed: OpenGL context is not OK."), _("OpenGL Error"), wxICON_ERROR);
+		return;
+	}
+
+	wxLogMessage("Initializing preview panel...");
+	gls.Initialize(canvas, context.get());
+	auto size = canvas->GetClientSize();
+	int vpW = size.GetWidth() > 0 ? size.GetWidth() : 800;
+	int vpH = size.GetHeight() > 0 ? size.GetHeight() : 600;
+	gls.SetStartingView(Vector3(0.0f, -5.0f, -15.0f), Vector3(15.0f, 0.0f, 0.0f), vpW, vpH, 65.0);
+	gls.SetVertexColors(true);
+
+	int ambient = Config.GetIntValue("Lights/Ambient");
+	int frontal = Config.GetIntValue("Lights/Frontal");
+
+	int directional0 = Config.GetIntValue("Lights/Directional0");
+	int directional0X = Config.GetIntValue("Lights/Directional0.x");
+	int directional0Y = Config.GetIntValue("Lights/Directional0.y");
+	int directional0Z = Config.GetIntValue("Lights/Directional0.z");
+
+	int directional1 = Config.GetIntValue("Lights/Directional1");
+	int directional1X = Config.GetIntValue("Lights/Directional1.x");
+	int directional1Y = Config.GetIntValue("Lights/Directional1.y");
+	int directional1Z = Config.GetIntValue("Lights/Directional1.z");
+
+	int directional2 = Config.GetIntValue("Lights/Directional2");
+	int directional2X = Config.GetIntValue("Lights/Directional2.x");
+	int directional2Y = Config.GetIntValue("Lights/Directional2.y");
+	int directional2Z = Config.GetIntValue("Lights/Directional2.z");
+
+	Vector3 directional0Dir = Vector3(directional0X / 100.0f, directional0Y / 100.0f, directional0Z / 100.0f);
+	Vector3 directional1Dir = Vector3(directional1X / 100.0f, directional1Y / 100.0f, directional1Z / 100.0f);
+	Vector3 directional2Dir = Vector3(directional2X / 100.0f, directional2Y / 100.0f, directional2Z / 100.0f);
+	gls.UpdateLights(ambient, frontal, directional0, directional1, directional2, directional0Dir, directional1Dir, directional2Dir);
+
+	if (Config.Exists("Rendering/ColorBackground")) {
+		int colorR = Config.GetIntValue("Rendering/ColorBackground.r");
+		int colorG = Config.GetIntValue("Rendering/ColorBackground.g");
+		int colorB = Config.GetIntValue("Rendering/ColorBackground.b");
+		gls.SetBackgroundColor(Vector3(colorR / 255.0f, colorG / 255.0f, colorB / 255.0f));
+	}
+
+	if (Config.Exists("Rendering/ColorWire")) {
+		int colorR = Config.GetIntValue("Rendering/ColorWire.r");
+		int colorG = Config.GetIntValue("Rendering/ColorWire.g");
+		int colorB = Config.GetIntValue("Rendering/ColorWire.b");
+		gls.SetWireColor(Vector3(colorR / 255.0f, colorG / 255.0f, colorB / 255.0f));
+	}
+
+	if (Config.Exists("Rendering/ColorPoints")) {
+		int colorR = Config.GetIntValue("Rendering/ColorPoints.r");
+		int colorG = Config.GetIntValue("Rendering/ColorPoints.g");
+		int colorB = Config.GetIntValue("Rendering/ColorPoints.b");
+		gls.SetPointColor(Vector3(colorR / 255.0f, colorG / 255.0f, colorB / 255.0f));
+	}
+
+	if (Config.Exists("Rendering/ColorPointsMasked")) {
+		int colorR = Config.GetIntValue("Rendering/ColorPointsMasked.r");
+		int colorG = Config.GetIntValue("Rendering/ColorPointsMasked.g");
+		int colorB = Config.GetIntValue("Rendering/ColorPointsMasked.b");
+		gls.SetMaskedPointColor(Vector3(colorR / 255.0f, colorG / 255.0f, colorB / 255.0f));
+	}
+
+	gls.SetPointSizeParams(
+		Config.GetFloatValue("Rendering/PointSizeMin", 4.0f),
+		Config.GetFloatValue("Rendering/PointSizeMax", 14.0f),
+		Config.GetFloatValue("Rendering/PointSizeScale", 0.6f));
+
+	gls.SetPerspective(BodySlideConfig.GetBoolValue("Rendering/PerspectiveView", true));
+	gls.SetComplexMaterialEnabled(BodySlideConfig.GetBoolValue("Rendering/ComplexMaterial", true));
+	gls.SetPBREnabled(BodySlideConfig.GetBoolValue("Rendering/TruePBR", true));
+
+	glInitialized = true;
+
+	RefreshPoseControls();
+
+	// Load deferred project entries
+	if (!projectEntries.empty()) {
+		if (loadAllProjects) {
+			LoadProjects(projectEntries);
+			loadAllProjects = false;
+		}
+		else {
+			LoadProjects({projectEntries[0]});
+		}
+		return;
+	}
+
+	// Load deferred nifs if in NIF-only preview mode
+	if (!extraNifPaths.empty()) {
+		wxLogMessage("Loading %zu nif file(s) in preview mode...", extraNifPaths.size());
+		ShowWeight(false);
+		LoadNifFiles(extraNifPaths);
+		gls.RenderOneFrame();
+		return;
+	}
+
+	app->InitPreview();
+}
+
+void PreviewPanel::LoadNifFiles(const std::vector<std::string>& nifFilePaths) {
+	// Every call loads the complete set, so these replace the previous ones
+	std::vector<std::unique_ptr<NifFile>> nifFiles;
+
+	for (const auto& nifPath : nifFilePaths) {
+		std::fstream file;
+		PlatformUtil::OpenFileStream(file, nifPath, std::ios::in | std::ios::binary);
+
+		auto nifFile = std::make_unique<NifFile>();
+		if (nifFile->Load(file)) {
+			wxLogWarning("Failed to load nif file: %s", nifPath);
+			continue;
+		}
+
+		// A Starfield NIF only references the .mesh files its geometry is in
+		if (nifFile->GetHeader().GetVersion().IsSF())
+			for (const auto& meshPath : GameDataStream::LoadExternalGeometry(*nifFile, Config["GameDataPath"], nifPath))
+				wxLogWarning("Unable to locate external mesh data '%s' of nif file: %s", meshPath, nifPath);
+
+		wxLogMessage("Loading nif: %s", nifPath);
+		AddMeshFromNif(nifFile.get());
+
+		for (auto& s : nifFile->GetShapeNames())
+			AddNifShapeTextures(nifFile.get(), s);
+
+		nifFiles.push_back(std::move(nifFile));
+	}
+
+	// The application keeps them, so they can be posed
+	app->SetPreviewLooseNifs(std::move(nifFiles));
+}
+
+void PreviewPanel::SetProjectData(const std::vector<PreviewProjectEntry>& entries, bool loadAll, const std::string& initialPreset) {
+	projectEntries = entries;
+	loadAllProjects = loadAll;
+	initialPresetName = initialPreset;
+
+	if (!loadAll && projectChoice) {
+		projectChoice->Clear();
+		for (auto& entry : projectEntries)
+			projectChoice->Append(wxString::FromUTF8(entry.setName));
+
+		if (!projectEntries.empty())
+			projectChoice->SetSelection(0);
+
+		projectChoice->Show(projectEntries.size() > 1);
+		projectLabel->Show(projectEntries.size() > 1);
+
+		projectChoice->GetParent()->Show();
+		Layout();
+	}
+}
+
+void PreviewPanel::LoadProjects(const std::vector<PreviewProjectEntry>& entries) {
+	wxLogMessage("Loading %zu project(s) in preview mode...", entries.size());
+
+	app->CleanupPreview();
+
+	for (auto& entry : entries) {
+		if (app->AddProjectSliders(entry.projectFile, entry.setName)) {
+			wxLogError("Failed to load slider set '%s' from file: %s", entry.setName, entry.projectFile);
+			continue;
+		}
+	}
+
+	if (entries.empty())
+		return;
+
+	app->LoadPresets(entries[0].setName);
+
+	if (presetChoice) {
+		wxString previousPreset = initialPresetName.empty() ? presetChoice->GetStringSelection() : wxString::FromUTF8(initialPresetName);
+		presetChoice->Clear();
+
+		std::vector<std::string> presetNames;
+		app->GetPresetNames(presetNames);
+
+		if (!presetNames.empty()) {
+			for (auto& name : presetNames)
+				presetChoice->Append(wxString::FromUTF8(name));
+
+			int idx = presetChoice->FindString(previousPreset);
+			if (idx == wxNOT_FOUND) {
+				idx = 0;
+
+				if (!previousPreset.IsEmpty())
+					wxLogWarning("Preset '%s' is not available for the loaded project(s), using preset '%s' instead.", previousPreset, presetNames[idx]);
+			}
+
+			presetChoice->SetSelection(idx);
+			presetChoice->Show();
+			presetLabel->Show();
+
+			app->InitializeSliders(presetNames[idx]);
+			initialPresetName.clear();
+		}
+		else {
+			presetChoice->Hide();
+			presetLabel->Hide();
+
+			app->InitializeSliders();
+		}
+
+		presetChoice->GetParent()->Show();
+		Layout();
+	}
+
+	multiProjectMode = true;
+
+	app->InitPreview();
+}
+
+void PreviewPanel::OnProjectChoice(wxCommandEvent& WXUNUSED(event)) {
+	if (!projectChoice)
+		return;
+
+	int selection = projectChoice->GetSelection();
+	if (selection < 0 || selection >= (int)projectEntries.size())
+		return;
+
+	LoadProjects({projectEntries[selection]});
+}
+
+void PreviewPanel::OnPresetChoice(wxCommandEvent& WXUNUSED(event)) {
+	if (!presetChoice)
+		return;
+
+	int selection = presetChoice->GetSelection();
+	if (selection < 0)
+		return;
+
+	std::string presetName = presetChoice->GetStringSelection().ToUTF8().data();
+	wxLogMessage("Applying preset '%s' to preview...", presetName);
+
+	app->InitializeSliders(presetName);
+	app->RebuildPreviewMeshes();
+}
+
+void PreviewPanel::SetNormalsGenerationLayers(std::vector<NormalGenLayer>& normalLayers) {
+	refNormalGenLayers = normalLayers;
+	if (normalLayers.size() != 0)
+		optButton->Show();
+	else
+		optButton->Hide();
+
+	if (normalsGenDlg)
+		normalsGenDlg->Hide();
+
+	LayoutToolBar();
+}
+
+Mesh* PreviewPanel::GetMesh(const std::string& shapeName) {
+	return gls.GetMesh(shapeName);
+}
+
+void PreviewPanel::AddMeshFromNif(NifFile* nif, char* shapeName) {
+	if (!glInitialized || !gls.SetContext())
+		return;
+
+	bool showHelperShapes = showHelperShapesCheckbox->IsChecked();
+
+	std::vector<std::string> shapeList = nif->GetShapeNames();
+	for (size_t i = 0; i < shapeList.size(); i++) {
+		std::string& shapeListName = shapeList[i];
+		if (!shapeName || (shapeName && shapeListName == shapeName)) {
+			Mesh* m = gls.AddMeshFromNif(nif, shapeListName);
+			if (!m)
+				continue;
+
+			SetSFSkinTransform(nif, shapeListName, m);
+			SetShapeVertexColors(nif, shapeListName, m);
+			m->BuildVertexAdjacency();
+			m->CreateBuffers();
+
+			if (m->bHelperShape && !showHelperShapes)
+				gls.SetMeshVisibility(shapeListName, false);
+		}
+	}
+}
+
+void PreviewPanel::SetSFSkinTransform(NifFile* nif, const std::string& shapeName, Mesh* m) {
+	if (!m || !nif->GetHeader().GetVersion().IsSF())
+		return;
+
+	auto shape = nif->FindBlockByName<NiShape>(shapeName);
+	if (!shape || !shape->IsSkinned() || !app->EnsurePreviewSkeleton())
+		return;
+
+	AnimSkin skin;
+	skin.LoadFromNif(nif, shape);
+
+	MatTransform globalToSkin = skin.xformGlobalToSkin;
+	globalToSkin.translation *= sfHavokScale;
+	m->SetXformModelToMesh(Mesh::xformNifToMesh.ComposeTransforms(globalToSkin.ComposeTransforms(Mesh::xformMeshToNif)));
+}
+
+void PreviewPanel::RefreshMeshFromNif(const std::vector<NifFile*>& nifs) {
+	if (!glInitialized || !gls.SetContext())
+		return;
+
+	gls.ClearMeshes();
+
+	bool showHelperShapes = showHelperShapesCheckbox->IsChecked();
+
+	for (auto* nif : nifs) {
+		for (auto& shapeListName : nif->GetShapeNames()) {
+			Mesh* m = gls.AddMeshFromNif(nif, shapeListName);
+			if (!m)
+				continue;
+
+			SetSFSkinTransform(nif, shapeListName, m);
+			SetShapeVertexColors(nif, shapeListName, m);
+			m->BuildVertexAdjacency();
+			m->SmoothNormals();
+			m->CreateBuffers();
+
+			auto sfIter = shapeSFMaterials.find(shapeListName);
+			auto iter = shapeMaterials.find(shapeListName);
+			if (sfIter != shapeSFMaterials.end())
+				SetShapeSFMaterial(shapeListName, sfIter->second);
+			else if (iter != shapeMaterials.end())
+				m->material = iter->second;
+			else
+				AddNifShapeTextures(nif, shapeListName);
+
+			if (m->bHelperShape && !showHelperShapes)
+				gls.SetMeshVisibility(shapeListName, false);
+		}
+	}
+
+	LoadNifFiles(extraNifPaths);
+
+	gls.RenderOneFrame();
+}
+
+std::string PreviewPanel::AssetPath(const std::string& relPath) const {
+	// The base data path first, then the extra data folders, like Outfit Studio looks them up
+	return GameDataStream::FindAssetPath(relPath, baseDataPath);
+}
+
+void PreviewPanel::AddNifShapeTextures(NifFile* fromNif, const std::string& shapeName) {
+	bool hasMat = false;
+	bool hasSFMat = false;
+	std::string matFile;
+
+	const uint8_t MAX_TEXTURE_PATHS = 10;
+	std::vector<std::string> texFiles(MAX_TEXTURE_PATHS);
+	std::shared_ptr<const SFLayeredMaterial> sfMaterial;
+
+	NiShader* shader = nullptr;
+	auto shape = fromNif->FindBlockByName<NiShape>(shapeName);
+	if (shape) {
+		shader = fromNif->GetShader(shape);
+		if (shader) {
+			if (fromNif->GetHeader().GetVersion().IsFO4() || fromNif->GetHeader().GetVersion().IsFO76()) {
+				matFile = shader->name.get();
+				if (!matFile.empty())
+					hasMat = true;
+			}
+			else if (fromNif->GetHeader().GetVersion().IsSF()) {
+				matFile = shader->name.get();
+				if (!matFile.empty()) {
+					hasMat = true;
+					hasSFMat = true;
+				}
+			}
+		}
+	}
+
+	MaterialFile mat(MaterialFile::BGSM);
+	if (hasMat) {
+		matFile = std::regex_replace(matFile, std::regex("\\\\+"), "/");
+		matFile = std::regex_replace(matFile, std::regex("^(.*?)/materials/", std::regex_constants::icase), "");
+		matFile = std::regex_replace(matFile, std::regex("^/+"), "");
+		matFile = std::regex_replace(matFile, std::regex("^(?!^materials/)", std::regex_constants::icase), "materials/");
+
+		if (hasSFMat) {
+			SFLayeredMaterial sfMat;
+			if (sfMaterialResolver.Resolve(matFile, baseDataPath, sfMat)) {
+				texFiles = sfMat.GetPrimaryTextureFiles(MAX_TEXTURE_PATHS);
+
+				sfMat.ResolveTexturePaths([this](const std::string& texFile) { return AssetPath(texFile); });
+				sfMaterial = std::make_shared<const SFLayeredMaterial>(std::move(sfMat));
+			}
+			else if (shader) {
+				for (int i = 0; i < MAX_TEXTURE_PATHS; i++)
+					fromNif->GetTextureSlot(shape, texFiles[i], i);
+			}
+
+			hasMat = false;
+		}
+		else {
+			mat = MaterialFile(AssetPath(matFile));
+
+			if (mat.Failed()) {
+				wxMemoryBuffer data;
+				for (FSArchiveFile* archive : FSManager::archiveList()) {
+					if (archive) {
+						if (archive->hasFile(matFile)) {
+							wxMemoryBuffer outData;
+							archive->fileContents(matFile, outData);
+
+							if (!outData.IsEmpty()) {
+								data = std::move(outData);
+								break;
+							}
+						}
+					}
+				}
+
+				if (!data.IsEmpty()) {
+					std::string content((char*)data.GetData(), data.GetDataLen());
+					std::istringstream contentStream(content, std::istringstream::binary);
+
+					mat = MaterialFile(contentStream);
+				}
+			}
+
+			if (!mat.Failed()) {
+				if (mat.signature == MaterialFile::BGSM) {
+					texFiles[0] = mat.diffuseTexture.c_str();
+					texFiles[1] = mat.normalTexture.c_str();
+					texFiles[2] = mat.glowTexture.c_str();
+					texFiles[3] = mat.greyscaleTexture.c_str();
+					texFiles[4] = mat.envmapTexture.c_str();
+					texFiles[7] = mat.smoothSpecTexture.c_str();
+				}
+				else if (mat.signature == MaterialFile::BGEM) {
+					texFiles[0] = mat.baseTexture.c_str();
+					texFiles[1] = mat.fxNormalTexture.c_str();
+					texFiles[3] = mat.grayscaleTexture.c_str();
+					texFiles[4] = mat.fxEnvmapTexture.c_str();
+					texFiles[5] = mat.envmapMaskTexture.c_str();
+				}
+			}
+			else if (shader) {
+				hasMat = false;
+
+				for (int i = 0; i < MAX_TEXTURE_PATHS; i++)
+					fromNif->GetTextureSlot(shape, texFiles[i], i);
+			}
+		}
+	}
+	else if (shader) {
+		for (int i = 0; i < MAX_TEXTURE_PATHS; i++)
+			fromNif->GetTextureSlot(shape, texFiles[i], i);
+	}
+
+	for (int i = 0; i < MAX_TEXTURE_PATHS; i++) {
+		if (!texFiles[i].empty()) {
+			texFiles[i] = std::regex_replace(texFiles[i], std::regex("\\\\+"), "/");
+			texFiles[i] = std::regex_replace(texFiles[i],
+											 std::regex("^(.*?)/textures/", std::regex_constants::icase),
+											 "");
+			texFiles[i] = std::regex_replace(texFiles[i], std::regex("^/+"), "");
+			texFiles[i] = std::regex_replace(texFiles[i],
+											 std::regex("^(?!^textures/)", std::regex_constants::icase),
+											 "textures/");
+
+			texFiles[i] = AssetPath(texFiles[i]);
+		}
+	}
+
+	std::string vShader = Config["AppDir"] + "/res/shaders/default.vert";
+	std::string fShader = Config["AppDir"] + "/res/shaders/default.frag";
+	bool renderAsPBR = false;
+
+	TargetGame targetGame = (TargetGame)Config.GetIntValue("TargetGame");
+	if (targetGame == SF) {
+		// Every Starfield shape renders through its layered material, a single layer of whatever textures
+		// it has when there is no material to read
+		if (!sfMaterial)
+			sfMaterial = std::make_shared<const SFLayeredMaterial>(SFLayeredMaterial::FromTextureFiles(texFiles));
+
+		SetShapeSFMaterial(shapeName, sfMaterial);
+		return;
+	}
+
+	if (targetGame == FO4 || targetGame == FO4VR || targetGame == FO76) {
+		vShader = Config["AppDir"] + "/res/shaders/fo4_default.vert";
+		fShader = Config["AppDir"] + "/res/shaders/fo4_default.frag";
+	}
+	else if (targetGame == OB) {
+		vShader = Config["AppDir"] + "/res/shaders/ob_default.vert";
+		fShader = Config["AppDir"] + "/res/shaders/ob_default.frag";
+	}
+	else {
+		// A True PBR shape reads its texture slots differently enough from every other Skyrim shape
+		// that it gets its own pair rather than another branch inside the shared one.
+		Mesh* m = gls.GetMesh(shapeName);
+		if (m && m->pbr && gls.IsPBREnabled()) {
+			vShader = Config["AppDir"] + "/res/shaders/sk_truepbr.vert";
+			fShader = Config["AppDir"] + "/res/shaders/sk_truepbr.frag";
+			renderAsPBR = true;
+		}
+	}
+
+	SetShapeTextures(shapeName, texFiles, vShader, fShader, hasMat, mat, renderAsPBR);
+}
+
+void PreviewPanel::RenderNormalMap(const std::string& outfilename) {
+	// The generated map replaces the normal map of the preview mesh named "CBBE", which other outfits don't have
+	Mesh* mesh = gls.GetMesh("CBBE");
+	if (!mesh || !mesh->material) {
+		wxLogWarning("Normal map generation needs a preview shape named 'CBBE'.");
+		return;
+	}
+
+	wxBusyCursor busycursor;
+
+	std::string dest_tex = mesh->material->GetTexName(1);
+	GLuint w, h;
+	gls.GetSize(w, h);
+	std::vector<GLuint> texIds;
+	std::vector<std::string> normTextures;
+	normTextures.resize(20);
+
+	GLMaterial* normMat = gls.AddMaterial(normTextures, Config["AppDir"] + "/res/shaders/normalshade.vert", Config["AppDir"] + "/res/shaders/normalshade.frag");
+
+	std::vector<std::string> ppTex;
+	ppTex.push_back("pproc");
+	GLMaterial* ppMat = gls.AddMaterial(ppTex, Config["AppDir"] + "/res/shaders/fullscreentri.vert", Config["AppDir"] + "/res/shaders/fullscreentri.frag");
+
+	GLOffScreenBuffer offscreen(&gls, 4096, 4096, 2, texIds);
+
+	gls.SetPerspective(false);
+	offscreen.Start();
+	gls.RenderToTexture(normMat);
+	gls.GetResourceLoader()->RenameTexture(offscreen.texName(0), "pproc", true);
+	offscreen.End();
+	offscreen.NextBuffer();
+
+	offscreen.Start();
+	gls.RenderFullScreenQuad(ppMat, 4096, 4096);
+	gls.GetResourceLoader()->RenameTexture(offscreen.texName(1), dest_tex, true);
+	if (!outfilename.empty()) {
+		offscreen.SaveTexture(outfilename);
+	}
+	offscreen.End();
+
+	gls.SetPerspective(true);
+	gls.SetSize(w, h);
+	Render();
+}
+
+void PreviewPanel::RightDrag(int dX, int dY) {
+	const float yawDegrees = gls.TurnTableCamera(dX);
+	gls.PitchCamera(dY);
+	app->InjectPreviewCameraYaw(yawDegrees);
+	gls.RenderOneFrame();
+}
+
+void PreviewPanel::LeftDrag(int dX, int dY) {
+	gls.PanCamera(dX, dY);
+	gls.RenderOneFrame();
+}
+
+void PreviewPanel::TrackMouse(int X, int Y) {
+	gls.UpdateCursor(X, Y);
+	gls.RenderOneFrame();
+}
+
+void PreviewPanel::MouseWheel(int dW) {
+	gls.DollyCamera(dW);
+	gls.RenderOneFrame();
+}
+
+void PreviewPanel::OnWeightSlider(wxScrollEvent& event) {
+	// The panel catches scroll events of any id, so make sure this is the weight
+	// slider and not one of the other sliders on it
+	if (event.GetEventObject() != weightSlider) {
+		event.Skip();
+		return;
+	}
+
+	weight = event.GetPosition();
+	app->UpdatePreview();
+}
+
+void PreviewPanel::OnLockShape(wxCommandEvent& WXUNUSED(event)) {
+	app->CopyPreviewWeightToSliders();
+}
+
+void PreviewPanel::OnShowReference(wxCommandEvent& WXUNUSED(event)) {
+	app->UpdatePreview();
+}
+
+void PreviewPanel::OnShowHelperShapes(wxCommandEvent& WXUNUSED(event)) {
+	bool show = showHelperShapesCheckbox->IsChecked();
+	for (auto* m : gls.GetMeshes()) {
+		if (m->bHelperShape)
+			gls.SetMeshVisibility(m->shapeName, show);
+	}
+	gls.RenderOneFrame();
+}
+
+void PreviewPanel::ShowPhysicsControls(bool show) {
+	if (!physicsCheckbox)
+		return;
+
+	physicsCheckbox->Show(show);
+	if (!show)
+		SetPhysicsChecked(false);
+
+	LayoutToolBar();
+}
+
+void PreviewPanel::SetPhysicsChecked(bool checked) {
+	if (!physicsCheckbox)
+		return;
+
+	physicsCheckbox->SetValue(checked);
+
+	// Wind is meaningless without a running simulation
+	const bool showWind = checked && physicsCheckbox->IsShown();
+	if (physicsWindButton)
+		physicsWindButton->Show(showWind);
+
+	if (!showWind)
+		DestroyPhysicsWindPopup();
+
+	LayoutToolBar();
+}
+
+void PreviewPanel::ApplyPhysicsWind() {
+	app->SetPreviewWind(physicsWindDirIndex, physicsWindStrength);
+}
+
+void PreviewPanel::OnPhysics(wxCommandEvent& event) {
+	app->EnablePreviewPhysics(event.IsChecked());
+
+	// The simulation refuses to start without usable XMLs, so take the state
+	// from it instead of from the click
+	SetPhysicsChecked(app->IsPreviewPhysicsRunning());
+	ApplyPhysicsWind();
+}
+
+void PreviewPanel::OnPhysicsWindButton(wxCommandEvent& WXUNUSED(event)) {
+	if (!physicsWindButton)
+		return;
+
+	// Popping the preview out moves it to a different window, leaving the popup
+	// behind on the old one
+	if (physicsWindPopup && physicsWindPopup->GetParent() != wxGetTopLevelParent(this))
+		DestroyPhysicsWindPopup();
+
+	if (!physicsWindPopup)
+		CreatePhysicsWindPopup();
+
+	// Drop it down from the button, flipping to above it near the screen edge
+	physicsWindPopup->Position(physicsWindButton->GetScreenPosition(), physicsWindButton->GetSize());
+	physicsWindPopup->Popup();
+}
+
+void PreviewPanel::OnPhysicsWind(wxScrollEvent& WXUNUSED(event)) {
+	if (!physicsWindSlider)
+		return;
+
+	physicsWindStrength = physicsWindSlider->GetValue();
+	ApplyPhysicsWind();
+}
+
+void PreviewPanel::OnPhysicsWindDir(wxCommandEvent& WXUNUSED(event)) {
+	if (!physicsWindDir)
+		return;
+
+	physicsWindDirIndex = physicsWindDir->GetSelection();
+	ApplyPhysicsWind();
+}
+
+void PreviewPanel::Pump() {
+	app->PumpPreview();
+}
+
+void PreviewPanel::SetPumpActive(bool active) {
+	if (active == pumpTimer.IsRunning())
+		return;
+
+	if (active)
+		pumpTimer.Start(Physics::PumpTimerIntervalMS);
+	else
+		pumpTimer.Stop();
+}
+
+void PreviewPanel::OnPumpTimer(wxTimerEvent& WXUNUSED(event)) {
+	Pump();
+}
+
+void PreviewPanel::RefreshPoseControls() {
+	if (!poseChoice)
+		return;
+
+	poseChoice->Freeze();
+	poseChoice->Clear();
+	poseChoice->Append(_("No pose"));
+	poseChoice->Append(_("Skinned (rest pose)"));
+	for (auto& name : app->GetPreviewPoseNames())
+		poseChoice->Append(wxString::FromUTF8(name));
+
+	poseChoice->SetSelection(app->GetPreviewPose());
+	poseChoice->Thaw();
+
+	if (animationButton) {
+		animationButton->Show(app->CanLoadPreviewAnimations());
+		if (!animationButton->IsShown())
+			DestroyAnimationPopup();
+	}
+
+	PopulateAnimationChoice();
+	SyncAnimationControls();
+	LayoutToolBar();
+}
+
+void PreviewPanel::SyncAnimationControls() {
+	// An animation decides the pose for as long as it's selected
+	const bool hasAnimation = app->GetPreviewAnimation() >= 0;
+	if (poseChoice && poseChoice->IsEnabled() == hasAnimation)
+		poseChoice->Enable(!hasAnimation);
+
+	if (!animationPopup)
+		return;
+
+	if (animationFavoriteButton) {
+		const bool favorite = app->IsPreviewAnimationFavorite(app->GetPreviewAnimation());
+		if (animationFavoriteButton->IsEnabled() != hasAnimation || animationFavoriteShown != favorite) {
+			animationFavoriteShown = favorite;
+			animationFavoriteButton->SetBitmap(wxBitmap(wxString::FromUTF8(Config["AppDir"] + (favorite ? FavoriteStarIcon : FavoriteStarEmptyIcon)), wxBITMAP_TYPE_PNG));
+			animationFavoriteButton->Enable(hasAnimation);
+		}
+	}
+
+	const int numFrames = static_cast<int>(app->GetPreviewAnimationFrameCount());
+	const int frame = numFrames > 0 ? std::min(app->GetPreviewAnimationFrame(), numFrames - 1) : 0;
+
+	if (animationPlayButton) {
+		const wxString label = app->IsPreviewAnimationPlaying() ? _("Pause") : _("Play");
+		if (animationPlayButton->GetLabel() != label)
+			animationPlayButton->SetLabel(label);
+		animationPlayButton->Enable(numFrames > 0);
+	}
+
+	if (animationFrameSlider) {
+		const int maxFrame = numFrames > 1 ? numFrames - 1 : 1;
+		if (animationFrameSlider->GetMax() != maxFrame)
+			animationFrameSlider->SetRange(0, maxFrame);
+		if (animationFrameSlider->GetValue() != frame)
+			animationFrameSlider->SetValue(frame);
+		animationFrameSlider->Enable(numFrames > 1);
+	}
+
+	if (animationFrameText) {
+		const wxString text = numFrames > 0 ? wxString::Format("%d / %d", frame + 1, numFrames) : wxString("-");
+		if (animationFrameText->GetLabel() != text)
+			animationFrameText->SetLabel(text);
+	}
+
+	if (animationInterpolateCheck)
+		animationInterpolateCheck->Enable(numFrames > 1);
+}
+
+void PreviewPanel::PopulateAnimationChoice() {
+	if (!animationChoice)
+		return;
+
+	animationChoice->Freeze();
+	animationChoice->Clear();
+	animationChoice->Append(_("<None>"));
+
+	// Favorites carry the same star as favorite outfits and presets
+	auto names = app->GetPreviewAnimationNames();
+	for (size_t i = 0; i < names.size(); i++) {
+		wxString label = wxString::FromUTF8(names[i]);
+		if (app->IsPreviewAnimationFavorite(static_cast<int>(i)))
+			label = wxString::FromUTF8(FavoriteStar) + " " + label;
+
+		animationChoice->Append(label);
+	}
+
+	animationChoice->SetSelection(app->GetPreviewAnimation() + 1);
+	animationChoice->Thaw();
+}
+
+void PreviewPanel::CreateAnimationPopup() {
+	// Hangs off the top level window like the wind drop-down, see there
+	animationPopup = new wxPopupTransientWindow(wxGetTopLevelParent(this), wxBORDER_SIMPLE | wxPU_CONTAINS_CONTROLS);
+
+	wxPanel* animPanel = new wxPanel(animationPopup);
+	animPanel->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW));
+
+	animationChoice = new wxChoice(animPanel, wxID_ANY, wxDefaultPosition, FromDIP(wxSize(200, -1)), wxArrayString(), 0, wxDefaultValidator, "animationChoice");
+	animationChoice->SetToolTip(_("The animation playing on the preview. While one is selected, it decides the pose."));
+	animationChoice->Bind(wxEVT_CHOICE, &PreviewPanel::OnAnimationChoice, this);
+
+	animationFavoriteButton = new wxBitmapButton(animPanel,
+												 wxID_ANY,
+												 wxBitmap(wxString::FromUTF8(Config["AppDir"] + FavoriteStarEmptyIcon), wxBITMAP_TYPE_PNG),
+												 wxDefaultPosition,
+												 FromDIP(wxSize(24, 24)));
+	animationFavoriteShown = false;
+	animationFavoriteButton->SetToolTip(_("Favorite this animation. Favorites are listed in BodySlide and Outfit Studio without loading them again."));
+	animationFavoriteButton->Bind(wxEVT_BUTTON, &PreviewPanel::OnAnimationFavorite, this);
+
+	wxButton* loadButton = new wxButton(animPanel, wxID_ANY, _("Load HKX..."), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT);
+	loadButton->SetToolTip(_("Load a Havok animation file (.hkx). It's read against the .hkx skeleton next to the reference skeleton."));
+	loadButton->Bind(wxEVT_BUTTON, &PreviewPanel::OnLoadAnimation, this);
+
+	// Default size, so the button fits "Pause" as well as "Play"
+	animationPlayButton = new wxButton(animPanel, wxID_ANY, _("Play"));
+	animationPlayButton->Bind(wxEVT_BUTTON, &PreviewPanel::OnAnimationPlayPause, this);
+
+	animationFrameSlider = new wxSlider(animPanel, wxID_ANY, 0, 0, 1, wxDefaultPosition, FromDIP(wxSize(160, -1)), wxSL_HORIZONTAL, wxDefaultValidator, "animationFrameSlider");
+	animationFrameSlider->Bind(wxEVT_SCROLL_CHANGED, &PreviewPanel::OnAnimationFrame, this);
+	animationFrameSlider->Bind(wxEVT_SCROLL_THUMBTRACK, &PreviewPanel::OnAnimationFrame, this);
+
+	animationFrameText = new wxStaticText(animPanel, wxID_ANY, "-", wxDefaultPosition, FromDIP(wxSize(60, -1)));
+
+	// Matches the speeds of Outfit Studio's animation player
+	wxArrayString speeds;
+	speeds.Add("0.25x");
+	speeds.Add("0.5x");
+	speeds.Add("1x");
+	speeds.Add("1.5x");
+	speeds.Add("2x");
+
+	wxChoice* speedChoice = new wxChoice(animPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, speeds, 0, wxDefaultValidator, "animationSpeed");
+	speedChoice->SetSelection(animationSpeedIndex);
+	speedChoice->Bind(wxEVT_CHOICE, &PreviewPanel::OnAnimationSpeed, this);
+
+	animationInterpolateCheck = new wxCheckBox(animPanel, wxID_ANY, _("Interpolate"));
+	animationInterpolateCheck->SetValue(app->IsPreviewAnimationInterpolated());
+	animationInterpolateCheck->SetToolTip(_("Blend between frames for smooth playback."));
+	animationInterpolateCheck->Bind(wxEVT_CHECKBOX, &PreviewPanel::OnAnimationInterpolate, this);
+
+	wxBoxSizer* sizerChoice = new wxBoxSizer(wxHORIZONTAL);
+	sizerChoice->Add(animationChoice, 1, wxALIGN_CENTER_VERTICAL);
+	sizerChoice->Add(animationFavoriteButton, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(4));
+	sizerChoice->Add(loadButton, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(6));
+
+	wxBoxSizer* sizerPlayer = new wxBoxSizer(wxHORIZONTAL);
+	sizerPlayer->Add(animationPlayButton, 0, wxALIGN_CENTER_VERTICAL);
+	sizerPlayer->Add(animationFrameSlider, 1, wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(4));
+	sizerPlayer->Add(animationFrameText, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(4));
+
+	wxBoxSizer* sizerOptions = new wxBoxSizer(wxHORIZONTAL);
+	sizerOptions->Add(new wxStaticText(animPanel, wxID_ANY, _("Speed")), 0, wxALIGN_CENTER_VERTICAL);
+	sizerOptions->Add(speedChoice, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(4));
+	sizerOptions->Add(animationInterpolateCheck, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(12));
+
+	wxBoxSizer* sizerAnim = new wxBoxSizer(wxVERTICAL);
+	sizerAnim->Add(sizerChoice, 0, wxEXPAND | wxBOTTOM, FromDIP(6));
+	sizerAnim->Add(sizerPlayer, 0, wxEXPAND | wxBOTTOM, FromDIP(6));
+	sizerAnim->Add(sizerOptions, 0, wxEXPAND);
+
+	wxBoxSizer* sizerAnimBorder = new wxBoxSizer(wxVERTICAL);
+	sizerAnimBorder->Add(sizerAnim, 1, wxEXPAND | wxALL, FromDIP(8));
+	animPanel->SetSizerAndFit(sizerAnimBorder);
+
+	wxBoxSizer* sizerPopup = new wxBoxSizer(wxVERTICAL);
+	sizerPopup->Add(animPanel, 1, wxEXPAND);
+	animationPopup->SetSizerAndFit(sizerPopup);
+
+	PopulateAnimationChoice();
+	SyncAnimationControls();
+}
+
+void PreviewPanel::DestroyAnimationPopup() {
+	if (!animationPopup)
+		return;
+
+	if (animationPopup->IsShown())
+		animationPopup->Dismiss();
+
+	animationPopup->Destroy();
+	animationPopup = nullptr;
+	animationChoice = nullptr;
+	animationFavoriteButton = nullptr;
+	animationPlayButton = nullptr;
+	animationFrameSlider = nullptr;
+	animationFrameText = nullptr;
+	animationInterpolateCheck = nullptr;
+}
+
+void PreviewPanel::OnPoseChoice(wxCommandEvent& WXUNUSED(event)) {
+	app->SetPreviewPose(poseChoice->GetSelection());
+}
+
+void PreviewPanel::OnAnimationButton(wxCommandEvent& WXUNUSED(event)) {
+	if (!animationButton)
+		return;
+
+	// See OnPhysicsWindButton
+	if (animationPopup && animationPopup->GetParent() != wxGetTopLevelParent(this))
+		DestroyAnimationPopup();
+
+	if (!animationPopup)
+		CreateAnimationPopup();
+
+	animationPopup->Position(animationButton->GetScreenPosition(), animationButton->GetSize());
+	animationPopup->Popup();
+}
+
+void PreviewPanel::OnAnimationChoice(wxCommandEvent& WXUNUSED(event)) {
+	if (!animationChoice)
+		return;
+
+	std::string error;
+	bool selected = false;
+	{
+		// A favorite is only read now
+		wxBusyCursor busy;
+		selected = app->SetPreviewAnimation(animationChoice->GetSelection() - 1, &error);
+	}
+
+	if (!selected) {
+		animationChoice->SetSelection(app->GetPreviewAnimation() + 1);
+		wxMessageBox(wxString::FromUTF8(error), _("Load Animation File"), wxOK | wxICON_ERROR, this);
+	}
+
+	SyncAnimationControls();
+}
+
+void PreviewPanel::OnAnimationFavorite(wxCommandEvent& WXUNUSED(event)) {
+	const int animIndex = app->GetPreviewAnimation();
+	if (animIndex < 0)
+		return;
+
+	app->SetPreviewAnimationFavorite(animIndex, !app->IsPreviewAnimationFavorite(animIndex));
+
+	PopulateAnimationChoice();
+	SyncAnimationControls();
+}
+
+void PreviewPanel::OnLoadAnimation(wxCommandEvent& WXUNUSED(event)) {
+	// The file dialog takes the focus, which closes the drop-down anyway
+	if (animationPopup && animationPopup->IsShown())
+		animationPopup->Dismiss();
+
+	wxFileDialog loadDlg(this, _("Select animation file"), wxEmptyString, wxEmptyString, "HKX animation files (*.hkx)|*.hkx", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+	if (loadDlg.ShowModal() == wxID_CANCEL)
+		return;
+
+	std::string error;
+	bool loaded = false;
+	{
+		wxBusyCursor busy;
+		loaded = app->LoadPreviewAnimation(loadDlg.GetPath().ToUTF8().data(), error);
+	}
+
+	if (!loaded)
+		wxMessageBox(wxString::FromUTF8(error), _("Load Animation File"), wxOK | wxICON_ERROR, this);
+
+	PopulateAnimationChoice();
+	SyncAnimationControls();
+}
+
+void PreviewPanel::OnAnimationPlayPause(wxCommandEvent& WXUNUSED(event)) {
+	app->SetPreviewAnimationPlaying(!app->IsPreviewAnimationPlaying());
+	SyncAnimationControls();
+}
+
+void PreviewPanel::OnAnimationFrame(wxScrollEvent& event) {
+	app->SeekPreviewAnimation(event.GetPosition());
+	SyncAnimationControls();
+}
+
+void PreviewPanel::OnAnimationSpeed(wxCommandEvent& event) {
+	static const double speeds[] = {0.25, 0.5, 1.0, 1.5, 2.0};
+
+	animationSpeedIndex = event.GetSelection();
+	if (animationSpeedIndex < 0 || animationSpeedIndex >= static_cast<int>(std::size(speeds)))
+		animationSpeedIndex = 2;
+
+	app->SetPreviewAnimationSpeed(speeds[animationSpeedIndex]);
+}
+
+void PreviewPanel::OnAnimationInterpolate(wxCommandEvent& event) {
+	app->SetPreviewAnimationInterpolate(event.IsChecked());
+}
+
+void PreviewPanel::OnPopout(wxCommandEvent& WXUNUSED(event)) {
+	wxCommandEvent evt(EVT_PREVIEW_POPOUT);
+	wxPostEvent(GetParent(), evt);
+}
+
+void PreviewPanel::ShowPopoutButton(bool show) {
+	if (popoutButton) {
+		popoutButton->Show(show);
+		LayoutToolBar();
+	}
+}
+
+void PreviewPanel::SetPopoutButtonDetachedState(bool detached) {
+	if (!popoutButton)
+		return;
+
+	const wxString imageName = detached ? "PopIn.png" : "PopOut.png";
+	wxBitmap bitmap(wxString::FromUTF8(Config["AppDir"]) + "/res/images/" + imageName, wxBITMAP_TYPE_PNG);
+	if (bitmap.IsOk())
+		popoutButton->SetBitmap(bitmap);
+
+	if (detached)
+		popoutButton->SetToolTip(_("Pop preview back into the main window"));
+	else
+		popoutButton->SetToolTip(_("Pop out preview into a separate window"));
+}
+
+void PreviewPanel::ShowNormalGenWindow(wxCommandEvent& WXUNUSED(event)) {
+	if (!normalsGenDlg)
+		normalsGenDlg = new NormalsGenDialog(this, refNormalGenLayers);
+	else
+		normalsGenDlg->SetLayersRef(refNormalGenLayers);
+
+	normalsGenDlg->Show();
+}
+
+void PreviewPanel::Cleanup() {
+	pumpTimer.Stop();
+	DestroyPhysicsWindPopup();
+	SyncAnimationControls();
+
+	if (canvas && context)
+		canvas->SetCurrent(*context);
+
+	gls.Cleanup();
+	shapeMaterials.clear();
+	shapeSFMaterials.clear();
+	gls.RenderOneFrame();
+}
+
+wxBEGIN_EVENT_TABLE(PreviewCanvas, wxGLCanvas)
+	EVT_KEY_UP(PreviewCanvas::OnKeyUp)
+	EVT_MOTION(PreviewCanvas::OnMotion)
+	EVT_MOUSEWHEEL(PreviewCanvas::OnMouseWheel)
+	EVT_PAINT(PreviewCanvas::OnPaint)
+	EVT_SIZE(PreviewCanvas::OnResized)
+wxEND_EVENT_TABLE()
+
+PreviewCanvas::PreviewCanvas(PreviewPanel* pp, const wxGLAttributes& attribs)
+	: wxGLCanvas(pp, attribs, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxFULL_REPAINT_ON_RESIZE)
+	, previewPanel(pp) {}
+
+void PreviewCanvas::OnPaint(wxPaintEvent& WXUNUSED(event)) {
+	// Initialize OpenGL the first time the window is painted.
+	if (firstPaint) {
+		firstPaint = false;
+		previewPanel->OnShown();
+	}
+	previewPanel->Render();
+}
+
+void PreviewCanvas::OnKeyUp(wxKeyEvent& event) {
+	int key = event.GetKeyCode();
+	switch (key) {
+		case 'T': previewPanel->ToggleTextures(); break;
+		case 'W': previewPanel->ToggleWireframe(); break;
+		case 'L': previewPanel->ToggleLighting(); break;
+		case 'G':
+			break;
+	}
+}
+
+void PreviewCanvas::OnMotion(wxMouseEvent& event) {
+	if (!HasFocus()) {
+		auto topLevel = dynamic_cast<wxTopLevelWindow*>(wxGetTopLevelParent(previewPanel));
+		if (topLevel && topLevel->IsActive())
+			SetFocus();
+	}
+
+	// Mouse motion floods the message queue and starves the WM_TIMER driving the
+	// physics, so tick it from here as well (the pump paces itself)
+	previewPanel->Pump();
+
+	auto delta = event.GetPosition() - lastMousePosition;
+
+	if (event.LeftIsDown()) {
+		previewPanel->LeftDrag(delta.x, delta.y);
+	}
+	else if (event.MiddleIsDown()) {
+		if (wxGetKeyState(WXK_SHIFT))
+			previewPanel->MouseWheel(delta.y);
+		else
+			previewPanel->LeftDrag(delta.x, delta.y);
+	}
+	else if (event.RightIsDown()) {
+		if (wxGetKeyState(WXK_SHIFT))
+			previewPanel->LeftDrag(delta.x, delta.y);
+		else
+			previewPanel->RightDrag(delta.x, delta.y);
+	}
+	else
+		previewPanel->TrackMouse(event.GetX(), event.GetY());
+
+	lastMousePosition = event.GetPosition();
+}
+
+void PreviewCanvas::OnMouseWheel(wxMouseEvent& event) {
+	previewPanel->MouseWheel(event.GetWheelRotation());
+}
+
+void PreviewCanvas::OnResized(wxSizeEvent& event) {
+	previewPanel->Resized(event.GetSize().GetWidth(), event.GetSize().GetHeight());
+}

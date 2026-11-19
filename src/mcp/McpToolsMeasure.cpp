@@ -4,8 +4,9 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
-#include "../components/MeshAnalysis.h"
-#include "../program/OutfitStudio.h"
+#include "McpHelpers.h"
+#include "components/MeshAnalysis.h"
+#include "outfitstudio/OutfitStudioFrame.h"
 
 #include <algorithm>
 #include <cfloat>
@@ -17,12 +18,8 @@ using namespace nifly;
 
 namespace {
 
-float Round(float v, float step = 0.01f) {
-	return std::round(v / step) * step;
-}
-
 json VectorJson(const Vector3& v) {
-	return json::array({Round(v.x, 0.001f), Round(v.y, 0.001f), Round(v.z, 0.001f)});
+	return json::array({RoundTo(v.x, 0.001f), RoundTo(v.y, 0.001f), RoundTo(v.z, 0.001f)});
 }
 
 Vector3 VectorArg(const json& value, const char* name) {
@@ -111,14 +108,14 @@ json Distribution(std::vector<float> values, float over, double* outMedian = nul
 		*outInside = inside / n;
 	return {
 		{"vertices", values.size()},
-		{"min", Round(values.front())},
-		{"p5", Round(Percentile(values, 0.05f))},
-		{"median", Round(Percentile(values, 0.5f))},
-		{"mean", Round(static_cast<float>(sum / n))},
-		{"p95", Round(Percentile(values, 0.95f))},
-		{"max", Round(values.back())},
-		{"inside", Round(static_cast<float>(inside / n), 0.001f)},
-		{"over", Round(static_cast<float>(beyond / n), 0.001f)},
+		{"min", RoundTo(values.front())},
+		{"p5", RoundTo(Percentile(values, 0.05f))},
+		{"median", RoundTo(Percentile(values, 0.5f))},
+		{"mean", RoundTo(static_cast<float>(sum / n))},
+		{"p95", RoundTo(Percentile(values, 0.95f))},
+		{"max", RoundTo(values.back())},
+		{"inside", RoundTo(static_cast<float>(inside / n), 0.001f)},
+		{"over", RoundTo(static_cast<float>(beyond / n), 0.001f)},
 	};
 }
 
@@ -192,18 +189,6 @@ std::vector<Vector3> LiveVerts(OutfitProject& project, NiShape* shape) {
 	return verts;
 }
 
-std::vector<Vector3> RestVerts(OutfitProject& project, NiShape* shape) {
-	std::vector<Vector3> verts;
-	project.GetWorkNif()->GetVertsForShape(shape, verts);
-	return verts;
-}
-
-std::vector<Triangle> Triangles(NiShape* shape) {
-	std::vector<Triangle> tris;
-	shape->GetTriangles(tris);
-	return tris;
-}
-
 std::vector<float> SignedGaps(const std::vector<Vector3>& verts, const std::vector<Vector3>& surfaceVerts, const std::vector<Triangle>& surfaceTris, float radius) {
 	return MeshAnalysis::AnalyzePenetration(verts, surfaceVerts, surfaceTris, 0.1f, radius).signedDistances;
 }
@@ -220,7 +205,7 @@ json Profile(const std::vector<float>& gaps, const std::vector<Vector3>& rest, c
 	for (auto& bin : bins) {
 		std::vector<float> sorted = bin.second;
 		std::sort(sorted.begin(), sorted.end());
-		profile.push_back({{"at", Round((bin.first + 0.5f) * step)}, {"median", Round(Percentile(sorted, 0.5f))}, {"vertices", sorted.size()}});
+		profile.push_back({{"at", RoundTo((bin.first + 0.5f) * step)}, {"median", RoundTo(Percentile(sorted, 0.5f))}, {"vertices", sorted.size()}});
 	}
 	return profile;
 }
@@ -318,7 +303,7 @@ McpToolResult MeasureGap(OutfitStudioMcp& mcp, const json& args) {
 		if (!c.keepCurrent)
 			entry["sliderValues"] = c.values;
 		if (scored) {
-			entry["score"] = Round(static_cast<float>(score / scored), 0.001f);
+			entry["score"] = RoundTo(static_cast<float>(score / scored), 0.001f);
 			ranking.emplace_back(score / scored, c.name);
 		}
 		caseList.push_back(entry);
@@ -330,7 +315,7 @@ McpToolResult MeasureGap(OutfitStudioMcp& mcp, const json& args) {
 		std::sort(ranking.begin(), ranking.end());
 		json rank = json::array();
 		for (auto& r : ranking)
-			rank.push_back({{"case", r.second}, {"score", Round(static_cast<float>(r.first), 0.001f)}});
+			rank.push_back({{"case", r.second}, {"score", RoundTo(static_cast<float>(r.first), 0.001f)}});
 		result.data["ranking"] = rank;
 	}
 	return result;
@@ -420,7 +405,7 @@ McpToolResult CompareShapes(OutfitStudioMcp& mcp, const json& args) {
 		throw McpToolError("'" + anchor->name.get() + "' and '" + sourceAnchor->name.get() + "' need the same vertex count for anchorTo.");
 
 	std::vector<Vector3> rest = RestVerts(project, shape);
-	std::vector<Triangle> tris = Triangles(shape);
+	std::vector<Triangle> tris = ShapeTriangles(shape);
 	std::vector<bool> use = MaskFilter(mcp, shape, verts.size(), McpArgs::String(args, "vertices", "all"));
 
 	// How far each vertex is from where it is in the source, and how its gap to the body changed
@@ -486,7 +471,7 @@ McpToolResult CompareShapes(OutfitStudioMcp& mcp, const json& args) {
 		const float contactDistance = McpArgs::Float(args, "contactDistance", 1.0f);
 		std::vector<Triangle> anchorTris;
 		if (anchor)
-			anchorTris = Triangles(sourceAnchor);
+			anchorTris = ShapeTriangles(sourceAnchor);
 
 		struct PartRow {
 			int part;
@@ -523,12 +508,12 @@ McpToolResult CompareShapes(OutfitStudioMcp& mcp, const json& args) {
 				{"part", p},
 				{"vertices", pv.size()},
 				{"move", VectorJson(toCenter - fromCenter)},
-				{"turn", Round(RotationDegrees(fit.rotation), 0.1f)},
-				{"bend", Round(bend, 0.001f)},
-				{"maxBend", Round(worst, 0.001f)},
+				{"turn", RoundTo(RotationDegrees(fit.rotation), 0.1f)},
+				{"bend", RoundTo(bend, 0.001f)},
+				{"maxBend", RoundTo(worst, 0.001f)},
 			};
 			if (allowScale)
-				entry["scale"] = Round(static_cast<float>(fit.scale), 0.001f);
+				entry["scale"] = RoundTo(static_cast<float>(fit.scale), 0.001f);
 
 			if (anchor) {
 				auto closest = MeshAnalysis::ClosestSurfacePoints(sourceAnchorVerts, anchorTris, from, contactDistance);
@@ -553,7 +538,7 @@ McpToolResult CompareShapes(OutfitStudioMcp& mcp, const json& args) {
 					entry["anchor"] = {
 						{"contactVertices", needs.size()},
 						{"restoreMove", VectorJson(mean)},
-						{"spread", Round(static_cast<float>(std::sqrt(spread / needs.size())), 0.001f)},
+						{"spread", RoundTo(static_cast<float>(std::sqrt(spread / needs.size())), 0.001f)},
 					};
 				}
 			}
@@ -612,7 +597,7 @@ McpToolResult AnalyzeStrap(OutfitStudioMcp& mcp, const json& args) {
 	if (McpArgs::Has(args, "part")) {
 		const int part = McpArgs::Int(args, "part", 0);
 		int partCount = 0;
-		std::vector<int> parts = MeshAnalysis::ConnectedParts(rest, Triangles(shape), McpArgs::Float(args, "weldDistance", 0.001f), nullptr, &partCount);
+		std::vector<int> parts = MeshAnalysis::ConnectedParts(rest, ShapeTriangles(shape), McpArgs::Float(args, "weldDistance", 0.001f), nullptr, &partCount);
 		if (part < 0 || part >= partCount)
 			throw McpToolError("'" + shape->name.get() + "' has parts 0 to " + std::to_string(partCount - 1) + ". list_mesh_parts lists them.");
 		for (size_t v = 0; v < parts.size(); v++)
@@ -675,7 +660,7 @@ McpToolResult AnalyzeStrap(OutfitStudioMcp& mcp, const json& args) {
 				centers.emplace_back((s + 0.5f) / sections, sectionSum[s] / static_cast<float>(sectionCount[s]));
 
 		// Bow: how far the section centres are off the straight line between the end sections
-		json entry = {{"case", c.name}, {"length", Round(length)}};
+		json entry = {{"case", c.name}, {"length", RoundTo(length)}};
 		if (centers.size() >= 3) {
 			Vector3 a = centers.front().second, b = centers.back().second;
 			Vector3 chord = b - a;
@@ -692,8 +677,8 @@ McpToolResult AnalyzeStrap(OutfitStudioMcp& mcp, const json& args) {
 					bowOffset = offset;
 				}
 			}
-			entry["bow"] = Round(bow, 0.001f);
-			entry["bowAt"] = Round(bowAt);
+			entry["bow"] = RoundTo(bow, 0.001f);
+			entry["bowAt"] = RoundTo(bowAt);
 			entry["bowOffset"] = VectorJson(bowOffset);
 		}
 
@@ -709,7 +694,7 @@ McpToolResult AnalyzeStrap(OutfitStudioMcp& mcp, const json& args) {
 			float best = FLT_MAX;
 			std::string bestShape;
 			for (auto* other : joins) {
-				auto closest = MeshAnalysis::ClosestSurfacePoints(LiveVerts(project, other), Triangles(other), end, radius);
+				auto closest = MeshAnalysis::ClosestSurfacePoints(LiveVerts(project, other), ShapeTriangles(other), end, radius);
 				for (auto& sp : closest)
 					if (sp.triangle >= 0 && sp.distance < best) {
 						best = sp.distance;
@@ -717,7 +702,7 @@ McpToolResult AnalyzeStrap(OutfitStudioMcp& mcp, const json& args) {
 					}
 			}
 			if (!bestShape.empty()) {
-				endEntry["gap"] = Round(best, 0.001f);
+				endEntry["gap"] = RoundTo(best, 0.001f);
 				endEntry["to"] = bestShape;
 			}
 			ends.push_back(endEntry);

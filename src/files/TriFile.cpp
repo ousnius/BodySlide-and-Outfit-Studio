@@ -4,7 +4,7 @@ See the included LICENSE file
 */
 
 #include "TriFile.h"
-#include "../utils/PlatformUtil.h"
+#include "utils/PlatformUtil.h"
 
 using namespace nifly;
 

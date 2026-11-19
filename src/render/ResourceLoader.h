@@ -1,0 +1,173 @@
+/*
+BodySlide and Outfit Studio
+See the included LICENSE file
+*/
+
+#pragma once
+
+#include <cstddef>
+#include <cstdint>
+#include <map>
+#include <memory>
+#include <string>
+#include <tuple>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+
+#include "utils/StringStuff.h"
+
+#include <Object3d.hpp>
+#include <SOIL2/SOIL2.h>
+#include <gli.hpp>
+
+typedef unsigned int GLenum;
+typedef unsigned int GLuint;
+class GLMaterial;
+
+class ResourceLoader {
+public:
+	ResourceLoader();
+	~ResourceLoader();
+
+	// useDefaultTexture substitutes the "no image" placeholder for a missing diffuse. Only pass true for shapes that
+	// have a shader to begin with - a shape without one has no textures by definition and is meant to render untextured.
+	// isPBR says the slots hold what Community Shaders' True PBR puts in them, which spares slot 5 the environment mask
+	// classification: that slot carries an RMAOS map, and the classifier would call every one of them a Complex Material.
+	GLMaterial* AddMaterial(const std::vector<std::string>& textureFiles,
+							const std::string& vShaderFile,
+							const std::string& fShaderFile,
+							const bool reloadTextures = false,
+							const bool useDefaultTexture = true,
+							const bool isPBR = false);
+
+	// A Starfield layered material, whose texture list is whatever the material references rather than
+	// a fixed slot layout: every file is a plain 2D texture, none is classified, and one that can't be
+	// loaded is left out instead of being replaced by the placeholder - the material has a replacement
+	// color for that. The files that did load come back in loadedFiles, no more than maxTextures of
+	// them, in the order the material binds them to its texture units.
+	GLMaterial* AddSFMaterial(const std::vector<std::string>& textureFiles,
+							  const size_t maxTextures,
+							  const std::string& vShaderFile,
+							  const std::string& fShaderFile,
+							  const bool reloadTextures,
+							  std::vector<std::string>& loadedFiles);
+
+
+	//Central Point for loading texture files.  Calls appropriate resource loading subroutine, and
+	// tracks the resulting GL texture identifier so subsequent access to the same texture does not result
+	// in a new load.
+	GLuint LoadTexture(const std::string& fileName, bool isCubeMap = false, bool reloadTextures = false);
+
+	// The following functions manage non-file-sourced texture ids.  This facilitates named textures generated
+	//  within the program either for temporary use (generate/delete) or persistent use
+	GLuint GenerateTextureID(const std::string& texName);
+
+	GLuint GetTexID(const std::string& texName);
+
+
+	/* The following functions update cacheTime, which will cause any linked material to re-search for texture ids.
+		while this is not a tremendous performance impact, these functions should not be called every frame.
+		Functions above (that add new textures) do NOT update the cacheTime, because old Texture IDs remain valid.
+		*/
+
+	// Deletes all materials and textures.
+	void Cleanup();
+	// The next AddMaterial for a material with textures that weren't found looks for them again,
+	// after the data folders or archives changed.
+	void RetryMissingTextures();
+	// Deletes a specfic texture and removes it from video memory.
+	void DeleteTexture(const std::string& texName);
+	// rename texture moves the internal texture id to a new name. this allows a function to safely 'steal' a
+	//  texture generated elsewhere.  EG: in GLOffscreenBuffer, while the buffer is active, one of the textures
+	//  generated can be renamed to prevent the texture from being deleted when the object is deleted, so it can
+	//  be used elsewhere.
+	//  Fails if texture already exist and overwrite is not set to true.
+	bool RenameTexture(const std::string& texNameSrc, const std::string& texNameDest, bool overwrite = false);
+
+
+	// Whether the texture looks like a Skyrim "Complex Material" mask: glossiness in green and
+	//  metalness in blue, instead of the greyscale reflection mask vanilla puts in the same slot.
+	//  Classified once when the texture is loaded into the slot that carries it, since the verdict
+	//  is about the map as a whole and can't be made from the texel a fragment happens to sample.
+	bool IsComplexMaterialTexture(const std::string& texName) const;
+
+	// Highest mip level the texture actually has, 0 for one without a mip chain. Reflections pick
+	//  their mip from roughness, so the shader needs the real number rather than an assumed one.
+	int GetTextureMaxMipLevel(const std::string& texName) const;
+
+	// Edge length of the cube map's base level, 0 for a texture that isn't one. A 1x1 cube map holds
+	//  no reflection anybody wants; it is how Community Shaders and ENB mods mark a slot as wanting
+	//  a dynamic cube map instead, which is the only reason the size is worth remembering.
+	int GetCubemapSize(const std::string& texName) const;
+
+	// What a 1x1 cube map's single texel stood for, read as an sRGB F0 reflectance and returned
+	//  linear. Black means full reflectance rather than a black reflection, so it comes back as 1.0,
+	//  which is also what any cube map that isn't 1x1 returns.
+	nifly::Vector3 GetCubemapF0Color(const std::string& texName) const;
+
+	// Whether the texture was uploaded in an sRGB format, which the GPU decodes to linear as it is
+	//  sampled. Only a shader that does that decode itself needs to know, so it can skip it rather
+	//  than decode the texture a second time.
+	bool IsSRGBTexture(const std::string& texName) const;
+
+	// Whether the texture was uploaded in a signed format, such as the BC5_SNORM normal maps of
+	//  Starfield, which sample as -1 to 1 and so need no expanding from 0 to 1 in the shader.
+	bool IsSignedTexture(const std::string& texName) const;
+
+	// compares the incoming cacheTime with the internal cacheTime, and returns true if they match.
+	//  if they do not match, the incoming cacheTime is updated to match and the function returns false.
+	bool CacheStamp(int64_t& inCacheTime) {
+		if (cacheTime == inCacheTime)
+			return true;
+		else {
+			inCacheTime = cacheTime;
+			return false;
+		}
+	}
+
+private:
+	static bool extChecked;
+	// isSRGB and isSigned, if given, receive whether the texture went up in an sRGB or a signed format.
+	GLuint GLI_create_texture(gli::texture& texture, GLuint textureID = 0, bool* isSRGB = nullptr, bool* isSigned = nullptr);
+	GLuint GLI_load_texture(const std::string& fileName, GLuint textureID = 0, bool* isSRGB = nullptr, bool* isSigned = nullptr);
+	GLuint GLI_load_texture_from_memory(const char* buffer, size_t size, GLuint textureID = 0, bool* isSRGB = nullptr, bool* isSigned = nullptr);
+
+	// Highest level with actual storage for the currently bound texture. GL_TEXTURE_MAX_LEVEL isn't
+	//  usable here: the SOIL path never sets it and leaves it at its 1000 default, so the levels are
+	//  walked until one comes back with no width. Pass the cube map's first face for a cube map.
+	static int GetBoundMaxMipLevel(GLenum levelTarget);
+	// Reads the smallest mip - the average of the whole texture - and decides from it.
+	bool ClassifyComplexMaterial(GLuint textureID) const;
+	// Records the bound cube map's size, and for a 1x1 one the color its texel stands for.
+	void ClassifyCubemap(const std::string& texName, GLuint textureID);
+
+	// If N3983 gets accepted into a future C++ standard then
+	// we wouldn't have to explicitly define our own hash here.
+	// The default texture flag is part of the key: the same (empty) texture list resolves to a different
+	// material depending on whether the "no image" placeholder was substituted for the diffuse.
+	typedef std::tuple<std::vector<std::string>, std::string, std::string, bool> MaterialKey;
+	struct MatKeyHash {
+		size_t operator()(const MaterialKey& key) const;
+	};
+	typedef std::unordered_map<MaterialKey, std::unique_ptr<GLMaterial>, MatKeyHash> MaterialCache;
+	// defining texture cache like this both for consitency, might also make it easier to add features like
+	// reference tracking later.  For now, Textures are only unloaded when ResourceLoader is destroyed.
+	typedef std::map<std::string, GLuint, case_insensitive_compare> TextureCache;
+
+	TextureCache textures;
+	MaterialCache materials;
+	// Materials with a texture that couldn't be loaded, and those of them AddMaterial looks for again once
+	std::unordered_set<MaterialKey, MatKeyHash> incompleteMaterials;
+	std::unordered_set<MaterialKey, MatKeyHash> retryMaterials;
+	// Keyed by texture name like the texture cache, so a verdict outlives the material that
+	// triggered it and survives the material cache handing back an existing entry.
+	std::map<std::string, bool, case_insensitive_compare> complexMaterialTextures;
+	std::map<std::string, int, case_insensitive_compare> textureMaxMipLevels;
+	std::map<std::string, int, case_insensitive_compare> cubemapSizes;
+	std::map<std::string, nifly::Vector3, case_insensitive_compare> cubemapF0Colors;
+	std::map<std::string, bool, case_insensitive_compare> srgbTextures;
+	std::map<std::string, bool, case_insensitive_compare> signedTextures;
+
+	int64_t cacheTime = 1;
+};
