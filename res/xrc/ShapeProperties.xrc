@@ -1482,7 +1482,6 @@
 														<min>1</min>
 														<max>8</max>
 														<enabled>0</enabled>
-														<hidden>1</hidden>
 														<tooltip>Most bones a vertex of the mesh can be weighted to. Without a lock, the mesh is saved with the most any of its vertices needs.</tooltip>
 													</object>
 												</object>

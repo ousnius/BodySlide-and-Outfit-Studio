@@ -2134,13 +2134,14 @@ void ShapeProperties::RefreshMesh() {
 }
 
 void ShapeProperties::GetBonesPerVertex() {
-	// Only Starfield meshes store their own bones per vertex count, other games always use 4
-	if (!nif->GetHeader().GetVersion().IsSF())
+	// Only Starfield meshes store their own bones per vertex count, other games always use 4.
+	// The spin control isn't hidden in the XRC: on MSW, a wxSpinCtrl hidden before its creation still shows its text box.
+	bool isSF = nif->GetHeader().GetVersion().IsSF();
+	lbBonesPerVertex->Show(isSF);
+	bonesPerVertex->Show(isSF);
+	bonesPerVertexLock->Show(isSF);
+	if (!isSF)
 		return;
-
-	lbBonesPerVertex->Show();
-	bonesPerVertex->Show();
-	bonesPerVertexLock->Show();
 
 	OutfitProject* project = os->project;
 	bool available = std::all_of(shapes.begin(), shapes.end(), [project](NiShape* s) { return project->HasBonesPerVertexCount(s); });
