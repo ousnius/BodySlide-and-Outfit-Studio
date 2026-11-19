@@ -904,7 +904,7 @@
     <ClInclude Include="src\ui\outfitstudio\BadBonesDialog.h" />
     <ClInclude Include="src\outfitstudio\OutfitStudioFrame.h" />
     <ClInclude Include="src\outfitstudio\FrameHelpers.h" />
-    <ClInclude Include="src\outfitstudio\ViewState.h" />
+    <ClInclude Include="src\render\ViewState.h" />
     <ClInclude Include="src\outfitstudio\ToolID.h" />
     <ClInclude Include="src\outfitstudio\ShapeTreeItems.h" />
     <ClInclude Include="src\outfitstudio\OutfitStudioProjectHost.h" />

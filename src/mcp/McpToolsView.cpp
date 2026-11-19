@@ -8,7 +8,7 @@ See the included LICENSE file
 #include "components/PoseMath.h"
 #include "outfitstudio/OutfitStudioFrame.h"
 #include "outfitstudio/GLPanel.h"
-#include "outfitstudio/ViewState.h"
+#include "render/ViewState.h"
 #include "render/GLSurface.h"
 
 #include <wx/dcmemory.h>

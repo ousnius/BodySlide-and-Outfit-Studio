@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "FrameHelpers.h"
 #include "GLPanel.h"
 #include "ShapeTreeItems.h"
-#include "ViewState.h"
+#include "render/ViewState.h"
 #include "utils/ConfigurationManager.h"
 #include "ui/wxStateButton.h"
 #include "ui/outfitstudio/WeightCopyDialog.h"

@@ -943,8 +943,8 @@
     <ClInclude Include="src\outfitstudio\FrameHelpers.h">
       <Filter>Outfit Studio</Filter>
     </ClInclude>
-    <ClInclude Include="src\outfitstudio\ViewState.h">
-      <Filter>Outfit Studio</Filter>
+    <ClInclude Include="src\render\ViewState.h">
+      <Filter>Rendering</Filter>
     </ClInclude>
     <ClInclude Include="src\outfitstudio\ToolID.h">
       <Filter>Outfit Studio</Filter>
