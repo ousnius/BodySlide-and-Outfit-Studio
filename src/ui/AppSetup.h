@@ -32,4 +32,10 @@ void FillDataFileList(wxCheckListBox* dataFileList, const wxString& dataDir, int
 // Choice event of the settings dialog's target game: shows the game's skeleton, data folder and archives
 void OnChooseTargetGame(wxCommandEvent& event);
 
+// Sets the defaults of the settings both applications share. Returns the target game, -1 if none is set yet.
+int SetSharedConfigDefaults();
+
+// Sets the registry keys and values the data folders of the games are looked up with
+void SetGameRegistryDefaults();
+
 } // namespace AppSetup

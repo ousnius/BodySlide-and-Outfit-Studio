@@ -468,34 +468,7 @@ void OutfitStudio::CharHook(wxKeyEvent& event) {
 }
 
 bool OutfitStudio::SetDefaultConfig() {
-	int currentTarget = -1;
-	Config.SetDefaultValue("TargetGame", currentTarget);
-	currentTarget = Config.GetIntValue("TargetGame");
-
-	Config.SetDefaultBoolValue("WarnMissingGamePath", true);
-	Config.SetDefaultBoolValue("BSATextureScan", true);
-	Config.SetDefaultValue("LogLevel", "3");
-	SettingsDialogShared::SetDefaultAppearanceMode(Config);
-	Config.SetDefaultValue("Input/SliderMinimum", 0);
-	Config.SetDefaultValue("Input/SliderMaximum", 100);
-	Config.SetDefaultBoolValue("Input/LeftMousePan", false);
-	Config.SetDefaultBoolValue("Input/BrushSettingsNearCursor", true);
-	Config.SetDefaultBoolValue("Input/MaskHistory", true);
-	Config.SetDefaultBoolValue("Input/ShapeHoverHighlight", true);
-	Config.SetDefaultValue("Lights/Ambient", 15);
-	Config.SetDefaultValue("Lights/Frontal", 100);
-	Config.SetDefaultValue("Lights/Directional0", 0);
-	Config.SetDefaultValue("Lights/Directional0.x", -90);
-	Config.SetDefaultValue("Lights/Directional0.y", 10);
-	Config.SetDefaultValue("Lights/Directional0.z", 100);
-	Config.SetDefaultValue("Lights/Directional1", 0);
-	Config.SetDefaultValue("Lights/Directional1.x", 70);
-	Config.SetDefaultValue("Lights/Directional1.y", 10);
-	Config.SetDefaultValue("Lights/Directional1.z", 100);
-	Config.SetDefaultValue("Lights/Directional2", 0);
-	Config.SetDefaultValue("Lights/Directional2.x", 30);
-	Config.SetDefaultValue("Lights/Directional2.y", 20);
-	Config.SetDefaultValue("Lights/Directional2.z", -100);
+	int currentTarget = AppSetup::SetSharedConfigDefaults();
 	Config.SetDefaultValue("Rendering/HDRIBackground", "");
 	const wxSize outfitStudioFrameSize = wxWindow::FromDIP(wxSize(1360, 900), nullptr);
 	OutfitStudioConfig.SetDefaultValue("OutfitStudioFrame.width", outfitStudioFrameSize.GetWidth());
@@ -509,24 +482,7 @@ bool OutfitStudio::SetDefaultConfig() {
 	if (!OutfitStudioConfig.Exists("ProjectHistory.maxcount"))
 		OutfitStudioConfig.SetValue("ProjectHistory.maxcount", DEF_PROJECT_HISTORY);
 
-	Config.SetDefaultValue("GameRegKey/Oblivion", "Software\\Bethesda Softworks\\Oblivion");
-	Config.SetDefaultValue("GameRegVal/Oblivion", "Installed Path");
-	Config.SetDefaultValue("GameRegKey/Fallout3", "Software\\Bethesda Softworks\\Fallout3");
-	Config.SetDefaultValue("GameRegVal/Fallout3", "Installed Path");
-	Config.SetDefaultValue("GameRegKey/FalloutNewVegas", "Software\\Bethesda Softworks\\FalloutNV");
-	Config.SetDefaultValue("GameRegVal/FalloutNewVegas", "Installed Path");
-	Config.SetDefaultValue("GameRegKey/Skyrim", "Software\\Bethesda Softworks\\Skyrim");
-	Config.SetDefaultValue("GameRegVal/Skyrim", "Installed Path");
-	Config.SetDefaultValue("GameRegKey/Fallout4", "Software\\Bethesda Softworks\\Fallout4");
-	Config.SetDefaultValue("GameRegVal/Fallout4", "Installed Path");
-	Config.SetDefaultValue("GameRegKey/SkyrimSpecialEdition", "Software\\Bethesda Softworks\\Skyrim Special Edition");
-	Config.SetDefaultValue("GameRegVal/SkyrimSpecialEdition", "Installed Path");
-	Config.SetDefaultValue("GameRegKey/Fallout4VR", "Software\\Bethesda Softworks\\Fallout 4 VR");
-	Config.SetDefaultValue("GameRegVal/Fallout4VR", "Installed Path");
-	Config.SetDefaultValue("GameRegKey/SkyrimVR", "Software\\Bethesda Softworks\\Skyrim VR");
-	Config.SetDefaultValue("GameRegVal/SkyrimVR", "Installed Path");
-	Config.SetDefaultValue("GameRegKey/Starfield", "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Steam App 1716740");
-	Config.SetDefaultValue("GameRegVal/Starfield", "InstallLocation");
+	AppSetup::SetGameRegistryDefaults();
 
 	// Target game not set, show setup dialog
 	if (currentTarget == -1)
