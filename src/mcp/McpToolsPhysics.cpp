@@ -8,7 +8,7 @@ See the included LICENSE file
 #include "components/MeshAnalysis.h"
 #include "components/PhysicsChains.h"
 #include "physics/Controller.h"
-#include "outfitstudio/OutfitStudio.h"
+#include "outfitstudio/OutfitStudioFrame.h"
 
 #include <tinyxml2.h>
 

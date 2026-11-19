@@ -4,7 +4,7 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
-#include "outfitstudio/OutfitStudio.h"
+#include "outfitstudio/OutfitStudioFrame.h"
 #include "ui/outfitstudio/PartitionTypeChoices.h"
 
 #include <algorithm>

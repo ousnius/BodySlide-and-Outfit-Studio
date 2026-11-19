@@ -6,7 +6,7 @@ See the included LICENSE file
 #include "OutfitStudioMcp.h"
 #include "components/MaskOps.h"
 #include "project/BrushStrokeController.h"
-#include "outfitstudio/OutfitStudio.h"
+#include "outfitstudio/OutfitStudioFrame.h"
 
 #include <algorithm>
 #include <cfloat>

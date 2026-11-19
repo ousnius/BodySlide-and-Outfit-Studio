@@ -12,7 +12,7 @@ See the included LICENSE file
 #include "components/StarfieldSpace.h"
 #include "utils/ConfigurationManager.h"
 #include "utils/ProjectUtil.h"
-#include "outfitstudio/OutfitStudio.h"
+#include "outfitstudio/OutfitStudioFrame.h"
 
 #include <wx/filename.h>
 

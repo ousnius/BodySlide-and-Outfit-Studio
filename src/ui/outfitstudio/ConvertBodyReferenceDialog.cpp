@@ -13,7 +13,7 @@ See the included LICENSE file
 
 #include <regex>
 
-#include "outfitstudio/OutfitStudio.h"
+#include "outfitstudio/OutfitStudioFrame.h"
 
 using namespace std;
 class RefTemplate;

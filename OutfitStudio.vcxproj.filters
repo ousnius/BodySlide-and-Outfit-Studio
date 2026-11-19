@@ -934,7 +934,7 @@
     <ClInclude Include="src\physics\hdt\hdtVertex.h">
       <Filter>Physics\hdt</Filter>
     </ClInclude>
-    <ClInclude Include="src\outfitstudio\OutfitStudio.h">
+    <ClInclude Include="src\outfitstudio\OutfitStudioFrame.h">
       <Filter>Outfit Studio</Filter>
     </ClInclude>
     <ClInclude Include="src\ui\PresetSaveDialog.h">

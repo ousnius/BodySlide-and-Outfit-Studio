@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "OutfitStudio.h"
+#include "OutfitStudioFrame.h"
 #include "mcp/OutfitStudioMcp.h"
 #include "components/MaskOps.h"
 #include "components/SliderGroup.h"

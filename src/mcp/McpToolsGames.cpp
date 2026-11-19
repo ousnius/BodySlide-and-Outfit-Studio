@@ -8,7 +8,7 @@ See the included LICENSE file
 #include "files/MaterialFile.h"
 #include "files/GameDataStream.h"
 #include "project/GameImport.h"
-#include "outfitstudio/OutfitStudio.h"
+#include "outfitstudio/OutfitStudioFrame.h"
 #include "utils/ConfigurationManager.h"
 
 #include <wx/filename.h>

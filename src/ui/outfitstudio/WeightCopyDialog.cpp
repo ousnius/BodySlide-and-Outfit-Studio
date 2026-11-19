@@ -6,7 +6,7 @@ See the included LICENSE file
 #include "WeightCopyDialog.h"
 
 #include "project/OutfitProject.h"
-#include "outfitstudio/OutfitStudio.h"
+#include "outfitstudio/OutfitStudioFrame.h"
 
 #include <wx/xrc/xmlres.h>
 

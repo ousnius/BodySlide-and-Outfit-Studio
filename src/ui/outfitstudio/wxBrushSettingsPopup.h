@@ -5,7 +5,7 @@ See the included LICENSE file
 
 #pragma once
 
-#include "outfitstudio/OutfitStudio.h"
+#include "outfitstudio/OutfitStudioFrame.h"
 
 #include <wx/popupwin.h>
 #include <wx/spinctrl.h>

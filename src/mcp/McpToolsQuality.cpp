@@ -7,7 +7,7 @@ See the included LICENSE file
 #include "components/ClippingFixer.h"
 #include "components/MaskOps.h"
 #include "components/StarfieldSpace.h"
-#include "outfitstudio/OutfitStudio.h"
+#include "outfitstudio/OutfitStudioFrame.h"
 #include "utils/ConfigurationManager.h"
 
 #include <algorithm>

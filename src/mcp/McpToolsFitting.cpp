@@ -12,7 +12,7 @@ See the included LICENSE file
 #include "components/PoseFit.h"
 #include "components/PoseMath.h"
 #include "components/SurfaceFit.h"
-#include "outfitstudio/OutfitStudio.h"
+#include "outfitstudio/OutfitStudioFrame.h"
 
 #include <algorithm>
 #include <cfloat>

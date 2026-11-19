@@ -5,7 +5,7 @@ See the included LICENSE file
 
 #include "SliderDataDialog.h"
 
-#include "outfitstudio/OutfitStudio.h"
+#include "outfitstudio/OutfitStudioFrame.h"
 #include "utils/StringStuff.h"
 
 #include <wx/button.h>

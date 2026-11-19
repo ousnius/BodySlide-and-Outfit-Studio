@@ -6,7 +6,7 @@ See the included LICENSE file
 #include "OutfitStudioMcp.h"
 #include "components/ArchiveIndex.h"
 #include "files/GameDataStream.h"
-#include "outfitstudio/OutfitStudio.h"
+#include "outfitstudio/OutfitStudioFrame.h"
 #include "ui/outfitstudio/ArchiveBrowser.h"
 #include "utils/ConfigurationManager.h"
 #include "utils/GameUtil.h"

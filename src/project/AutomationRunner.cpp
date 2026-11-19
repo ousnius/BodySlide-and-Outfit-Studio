@@ -8,7 +8,7 @@ See the included LICENSE file
 #include "BrushStrokeController.h"
 #include "GameImport.h"
 #include "OutfitProject.h"
-#include "outfitstudio/OutfitStudio.h"
+#include "outfitstudio/OutfitStudioFrame.h"
 
 #include "components/ClippingFixer.h"
 #include "components/DiffData.h"

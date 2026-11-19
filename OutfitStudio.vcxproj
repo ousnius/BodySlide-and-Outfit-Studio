@@ -900,7 +900,7 @@
     <ClInclude Include="src\project\BrushStrokeController.h" />
     <ClInclude Include="src\project\EditorState.h" />
     <ClInclude Include="src\ui\outfitstudio\BadBonesDialog.h" />
-    <ClInclude Include="src\outfitstudio\OutfitStudio.h" />
+    <ClInclude Include="src\outfitstudio\OutfitStudioFrame.h" />
     <ClInclude Include="src\ui\PresetSaveDialog.h" />
     <ClInclude Include="src\ui\outfitstudio\ShapeProperties.h" />
     <ClInclude Include="src\ui\outfitstudio\SliderDataDialog.h" />

@@ -5,7 +5,7 @@ See the included LICENSE file
 
 #include "ArchiveBrowser.h"
 
-#include "outfitstudio/OutfitStudio.h"
+#include "outfitstudio/OutfitStudioFrame.h"
 #include "utils/ConfigurationManager.h"
 
 #include "FSEngine/FSEngine.h"

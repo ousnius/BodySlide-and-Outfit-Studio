@@ -5,7 +5,7 @@ See the included LICENSE file
 
 #include "OutfitStudioMcp.h"
 #include "components/SliderPresets.h"
-#include "outfitstudio/OutfitStudio.h"
+#include "outfitstudio/OutfitStudioFrame.h"
 #include "utils/ProjectUtil.h"
 
 #include <wx/filename.h>

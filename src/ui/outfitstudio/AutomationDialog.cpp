@@ -6,7 +6,7 @@ See the included LICENSE file
 #include "AutomationDialog.h"
 
 #include "project/OutfitProject.h"
-#include "outfitstudio/OutfitStudio.h"
+#include "outfitstudio/OutfitStudioFrame.h"
 #include "PartitionTypeChoices.h"
 
 #include "files/MaskFile.h"
