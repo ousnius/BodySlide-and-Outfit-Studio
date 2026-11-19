@@ -16,6 +16,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "OutfitStudioFrame.h"
+#include "DropTargets.h"
+#include "OutfitStudioApp.h"
 #include "mcp/OutfitStudioMcp.h"
 #include "components/MaskOps.h"
 #include "components/SliderGroup.h"

@@ -901,6 +901,13 @@
     <ClInclude Include="src\project\EditorState.h" />
     <ClInclude Include="src\ui\outfitstudio\BadBonesDialog.h" />
     <ClInclude Include="src\outfitstudio\OutfitStudioFrame.h" />
+    <ClInclude Include="src\outfitstudio\ViewState.h" />
+    <ClInclude Include="src\outfitstudio\ToolID.h" />
+    <ClInclude Include="src\outfitstudio\ShapeTreeItems.h" />
+    <ClInclude Include="src\outfitstudio\OutfitStudioProjectHost.h" />
+    <ClInclude Include="src\outfitstudio\OutfitStudioApp.h" />
+    <ClInclude Include="src\outfitstudio\GLPanel.h" />
+    <ClInclude Include="src\outfitstudio\DropTargets.h" />
     <ClInclude Include="src\ui\PresetSaveDialog.h" />
     <ClInclude Include="src\ui\outfitstudio\ShapeProperties.h" />
     <ClInclude Include="src\ui\outfitstudio\SliderDataDialog.h" />
