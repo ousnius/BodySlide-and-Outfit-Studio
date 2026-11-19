@@ -78,7 +78,7 @@ struct SharedFilesTarget {
 
 class Mesh;
 class ShapeItemData;
-class UndoStateProject;
+struct UndoStateProject;
 class wxGLPanel;
 class wxStateButton;
 struct ViewState;

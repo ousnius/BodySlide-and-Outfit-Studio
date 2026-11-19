@@ -22,7 +22,7 @@ See the included LICENSE file
 
 class BrushStrokeController;
 class OutfitStudioFrame;
-class SFLayeredMaterial;
+struct SFLayeredMaterial;
 
 // The 3D viewport of the Outfit Studio window: drawing, the editing tools and their undo
 
@@ -345,6 +345,22 @@ private:
 	void OnIdle(wxIdleEvent& event);
 
 	void OnCaptureLost(wxMouseCaptureLostEvent& event);
+
+	// Parts of ApplyUndoState, one per undo type
+	void ApplyUndoWeights(UndoStateProject* usp, bool bUndo);
+	void ApplyUndoPoints(UndoStateProject* usp, bool bUndo, Mesh::UpdateType updateType, void (*setPoint)(Mesh&, int, const nifly::Vector3&));
+	void ApplyUndoUVs(UndoStateProject* usp, UndoStateShape& uss, bool bUndo);
+	void ApplyUndoVertexPositions(UndoStateProject* usp, bool bUndo);
+	void ApplyUndoMesh(UndoStateProject* usp, bool bUndo);
+	void ApplyUndoShapeDelete(UndoStateProject* usp, bool bUndo);
+	void ApplyUndoMirror(UndoStateProject* usp);
+	void ApplyUndoNodeTransform(UndoStateProject* usp, bool bUndo);
+	void ApplyUndoBoneEdit(UndoStateProject* usp, bool bUndo);
+	void RestoreOrDeleteShapes(UndoStateProject* usp, bool restore);
+	void UpdateAfterSkeletonUndo();
+	// Puts the posed vertices of a shape, or of all shapes of an undo state, into their meshes
+	void UpdateMeshFromLiveVerts(nifly::NiShape* shape);
+	void UpdateMeshesFromLiveVerts(UndoStateProject* usp);
 
 	std::unique_ptr<wxGLContext> context;
 
