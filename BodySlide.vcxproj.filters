@@ -1914,6 +1914,48 @@
     <ClCompile Include="src\bodyslide\BodySlideApp.cpp">
       <Filter>BodySlide</Filter>
     </ClCompile>
+    <ClCompile Include="src\bodyslide\BodySlideFrameSliders.cpp">
+      <Filter>BodySlide</Filter>
+    </ClCompile>
+    <ClCompile Include="src\bodyslide\BodySlideFramePreview.cpp">
+      <Filter>BodySlide</Filter>
+    </ClCompile>
+    <ClCompile Include="src\bodyslide\BodySlideFrameOutfits.cpp">
+      <Filter>BodySlide</Filter>
+    </ClCompile>
+    <ClCompile Include="src\bodyslide\BodySlideFrameBuild.cpp">
+      <Filter>BodySlide</Filter>
+    </ClCompile>
+    <ClCompile Include="src\bodyslide\BodySlideFrame.cpp">
+      <Filter>BodySlide</Filter>
+    </ClCompile>
+    <ClCompile Include="src\bodyslide\BodySlideAppSliders.cpp">
+      <Filter>BodySlide</Filter>
+    </ClCompile>
+    <ClCompile Include="src\bodyslide\BodySlideAppPreviewMotion.cpp">
+      <Filter>BodySlide</Filter>
+    </ClCompile>
+    <ClCompile Include="src\bodyslide\BodySlideAppPreview.cpp">
+      <Filter>BodySlide</Filter>
+    </ClCompile>
+    <ClCompile Include="src\bodyslide\BodySlideAppPresets.cpp">
+      <Filter>BodySlide</Filter>
+    </ClCompile>
+    <ClCompile Include="src\bodyslide\BodySlideAppOutfits.cpp">
+      <Filter>BodySlide</Filter>
+    </ClCompile>
+    <ClCompile Include="src\bodyslide\BodySlideAppMorphFiles.cpp">
+      <Filter>BodySlide</Filter>
+    </ClCompile>
+    <ClCompile Include="src\bodyslide\BodySlideAppGroups.cpp">
+      <Filter>BodySlide</Filter>
+    </ClCompile>
+    <ClCompile Include="src\bodyslide\BodySlideAppBuildRecords.cpp">
+      <Filter>BodySlide</Filter>
+    </ClCompile>
+    <ClCompile Include="src\bodyslide\BodySlideAppBuild.cpp">
+      <Filter>BodySlide</Filter>
+    </ClCompile>
     <ClCompile Include="src\bodyslide\SliderDisplay.cpp">
       <Filter>BodySlide</Filter>
     </ClCompile>

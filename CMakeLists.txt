@@ -594,6 +594,20 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 
 set(BSOS_BODYSLIDE_SOURCES
 	src/bodyslide/BodySlideApp.cpp
+	src/bodyslide/BodySlideFrameSliders.cpp
+	src/bodyslide/BodySlideFramePreview.cpp
+	src/bodyslide/BodySlideFrameOutfits.cpp
+	src/bodyslide/BodySlideFrameBuild.cpp
+	src/bodyslide/BodySlideFrame.cpp
+	src/bodyslide/BodySlideAppSliders.cpp
+	src/bodyslide/BodySlideAppPreviewMotion.cpp
+	src/bodyslide/BodySlideAppPreview.cpp
+	src/bodyslide/BodySlideAppPresets.cpp
+	src/bodyslide/BodySlideAppOutfits.cpp
+	src/bodyslide/BodySlideAppMorphFiles.cpp
+	src/bodyslide/BodySlideAppGroups.cpp
+	src/bodyslide/BodySlideAppBuildRecords.cpp
+	src/bodyslide/BodySlideAppBuild.cpp
 	src/bodyslide/SliderDisplay.cpp
 	src/bodyslide/PreviewWindow.cpp
 	src/ui/bodyslide/NormalsGenDialog.cpp
