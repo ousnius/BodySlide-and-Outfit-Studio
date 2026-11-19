@@ -822,6 +822,7 @@
     <ClInclude Include="src\components\SurfaceFit.h" />
     <ClInclude Include="src\components\TextureConvert.h" />
     <ClInclude Include="src\project\GameImport.h" />
+    <ClInclude Include="src\project\ProjectPacker.h" />
     <ClInclude Include="src\components\ClothData.h" />
     <ClInclude Include="src\components\DiffData.h" />
     <ClInclude Include="src\components\Mesh.h" />
@@ -991,6 +992,7 @@
     <ClCompile Include="src\components\SurfaceFit.cpp" />
     <ClCompile Include="src\components\TextureConvert.cpp" />
     <ClCompile Include="src\project\GameImport.cpp" />
+    <ClCompile Include="src\project\ProjectPacker.cpp" />
     <ClCompile Include="src\mcp\McpToolsFitting.cpp" />
     <ClCompile Include="src\mcp\McpToolsTextures.cpp" />
     <ClCompile Include="src\components\DiffData.cpp" />

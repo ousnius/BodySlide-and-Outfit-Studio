@@ -504,6 +504,7 @@ target_link_libraries(bsos_fbx PUBLIC bsos_core)
 add_library(bsos_project STATIC
 	src/project/BrushStrokeController.cpp
 	src/project/GameImport.cpp
+	src/project/ProjectPacker.cpp
 	src/project/OutfitProject.cpp
 	src/project/ProjectHost.cpp
 	src/project/ProjectOperations.cpp
@@ -635,6 +636,7 @@ if(BSOS_BUILD_TESTS)
 		tests/PoseFitTest.cpp
 		tests/PoseMathTest.cpp
 		tests/ProjectUtilTest.cpp
+		tests/ProjectPackerTest.cpp
 		tests/SFMaterialDatabaseTest.cpp
 		tests/SFLayeredMaterialTest.cpp
 		tests/SFMaterialFileTest.cpp

@@ -329,6 +329,9 @@
     <ClCompile Include="tests\ProjectUtilTest.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
+    <ClCompile Include="tests\ProjectPackerTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
     <ClCompile Include="tests\SurfaceFitTest.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
@@ -423,6 +426,9 @@
       <Filter>MCP</Filter>
     </ClCompile>
     <ClCompile Include="src\project\ProjectOperations.cpp">
+      <Filter>Project</Filter>
+    </ClCompile>
+    <ClCompile Include="src\project\ProjectPacker.cpp">
       <Filter>Project</Filter>
     </ClCompile>
     <ClCompile Include="src\project\BrushStrokeController.cpp">

@@ -534,7 +534,6 @@ private:
 	void OnExit(wxCommandEvent& event);
 	void OnClose(wxCloseEvent& event);
 
-	bool CopyStreamData(wxInputStream& inputStream, wxOutputStream& outputStream, wxFileOffset size);
 
 	void OnMenuItem(wxCommandEvent& event);
 	void OnPackProjects(wxCommandEvent& event);

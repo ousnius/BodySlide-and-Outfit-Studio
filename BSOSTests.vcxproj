@@ -270,6 +270,7 @@
     <ClCompile Include="tests\PoseFitTest.cpp" />
     <ClCompile Include="tests\PoseMathTest.cpp" />
     <ClCompile Include="tests\ProjectUtilTest.cpp" />
+    <ClCompile Include="tests\ProjectPackerTest.cpp" />
     <ClCompile Include="tests\SurfaceFitTest.cpp" />
     <ClCompile Include="tests\TextureConvertTest.cpp" />
     <ClCompile Include="src\components\ArchiveIndex.cpp" />
@@ -307,6 +308,7 @@
     <ClCompile Include="src\mcp\McpProtocol.cpp" />
     <ClCompile Include="src\mcp\McpServer.cpp" />
     <ClCompile Include="src\project\ProjectOperations.cpp" />
+    <ClCompile Include="src\project\ProjectPacker.cpp" />
     <ClCompile Include="src\project\BrushStrokeController.cpp" />
     <ClCompile Include="src\components\TweakBrush.cpp" />
     <ClCompile Include="src\components\PoseData.cpp" />

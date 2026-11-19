@@ -811,6 +811,9 @@
     <ClInclude Include="src\project\GameImport.h">
       <Filter>Project</Filter>
     </ClInclude>
+    <ClInclude Include="src\project\ProjectPacker.h">
+      <Filter>Project</Filter>
+    </ClInclude>
     <ClInclude Include="src\files\ObjFile.h">
       <Filter>Files</Filter>
     </ClInclude>
@@ -2326,6 +2329,9 @@
       <Filter>Components</Filter>
     </ClCompile>
     <ClCompile Include="src\project\GameImport.cpp">
+      <Filter>Project</Filter>
+    </ClCompile>
+    <ClCompile Include="src\project\ProjectPacker.cpp">
       <Filter>Project</Filter>
     </ClCompile>
     <ClCompile Include="src\mcp\McpToolsFitting.cpp">
