@@ -174,8 +174,10 @@ PackResult PackProjects(const std::map<std::string, SliderSet>& sources,
 		PackBaseProject(set, selected, mergedFile, result.missingBaseProjects);
 		projectFile.UpdateSet(set);
 
-		if (!target.AddFile(wxString::FromUTF8(shapeData + set.GetInputFileName()),
-							wxString::FromUTF8(baseDir + sep + "ShapeData" + sep + set.GetInputFileName()),
+		// Relative to the ShapeData folder. GetInputFileName starts with a separator, which Linux keeps doubled in archive entries.
+		const std::string inputFile = set.GetDefaultDataFolder() + sep + set.GetInputFile();
+		if (!target.AddFile(wxString::FromUTF8(shapeData + inputFile),
+							wxString::FromUTF8(baseDir + sep + "ShapeData" + sep + inputFile),
 							PackTarget::FileKind::Input,
 							result.error))
 			return result;
