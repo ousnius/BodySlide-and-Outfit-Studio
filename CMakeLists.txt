@@ -15,7 +15,6 @@ option(BSOS_ENABLE_BULLET "Build with Bullet physics preview support when availa
 option(BSOS_ENABLE_OPENEXR "Build with HDRi environment support when available" ON)
 option(BSOS_BUILD_TESTS "Build Catch2-based tests" OFF)
 set(BSOS_FBXSDK_ROOT "" CACHE PATH "Root directory of the Autodesk FBX SDK")
-set(BSOS_TEST_MSVC_RUNTIME_LIBRARY "" CACHE STRING "MSVC runtime library override for BSOSTests")
 set(fbxsdk_dir "" CACHE PATH "Compatibility alias for BSOS_FBXSDK_ROOT")
 
 if(WIN32 AND DEFINED wxWidgets_ROOT_DIR AND wxWidgets_ROOT_DIR
@@ -274,32 +273,75 @@ else()
 	message(STATUS "HDRi environment support disabled")
 endif()
 
-# Physics preview sources are always listed; their bodies compile to empty
-# translation units unless USE_BULLET is defined (same convention as
-# FBXWrangler.cpp with USE_FBXSDK), so builds without Bullet stay valid. Both
-# applications preview physics, so they are part of the common sources.
-set(BSOS_PHYSICS_SOURCES
-	src/physics/Controller.cpp
-	src/physics/DebugDraw.cpp
-	src/physics/SystemBuilder.cpp
-	src/physics/hdt/XmlReader.cpp
-	src/physics/hdt/hdtBoneScaleConstraint.cpp
-	src/physics/hdt/hdtCollider.cpp
-	src/physics/hdt/hdtConeTwistConstraint.cpp
-	src/physics/hdt/hdtDispatcher.cpp
-	src/physics/hdt/hdtGeneric6DofConstraint.cpp
-	src/physics/hdt/hdtSkinnedMeshAlgorithm.cpp
-	src/physics/hdt/hdtSkinnedMeshBody.cpp
-	src/physics/hdt/hdtSkinnedMeshBone.cpp
-	src/physics/hdt/hdtSkinnedMeshShape.cpp
-	src/physics/hdt/hdtSkinnedMeshSystem.cpp
-	src/physics/hdt/hdtSkinnedMeshWorld.cpp
-	src/physics/hdt/hdtStiffSpringConstraint.cpp
-	src/physics/hdt/hdtVertex.cpp
+set(BSOS_COMMON_INCLUDE_DIRS
+	${CMAKE_CURRENT_SOURCE_DIR}/lib
+	${CMAKE_CURRENT_SOURCE_DIR}/lib/gli
+	${CMAKE_CURRENT_SOURCE_DIR}/lib/fkYAML/include
+	${CMAKE_CURRENT_SOURCE_DIR}/lib/nlohmannjson/include
+	${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/include
+	${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/external
+	${CMAKE_CURRENT_SOURCE_DIR}/lib/TinyXML-2
+	${CMAKE_CURRENT_SOURCE_DIR}/lib/cpp-httplib
+	${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-set(BSOS_COMMON_SOURCES
-	${BSOS_PHYSICS_SOURCES}
+set(BSOS_PLATFORM_DEFINITIONS GLM_FORCE_SILENT_WARNINGS)
+if(WIN32)
+	list(APPEND BSOS_PLATFORM_DEFINITIONS _WINDOWS _CRT_SECURE_NO_WARNINGS WIN32_LEAN_AND_MEAN NOMINMAX)
+	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+		list(APPEND BSOS_PLATFORM_DEFINITIONS WIN64)
+	else()
+		list(APPEND BSOS_PLATFORM_DEFINITIONS WIN32)
+	endif()
+endif()
+
+# Settings every target shares: include folders, definitions, warnings and wxWidgets.
+add_library(bsos_options INTERFACE)
+target_include_directories(bsos_options INTERFACE ${BSOS_COMMON_INCLUDE_DIRS})
+if(NOT TARGET OpenGL::GL AND OPENGL_INCLUDE_DIR)
+	target_include_directories(bsos_options SYSTEM INTERFACE ${OPENGL_INCLUDE_DIR})
+endif()
+if(UNIX AND NOT APPLE AND NOT TARGET GLEW::GLEW AND GLEW_INCLUDE_DIRS)
+	target_include_directories(bsos_options SYSTEM INTERFACE ${GLEW_INCLUDE_DIRS})
+endif()
+target_compile_definitions(bsos_options INTERFACE ${BSOS_PLATFORM_DEFINITIONS})
+target_link_libraries(bsos_options INTERFACE ${BSOS_WX_LIBRARIES} Threads::Threads)
+if(WIN32)
+	# dbghelp: stack traces in crash reports. winmm: timeBeginPeriod, needed to pace
+	# animation playback above the default ~15.6 ms system clock tick.
+	target_link_libraries(bsos_options INTERFACE dbghelp winmm)
+endif()
+if(MSVC)
+	target_compile_options(bsos_options INTERFACE /W4 /bigobj /wd26812)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+	target_compile_options(bsos_options INTERFACE -Wall)
+endif()
+
+function(bsos_link_config_libraries target debug_library release_library)
+	if(debug_library AND release_library)
+		target_link_libraries(${target} PUBLIC
+			$<$<CONFIG:Debug>:${debug_library}>
+			$<$<NOT:$<CONFIG:Debug>>:${release_library}>
+		)
+	elseif(debug_library)
+		target_link_libraries(${target} PUBLIC ${debug_library})
+	elseif(release_library)
+		target_link_libraries(${target} PUBLIC ${release_library})
+	endif()
+endfunction()
+
+# The libraries below are layered: each one may only use the ones it links.
+#   bsos_vendor   third-party code in lib/
+#   bsos_core     src/utils, src/files and src/components: no GL, no windows
+#   bsos_render   src/render, OpenGL drawing
+#   bsos_physics  src/physics, the Bullet based physics preview, drawn through bsos_render
+#   bsos_ui       src/ui, dialogs and widgets both applications use
+#   bsos_fbx      the FBX SDK wrapper, only for Outfit Studio
+#   bsos_project  src/project, the Outfit Studio project and its operations without the window
+#   bsos_mcp      the MCP protocol and HTTP server without the tools
+# Each source file is compiled once and shared by the applications and the tests.
+
+add_library(bsos_vendor STATIC
 	lib/FSEngine/FSBSA.cpp
 	lib/FSEngine/FSEngine.cpp
 	lib/FSEngine/FSManager.cpp
@@ -329,26 +371,61 @@ set(BSOS_COMMON_SOURCES
 	lib/SOIL2/image_helper.c
 	lib/SOIL2/SOIL2.c
 	lib/TinyXML-2/tinyxml2.cpp
+)
+target_link_libraries(bsos_vendor PUBLIC bsos_options)
+
+add_library(bsos_core STATIC
+	src/utils/AABBTree.cpp
+	src/utils/ConfigurationManager.cpp
+	src/utils/GameUtil.cpp
+	src/utils/Log.cpp
+	src/utils/MainThreadDispatcher.cpp
+	src/utils/PlatformUtil.cpp
+	src/utils/ProjectUtil.cpp
+	src/utils/StackTrace.cpp
+	src/utils/StringStuff.cpp
+	src/utils/WxBuildConfigCheck.cpp
+	src/files/EXRImage.cpp
+	src/files/GameDataStream.cpp
+	src/files/HkxFile.cpp
+	src/files/MaskFile.cpp
+	src/files/MaterialFile.cpp
+	src/files/ObjFile.cpp
+	src/files/PhysicsXmlFile.cpp
+	src/files/SFLayeredMaterial.cpp
+	src/files/SFMaterialDatabase.cpp
+	src/files/SFMaterialFile.cpp
+	src/files/SFMaterialGraph.cpp
+	src/files/SFMaterialResolver.cpp
+	src/files/SFMorphFile.cpp
+	src/files/SFResourceHash.cpp
+	src/files/TriFile.cpp
+	src/files/wxDDSImage.cpp
 	src/components/AddOnSliders.cpp
 	src/components/Anim.cpp
+	src/components/ArchiveIndex.cpp
+	src/components/Automation.cpp
+	src/components/AutomationJson.cpp
 	src/components/Automorph.cpp
+	src/components/BuildSelection.cpp
 	src/components/ClippingFixer.cpp
+	src/components/ClothData.cpp
+	src/components/DiffData.cpp
 	src/components/MaskOps.cpp
+	src/components/MaskTransfer.cpp
+	src/components/Mesh.cpp
 	src/components/MeshAnalysis.cpp
 	src/components/MeshDeform.cpp
 	src/components/MeshRefine.cpp
-	src/components/PhysicsChains.cpp
-	src/components/PoseFit.cpp
-	src/components/PoseMath.cpp
-	src/components/SurfaceFit.cpp
-	src/components/TextureConvert.cpp
-	src/components/DiffData.cpp
-	src/components/Mesh.cpp
 	src/components/NormalGenLayers.cpp
+	src/components/PhysicsChains.cpp
 	src/components/PoseData.cpp
 	src/components/PoseDataHkx.cpp
 	src/components/PoseDataJson.cpp
 	src/components/PoseDataYaml.cpp
+	src/components/PoseFit.cpp
+	src/components/PoseMath.cpp
+	src/components/RefTemplates.cpp
 	src/components/SliderCategories.cpp
 	src/components/SliderData.cpp
 	src/components/SliderGroup.cpp
@@ -357,82 +434,105 @@ set(BSOS_COMMON_SOURCES
 	src/components/SliderSet.cpp
 	src/components/SliderSetIndex.cpp
 	src/components/SliderSetInheritance.cpp
-	src/files/EXRImage.cpp
-	src/files/GameDataStream.cpp
-	src/files/HkxFile.cpp
-	src/files/MaterialFile.cpp
-	src/render/ResourceLoader.cpp
-	src/files/TriFile.cpp
-	src/ui/GroupManager.cpp
-	src/ui/PresetSaveDialog.cpp
+	src/components/SurfaceFit.cpp
+	src/components/TextureConvert.cpp
+	src/components/TweakBrush.cpp
+	src/components/UndoHistory.cpp
+	src/components/WeightNorm.cpp
+)
+target_link_libraries(bsos_core PUBLIC bsos_vendor)
+if(BSOS_HAVE_OPENEXR)
+	target_compile_definitions(bsos_core PUBLIC USE_OPENEXR)
+	target_link_libraries(bsos_core PUBLIC OpenEXR::OpenEXRCore)
+endif()
+
+add_library(bsos_render STATIC
+	src/render/GLCanvas.cpp
+	src/render/GLDialog.cpp
 	src/render/GLExtensions.cpp
 	src/render/GLHDRiEnvironment.cpp
 	src/render/GLMaterial.cpp
 	src/render/GLOffscreenBuffer.cpp
-	src/render/MeshBuffers.cpp
 	src/render/GLShader.cpp
 	src/render/GLSurface.cpp
-	src/ui/wxStateButton.cpp
-	src/utils/AABBTree.cpp
-	src/utils/ConfigurationManager.cpp
-	src/utils/Log.cpp
-	src/utils/PlatformUtil.cpp
-	src/ui/SettingsDialogShared.cpp
-	src/utils/ProjectUtil.cpp
-	src/utils/GameUtil.cpp
-	src/utils/StackTrace.cpp
-	src/utils/StringStuff.cpp
-	src/utils/MainThreadDispatcher.cpp
-	src/utils/WxBuildConfigCheck.cpp
+	src/render/MeshBuffers.cpp
+	src/render/ResourceLoader.cpp
 )
+target_link_libraries(bsos_render PUBLIC bsos_core ${BSOS_OPENGL_LIBRARIES} ${BSOS_GLEW_LIBRARY})
+
+# Physics preview sources compile to empty translation units unless USE_BULLET
+# is defined (same convention as FBXWrangler.cpp with USE_FBXSDK), so builds
+# without Bullet stay valid.
+set(BSOS_PHYSICS_SOURCES
+	src/physics/Controller.cpp
+	src/physics/DebugDraw.cpp
+	src/physics/SystemBuilder.cpp
+	src/physics/hdt/XmlReader.cpp
+	src/physics/hdt/hdtBoneScaleConstraint.cpp
+	src/physics/hdt/hdtCollider.cpp
+	src/physics/hdt/hdtConeTwistConstraint.cpp
+	src/physics/hdt/hdtDispatcher.cpp
+	src/physics/hdt/hdtGeneric6DofConstraint.cpp
+	src/physics/hdt/hdtSkinnedMeshAlgorithm.cpp
+	src/physics/hdt/hdtSkinnedMeshBody.cpp
+	src/physics/hdt/hdtSkinnedMeshBone.cpp
+	src/physics/hdt/hdtSkinnedMeshShape.cpp
+	src/physics/hdt/hdtSkinnedMeshSystem.cpp
+	src/physics/hdt/hdtSkinnedMeshWorld.cpp
+	src/physics/hdt/hdtStiffSpringConstraint.cpp
+	src/physics/hdt/hdtVertex.cpp
+)
+add_library(bsos_physics STATIC ${BSOS_PHYSICS_SOURCES})
+target_link_libraries(bsos_physics PUBLIC bsos_render)
+
+add_library(bsos_ui STATIC
+	src/ui/GroupManager.cpp
+	src/ui/PresetSaveDialog.cpp
+	src/ui/SettingsDialogShared.cpp
+	src/ui/wxFavoriteChoice.cpp
+	src/ui/wxSliderPanel.cpp
+	src/ui/wxStateButton.cpp
+)
+target_link_libraries(bsos_ui PUBLIC bsos_core)
+
+# Built even without the FBX SDK, then FBXWrangler.cpp compiles to nothing.
+add_library(bsos_fbx STATIC
+	src/files/FBXWrangler.cpp
+)
+target_link_libraries(bsos_fbx PUBLIC bsos_core)
+
+add_library(bsos_project STATIC
+	src/project/BrushStrokeController.cpp
+	src/project/GameImport.cpp
+	src/project/OutfitProject.cpp
+	src/project/ProjectHost.cpp
+	src/project/ProjectOperations.cpp
+)
+target_link_libraries(bsos_project PUBLIC bsos_core bsos_fbx)
+
+add_library(bsos_mcp STATIC
+	src/mcp/McpProtocol.cpp
+	src/mcp/McpServer.cpp
+)
+target_link_libraries(bsos_mcp PUBLIC bsos_core)
 
 set(BSOS_OUTFIT_STUDIO_SOURCES
-	${BSOS_COMMON_SOURCES}
-	src/components/RefTemplates.cpp
-	src/components/Automation.cpp
-	src/components/AutomationJson.cpp
-	src/components/TweakBrush.cpp
-	src/components/ArchiveIndex.cpp
-	src/components/UndoHistory.cpp
-	src/components/WeightNorm.cpp
-	src/components/MaskTransfer.cpp
-	src/components/ClothData.cpp
-	src/files/FBXWrangler.cpp
-	src/files/MaskFile.cpp
-	src/files/ObjFile.cpp
-	src/files/PhysicsXmlFile.cpp
-	src/files/SFMaterialDatabase.cpp
-	src/files/SFMaterialFile.cpp
-	src/files/SFMaterialGraph.cpp
-	src/files/SFLayeredMaterial.cpp
-	src/files/SFMaterialResolver.cpp
-	src/files/SFResourceHash.cpp
-	src/files/SFMorphFile.cpp
-	src/ui/outfitstudio/wxBrushSettingsPopup.cpp
+	src/outfitstudio/OutfitStudio.cpp
+	src/project/AutomationRunner.cpp
+	src/ui/outfitstudio/AddProjectDialog.cpp
 	src/ui/outfitstudio/ArchiveBrowser.cpp
-	src/ui/outfitstudio/WeightCopyDialog.cpp
-	src/ui/wxSliderPanel.cpp
+	src/ui/outfitstudio/AutomationDialog.cpp
+	src/ui/outfitstudio/BadBonesDialog.cpp
+	src/ui/outfitstudio/ConvertBodyReferenceDialog.cpp
 	src/ui/outfitstudio/EditUV.cpp
 	src/ui/outfitstudio/FBXImportDialog.cpp
 	src/ui/outfitstudio/ObjImportDialog.cpp
-	src/project/OutfitProject.cpp
-	src/outfitstudio/OutfitStudio.cpp
-	src/project/ProjectHost.cpp
-	src/project/ProjectOperations.cpp
-	src/project/GameImport.cpp
-	src/project/BrushStrokeController.cpp
-	src/ui/outfitstudio/BadBonesDialog.cpp
 	src/ui/outfitstudio/ShapeProperties.cpp
-	src/ui/outfitstudio/ConvertBodyReferenceDialog.cpp
-	src/ui/outfitstudio/AutomationDialog.cpp
-	src/project/AutomationRunner.cpp
 	src/ui/outfitstudio/SliderDataDialog.cpp
 	src/ui/outfitstudio/SliderDataImportDialog.cpp
-	src/ui/outfitstudio/AddProjectDialog.cpp
-	src/mcp/McpProtocol.cpp
-	src/mcp/McpServer.cpp
+	src/ui/outfitstudio/WeightCopyDialog.cpp
+	src/ui/outfitstudio/wxBrushSettingsPopup.cpp
 	src/mcp/McpSnapshots.cpp
-	src/mcp/OutfitStudioMcp.cpp
 	src/mcp/McpToolsAnalysis.cpp
 	src/mcp/McpToolsArchives.cpp
 	src/mcp/McpToolsAutomation.cpp
@@ -441,36 +541,23 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/mcp/McpToolsFitting.cpp
 	src/mcp/McpToolsGames.cpp
 	src/mcp/McpToolsGuides.cpp
+	src/mcp/McpToolsMeasure.cpp
 	src/mcp/McpToolsPhysics.cpp
 	src/mcp/McpToolsProject.cpp
-	src/mcp/McpToolsMeasure.cpp
 	src/mcp/McpToolsQuality.cpp
 	src/mcp/McpToolsShapes.cpp
 	src/mcp/McpToolsSliderFiles.cpp
 	src/mcp/McpToolsSliders.cpp
 	src/mcp/McpToolsTextures.cpp
 	src/mcp/McpToolsView.cpp
-	src/render/GLCanvas.cpp
-	src/render/GLDialog.cpp
+	src/mcp/OutfitStudioMcp.cpp
 )
 
 set(BSOS_BODYSLIDE_SOURCES
-	${BSOS_COMMON_SOURCES}
-	src/components/BuildSelection.cpp
-	src/files/ObjFile.cpp
-	src/files/SFMaterialDatabase.cpp
-	src/files/SFMaterialFile.cpp
-	src/files/SFMaterialGraph.cpp
-	src/files/SFLayeredMaterial.cpp
-	src/files/SFMaterialResolver.cpp
-	src/files/SFResourceHash.cpp
-	src/files/SFMorphFile.cpp
-	src/files/wxDDSImage.cpp
 	src/bodyslide/BodySlideApp.cpp
-	src/ui/bodyslide/NormalsGenDialog.cpp
 	src/bodyslide/PreviewWindow.cpp
+	src/ui/bodyslide/NormalsGenDialog.cpp
 	src/ui/bodyslide/PreviewPanel.cpp
-	src/ui/wxFavoriteChoice.cpp
 	src/ui/bodyslide/wxNormalsGenDlg.cpp
 )
 
@@ -480,29 +567,10 @@ if(WIN32)
 endif()
 
 add_executable(OutfitStudio ${BSOS_OUTFIT_STUDIO_SOURCES})
+target_link_libraries(OutfitStudio PRIVATE bsos_project bsos_mcp bsos_ui bsos_render bsos_physics)
+
 add_executable(BodySlide ${BSOS_BODYSLIDE_SOURCES})
-
-set(BSOS_COMMON_INCLUDE_DIRS
-	${CMAKE_CURRENT_SOURCE_DIR}/lib
-	${CMAKE_CURRENT_SOURCE_DIR}/lib/gli
-	${CMAKE_CURRENT_SOURCE_DIR}/lib/fkYAML/include
-	${CMAKE_CURRENT_SOURCE_DIR}/lib/nlohmannjson/include
-	${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/include
-	${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/external
-	${CMAKE_CURRENT_SOURCE_DIR}/lib/TinyXML-2
-	${CMAKE_CURRENT_SOURCE_DIR}/lib/cpp-httplib
-	${CMAKE_CURRENT_SOURCE_DIR}/src
-)
-
-set(BSOS_PLATFORM_DEFINITIONS GLM_FORCE_SILENT_WARNINGS)
-if(WIN32)
-	list(APPEND BSOS_PLATFORM_DEFINITIONS _WINDOWS _CRT_SECURE_NO_WARNINGS WIN32_LEAN_AND_MEAN NOMINMAX)
-	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-		list(APPEND BSOS_PLATFORM_DEFINITIONS WIN64)
-	else()
-		list(APPEND BSOS_PLATFORM_DEFINITIONS WIN32)
-	endif()
-endif()
+target_link_libraries(BodySlide PRIVATE bsos_ui bsos_render bsos_physics)
 
 if(BSOS_BUILD_TESTS)
 	find_package(Catch2 3 REQUIRED)
@@ -515,6 +583,8 @@ if(BSOS_BUILD_TESTS)
 	include(CTest)
 	enable_testing()
 
+	# The tests link the same libraries as the applications, so Catch2 has to be built
+	# with the same MSVC runtime library (static by default, see CMAKE_MSVC_RUNTIME_LIBRARY).
 	add_executable(BSOSTests
 		tests/AddOnSlidersTest.cpp
 		tests/AnimTest.cpp
@@ -548,115 +618,11 @@ if(BSOS_BUILD_TESTS)
 		tests/StarfieldSpaceTest.cpp
 		tests/SurfaceFitTest.cpp
 		tests/TextureConvertTest.cpp
-		src/components/ArchiveIndex.cpp
-		src/components/Automation.cpp
-		src/components/AutomationJson.cpp
-		src/components/BuildSelection.cpp
-		src/components/ClippingFixer.cpp
-		src/components/ClothData.cpp
-		src/components/MaskTransfer.cpp
-		src/components/MeshAnalysis.cpp
-		src/components/MeshDeform.cpp
-		src/components/MeshRefine.cpp
-		src/components/PhysicsChains.cpp
-		src/components/PoseFit.cpp
-		src/components/PoseMath.cpp
-		src/components/SurfaceFit.cpp
-		src/components/TextureConvert.cpp
-		src/components/AddOnSliders.cpp
-		src/components/Anim.cpp
-		src/components/Automorph.cpp
-		src/components/DiffData.cpp
-		src/components/MaskOps.cpp
-		src/components/Mesh.cpp
-		src/components/NormalGenLayers.cpp
-		src/components/SliderData.cpp
-		src/components/SliderSet.cpp
-		src/components/SliderSetIndex.cpp
-		src/components/SliderSetInheritance.cpp
-		src/components/WeightNorm.cpp
-		src/files/MaterialFile.cpp
-		src/files/ObjFile.cpp
-		src/files/PhysicsXmlFile.cpp
-		src/files/TriFile.cpp
-		src/project/OutfitProject.cpp
-		src/project/ProjectHost.cpp
-		src/mcp/McpProtocol.cpp
-		src/mcp/McpServer.cpp
-		src/project/ProjectOperations.cpp
-		src/project/BrushStrokeController.cpp
-		src/components/TweakBrush.cpp
-		src/components/PoseData.cpp
-		src/components/PoseDataJson.cpp
-		src/components/PoseDataYaml.cpp
-		src/components/SliderManager.cpp
-		src/components/SliderPresets.cpp
-		src/components/UndoHistory.cpp
-		src/utils/ProjectUtil.cpp
-		src/utils/GameUtil.cpp
-		src/files/HkxFile.cpp
-		src/files/GameDataStream.cpp
-		src/files/SFMaterialDatabase.cpp
-		src/files/SFMaterialFile.cpp
-		src/files/SFMaterialGraph.cpp
-		src/files/SFLayeredMaterial.cpp
-		src/files/SFMaterialResolver.cpp
-		src/files/SFMorphFile.cpp
-		src/files/SFResourceHash.cpp
-		src/utils/AABBTree.cpp
-		src/utils/ConfigurationManager.cpp
-		src/utils/PlatformUtil.cpp
-		src/utils/MainThreadDispatcher.cpp
-		src/utils/StringStuff.cpp
-		lib/FSEngine/FSBSA.cpp
-		lib/FSEngine/FSEngine.cpp
-		lib/FSEngine/FSManager.cpp
-		lib/LZ4F/lz4.c
-		lib/LZ4F/lz4frame.c
-		lib/LZ4F/lz4hc.c
-		lib/LZ4F/xxhash.c
-		lib/nifly/src/Animation.cpp
-		lib/nifly/src/BasicTypes.cpp
-		lib/nifly/src/bhk.cpp
-		lib/nifly/src/ExtraData.cpp
-		lib/nifly/src/Factory.cpp
-		lib/nifly/src/Geometry.cpp
-		lib/nifly/src/NifFile.cpp
-		lib/nifly/src/NifUtil.cpp
-		lib/nifly/src/Nodes.cpp
-		lib/nifly/src/Object3d.cpp
-		lib/nifly/src/Objects.cpp
-		lib/nifly/src/Particles.cpp
-		lib/nifly/src/Shaders.cpp
-		lib/nifly/src/Skin.cpp
-		lib/TinyXML-2/tinyxml2.cpp
 	)
-	target_include_directories(BSOSTests PRIVATE
-		${CMAKE_CURRENT_SOURCE_DIR}/src
-		${CMAKE_CURRENT_SOURCE_DIR}/lib
-		${CMAKE_CURRENT_SOURCE_DIR}/lib/gli
-		${CMAKE_CURRENT_SOURCE_DIR}/lib/fkYAML/include
-		${CMAKE_CURRENT_SOURCE_DIR}/lib/nlohmannjson/include
-		${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/include
-		${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/external
-		${CMAKE_CURRENT_SOURCE_DIR}/lib/TinyXML-2
-		${CMAKE_CURRENT_SOURCE_DIR}/lib/cpp-httplib
-	)
-	target_compile_definitions(BSOSTests PRIVATE
-		${BSOS_PLATFORM_DEFINITIONS}
-		BSOS_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/data"
-	)
-	# The archive reader (FSBSA) is built on wxWidgets' file and zlib streams
-	target_link_libraries(BSOSTests PRIVATE Catch2::Catch2WithMain ${BSOS_WX_LIBRARIES} Threads::Threads)
-	set_target_properties(BSOSTests PROPERTIES CXX_EXTENSIONS OFF)
-	if(MSVC AND BSOS_TEST_MSVC_RUNTIME_LIBRARY)
-		set_property(TARGET BSOSTests PROPERTY MSVC_RUNTIME_LIBRARY "${BSOS_TEST_MSVC_RUNTIME_LIBRARY}")
-	endif()
-
-	if(MSVC)
-		target_compile_options(BSOSTests PRIVATE /W4 /bigobj /wd26812)
-	elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-		target_compile_options(BSOSTests PRIVATE -Wall)
+	target_compile_definitions(BSOSTests PRIVATE BSOS_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/data")
+	target_link_libraries(BSOSTests PRIVATE Catch2::Catch2WithMain bsos_project bsos_mcp)
+	if(MSVC AND BSOS_HAVE_FBXSDK)
+		target_link_options(BSOSTests PRIVATE /ignore:4099)
 	endif()
 
 	catch_discover_tests(BSOSTests
@@ -666,67 +632,16 @@ if(BSOS_BUILD_TESTS)
 	)
 endif()
 
-function(bsos_configure_target target)
-	target_include_directories(${target} PRIVATE ${BSOS_COMMON_INCLUDE_DIRS})
-	if(NOT TARGET OpenGL::GL AND OPENGL_INCLUDE_DIR)
-		target_include_directories(${target} SYSTEM PRIVATE ${OPENGL_INCLUDE_DIR})
-	endif()
-	if(UNIX AND NOT APPLE AND NOT TARGET GLEW::GLEW AND GLEW_INCLUDE_DIRS)
-		target_include_directories(${target} SYSTEM PRIVATE ${GLEW_INCLUDE_DIRS})
-	endif()
-	target_compile_definitions(${target} PRIVATE ${BSOS_PLATFORM_DEFINITIONS})
-	target_link_libraries(${target} PRIVATE
-		${BSOS_WX_LIBRARIES}
-		${BSOS_OPENGL_LIBRARIES}
-		${BSOS_GLEW_LIBRARY}
-		Threads::Threads
-	)
-	if(WIN32)
-		# winmm: timeBeginPeriod, needed to pace animation playback above the
-		# default ~15.6 ms system clock tick.
-		target_link_libraries(${target} PRIVATE dbghelp winmm)
-	endif()
-
-	if(MSVC)
-		target_compile_options(${target} PRIVATE /W4 /bigobj /wd26812)
-	elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-		target_compile_options(${target} PRIVATE -Wall)
-	endif()
-endfunction()
-
-bsos_configure_target(OutfitStudio)
-bsos_configure_target(BodySlide)
-
-function(bsos_link_config_libraries target debug_library release_library)
-	if(debug_library AND release_library)
-		target_link_libraries(${target} PRIVATE
-			$<$<CONFIG:Debug>:${debug_library}>
-			$<$<NOT:$<CONFIG:Debug>>:${release_library}>
-		)
-	elseif(debug_library)
-		target_link_libraries(${target} PRIVATE ${debug_library})
-	elseif(release_library)
-		target_link_libraries(${target} PRIVATE ${release_library})
-	endif()
-endfunction()
-
-if(BSOS_HAVE_OPENEXR)
-	foreach(openexr_target OutfitStudio BodySlide)
-		target_compile_definitions(${openexr_target} PRIVATE USE_OPENEXR)
-		target_link_libraries(${openexr_target} PRIVATE OpenEXR::OpenEXRCore)
-	endforeach()
-endif()
-
 if(BSOS_HAVE_FBXSDK)
-	target_compile_definitions(OutfitStudio PRIVATE USE_FBXSDK)
-	target_link_libraries(OutfitStudio PRIVATE FBXSDK::FBXSDK)
-	bsos_link_config_libraries(OutfitStudio "${FBXSDK_XML2_LIBRARY_DEBUG}" "${FBXSDK_XML2_LIBRARY_RELEASE}")
+	target_compile_definitions(bsos_fbx PUBLIC USE_FBXSDK)
+	target_link_libraries(bsos_fbx PUBLIC FBXSDK::FBXSDK)
+	bsos_link_config_libraries(bsos_fbx "${FBXSDK_XML2_LIBRARY_DEBUG}" "${FBXSDK_XML2_LIBRARY_RELEASE}")
 	if(NOT FBXSDK_XML2_LIBRARY_DEBUG AND NOT FBXSDK_XML2_LIBRARY_RELEASE AND TARGET LibXml2::LibXml2)
-		target_link_libraries(OutfitStudio PRIVATE LibXml2::LibXml2)
+		target_link_libraries(bsos_fbx PUBLIC LibXml2::LibXml2)
 	endif()
-	bsos_link_config_libraries(OutfitStudio "${FBXSDK_ZLIB_LIBRARY_DEBUG}" "${FBXSDK_ZLIB_LIBRARY_RELEASE}")
+	bsos_link_config_libraries(bsos_fbx "${FBXSDK_ZLIB_LIBRARY_DEBUG}" "${FBXSDK_ZLIB_LIBRARY_RELEASE}")
 	if(NOT FBXSDK_ZLIB_LIBRARY_DEBUG AND NOT FBXSDK_ZLIB_LIBRARY_RELEASE AND TARGET ZLIB::ZLIB)
-		target_link_libraries(OutfitStudio PRIVATE ZLIB::ZLIB)
+		target_link_libraries(bsos_fbx PUBLIC ZLIB::ZLIB)
 	endif()
 endif()
 
@@ -738,10 +653,8 @@ if(BSOS_HAVE_BULLET)
 	# BT_USE_SSE, which it does on Windows and macOS but not on Linux; the port
 	# falls back to explicit conversions there (see hdt::toSimd in
 	# hdtBulletHelper.h).
-	foreach(bullet_target OutfitStudio BodySlide)
-		target_compile_definitions(${bullet_target} PRIVATE USE_BULLET BT_USE_SSE_IN_API)
-		target_include_directories(${bullet_target} SYSTEM PRIVATE ${BSOS_BULLET_INCLUDE_DIRS})
-	endforeach()
+	target_compile_definitions(bsos_physics PUBLIC USE_BULLET BT_USE_SSE_IN_API)
+	target_include_directories(bsos_physics SYSTEM PUBLIC ${BSOS_BULLET_INCLUDE_DIRS})
 
 	# The port uses SSE4.1 intrinsics throughout, as the MSVC build does through
 	# BT_ALLOW_SSE4. GCC and Clang only accept those with a matching -m flag, and
@@ -786,12 +699,10 @@ if(BSOS_HAVE_BULLET)
 				)
 			endif()
 		endforeach()
-		target_link_directories(OutfitStudio PRIVATE ${BSOS_BULLET_LIBRARY_DIRS})
-		target_link_directories(BodySlide PRIVATE ${BSOS_BULLET_LIBRARY_DIRS})
+		target_link_directories(bsos_physics PUBLIC ${BSOS_BULLET_LIBRARY_DIRS})
 	endif()
 
-	target_link_libraries(OutfitStudio PRIVATE ${BSOS_BULLET_LINK_LIBRARIES})
-	target_link_libraries(BodySlide PRIVATE ${BSOS_BULLET_LINK_LIBRARIES})
+	target_link_libraries(bsos_physics PUBLIC ${BSOS_BULLET_LINK_LIBRARIES})
 endif()
 
 if(MSVC)
