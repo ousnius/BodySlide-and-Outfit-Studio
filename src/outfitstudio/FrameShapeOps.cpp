@@ -218,11 +218,14 @@ void OutfitStudioFrame::RunShapeTransformDialog(const ShapeTransformDialogSpec& 
 	auto text = [&](int axis) { return XRCCTRL(dlg, prefix + "Text" + axes[axis], wxTextCtrl); };
 	auto textValue = [&](int axis) { return static_cast<float>(atof(text(axis)->GetValue().c_str())); };
 
-	Vector3 preview = spec.identity;
+	// Whether a preview is applied, which the next preview or cancelling undoes. Not the same as a value
+	// other than the identity: mirroring changes the shape at any value.
+	bool previewApplied = false;
 
 	auto undoPreview = [&](bool render) {
-		if (preview == spec.identity)
+		if (!previewApplied)
 			return;
+		previewApplied = false;
 
 		UndoStateProject* curState = glView->GetUndoHistory()->GetBackState();
 		if (curState) {
@@ -295,7 +298,7 @@ void OutfitStudioFrame::RunShapeTransformDialog(const ShapeTransformDialogSpec& 
 
 		glView->ApplyUndoState(usp, false);
 
-		preview = value;
+		previewApplied = true;
 
 		if (glView->GetTransformMode())
 			glView->ShowTransformTool();
