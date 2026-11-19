@@ -6,6 +6,7 @@ See the included LICENSE file
 #include "GameUtil.h"
 #include "ConfigurationManager.h"
 #include "StringStuff.h"
+#include "TargetGame.h"
 #include "FSEngine/FSManager.h"
 
 #include <wx/dir.h>
@@ -136,4 +137,20 @@ void GameUtil::SetExtraDataFolders(int targ, const std::vector<std::string>& fol
 		value += folder;
 	}
 	Config.SetValue("ExtraDataFolders/" + TargetGames[targ].ToStdString(), value);
+}
+
+GameUtil::DefaultSkeleton GameUtil::GetDefaultSkeleton(int targ) {
+	switch (targ) {
+		case OB: return {"res/skeleton_ob.nif", "Bip01"};
+		case FO3:
+		case FONV: return {"res/skeleton_fo3nv.nif", "Bip01"};
+		case SKYRIM: return {"res/skeleton_female_sk.nif", "NPC Root [Root]"};
+		case SKYRIMSE:
+		case SKYRIMVR: return {"res/skeleton_female_sse.nif", "NPC Root [Root]"};
+		case SF: return {"res/skeleton_female_sf.nif", "Root"};
+		case FO4:
+		case FO4VR:
+		case FO76:
+		default: return {"res/skeleton_fo4.nif", "Root"};
+	}
 }

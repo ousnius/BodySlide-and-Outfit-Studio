@@ -36,4 +36,11 @@ namespace GameUtil {
 
 	/// Sets the extra data folders of the game in the config, without saving it or reloading the archives.
 	void SetExtraDataFolders(int targ, const std::vector<std::string>& folders);
+
+	/// The reference skeleton file (relative to the app folder) and its root bone of a target game
+	struct DefaultSkeleton {
+		const char* file;
+		const char* rootName;
+	};
+	DefaultSkeleton GetDefaultSkeleton(int targ);
 }

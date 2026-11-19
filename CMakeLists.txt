@@ -489,6 +489,7 @@ add_library(bsos_ui STATIC
 	src/ui/GroupManager.cpp
 	src/ui/PresetSaveDialog.cpp
 	src/ui/SettingsDialogShared.cpp
+	src/ui/AppSetup.cpp
 	src/ui/wxFavoriteChoice.cpp
 	src/ui/wxSliderPanel.cpp
 	src/ui/wxStateButton.cpp
@@ -646,6 +647,7 @@ if(BSOS_BUILD_TESTS)
 		tests/PoseFitTest.cpp
 		tests/PoseMathTest.cpp
 		tests/ProjectUtilTest.cpp
+		tests/GameUtilTest.cpp
 		tests/ProjectPackerTest.cpp
 		tests/SFMaterialDatabaseTest.cpp
 		tests/SFLayeredMaterialTest.cpp

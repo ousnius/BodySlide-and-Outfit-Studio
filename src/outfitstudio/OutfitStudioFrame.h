@@ -537,8 +537,6 @@ private:
 
 	void OnMenuItem(wxCommandEvent& event);
 	void OnPackProjects(wxCommandEvent& event);
-	void OnChooseTargetGame(wxCommandEvent& event);
-	void SettingsFillDataFiles(wxCheckListBox* dataFileList, wxString& dataDir, int targetGame);
 	void OnSettings(wxCommandEvent& event);
 	void OnMcpServer(wxCommandEvent& event);
 	void UpdateMcpMenu();

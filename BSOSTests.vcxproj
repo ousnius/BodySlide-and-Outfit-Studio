@@ -270,6 +270,7 @@
     <ClCompile Include="tests\PoseFitTest.cpp" />
     <ClCompile Include="tests\PoseMathTest.cpp" />
     <ClCompile Include="tests\ProjectUtilTest.cpp" />
+    <ClCompile Include="tests\GameUtilTest.cpp" />
     <ClCompile Include="tests\ProjectPackerTest.cpp" />
     <ClCompile Include="tests\SurfaceFitTest.cpp" />
     <ClCompile Include="tests\TextureConvertTest.cpp" />

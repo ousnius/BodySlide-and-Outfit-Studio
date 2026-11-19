@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "BodySlideApp.h"
+#include "ui/AppSetup.h"
 #include "components/ClippingFixer.h"
 #include "components/Mesh.h"
 #include "components/SliderSetIndex.h"
@@ -79,14 +80,6 @@ void LogBaseProjectStatus(const SliderSet& set, NifFile* nif = nullptr) {
 }
 } // namespace
 
-const std::array<wxLanguage, 37> SupportedLangs = {wxLANGUAGE_ENGLISH,	  wxLANGUAGE_AFRIKAANS,		   wxLANGUAGE_ARABIC,  wxLANGUAGE_CATALAN,	  wxLANGUAGE_CZECH,
-												   wxLANGUAGE_DANISH,	  wxLANGUAGE_GERMAN,		   wxLANGUAGE_GREEK,   wxLANGUAGE_SPANISH,	  wxLANGUAGE_BASQUE,
-												   wxLANGUAGE_FINNISH,	  wxLANGUAGE_FRENCH,		   wxLANGUAGE_HINDI,   wxLANGUAGE_HUNGARIAN,  wxLANGUAGE_INDONESIAN,
-												   wxLANGUAGE_ITALIAN,	  wxLANGUAGE_JAPANESE,		   wxLANGUAGE_KOREAN,  wxLANGUAGE_LITHUANIAN, wxLANGUAGE_LATVIAN,
-												   wxLANGUAGE_MALAY,	  wxLANGUAGE_NORWEGIAN_BOKMAL, wxLANGUAGE_NEPALI,  wxLANGUAGE_DUTCH,	  wxLANGUAGE_POLISH,
-												   wxLANGUAGE_PORTUGUESE, wxLANGUAGE_ROMANIAN,		   wxLANGUAGE_RUSSIAN, wxLANGUAGE_SLOVAK,	  wxLANGUAGE_SLOVENIAN,
-												   wxLANGUAGE_ALBANIAN,	  wxLANGUAGE_SWEDISH,		   wxLANGUAGE_TAMIL,   wxLANGUAGE_TURKISH,	  wxLANGUAGE_UKRAINIAN,
-												   wxLANGUAGE_VIETNAMESE, wxLANGUAGE_CHINESE};
 
 wxBEGIN_EVENT_TABLE(BodySlideFrame, wxFrame)
 	EVT_MENU(wxID_EXIT, BodySlideFrame::OnExit)
@@ -4223,226 +4216,11 @@ void BodySlideApp::ApplyPBRSetting() {
 }
 
 bool BodySlideApp::ShowSetup() {
-	wxXmlResource* xrc = wxXmlResource::Get();
-	bool loaded = xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/Setup.xrc");
-	if (!loaded) {
-		wxMessageBox("Failed to load Setup.xrc file!", _("Error"), wxICON_ERROR);
-		return false;
-	}
-
-	wxDialog* setup = xrc->LoadDialog(nullptr, "dlgSetup");
-	if (setup) {
-		setup->SetSize(setup->FromDIP(wxSize(700, -1)));
-		setup->CenterOnScreen();
-
-		wxButton* btOblivion = XRCCTRL(*setup, "btOblivion", wxButton);
-		btOblivion->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal((int)OB); });
-
-		wxButton* btFallout3 = XRCCTRL(*setup, "btFallout3", wxButton);
-		btFallout3->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal((int)FO3); });
-
-		wxButton* btFalloutNV = XRCCTRL(*setup, "btFalloutNV", wxButton);
-		btFalloutNV->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal((int)FONV); });
-
-		wxButton* btSkyrim = XRCCTRL(*setup, "btSkyrim", wxButton);
-		btSkyrim->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal((int)SKYRIM); });
-
-		wxButton* btFallout4 = XRCCTRL(*setup, "btFallout4", wxButton);
-		btFallout4->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal((int)FO4); });
-
-		wxButton* btSkyrimSE = XRCCTRL(*setup, "btSkyrimSE", wxButton);
-		btSkyrimSE->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal((int)SKYRIMSE); });
-
-		wxButton* btFallout4VR = XRCCTRL(*setup, "btFallout4VR", wxButton);
-		btFallout4VR->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal((int)FO4VR); });
-
-		wxButton* btSkyrimVR = XRCCTRL(*setup, "btSkyrimVR", wxButton);
-		btSkyrimVR->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal((int)SKYRIMVR); });
-
-		wxButton* btStarfield = XRCCTRL(*setup, "btStarfield", wxButton);
-		btStarfield->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal((int)SF); });
-
-		wxDirPickerCtrl* dirOblivion = XRCCTRL(*setup, "dirOblivion", wxDirPickerCtrl);
-		dirOblivion->Bind(wxEVT_DIRPICKER_CHANGED, [&dirOblivion, &btOblivion](wxFileDirPickerEvent&) { btOblivion->Enable(dirOblivion->GetDirName().DirExists()); });
-
-		wxDirPickerCtrl* dirFallout3 = XRCCTRL(*setup, "dirFallout3", wxDirPickerCtrl);
-		dirFallout3->Bind(wxEVT_DIRPICKER_CHANGED, [&dirFallout3, &btFallout3](wxFileDirPickerEvent&) { btFallout3->Enable(dirFallout3->GetDirName().DirExists()); });
-
-		wxDirPickerCtrl* dirFalloutNV = XRCCTRL(*setup, "dirFalloutNV", wxDirPickerCtrl);
-		dirFalloutNV->Bind(wxEVT_DIRPICKER_CHANGED, [&dirFalloutNV, &btFalloutNV](wxFileDirPickerEvent&) { btFalloutNV->Enable(dirFalloutNV->GetDirName().DirExists()); });
-
-		wxDirPickerCtrl* dirSkyrim = XRCCTRL(*setup, "dirSkyrim", wxDirPickerCtrl);
-		dirSkyrim->Bind(wxEVT_DIRPICKER_CHANGED, [&dirSkyrim, &btSkyrim](wxFileDirPickerEvent&) { btSkyrim->Enable(dirSkyrim->GetDirName().DirExists()); });
-
-		wxDirPickerCtrl* dirFallout4 = XRCCTRL(*setup, "dirFallout4", wxDirPickerCtrl);
-		dirFallout4->Bind(wxEVT_DIRPICKER_CHANGED, [&dirFallout4, &btFallout4](wxFileDirPickerEvent&) { btFallout4->Enable(dirFallout4->GetDirName().DirExists()); });
-
-		wxDirPickerCtrl* dirSkyrimSE = XRCCTRL(*setup, "dirSkyrimSE", wxDirPickerCtrl);
-		dirSkyrimSE->Bind(wxEVT_DIRPICKER_CHANGED, [&dirSkyrimSE, &btSkyrimSE](wxFileDirPickerEvent&) { btSkyrimSE->Enable(dirSkyrimSE->GetDirName().DirExists()); });
-
-		wxDirPickerCtrl* dirFallout4VR = XRCCTRL(*setup, "dirFallout4VR", wxDirPickerCtrl);
-		dirFallout4VR->Bind(wxEVT_DIRPICKER_CHANGED, [&dirFallout4VR, &btFallout4VR](wxFileDirPickerEvent&) { btFallout4VR->Enable(dirFallout4VR->GetDirName().DirExists()); });
-
-		wxDirPickerCtrl* dirSkyrimVR = XRCCTRL(*setup, "dirSkyrimVR", wxDirPickerCtrl);
-		dirSkyrimVR->Bind(wxEVT_DIRPICKER_CHANGED, [&dirSkyrimVR, &btSkyrimVR](wxFileDirPickerEvent&) { btSkyrimVR->Enable(dirSkyrimVR->GetDirName().DirExists()); });
-
-		wxDirPickerCtrl* dirStarfield = XRCCTRL(*setup, "dirStarfield", wxDirPickerCtrl);
-		dirStarfield->Bind(wxEVT_DIRPICKER_CHANGED, [&dirStarfield, &btStarfield](wxFileDirPickerEvent&) { btStarfield->Enable(dirStarfield->GetDirName().DirExists()); });
-
-		wxFileName dir = GameUtil::GetGameDataPath(OB);
-		if (dir.DirExists()) {
-			dirOblivion->SetDirName(dir);
-			btOblivion->Enable();
-		}
-
-		dir = GameUtil::GetGameDataPath(FO3);
-		if (dir.DirExists()) {
-			dirFallout3->SetDirName(dir);
-			btFallout3->Enable();
-		}
-
-		dir = GameUtil::GetGameDataPath(FONV);
-		if (dir.DirExists()) {
-			dirFalloutNV->SetDirName(dir);
-			btFalloutNV->Enable();
-		}
-
-		dir = GameUtil::GetGameDataPath(SKYRIM);
-		if (dir.DirExists()) {
-			dirSkyrim->SetDirName(dir);
-			btSkyrim->Enable();
-		}
-
-		dir = GameUtil::GetGameDataPath(FO4);
-		if (dir.DirExists()) {
-			dirFallout4->SetDirName(dir);
-			btFallout4->Enable();
-		}
-
-		dir = GameUtil::GetGameDataPath(SKYRIMSE);
-		if (dir.DirExists()) {
-			dirSkyrimSE->SetDirName(dir);
-			btSkyrimSE->Enable();
-		}
-
-		dir = GameUtil::GetGameDataPath(FO4VR);
-		if (dir.DirExists()) {
-			dirFallout4VR->SetDirName(dir);
-			btFallout4VR->Enable();
-		}
-
-		dir = GameUtil::GetGameDataPath(SKYRIMVR);
-		if (dir.DirExists()) {
-			dirSkyrimVR->SetDirName(dir);
-			btSkyrimVR->Enable();
-		}
-
-		dir = GameUtil::GetGameDataPath(SF);
-		if (dir.DirExists()) {
-			dirStarfield->SetDirName(dir);
-			btStarfield->Enable();
-		}
-
-		if (setup->ShowModal() != wxID_CANCEL) {
-			int targ = setup->GetReturnCode();
-			Config.SetValue("TargetGame", targ);
-
-			wxFileName dataDir;
-			switch (targ) {
-				case OB:
-					dataDir = dirOblivion->GetDirName();
-					Config.SetValue("Anim/DefaultSkeletonReference", "res/skeleton_ob.nif");
-					Config.SetValue("Anim/SkeletonRootName", "Bip01");
-					break;
-				case FO3:
-					dataDir = dirFallout3->GetDirName();
-					Config.SetValue("Anim/DefaultSkeletonReference", "res/skeleton_fo3nv.nif");
-					Config.SetValue("Anim/SkeletonRootName", "Bip01");
-					break;
-				case FONV:
-					dataDir = dirFalloutNV->GetDirName();
-					Config.SetValue("Anim/DefaultSkeletonReference", "res/skeleton_fo3nv.nif");
-					Config.SetValue("Anim/SkeletonRootName", "Bip01");
-					break;
-				case SKYRIM:
-					dataDir = dirSkyrim->GetDirName();
-					Config.SetValue("Anim/DefaultSkeletonReference", "res/skeleton_female_sk.nif");
-					Config.SetValue("Anim/SkeletonRootName", "NPC Root [Root]");
-					break;
-				case FO4:
-					dataDir = dirFallout4->GetDirName();
-					Config.SetValue("Anim/DefaultSkeletonReference", "res/skeleton_fo4.nif");
-					Config.SetValue("Anim/SkeletonRootName", "Root");
-					break;
-				case SKYRIMSE:
-					dataDir = dirSkyrimSE->GetDirName();
-					Config.SetValue("Anim/DefaultSkeletonReference", "res/skeleton_female_sse.nif");
-					Config.SetValue("Anim/SkeletonRootName", "NPC Root [Root]");
-					break;
-				case FO4VR:
-					dataDir = dirFallout4VR->GetDirName();
-					Config.SetValue("Anim/DefaultSkeletonReference", "res/skeleton_fo4.nif");
-					Config.SetValue("Anim/SkeletonRootName", "Root");
-					break;
-				case SKYRIMVR:
-					dataDir = dirSkyrimVR->GetDirName();
-					Config.SetValue("Anim/DefaultSkeletonReference", "res/skeleton_female_sse.nif");
-					Config.SetValue("Anim/SkeletonRootName", "NPC Root [Root]");
-					break;
-				case SF:
-					dataDir = dirStarfield->GetDirName();
-					Config.SetValue("Anim/DefaultSkeletonReference", "res/skeleton_female_sf.nif");
-					Config.SetValue("Anim/SkeletonRootName", "Root");
-					break;
-			}
-
-			Config.SetValue("GameDataPath", dataDir.GetFullPath().ToUTF8().data());
-			Config.SetValue("GameDataPaths/" + GameUtil::TargetGames[targ].ToStdString(), dataDir.GetFullPath().ToUTF8().data());
-
-			Config.SaveConfig(Config["AppDir"] + "/Config.xml");
-			delete setup;
-		}
-		else {
-			delete setup;
-			return false;
-		}
-	}
-
-	return true;
+	return AppSetup::ShowSetupDialog();
 }
 
 void BodySlideApp::InitLanguage() {
-	if (locale)
-		delete locale;
-
-	int lang = Config.GetIntValue("Language");
-	if (lang < 0)
-		lang = wxLANGUAGE_ENGLISH;
-
-	// Load language if possible, fall back to English otherwise
-	if (wxLocale::IsAvailable(lang)) {
-		locale = new wxLocale(lang);
-		locale->AddCatalogLookupPathPrefix(wxString::FromUTF8(Config["AppDir"]) + "/lang");
-		locale->AddCatalog("BodySlide");
-
-		if (!locale->IsOk()) {
-			wxLogError("System language '%d' is wrong.", lang);
-			wxMessageBox(wxString::Format(_("System language '%d' is wrong."), lang));
-
-			delete locale;
-			locale = new wxLocale(wxLANGUAGE_ENGLISH);
-			lang = wxLANGUAGE_ENGLISH;
-		}
-	}
-	else {
-		wxLogError("The system language '%d' is not supported by your system. Try installing support for this language.", lang);
-		wxMessageBox(wxString::Format(_("The system language '%d' is not supported by your system. Try installing support for this language."), lang));
-
-		locale = new wxLocale(wxLANGUAGE_ENGLISH);
-		lang = wxLANGUAGE_ENGLISH;
-	}
-
-	wxLogMessage("Using language '%s'.", wxLocale::GetLanguageName(lang));
+	AppSetup::InitLanguage(locale);
 }
 
 void BodySlideApp::LoadAllCategories() {
@@ -8480,81 +8258,6 @@ void BodySlideFrame::OnOutfitStudio(wxCommandEvent& WXUNUSED(event)) {
 	app->LaunchOutfitStudio();
 }
 
-void BodySlideFrame::OnChooseTargetGame(wxCommandEvent& event) {
-	wxChoice* choiceTargetGame = (wxChoice*)event.GetEventObject();
-	wxWindow* parent = choiceTargetGame->GetGrandParent();
-	wxFilePickerCtrl* fpSkeletonFile = XRCCTRL(*parent, "fpSkeletonFile", wxFilePickerCtrl);
-	wxChoice* choiceSkeletonRoot = XRCCTRL(*parent, "choiceSkeletonRoot", wxChoice);
-
-	TargetGame targ = (TargetGame)choiceTargetGame->GetSelection();
-	switch (targ) {
-		case OB:
-			fpSkeletonFile->SetPath("res/skeleton_ob.nif");
-			choiceSkeletonRoot->SetStringSelection("Bip01");
-			break;
-		case FO3:
-		case FONV:
-			fpSkeletonFile->SetPath("res/skeleton_fo3nv.nif");
-			choiceSkeletonRoot->SetStringSelection("Bip01");
-			break;
-		case SKYRIM:
-			fpSkeletonFile->SetPath("res/skeleton_female_sk.nif");
-			choiceSkeletonRoot->SetStringSelection("NPC Root [Root]");
-			break;
-		case SKYRIMSE:
-		case SKYRIMVR:
-			fpSkeletonFile->SetPath("res/skeleton_female_sse.nif");
-			choiceSkeletonRoot->SetStringSelection("NPC Root [Root]");
-			break;
-		case SF:
-			fpSkeletonFile->SetPath("res/skeleton_female_sf.nif");
-			choiceSkeletonRoot->SetStringSelection("Root");
-			break;
-		case FO4:
-		case FO4VR:
-		case FO76:
-		default:
-			fpSkeletonFile->SetPath("res/skeleton_fo4.nif");
-			choiceSkeletonRoot->SetStringSelection("Root");
-			break;
-	}
-
-	wxCheckListBox* dataFileList = XRCCTRL(*parent, "DataFileList", wxCheckListBox);
-	wxString dataDir = GameUtil::GetGameDataPath(targ);
-
-	wxDirPickerCtrl* dpGameDataPath = XRCCTRL(*parent, "dpGameDataPath", wxDirPickerCtrl);
-	dpGameDataPath->SetPath(dataDir);
-
-	SettingsFillDataFiles(dataFileList, dataDir, targ);
-	SettingsDialogShared::ShowExtraDataFolders(*wxGetTopLevelParent(choiceTargetGame), targ);
-}
-
-void BodySlideFrame::SettingsFillDataFiles(wxCheckListBox* dataFileList, wxString& dataDir, int targetGame) {
-	dataFileList->Clear();
-
-	wxString cp = "GameDataFiles/" + GameUtil::TargetGames[targetGame];
-	wxString activatedFiles = Config[cp];
-
-	wxStringTokenizer tokenizer(activatedFiles, ";");
-	std::map<wxString, bool> fsearch;
-	while (tokenizer.HasMoreTokens()) {
-		wxString val = tokenizer.GetNextToken().Trim(false).Trim();
-		val.MakeLower();
-		fsearch[val] = true;
-	}
-
-	wxArrayString files;
-	wxDir::GetAllFiles(dataDir, &files, "*.ba2", wxDIR_FILES);
-	wxDir::GetAllFiles(dataDir, &files, "*.bsa", wxDIR_FILES);
-	for (auto& file : files) {
-		file = file.AfterLast('/').AfterLast('\\');
-		dataFileList->Insert(file, dataFileList->GetCount());
-
-		if (fsearch.find(file.Lower()) == fsearch.end())
-			dataFileList->Check(dataFileList->GetCount() - 1);
-	}
-}
-
 void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 	wxDialog* settings = wxXmlResource::Get()->LoadDialog(this, "dlgSettings");
 	if (settings) {
@@ -8571,8 +8274,8 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		SettingsDialogShared::InitCommonSettingsDialog(*settings,
 			Config,
 			BodySlideConfig,
-			SupportedLangs.data(),
-			SupportedLangs.size(),
+			AppSetup::SupportedLangs.data(),
+			AppSetup::SupportedLangs.size(),
 			commonControls);
 
 		wxString gameDataPath = wxString::FromUTF8(Config["GameDataPath"]);
@@ -8592,9 +8295,9 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		XRCCTRL(*settings, "cbMcpServer", wxCheckBox)->Hide();
 		XRCCTRL(*settings, "spinMcpPort", wxSpinCtrl)->Hide();
 
-		SettingsFillDataFiles(commonControls.dataFileList, gameDataPath, Config.GetIntValue("TargetGame"));
+		AppSetup::FillDataFileList(commonControls.dataFileList, gameDataPath, Config.GetIntValue("TargetGame"));
 
-		commonControls.choiceTargetGame->Bind(wxEVT_CHOICE, &BodySlideFrame::OnChooseTargetGame, this);
+		commonControls.choiceTargetGame->Bind(wxEVT_CHOICE, &AppSetup::OnChooseTargetGame);
 
 		if (settings->ShowModal() == wxID_OK) {
 			int targetGameSelection = 0;
@@ -8604,8 +8307,8 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 				BodySlideConfig,
 				GameUtil::TargetGames.data(),
 				GameUtil::TargetGames.size(),
-				SupportedLangs.data(),
-				SupportedLangs.size(),
+				AppSetup::SupportedLangs.data(),
+				AppSetup::SupportedLangs.size(),
 				commonControls,
 				[this]() { app->InitLanguage(); },
 				targetGameSelection,

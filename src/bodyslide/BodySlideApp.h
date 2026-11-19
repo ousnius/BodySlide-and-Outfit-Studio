@@ -852,9 +852,7 @@ private:
 	void OnBatchBuildKey(wxKeyEvent& event);
 	void OnBatchBuildSelect(wxCommandEvent& event);
 	void OnOutfitStudio(wxCommandEvent& event);
-	void SettingsFillDataFiles(wxCheckListBox* dataFileList, wxString& dataDir, int targetGame);
 	void OnSettings(wxCommandEvent& event);
-	void OnChooseTargetGame(wxCommandEvent& event);
 	void OnAbout(wxCommandEvent& event);
 	void OnMoveWindow(wxMoveEvent& event);
 	void OnSetSize(wxSizeEvent& event);

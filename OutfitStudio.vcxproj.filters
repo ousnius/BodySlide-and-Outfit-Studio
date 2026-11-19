@@ -1042,6 +1042,9 @@
     <ClInclude Include="src\ui\SettingsDialogShared.h">
       <Filter>UI</Filter>
     </ClInclude>
+    <ClInclude Include="src\ui\AppSetup.h">
+      <Filter>UI</Filter>
+    </ClInclude>
     <ClInclude Include="src\utils\StackTrace.h">
       <Filter>Utilities</Filter>
     </ClInclude>
@@ -2629,6 +2632,9 @@
       <Filter>Utilities</Filter>
     </ClCompile>
     <ClCompile Include="src\ui\SettingsDialogShared.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ui\AppSetup.cpp">
       <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="src\utils\StackTrace.cpp">

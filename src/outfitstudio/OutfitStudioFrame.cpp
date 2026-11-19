@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "OutfitStudioFrame.h"
+#include "ui/AppSetup.h"
 #include "FrameHelpers.h"
 #include "GLPanel.h"
 #include "ShapeTreeItems.h"
@@ -931,81 +932,6 @@ void OutfitStudioFrame::OnMenuItem(wxCommandEvent& event) {
 		event.Skip();
 }
 
-void OutfitStudioFrame::OnChooseTargetGame(wxCommandEvent& event) {
-	wxChoice* choiceTargetGame = (wxChoice*)event.GetEventObject();
-	wxWindow* parent = choiceTargetGame->GetGrandParent();
-	wxFilePickerCtrl* fpSkeletonFile = XRCCTRL(*parent, "fpSkeletonFile", wxFilePickerCtrl);
-	wxChoice* choiceSkeletonRoot = XRCCTRL(*parent, "choiceSkeletonRoot", wxChoice);
-
-	TargetGame targ = (TargetGame)choiceTargetGame->GetSelection();
-	switch (targ) {
-		case OB:
-			fpSkeletonFile->SetPath("res/skeleton_ob.nif");
-			choiceSkeletonRoot->SetStringSelection("Bip01");
-			break;
-		case FO3:
-		case FONV:
-			fpSkeletonFile->SetPath("res/skeleton_fo3nv.nif");
-			choiceSkeletonRoot->SetStringSelection("Bip01");
-			break;
-		case SKYRIM:
-			fpSkeletonFile->SetPath("res/skeleton_female_sk.nif");
-			choiceSkeletonRoot->SetStringSelection("NPC Root [Root]");
-			break;
-		case SKYRIMSE:
-		case SKYRIMVR:
-			fpSkeletonFile->SetPath("res/skeleton_female_sse.nif");
-			choiceSkeletonRoot->SetStringSelection("NPC Root [Root]");
-			break;
-		case SF:
-			fpSkeletonFile->SetPath("res/skeleton_female_sf.nif");
-			choiceSkeletonRoot->SetStringSelection("Root");
-			break;
-		case FO4:
-		case FO4VR:
-		case FO76:
-		default:
-			fpSkeletonFile->SetPath("res/skeleton_fo4.nif");
-			choiceSkeletonRoot->SetStringSelection("Root");
-			break;
-	}
-
-	wxCheckListBox* dataFileList = XRCCTRL(*parent, "DataFileList", wxCheckListBox);
-	wxString dataDir = GameUtil::GetGameDataPath(targ);
-
-	wxDirPickerCtrl* dpGameDataPath = XRCCTRL(*parent, "dpGameDataPath", wxDirPickerCtrl);
-	dpGameDataPath->SetPath(dataDir);
-
-	SettingsFillDataFiles(dataFileList, dataDir, targ);
-	SettingsDialogShared::ShowExtraDataFolders(*wxGetTopLevelParent(choiceTargetGame), targ);
-}
-
-void OutfitStudioFrame::SettingsFillDataFiles(wxCheckListBox* dataFileList, wxString& dataDir, int targetGame) {
-	dataFileList->Clear();
-
-	wxString cp = "GameDataFiles/" + GameUtil::TargetGames[targetGame];
-	wxString activatedFiles = Config[cp];
-
-	wxStringTokenizer tokenizer(activatedFiles, ";");
-	std::map<wxString, bool> fsearch;
-	while (tokenizer.HasMoreTokens()) {
-		wxString val = tokenizer.GetNextToken().Trim(false).Trim();
-		val.MakeLower();
-		fsearch[val] = true;
-	}
-
-	wxArrayString files;
-	wxDir::GetAllFiles(dataDir, &files, "*.ba2", wxDIR_FILES);
-	wxDir::GetAllFiles(dataDir, &files, "*.bsa", wxDIR_FILES);
-	for (auto& file : files) {
-		file = file.AfterLast('/').AfterLast('\\');
-		dataFileList->Insert(file, dataFileList->GetCount());
-
-		if (fsearch.find(file.Lower()) == fsearch.end())
-			dataFileList->Check(dataFileList->GetCount() - 1);
-	}
-}
-
 bool OutfitStudioFrame::StartMcpServer(int port, bool showError) {
 	if (!mcp)
 		mcp = std::make_unique<OutfitStudioMcp>(this);
@@ -1075,8 +1001,8 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		SettingsDialogShared::InitCommonSettingsDialog(*settings,
 			Config,
 			OutfitStudioConfig,
-			SupportedLangs.data(),
-			SupportedLangs.size(),
+			AppSetup::SupportedLangs.data(),
+			AppSetup::SupportedLangs.size(),
 			commonControls);
 
 		wxString gameDataPath = wxString::FromUTF8(Config["GameDataPath"]);
@@ -1095,9 +1021,9 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		cbMcpServer->SetValue(mcpEnabled);
 		spinMcpPort->SetValue(mcpPort);
 
-		SettingsFillDataFiles(commonControls.dataFileList, gameDataPath, Config.GetIntValue("TargetGame"));
+		AppSetup::FillDataFileList(commonControls.dataFileList, gameDataPath, Config.GetIntValue("TargetGame"));
 
-		commonControls.choiceTargetGame->Bind(wxEVT_CHOICE, &OutfitStudioFrame::OnChooseTargetGame, this);
+		commonControls.choiceTargetGame->Bind(wxEVT_CHOICE, &AppSetup::OnChooseTargetGame);
 
 		const std::vector<std::string> extraFoldersBefore = GameUtil::GetExtraDataFolders(Config.GetIntValue("TargetGame"));
 		if (settings->ShowModal() == wxID_OK) {
@@ -1108,8 +1034,8 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 				OutfitStudioConfig,
 				GameUtil::TargetGames.data(),
 				GameUtil::TargetGames.size(),
-				SupportedLangs.data(),
-				SupportedLangs.size(),
+				AppSetup::SupportedLangs.data(),
+				AppSetup::SupportedLangs.size(),
 				commonControls,
 				[]() { wxGetApp().InitLanguage(); },
 				targetGameSelection,

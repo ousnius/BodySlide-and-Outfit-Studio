@@ -329,6 +329,9 @@
     <ClCompile Include="tests\ProjectUtilTest.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
+    <ClCompile Include="tests\GameUtilTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
     <ClCompile Include="tests\ProjectPackerTest.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
