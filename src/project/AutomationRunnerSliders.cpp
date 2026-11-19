@@ -7,8 +7,8 @@ See the included LICENSE file
 
 #include "AutomationRunner.h"
 #include "OutfitProject.h"
-#include "outfitstudio/OutfitStudioFrame.h"
-#include "outfitstudio/GLPanel.h"
+#include "ProjectOperations.h"
+#include "StudioSession.h"
 #include "components/DiffData.h"
 #include "components/UndoState.h"
 #include "files/TriFile.h"
@@ -24,6 +24,7 @@ See the included LICENSE file
 #include <NifFile.hpp>
 #include <wx/dir.h>
 #include <wx/filename.h>
+#include <wx/log.h>
 #include <wx/msgdlg.h>
 
 using namespace nifly;
@@ -33,7 +34,7 @@ int AutomationRunner::ExecuteStepSetSliderValues(const AutomationStep& step) {
 	if (step.setSliderNames.empty()) {
 		wxLogMessage("Automation: Setting all slider values to %d%%...", intVal);
 		for (size_t i = 0; i < project->SliderCount(); i++)
-			outfitStudio->SetSliderValue(i, intVal);
+			session->SetSliderValue(i, intVal);
 	}
 	else {
 		for (const auto& name : step.setSliderNames) {
@@ -42,10 +43,10 @@ int AutomationRunner::ExecuteStepSetSliderValues(const AutomationStep& step) {
 				continue;
 			}
 			wxLogMessage("Automation: Setting slider '%s' to %d%%...", name, intVal);
-			outfitStudio->SetSliderValue(name, intVal);
+			session->SetSliderValue(name, intVal);
 		}
 	}
-	outfitStudio->ApplySliders();
+	session->ApplySliders();
 	return 0;
 }
 
@@ -90,13 +91,13 @@ int AutomationRunner::ExecuteStepConformSliders(const AutomationStep& step) {
 					 options.sliderNames.size(), namesList);
 	}
 
-	OpResult result = ProjectOperations(*project, outfitStudio->editor).ConformSliders(shapes, options);
+	OpResult result = ProjectOperations(*project, session->Editor()).ConformSliders(shapes, options);
 	if (!result.ok) {
 		wxLogError("Automation: ConformSliders - %s", result.error);
 		return 1;
 	}
 
-	outfitStudio->ApplyRefresh(result.refresh);
+	session->ApplyRefresh(result.refresh);
 	return 0;
 }
 
@@ -562,13 +563,13 @@ int AutomationRunner::ExecuteStepFixClipping(const AutomationStep& step) {
 	ClippingFixMode mode = step.fixClipMode == 1 ? ClippingFixMode::Sliders : ClippingFixMode::Shapes;
 	wxLogMessage("Automation: FixClipping (%s mode, strength=%.0f%%)...", mode == ClippingFixMode::Sliders ? "Sliders" : "Shapes", step.fixClipStrength * 100.0f);
 
-	OpResult result = ProjectOperations(*project, outfitStudio->editor).FixClipping(shapes, mode, step.fixClipStrength, step.fixClipSliderNames);
+	OpResult result = ProjectOperations(*project, session->Editor()).FixClipping(shapes, mode, step.fixClipStrength, step.fixClipSliderNames);
 	if (!result.ok) {
 		wxLogError("Automation: FixClipping - %s", result.error);
 		return 1;
 	}
 
-	outfitStudio->ApplyRefresh(result.refresh);
+	session->ApplyRefresh(result.refresh);
 	return 0;
 }
 
@@ -600,7 +601,7 @@ int AutomationRunner::ExecuteStepClearSliderData(const AutomationStep& step) {
 			// Masked vertices keep their slider data, like the menu item
 			std::unordered_map<uint16_t, float> mask;
 			if (step.clearSliderUseMask)
-				outfitStudio->glView->GetShapeMask(mask, shapeName);
+				session->GetShapeMask(mask, shapeName);
 
 			wxLogMessage("Automation: Clearing the data of slider '%s' for '%s'...", sliderName, shapeName);
 			if (!mask.empty())
@@ -610,7 +611,7 @@ int AutomationRunner::ExecuteStepClearSliderData(const AutomationStep& step) {
 		}
 	}
 
-	outfitStudio->SetPendingChanges();
+	session->SetPendingChanges();
 	return 0;
 }
 
@@ -632,7 +633,7 @@ int AutomationRunner::ExecuteStepCloneSlider(const AutomationStep& step) {
 
 	wxLogMessage("Automation: Cloning slider '%s' as '%s'...", step.cloneSliderSource, step.newSliderName);
 	project->CloneSlider(step.cloneSliderSource, step.newSliderName);
-	outfitStudio->SetPendingChanges();
+	session->SetPendingChanges();
 	return 0;
 }
 
@@ -660,7 +661,7 @@ int AutomationRunner::ExecuteStepNegateSlider(const AutomationStep& step) {
 		}
 	}
 
-	outfitStudio->SetPendingChanges();
+	session->SetPendingChanges();
 	return 0;
 }
 
@@ -716,7 +717,7 @@ int AutomationRunner::ExecuteStepRigidifySlider(const AutomationStep& step) {
 	options.maxPartLength = std::max(0.0f, step.rigidifyMaxPartLength);
 
 	// Rigidify reads the project's slider data, not the meshes, so they are refreshed once at the end
-	ProjectOperations ops(*project, outfitStudio->editor);
+	ProjectOperations ops(*project, session->Editor());
 	RefreshFlags refresh = RefreshFlags::None;
 	for (const auto& sliderName : sliderNames) {
 		wxLogMessage("Automation: Rigidifying the parts of slider '%s' for %zu shape(s)...", sliderName, shapes.size());
@@ -727,14 +728,14 @@ int AutomationRunner::ExecuteStepRigidifySlider(const AutomationStep& step) {
 		OpResult result = ops.RigidifySlider(shapes, sliderName, options, usp, &parts);
 		refresh |= result.refresh;
 		if (!result.ok) {
-			outfitStudio->ApplyRefresh(refresh);
+			session->ApplyRefresh(refresh);
 			wxLogError("Automation: RigidifySlider - %s", result.error);
 			return 1;
 		}
 		wxLogMessage("Automation: Rigidified %zu part(s), %zu shape(s) changed.", parts, usp.usss.size());
 	}
 
-	outfitStudio->ApplyRefresh(refresh);
+	session->ApplyRefresh(refresh);
 	return 0;
 }
 
@@ -751,7 +752,7 @@ int AutomationRunner::ExecuteStepNewCombinedSlider(const AutomationStep& step) {
 
 	wxLogMessage("Automation: Creating combined slider '%s'...", step.newSliderName);
 	project->AddCombinedSlider(step.newSliderName);
-	outfitStudio->SetPendingChanges();
+	session->SetPendingChanges();
 	return 0;
 }
 
@@ -777,7 +778,7 @@ int AutomationRunner::ExecuteStepNewZapSlider(const AutomationStep& step) {
 
 		// The zap removes the unmasked vertices, so a mask marks what to keep
 		std::unordered_map<uint16_t, float> unmasked;
-		outfitStudio->glView->GetShapeUnmasked(unmasked, shapeName);
+		session->GetShapeUnmasked(unmasked, shapeName);
 		if (unmasked.empty()) {
 			wxLogWarning("Automation: NewZapSlider - '%s' is fully masked, skipping.", shapeName);
 			continue;
@@ -787,6 +788,6 @@ int AutomationRunner::ExecuteStepNewZapSlider(const AutomationStep& step) {
 		project->AddZapSlider(step.newSliderName, unmasked, shape);
 	}
 
-	outfitStudio->SetPendingChanges();
+	session->SetPendingChanges();
 	return 0;
 }

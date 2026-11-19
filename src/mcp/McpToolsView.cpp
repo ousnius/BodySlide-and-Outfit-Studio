@@ -6,8 +6,8 @@ See the included LICENSE file
 #include "OutfitStudioMcp.h"
 #include "McpHelpers.h"
 #include "components/PoseMath.h"
-#include "outfitstudio/OutfitStudioFrame.h"
-#include "outfitstudio/GLPanel.h"
+#include "project/ProjectOperations.h"
+#include "project/StudioSession.h"
 #include "render/ViewState.h"
 #include "render/GLSurface.h"
 
@@ -77,25 +77,22 @@ json ViewStateToJson(const ViewState& state) {
 	};
 }
 
-// View overlays that only the menu keeps, by argument name and menu item
-const std::pair<const char*, const char*> Overlays[] = {{"bones", "btnShowBones"}, {"nodes", "btnShowNodes"}, {"floor", "btnShowFloor"}};
+// View overlays that only the menu keeps, by argument name
+const std::pair<const char*, ViewOverlay> Overlays[] = {{"bones", ViewOverlay::Bones}, {"nodes", ViewOverlay::Nodes}, {"floor", ViewOverlay::Floor}};
 
-json OverlaysToJson(OutfitStudioFrame* frame) {
+json OverlaysToJson(IStudioSession* session) {
 	json overlays = json::object();
 	for (auto& overlay : Overlays)
-		overlays[overlay.first] = frame->GetMenuBar()->IsChecked(XRCID(overlay.second));
+		overlays[overlay.first] = session->IsOverlayShown(overlay.second);
 	return overlays;
 }
 
-void ApplyOverlays(OutfitStudioFrame* frame, const json& args) {
+void ApplyOverlays(IStudioSession* session, const json& args) {
 	for (auto& overlay : Overlays) {
 		if (!McpArgs::Has(args, overlay.first))
 			continue;
 
-		// The menu handler keeps the menu, the toolbar and the view in step
-		wxCommandEvent event(wxEVT_MENU, XRCID(overlay.second));
-		event.SetInt(McpArgs::Bool(args, overlay.first, false) ? 1 : 0);
-		frame->GetEventHandler()->ProcessEvent(event);
+		session->ShowOverlay(overlay.second, McpArgs::Bool(args, overlay.first, false));
 	}
 }
 
@@ -155,24 +152,25 @@ void CheckPreset(const std::string& name) {
 		throw McpToolError("View '" + name + "' has to be one of front, back, left, right, top, bottom.");
 }
 
-GLSurface& Surface(OutfitStudioFrame* frame) {
-	if (!frame->glView)
+GLSurface& Surface(IStudioSession* session) {
+	GLSurface* view = session->View();
+	if (!view)
 		throw McpToolError("The view isn't available.");
-	return frame->glView->gls;
+	return *view;
 }
 
 void FrameTarget(OutfitStudioMcp& mcp, const json& args) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 
 	if (McpArgs::Has(args, "bone")) {
 		std::string bone = McpArgs::String(args, "bone");
-		if (!frame->FrameBone(bone, McpArgs::Float(args, "minWeight", 0.1f)))
+		if (!session->FrameBone(bone, McpArgs::Float(args, "minWeight", 0.1f)))
 			throw McpToolError("No vertices are weighted to the bone '" + bone + "'.");
 	}
 	else if (McpArgs::Has(args, "vertices")) {
 		std::string shape = McpArgs::String(args, "shape");
 		mcp.Shape(shape);
-		if (!frame->FrameVertices(shape, McpArgs::Ints(args, "vertices")))
+		if (!session->FrameVertices(shape, McpArgs::Ints(args, "vertices")))
 			throw McpToolError("None of the vertices exist on '" + shape + "'.");
 	}
 	else {
@@ -181,7 +179,7 @@ void FrameTarget(OutfitStudioMcp& mcp, const json& args) {
 			shapes = mcp.Project().GetShapeOrder();
 		for (auto& shape : shapes)
 			mcp.Shape(shape);
-		if (!frame->FrameShapes(shapes))
+		if (!session->FrameShapes(shapes))
 			throw McpToolError("The shapes have nothing to frame.");
 	}
 }
@@ -402,10 +400,10 @@ std::vector<uint8_t> EncodePNG(const wxImage& image) {
 // Puts the view and slider values back the way they were after a render, also on errors
 class RenderRestore {
 public:
-	RenderRestore(OutfitStudioFrame* inFrame)
-		: frame(inFrame)
-		, view(inFrame->GetViewState()) {
-		OutfitProject* project = frame->project;
+	RenderRestore(IStudioSession* inSession)
+		: session(inSession)
+		, view(inSession->GetViewState()) {
+		OutfitProject* project = session->GetProject();
 		for (size_t i = 0; i < project->SliderCount(); i++)
 			sliderValues.push_back(project->SliderValue(i));
 	}
@@ -413,7 +411,7 @@ public:
 	~RenderRestore() {
 		// Triangles hidden by zaps come back
 		for (auto& hidden : zapHidden) {
-			Mesh* m = frame->glView->GetMesh(hidden.first);
+			Mesh* m = session->GetMesh(hidden.first);
 			if (m && m->renderTris && m->nTris == static_cast<int>(hidden.second.size())) {
 				std::copy(hidden.second.begin(), hidden.second.end(), m->renderTris.get());
 				m->QueueUpdate(Mesh::UpdateType::Indices);
@@ -423,10 +421,10 @@ public:
 		// The pose first, the meshes are rebuilt with the slider values below
 		if (pose) {
 			pose.reset();
-			frame->ApplyRefresh(RefreshFlags::Pose | RefreshFlags::Meshes);
+			session->ApplyRefresh(RefreshFlags::Pose | RefreshFlags::Meshes);
 		}
 
-		OutfitProject* project = frame->project;
+		OutfitProject* project = session->GetProject();
 		bool changed = false;
 		for (size_t i = 0; i < sliderValues.size() && i < project->SliderCount(); i++) {
 			if (project->SliderValue(i) != sliderValues[i]) {
@@ -436,13 +434,13 @@ public:
 		}
 
 		if (changed)
-			frame->ApplyRefresh(RefreshFlags::SliderValues | RefreshFlags::Meshes);
+			session->ApplyRefresh(RefreshFlags::SliderValues | RefreshFlags::Meshes);
 
 		if (vertexColorsChanged)
-			frame->FillVertexColors();
-		frame->SetViewState(view);
+			session->FillVertexColors();
+		session->SetViewState(view);
 		if (weightColorsChanged)
-			frame->RefreshGUIWeightColors();
+			session->RefreshGUIWeightColors();
 	}
 
 	const ViewState& View() const { return view; }
@@ -455,7 +453,7 @@ public:
 	std::map<std::string, std::vector<Triangle>> zapHidden;
 
 private:
-	OutfitStudioFrame* frame = nullptr;
+	IStudioSession* session = nullptr;
 	ViewState view;
 	std::vector<float> sliderValues;
 };
@@ -489,10 +487,10 @@ std::vector<std::string> RenderZaps(OutfitProject& project, const json& args) {
 }
 
 // Leaves the triangles that the zaps remove out of the meshes' index buffers, the way BodySlide builds the outfit
-void HideZappedTriangles(OutfitStudioFrame* frame, OutfitProject& project, const std::vector<std::string>& zaps, std::map<std::string, std::vector<Triangle>>& saved) {
+void HideZappedTriangles(IStudioSession* session, OutfitProject& project, const std::vector<std::string>& zaps, std::map<std::string, std::vector<Triangle>>& saved) {
 	for (auto* shape : project.GetWorkNif()->GetShapes()) {
 		const std::string name = shape->name.get();
-		Mesh* m = frame->glView->GetMesh(name);
+		Mesh* m = session->GetMesh(name);
 		if (!m || !m->renderTris)
 			continue;
 
@@ -521,9 +519,9 @@ void HideZappedTriangles(OutfitStudioFrame* frame, OutfitProject& project, const
 }
 
 McpToolResult RenderView(OutfitStudioMcp& mcp, const json& args) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	OutfitProject& project = mcp.Project();
-	Surface(frame);
+	Surface(session);
 
 	const int width = std::clamp(McpArgs::Int(args, "width", 768), 64, 2048);
 	const int height = std::clamp(McpArgs::Int(args, "height", 768), 64, 2048);
@@ -543,7 +541,7 @@ McpToolResult RenderView(OutfitStudioMcp& mcp, const json& args) {
 
 	const std::vector<std::string> zaps = RenderZaps(project, args);
 
-	RenderRestore restore(frame);
+	RenderRestore restore(session);
 	ViewState state = restore.View();
 
 	if (const json* display = McpArgs::Find(args, "display"))
@@ -623,7 +621,7 @@ McpToolResult RenderView(OutfitStudioMcp& mcp, const json& args) {
 		const bool masked = McpArgs::Bool(*focus, "masked", false);
 		const bool unmasked = McpArgs::Bool(*focus, "unmasked", false);
 		if (masked || unmasked) {
-			Mesh* m = frame->glView->GetMesh(focusShape);
+			Mesh* m = session->GetMesh(focusShape);
 			for (int v = 0; m && v < m->nVerts; v++) {
 				const bool isMasked = m->mask && m->mask[v] > 0.0f;
 				if (isMasked == masked)
@@ -721,7 +719,7 @@ McpToolResult RenderView(OutfitStudioMcp& mcp, const json& args) {
 	for (size_t i = 0; i < project.SliderCount(); i++)
 		baseValues[project.GetSliderName(i)] = project.SliderValue(i);
 
-	frame->SetViewState(state);
+	session->SetViewState(state);
 
 	McpToolResult result;
 	std::vector<wxImage> images;
@@ -741,32 +739,32 @@ McpToolResult RenderView(OutfitStudioMcp& mcp, const json& args) {
 			if (!restore.pose)
 				restore.pose.emplace(mcp);
 			restore.pose->Set(variant.pose);
-			frame->ApplyRefresh(RefreshFlags::Pose | RefreshFlags::Meshes);
+			session->ApplyRefresh(RefreshFlags::Pose | RefreshFlags::Meshes);
 		}
 		else if (restore.pose) {
 			// A variant without a pose after one with a pose shows the pose from before the render
 			restore.pose->Restore();
-			frame->ApplyRefresh(RefreshFlags::Pose | RefreshFlags::Meshes);
+			session->ApplyRefresh(RefreshFlags::Pose | RefreshFlags::Meshes);
 		}
 
 		for (auto& view : views) {
 			// Every view starts from the camera of the render, not from the preset or framing of the image before
-			Surface(frame).SetCamera(state.camera);
+			Surface(session).SetCamera(state.camera);
 			if (view != "current")
-				Surface(frame).SetViewPreset(view);
+				Surface(session).SetViewPreset(view);
 			if (!frameShapes.empty())
-				frame->FrameShapes(frameShapes);
+				session->FrameShapes(frameShapes);
 			if (!focusShape.empty())
-				frame->FrameVertices(focusShape, focusVertices);
+				session->FrameVertices(focusShape, focusVertices);
 
 			if (!zaps.empty())
-				HideZappedTriangles(frame, project, zaps, restore.zapHidden);
+				HideZappedTriangles(session, project, zaps, restore.zapHidden);
 
 			wxImage image;
-			if (!frame->glView->RenderViewImage(width, height, image))
+			if (!session->RenderViewImage(width, height, image))
 				throw McpToolError("Rendering failed. The window may be minimized or the graphics driver doesn't support offscreen rendering.");
 			if (skeleton)
-				DrawSkeleton(image, Surface(frame), *skeleton, project.bPose, McpBoneUnits(mcp));
+				DrawSkeleton(image, Surface(session), *skeleton, project.bPose, McpBoneUnits(mcp));
 
 			images.push_back(image);
 			labels.push_back(variant.label.empty() ? view : view + " - " + variant.label);
@@ -820,11 +818,11 @@ McpToolResult RenderView(OutfitStudioMcp& mcp, const json& args) {
 }
 
 McpToolResult ListShapes(OutfitStudioMcp& mcp, const json& args) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	OutfitProject& project = mcp.Project();
 	const bool withBones = McpArgs::Bool(args, "withBones", false);
 
-	std::vector<std::string> selected = frame->GetSelectedShapeNames();
+	std::vector<std::string> selected = session->GetSelectedShapeNames();
 
 	json shapes = json::array();
 	for (auto& name : project.GetShapeOrder()) {
@@ -858,7 +856,7 @@ McpToolResult ListShapes(OutfitStudioMcp& mcp, const json& args) {
 		}
 
 		ShapeDisplayMode mode;
-		if (frame->GetShapeDisplayMode(name, mode))
+		if (session->GetShapeDisplayMode(name, mode))
 			entry["display"] = ModeName(mode);
 
 		auto& shapeBones = project.GetWorkAnim()->shapeBones;
@@ -882,7 +880,7 @@ McpToolResult ListShapes(OutfitStudioMcp& mcp, const json& args) {
 } // namespace
 
 void AddViewTools(OutfitStudioMcp& mcp) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 
 	McpTool listShapes;
 	listShapes.name = "list_shapes";
@@ -899,15 +897,15 @@ void AddViewTools(OutfitStudioMcp& mcp) {
 	select.name = "select_shapes";
 	select.description = "Selects shapes in the window, the first one becomes the active shape. Tools that take shapes use the selected outfit shapes when they are given none.";
 	select.inputSchema = McpSchema({{"shapes", McpStringList("Shape names")}}, {"shapes"});
-	select.handler = [&mcp, frame](const json& args) {
+	select.handler = [&mcp, session](const json& args) {
 		std::vector<std::string> names = McpArgs::Strings(args, "shapes");
 		for (auto& name : names)
 			mcp.Shape(name);
-		if (names.empty() || !frame->SelectShapes(names))
+		if (names.empty() || !session->SelectShapes(names))
 			throw McpToolError("The shapes couldn't be selected.");
 
 		McpToolResult result;
-		result.data["selectedShapes"] = frame->GetSelectedShapeNames();
+		result.data["selectedShapes"] = session->GetSelectedShapeNames();
 		return result;
 	};
 	mcp.AddTool(std::move(select));
@@ -916,7 +914,7 @@ void AddViewTools(OutfitStudioMcp& mcp) {
 	display.name = "set_shape_display";
 	display.description = "Shows, hides or ghosts (see-through) shapes in the view.";
 	display.inputSchema = McpSchema({{"shapes", ShapeModesSchema}}, {"shapes"});
-	display.handler = [&mcp, frame](const json& args) {
+	display.handler = [&mcp, session](const json& args) {
 		const json& shapes = args.at("shapes");
 		if (!shapes.is_object())
 			McpArgs::Wrong("shapes", "an object of shape names to display modes");
@@ -925,12 +923,12 @@ void AddViewTools(OutfitStudioMcp& mcp) {
 			mcp.Shape(item.key());
 			if (!item.value().is_string())
 				McpArgs::Wrong("shapes", "an object of shape names to display modes");
-			frame->SetShapeDisplayMode(item.key(), ModeFromName(item.value().get<std::string>()));
+			session->SetShapeDisplayMode(item.key(), ModeFromName(item.value().get<std::string>()));
 		}
 
-		frame->glView->Render();
+		session->Render();
 		McpToolResult result;
-		result.data["shapes"] = ViewStateToJson(frame->GetViewState())["shapes"];
+		result.data["shapes"] = ViewStateToJson(session->GetViewState())["shapes"];
 		return result;
 	};
 	mcp.AddTool(std::move(display));
@@ -939,12 +937,12 @@ void AddViewTools(OutfitStudioMcp& mcp) {
 	getView.name = "get_view_state";
 	getView.description = "Returns the camera, the display toggles, the overlays and the display mode of each shape, to restore later with set_view_state.";
 	getView.readOnly = true;
-	getView.handler = [frame](const json&) {
-		Surface(frame);
+	getView.handler = [session](const json&) {
+		Surface(session);
 		McpToolResult result;
-		result.data = ViewStateToJson(frame->GetViewState());
-		result.data["camera"]["orbit"] = OrbitToJson(frame->GetViewState().camera);
-		result.data["overlays"] = OverlaysToJson(frame);
+		result.data = ViewStateToJson(session->GetViewState());
+		result.data["camera"]["orbit"] = OrbitToJson(session->GetViewState().camera);
+		result.data["overlays"] = OverlaysToJson(session);
 		return result;
 	};
 	mcp.AddTool(std::move(getView));
@@ -963,9 +961,9 @@ void AddViewTools(OutfitStudioMcp& mcp) {
 		{"overlays", OverlaysSchema},
 		{"shapes", ShapeModesSchema},
 	});
-	setView.handler = [&mcp, frame](const json& args) {
-		GLSurface& surface = Surface(frame);
-		ViewState state = frame->GetViewState();
+	setView.handler = [&mcp, session](const json& args) {
+		GLSurface& surface = Surface(session);
+		ViewState state = session->GetViewState();
 
 		if (const json* camera = McpArgs::Find(args, "camera"))
 			ApplyCamera(state.camera, *camera);
@@ -982,21 +980,21 @@ void AddViewTools(OutfitStudioMcp& mcp) {
 			}
 		}
 
-		frame->SetViewState(state);
+		session->SetViewState(state);
 		if (const json* overlays = McpArgs::Find(args, "overlays"))
-			ApplyOverlays(frame, *overlays);
+			ApplyOverlays(session, *overlays);
 
 		if (McpArgs::Has(args, "preset")) {
 			std::string preset = McpArgs::String(args, "preset");
 			CheckPreset(preset);
 			surface.SetViewPreset(preset);
-			frame->glView->Render();
+			session->Render();
 		}
 
 		McpToolResult result;
-		result.data = ViewStateToJson(frame->GetViewState());
-		result.data["camera"]["orbit"] = OrbitToJson(frame->GetViewState().camera);
-		result.data["overlays"] = OverlaysToJson(frame);
+		result.data = ViewStateToJson(session->GetViewState());
+		result.data["camera"]["orbit"] = OrbitToJson(session->GetViewState().camera);
+		result.data["overlays"] = OverlaysToJson(session);
 		return result;
 	};
 	mcp.AddTool(std::move(setView));
@@ -1013,9 +1011,9 @@ void AddViewTools(OutfitStudioMcp& mcp) {
 		{"toggle", {{"type", "array"}, {"items", {{"type", "string"}, {"enum", {"textures", "wireframe", "lighting", "mask", "vertexColors", "weightColors", "tints"}}}}, {"description", "Toggles to flip"}}},
 		{"set", DisplaySchema},
 	});
-	toggleDisplay.handler = [frame](const json& args) {
-		Surface(frame);
-		ViewState state = frame->GetViewState();
+	toggleDisplay.handler = [session](const json& args) {
+		Surface(session);
+		ViewState state = session->GetViewState();
 		GLSurface::DisplaySettings& display = state.display;
 		for (auto& name : McpArgs::Strings(args, "toggle")) {
 			if (name == "textures")
@@ -1037,10 +1035,10 @@ void AddViewTools(OutfitStudioMcp& mcp) {
 		}
 		if (const json* set = McpArgs::Find(args, "set"))
 			ApplyDisplay(display, *set);
-		frame->SetViewState(state);
+		session->SetViewState(state);
 
 		McpToolResult result;
-		result.data = ViewStateToJson(frame->GetViewState())["display"];
+		result.data = ViewStateToJson(session->GetViewState())["display"];
 		return result;
 	};
 	mcp.AddTool(std::move(toggleDisplay));
@@ -1058,8 +1056,8 @@ void AddViewTools(OutfitStudioMcp& mcp) {
 		{"minWeight", McpProp("number", "With bone: lowest weight that counts. Default 0.1.")},
 		{"preset", {{"type", "string"}, {"enum", ViewPresets}, {"description", "Look from this side"}}},
 	});
-	frameView.handler = [&mcp, frame](const json& args) {
-		GLSurface& surface = Surface(frame);
+	frameView.handler = [&mcp, session](const json& args) {
+		GLSurface& surface = Surface(session);
 		if (McpArgs::Has(args, "preset")) {
 			std::string preset = McpArgs::String(args, "preset");
 			CheckPreset(preset);
@@ -1067,11 +1065,11 @@ void AddViewTools(OutfitStudioMcp& mcp) {
 		}
 
 		FrameTarget(mcp, args);
-		frame->glView->Render();
+		session->Render();
 
 		McpToolResult result;
-		result.data["camera"] = ViewStateToJson(frame->GetViewState())["camera"];
-		result.data["camera"]["orbit"] = OrbitToJson(frame->GetViewState().camera);
+		result.data["camera"] = ViewStateToJson(session->GetViewState())["camera"];
+		result.data["camera"]["orbit"] = OrbitToJson(session->GetViewState().camera);
 		return result;
 	};
 	mcp.AddTool(std::move(frameView));

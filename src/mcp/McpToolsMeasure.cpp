@@ -6,7 +6,8 @@ See the included LICENSE file
 #include "OutfitStudioMcp.h"
 #include "McpHelpers.h"
 #include "components/MeshAnalysis.h"
-#include "outfitstudio/OutfitStudioFrame.h"
+#include "project/ProjectOperations.h"
+#include "project/StudioSession.h"
 
 #include <algorithm>
 #include <cfloat>

@@ -6,14 +6,15 @@ See the included LICENSE file
 #include "AutomationRunner.h"
 
 #include "OutfitProject.h"
-#include "outfitstudio/OutfitStudioFrame.h"
-#include "outfitstudio/GLPanel.h"
+#include "ProjectOperations.h"
+#include "StudioSession.h"
 
 #include "utils/ProjectUtil.h"
 
 #include <NifFile.hpp>
 
 #include <wx/filename.h>
+#include <wx/log.h>
 #include <wx/msgdlg.h>
 
 #include <algorithm>
@@ -25,12 +26,12 @@ See the included LICENSE file
 #include <vector>
 
 using namespace nifly;
-AutomationRunner::AutomationRunner(OutfitStudioFrame* inOutfitStudio)
-	: outfitStudio(inOutfitStudio)
-	, project(inOutfitStudio->project) {}
+AutomationRunner::AutomationRunner(IStudioSession& inSession)
+	: session(&inSession)
+	, project(inSession.GetProject()) {}
 
 void AutomationRunner::SyncProject() {
-	project = outfitStudio->project;
+	project = session->GetProject();
 }
 
 void AutomationRunner::BeginRun(const std::map<std::string, std::string>& baseVariables) {
@@ -55,12 +56,12 @@ int AutomationRunner::RunStep(const AutomationStep& scriptStep, AutomationStep* 
 
 void AutomationRunner::RefreshAfterStep(const AutomationStep& step) {
 	SyncProject();
-	outfitStudio->RefreshGUIFromProj();
+	session->RefreshGUIFromProj();
 
 	if (StepChangesSliderSet(step.type))
-		outfitStudio->CreateSetSliders();
+		session->CreateSetSliders();
 
-	outfitStudio->ApplySliders();
+	session->ApplySliders();
 }
 
 int AutomationRunner::ExecuteStep(const AutomationStep& step) {
@@ -230,7 +231,7 @@ void AutomationRunner::ResetAndClearProject() {
 	project->GetWorkAnim()->Clear();
 	project->GetWorkNif()->Clear();
 	project->ClearLoadedFileData();
-	outfitStudio->ResetProject();
+	session->ResetProject();
 	SyncProject();
 }
 wxString AutomationRunner::MakeAbsoluteToProject(const wxString& path) {
@@ -270,8 +271,8 @@ void AutomationRunner::RefreshMeshesWithMasks(std::unordered_map<std::string, st
 	// The stashed masks were already remapped to the new vertex lists by
 	// ApplyShapeMeshUndo while the render meshes still carry the old ones, so the
 	// rebuild has to happen without stashing again.
-	outfitStudio->RefreshGUIFromProj(false, false);
-	outfitStudio->glView->UnstashMasks(maskStash);
+	session->RefreshGUIFromProj(false, false);
+	session->UnstashMasks(maskStash);
 }
 
 int AutomationRunner::ExecuteStepSetVariable(const AutomationStep& step) {

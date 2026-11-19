@@ -24,7 +24,7 @@ namespace MeshAnalysis {
 struct PenetrationStats;
 }
 
-class OutfitStudioFrame;
+class IStudioSession;
 class OutfitProject;
 class ProjectOperations;
 class McpSnapshotStore;
@@ -38,14 +38,14 @@ struct Triangle;
 
 constexpr int McpDefaultPort = 47823;
 
-// The MCP server of an Outfit Studio window. Tools run on the main thread against the
-// window's project, the same way the window's own commands do.
+// The MCP server of an Outfit Studio session. Tools run on the main thread against the
+// session's project, the same way the window's own commands do.
 class OutfitStudioMcp {
 public:
 	using Handler = std::function<McpToolResult(const nlohmann::json& args)>;
 	using ProgressHandler = std::function<McpToolResult(const nlohmann::json& args, const McpProgress& progress)>;
 
-	explicit OutfitStudioMcp(OutfitStudioFrame* inFrame);
+	explicit OutfitStudioMcp(IStudioSession& inSession);
 	~OutfitStudioMcp();
 
 	// Main thread only
@@ -55,7 +55,7 @@ public:
 	bool IsRunning() const { return server.IsRunning(); }
 	std::string GetUrl() const { return server.GetUrl(); }
 
-	OutfitStudioFrame* GetFrame() const { return frame; }
+	IStudioSession& Session() const { return session; }
 
 	// Adds a tool whose handler runs on the main thread, once the window isn't busy. Messages the
 	// project shows and warnings or errors it logs while the tool runs are returned with the result,
@@ -95,7 +95,7 @@ public:
 	void CheckPositionEdit();
 
 private:
-	OutfitStudioFrame* frame = nullptr;
+	IStudioSession& session;
 	McpToolRegistry registry;
 	McpProtocol protocol;
 	McpServer server;

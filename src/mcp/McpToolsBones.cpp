@@ -7,7 +7,8 @@ See the included LICENSE file
 #include "McpHelpers.h"
 #include "components/Anim.h"
 #include "components/PoseMath.h"
-#include "outfitstudio/OutfitStudioFrame.h"
+#include "project/ProjectOperations.h"
+#include "project/StudioSession.h"
 
 #include <algorithm>
 #include <cmath>
@@ -113,7 +114,7 @@ const json RotationProp = McpProp("array", "Rotation to the parent as a rotation
 } // namespace
 
 void AddBoneTools(OutfitStudioMcp& mcp) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 
 	McpTool skeleton;
 	skeleton.name = "list_skeleton_bones";
@@ -181,7 +182,7 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 	addBones.name = "add_bones";
 	addBones.description = "Adds bones of the reference skeleton to the project, like Add Bone in the window. Weights for them come from copy_bone_weights, set_weights or the weight brush.";
 	addBones.inputSchema = McpSchema({{"bones", McpStringList("Bone names from list_skeleton_bones")}}, {"bones"});
-	addBones.handler = [&mcp, frame](const json& args) {
+	addBones.handler = [&mcp, session](const json& args) {
 		std::vector<std::string> bones = McpArgs::Strings(args, "bones");
 		if (bones.empty())
 			McpArgs::Wrong("bones", "a list of bone names");
@@ -189,7 +190,7 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 			if (!AnimSkeleton::getInstance().GetBonePtr(bone))
 				throw McpToolError("The skeleton has no bone '" + bone + "'. list_skeleton_bones lists them.");
 		McpRunStep(mcp, {{"type", "AddBone"}, {"BoneNames", bones}});
-		frame->UpdateAnimationGUI();
+		session->UpdateAnimationGUI();
 
 		McpToolResult result;
 		json list = json::array();
@@ -212,7 +213,7 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 			{"rotation", RotationProp},
 		},
 		{"name"});
-	addCustom.handler = [&mcp, frame](const json& args) {
+	addCustom.handler = [&mcp, session](const json& args) {
 		std::string name = McpArgs::String(args, "name");
 		if (AnimSkeleton::getInstance().GetBonePtr(name))
 			throw McpToolError("There already is a bone '" + name + "'. Use edit_bone to change a custom bone.");
@@ -220,7 +221,7 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 		if (!parent.empty() && !AnimSkeleton::getInstance().GetBonePtr(parent))
 			throw McpToolError("There is no parent bone '" + parent + "'.");
 		McpRunStep(mcp, CustomBoneStep("AddCustomBone", args));
-		frame->UpdateAnimationGUI();
+		session->UpdateAnimationGUI();
 		return BoneResult(name);
 	};
 	mcp.AddTool(std::move(addCustom));
@@ -237,7 +238,7 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 			{"rotation", RotationProp},
 		},
 		{"name"});
-	editBone.handler = [&mcp, frame](const json& args) {
+	editBone.handler = [&mcp, session](const json& args) {
 		std::string name = McpArgs::String(args, "name");
 		AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(name);
 		if (!bone)
@@ -245,7 +246,7 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 		if (bone->isStandardBone)
 			throw McpToolError("'" + name + "' is a bone of the reference skeleton, only custom bones can be edited.");
 		McpRunStep(mcp, CustomBoneStep("EditBone", args));
-		frame->UpdateAnimationGUI();
+		session->UpdateAnimationGUI();
 		return BoneResult(name);
 	};
 	mcp.AddTool(std::move(editBone));
@@ -270,7 +271,7 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 			{"parent", McpProp("string", "Bone the chain hangs from instead of the originals' parents. Default: the originals' parents.")},
 		},
 		{"bones"});
-	duplicateBones.handler = [&mcp, frame](const json& args) {
+	duplicateBones.handler = [&mcp, session](const json& args) {
 		std::vector<std::string> bones = McpArgs::Strings(args, "bones");
 		if (bones.empty())
 			McpArgs::Wrong("bones", "a list of bone names");
@@ -307,7 +308,7 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 					{"Suffix", suffix},
 					{"Mirror", McpArgs::Bool(args, "mirror", false)},
 					{"Parent", parent}});
-		frame->UpdateAnimationGUI();
+		session->UpdateAnimationGUI();
 
 		McpToolResult result;
 		json list = json::array();
@@ -327,7 +328,7 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 		"the window, e.g. after duplicate_bones. Bones whose parent is mirrored too move along with it. The mesh stays in "
 		"place: the skin transforms are recalculated. Bones of the reference skeleton can't be mirrored.";
 	mirrorBones.inputSchema = McpSchema({{"bones", McpStringList("Custom bones to mirror")}}, {"bones"});
-	mirrorBones.handler = [&mcp, frame](const json& args) {
+	mirrorBones.handler = [&mcp, session](const json& args) {
 		std::vector<std::string> bones = McpArgs::Strings(args, "bones");
 		if (bones.empty())
 			McpArgs::Wrong("bones", "a list of bone names");
@@ -340,7 +341,7 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 		}
 
 		McpRunStep(mcp, {{"type", "MirrorBones"}, {"BoneNames", bones}});
-		frame->UpdateAnimationGUI();
+		session->UpdateAnimationGUI();
 
 		McpToolResult result;
 		json list = json::array();
@@ -362,7 +363,7 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 			{"shapes", McpStringList("Only remove the bones from these shapes")},
 		},
 		{"bones"});
-	deleteBones.handler = [&mcp, frame](const json& args) {
+	deleteBones.handler = [&mcp, session](const json& args) {
 		std::vector<std::string> bones = McpArgs::Strings(args, "bones");
 		if (bones.empty())
 			McpArgs::Wrong("bones", "a list of bone names");
@@ -371,7 +372,7 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 		if (McpArgs::Has(args, "shapes"))
 			step["TargetMeshes"] = ShapeNames(mcp.Shapes(args, "shapes", true));
 		McpRunStep(mcp, step);
-		frame->UpdateAnimationGUI();
+		session->UpdateAnimationGUI();
 
 		McpToolResult result;
 		result.data["deleted"] = bones;
@@ -391,7 +392,7 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 			{"mode", {{"type", "string"}, {"enum", {"skin_from_node", "node_from_skin"}}, {"description", "Default skin_from_node"}}},
 		},
 		{"bones"});
-	boneTransforms.handler = [&mcp, frame](const json& args) {
+	boneTransforms.handler = [&mcp, session](const json& args) {
 		std::vector<std::string> bones = McpArgs::Strings(args, "bones");
 		if (bones.empty())
 			McpArgs::Wrong("bones", "a list of bone names");
@@ -401,7 +402,7 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 
 		json names = ShapeNames(mcp.Shapes(args, "shapes", true));
 		McpRunStep(mcp, {{"type", "SetBoneTransform"}, {"TargetMeshes", names}, {"BoneNames", bones}, {"Mode", mode == "skin_from_node" ? 0 : 1}});
-		frame->UpdateAnimationGUI();
+		session->UpdateAnimationGUI();
 
 		McpToolResult result;
 		result.data["shapes"] = names;
@@ -440,10 +441,10 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 	removeSkinning.name = "remove_skinning";
 	removeSkinning.description = "Removes the skinning and all bone weights of shapes, so they no longer follow the bones.";
 	removeSkinning.inputSchema = McpSchema({{"shapes", McpStringList("Shapes, the selected ones by default")}});
-	removeSkinning.handler = [&mcp, frame](const json& args) {
+	removeSkinning.handler = [&mcp, session](const json& args) {
 		json names = ShapeNames(mcp.Shapes(args, "shapes", true));
 		McpRunStep(mcp, {{"type", "RemoveSkinning"}, {"TargetMeshes", names}});
-		frame->UpdateAnimationGUI();
+		session->UpdateAnimationGUI();
 
 		McpToolResult result;
 		result.data["shapes"] = names;
@@ -458,7 +459,7 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 		"the current preview pose like the Pose to Mesh button, as one undo state. With pose it bakes a pose of the pose "
 		"list, like the Apply Pose automation step, which isn't in the undo history.";
 	poseToMesh.inputSchema = McpSchema({{"pose", McpProp("string", "Name of a pose from list_poses. Default: the current preview pose.")}});
-	poseToMesh.handler = [&mcp, frame](const json& args) {
+	poseToMesh.handler = [&mcp, session](const json& args) {
 		OutfitProject& project = mcp.Project();
 		if (McpArgs::Has(args, "pose"))
 			McpRunStep(mcp, {{"type", "ApplyPose"}, {"PoseName", McpArgs::String(args, "pose")}});
@@ -466,9 +467,8 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 			if (!project.bPose)
 				throw McpToolError("No preview pose is on. Set one with set_preview_pose, or name a pose.");
 
-			wxCommandEvent event(wxEVT_BUTTON, XRCID("poseToMesh"));
-			frame->GetEventHandler()->ProcessEvent(event);
-			frame->UpdateUndoTools();
+			session->PoseToMesh();
+			session->UpdateUndoTools();
 		}
 
 		McpToolResult result;
@@ -482,7 +482,7 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 	badBones.description =
 		"Checks the bones of the project for transforms that don't match the skeleton, like Check Bad Bones in the "
 		"window, and fixes them. The log lists what was found.";
-	badBones.handler = [&mcp, frame](const json&) {
+	badBones.handler = [&mcp, session](const json&) {
 		BadBonesReport report = mcp.Project().FindBadBones();
 
 		McpToolResult result;
@@ -500,7 +500,7 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 
 		if (report.found) {
 			McpRunStep(mcp, {{"type", "FixBadBones"}});
-			frame->UpdateAnimationGUI();
+			session->UpdateAnimationGUI();
 		}
 		result.data["fixed"] = report.found;
 		return result;

@@ -6,7 +6,8 @@ See the included LICENSE file
 #include "OutfitStudioMcp.h"
 #include "McpHelpers.h"
 #include "components/SliderPresets.h"
-#include "outfitstudio/OutfitStudioFrame.h"
+#include "project/ProjectOperations.h"
+#include "project/StudioSession.h"
 #include "utils/ProjectUtil.h"
 
 #include <wx/filename.h>
@@ -108,7 +109,7 @@ McpToolResult SlidersChanged(OutfitProject& project, const char* key, const json
 }
 
 McpToolResult SetSliderProperties(OutfitStudioMcp& mcp, const json& args) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	OutfitProject& project = mcp.Project();
 	std::string name = McpArgs::String(args, "slider");
 	size_t index = SliderIndex(project, name);
@@ -186,8 +187,8 @@ McpToolResult SetSliderProperties(OutfitStudioMcp& mcp, const json& args) {
 		if (newName != name) {
 			CheckNewSlider(project, newName);
 			// The slider panels are named after their slider, so they are made anew
-			if (frame->editor.bEditSlider)
-				frame->ExitSliderEdit();
+			if (session->Editor().bEditSlider)
+				session->ExitSliderEdit();
 
 			if (project.SliderFromBase(name))
 				renameNote = "'" + name + "' came from the base project. Its data is the project's own now, and '" + name + "' is hidden in this project.";
@@ -197,7 +198,7 @@ McpToolResult SetSliderProperties(OutfitStudioMcp& mcp, const json& args) {
 		}
 	}
 
-	frame->ApplyRefresh(refresh);
+	session->ApplyRefresh(refresh);
 
 	McpToolResult result;
 	result.data["slider"] = SliderProperties(project, index);
@@ -207,7 +208,7 @@ McpToolResult SetSliderProperties(OutfitStudioMcp& mcp, const json& args) {
 }
 
 McpToolResult ExportSliderData(OutfitStudioMcp& mcp, const json& args) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	OutfitProject& project = mcp.Project();
 	std::string path = McpFilePath(McpArgs::String(args, "path"));
 	auto shapes = mcp.Shapes(args, "shapes", true);
@@ -222,8 +223,8 @@ McpToolResult ExportSliderData(OutfitStudioMcp& mcp, const json& args) {
 	std::vector<std::string> sliders;
 	if (format != "dat") {
 		sliders = McpArgs::Strings(args, "sliders");
-		if (sliders.empty() && frame->editor.bEditSlider)
-			sliders.push_back(frame->editor.activeSlider);
+		if (sliders.empty() && session->Editor().bEditSlider)
+			sliders.push_back(session->Editor().activeSlider);
 		if (sliders.empty())
 			throw McpToolError("Name the sliders to export, or put a slider in edit mode.");
 		for (auto& slider : sliders)
@@ -266,7 +267,7 @@ McpToolResult ExportSliderData(OutfitStudioMcp& mcp, const json& args) {
 	}
 
 	// Writing slider meshes changes the shown state, like in the window
-	frame->ApplySliders();
+	session->ApplySliders();
 
 	McpToolResult result;
 	result.data["written"] = written;
@@ -335,7 +336,7 @@ McpToolResult SavePreset(OutfitStudioMcp& mcp, const json& args) {
 }
 
 McpToolResult PhysicsData(OutfitStudioMcp& mcp, const json& args) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	OutfitProject& project = mcp.Project();
 	std::string op = McpArgs::String(args, "op");
 
@@ -347,7 +348,7 @@ McpToolResult PhysicsData(OutfitStudioMcp& mcp, const json& args) {
 		if (!block->FromHKX(path))
 			throw McpToolError("'" + path + "' couldn't be read as physics data.");
 		project.AddClothData(path, std::move(block));
-		frame->SetPendingChanges();
+		session->SetPendingChanges();
 	}
 	else if (op == "export") {
 		std::string source = McpArgs::String(args, "source");
@@ -374,7 +375,7 @@ McpToolResult PhysicsData(OutfitStudioMcp& mcp, const json& args) {
 } // namespace
 
 void AddSliderFileTools(OutfitStudioMcp& mcp) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 
 	McpTool newSlider;
 	newSlider.name = "new_slider";
@@ -392,14 +393,14 @@ void AddSliderFileTools(OutfitStudioMcp& mcp) {
 			{"shapes", McpStringList("zap: shapes, the reference included, the selected shapes by default")},
 		},
 		{"name"});
-	newSlider.handler = [&mcp, frame](const json& args) {
+	newSlider.handler = [&mcp, session](const json& args) {
 		OutfitProject& project = mcp.Project();
 		std::string name = McpArgs::String(args, "name");
 		CheckNewSlider(project, name);
 
 		std::string kind = McpArgs::String(args, "kind", "empty");
 		if (kind == "empty")
-			frame->NewSlider(name, true);
+			session->NewSlider(name, true);
 		else if (kind == "zap")
 			McpRunStep(mcp, {{"type", "NewZapSlider"}, {"TargetMeshes", ShapeNames(mcp.Shapes(args, "shapes", true))}, {"SliderName", name}});
 		else if (kind == "combined")
@@ -481,7 +482,7 @@ void AddSliderFileTools(OutfitStudioMcp& mcp) {
 		{"regex", McpProp("boolean", "The names are regular expressions. Default false.")},
 		{"notOnReference", McpProp("boolean", "Also delete every slider that isn't a zap and has no data on the reference shape. Default false.")},
 	});
-	deleteSliders.handler = [&mcp, frame](const json& args) {
+	deleteSliders.handler = [&mcp, session](const json& args) {
 		OutfitProject& project = mcp.Project();
 		const bool regex = McpArgs::Bool(args, "regex", false);
 		const bool notOnReference = McpArgs::Bool(args, "notOnReference", false);
@@ -503,8 +504,8 @@ void AddSliderFileTools(OutfitStudioMcp& mcp) {
 		}
 		if (sliders.empty())
 			McpArgs::Wrong("sliders", "a list of slider names, or notOnReference");
-		if (frame->editor.bEditSlider)
-			frame->ExitSliderEdit();
+		if (session->Editor().bEditSlider)
+			session->ExitSliderEdit();
 		std::vector<std::string> before;
 		mcp.Project().GetSliderList(before);
 		McpRunStep(mcp, {{"type", "DeleteSlider"}, {"SliderName", sliders}, {"Regex", regex}});

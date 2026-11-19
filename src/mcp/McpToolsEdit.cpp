@@ -7,8 +7,8 @@ See the included LICENSE file
 #include "McpHelpers.h"
 #include "components/MaskOps.h"
 #include "project/BrushStrokeController.h"
-#include "outfitstudio/OutfitStudioFrame.h"
-#include "outfitstudio/GLPanel.h"
+#include "project/ProjectOperations.h"
+#include "project/StudioSession.h"
 #include "components/TweakBrush.h"
 #include "components/UndoHistory.h"
 
@@ -140,7 +140,7 @@ void SetupWeightBrush(TweakBrush* brush, const WeightBrushBones& bones, AnimInfo
 }
 
 McpToolResult BrushStroke(OutfitStudioMcp& mcp, const json& args) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	OutfitProject& project = mcp.Project();
 
 	std::string brushName = McpArgs::String(args, "brush");
@@ -256,22 +256,22 @@ McpToolResult BrushStroke(OutfitStudioMcp& mcp, const json& args) {
 		}
 	}
 
-	BrushStrokeController controller(project, frame->editor);
+	BrushStrokeController controller(project, session->Editor());
 
 	// Weight brushes paint the active bone, which is set for the stroke
-	std::string previousBone = frame->editor.activeBone;
+	std::string previousBone = session->Editor().activeBone;
 	struct BoneRestore {
 		EditorState& editor;
 		std::string bone;
 		~BoneRestore() { editor.activeBone = bone; }
-	} boneRestore{frame->editor, previousBone};
+	} boneRestore{session->Editor(), previousBone};
 
 	if (isWeight) {
 		std::string bone = McpArgs::String(args, "bone");
 		if (!AnimSkeleton::getInstance().GetBonePtr(bone))
 			throw McpToolError("There is no bone '" + bone + "' in the skeleton.");
 
-		frame->editor.activeBone = bone;
+		session->Editor().activeBone = bone;
 		controller.PrepareWeightStroke(shapes);
 
 		WeightBrushBones bones = mcp.Ops().GetWeightBrushBones(McpArgs::String(args, "mirrorBone", ""));
@@ -285,13 +285,13 @@ McpToolResult BrushStroke(OutfitStudioMcp& mcp, const json& args) {
 	controller.Begin(meshes, brush.get(), picks.front());
 	for (int pass = 0; pass < passes; pass++)
 		for (size_t i = pass == 0 ? 1 : 0; i < picks.size(); i++)
-			frame->ApplyRefresh(controller.Update(picks[i]));
-	frame->ApplyRefresh(controller.End());
+			session->ApplyRefresh(controller.Update(picks[i]));
+	session->ApplyRefresh(controller.End());
 
-	frame->UpdateUndoTools();
+	session->UpdateUndoTools();
 	if (isWeight)
-		frame->RefreshGUIWeightColors();
-	frame->glView->Render();
+		session->RefreshGUIWeightColors();
+	session->Render();
 
 	McpToolResult result;
 	result.data["dabs"] = picks.size() * passes;
@@ -299,7 +299,7 @@ McpToolResult BrushStroke(OutfitStudioMcp& mcp, const json& args) {
 }
 
 McpToolResult SmoothShapes(OutfitStudioMcp& mcp, const json& args) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	OutfitProject& project = mcp.Project();
 	mcp.CheckPositionEdit();
 
@@ -336,7 +336,7 @@ McpToolResult SmoothShapes(OutfitStudioMcp& mcp, const json& args) {
 				{"FollowShapes", followNames},
 				{"FollowRadius", McpArgs::Float(args, "followRadius", 1.5f)},
 				{"KeepBorders", McpArgs::Bool(args, "keepBorders", true)}});
-	frame->UpdateUndoTools();
+	session->UpdateUndoTools();
 
 	// How far the vertices moved, per shape
 	auto summary = [&](const std::vector<NiShape*>& list, const std::vector<std::vector<Vector3>>& old) {
@@ -417,7 +417,7 @@ McpToolResult GetWeights(OutfitStudioMcp& mcp, const json& args) {
 }
 
 McpToolResult SetWeights(OutfitStudioMcp& mcp, const json& args) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	OutfitProject& project = mcp.Project();
 	AnimInfo* anim = project.GetWorkAnim();
 
@@ -465,7 +465,7 @@ McpToolResult SetWeights(OutfitStudioMcp& mcp, const json& args) {
 		return it != weights->end() ? it->second : 0.0f;
 	};
 
-	UndoHistory& history = frame->editor.undoHistory;
+	UndoHistory& history = session->Editor().undoHistory;
 	UndoStateProject* usp = history.PushState();
 	usp->undoType = UndoType::Weight;
 	usp->usss.emplace_back();
@@ -510,10 +510,10 @@ McpToolResult SetWeights(OutfitStudioMcp& mcp, const json& args) {
 	for (auto& bw : byBone)
 		uss.boneWeights.push_back(bw.second);
 
-	frame->ApplyRefresh(mcp.Ops().ApplyShapeEdits(*usp, false));
-	frame->UpdateUndoTools();
-	frame->RefreshGUIWeightColors();
-	frame->SetPendingChanges();
+	session->ApplyRefresh(mcp.Ops().ApplyShapeEdits(*usp, false));
+	session->UpdateUndoTools();
+	session->RefreshGUIWeightColors();
+	session->SetPendingChanges();
 
 	McpToolResult result;
 	result.data["changed"] = newWeights.size();
@@ -541,7 +541,7 @@ Vector3 VectorArg(const json& args, const char* name, const Vector3& def, bool u
 // Moves, rotates, scales and inflates shapes the way the Move, Rotate, Scale and Inflate dialogs do:
 // masked vertices stay, the change is one undo state, and in slider edit mode it goes into the slider
 McpToolResult TransformShapes(OutfitStudioMcp& mcp, const json& args) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	OutfitProject& project = mcp.Project();
 	std::vector<NiShape*> shapes = mcp.Shapes(args, "shapes", McpArgs::Bool(args, "allowReference", false));
 	if (shapes.empty())
@@ -620,7 +620,7 @@ McpToolResult TransformShapes(OutfitStudioMcp& mcp, const json& args) {
 	xform.PushScale(scale.x, scale.y, scale.z);
 	xform.PushTranslate(origin * -1.0f);
 
-	UndoHistory* history = frame->glView->GetUndoHistory();
+	UndoHistory* history = &session->Editor().undoHistory;
 	UndoStateProject* usp = history->PushState();
 	usp->undoType = UndoType::VertexPosition;
 
@@ -678,14 +678,14 @@ McpToolResult TransformShapes(OutfitStudioMcp& mcp, const json& args) {
 		throw McpToolError("Nothing changed. Either no transform was given, or every vertex is masked.");
 	}
 
-	if (frame->editor.bEditSlider) {
-		usp->sliderName = frame->editor.activeSlider;
-		float sliderscale = project.SliderValue(frame->editor.activeSlider);
+	if (session->Editor().bEditSlider) {
+		usp->sliderName = session->Editor().activeSlider;
+		float sliderscale = project.SliderValue(session->Editor().activeSlider);
 		usp->sliderscale = sliderscale == 0.0f ? 1.0f : sliderscale;
 	}
 
-	frame->glView->ApplyUndoState(usp, false);
-	frame->UpdateUndoTools();
+	session->ApplyUndoState(usp, false);
+	session->UpdateUndoTools();
 
 	McpToolResult result;
 	result.data["changedVertices"] = changed;
@@ -697,7 +697,7 @@ McpToolResult TransformShapes(OutfitStudioMcp& mcp, const json& args) {
 } // namespace
 
 void AddEditTools(OutfitStudioMcp& mcp) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 
 	McpTool getMask;
 	getMask.name = "get_mask";
@@ -737,12 +737,12 @@ void AddEditTools(OutfitStudioMcp& mcp) {
 			{"replace", McpProp("boolean", "Clear the rest of the mask. Default true.")},
 		},
 		{"shape", "vertices"});
-	setMask.handler = [&mcp, frame](const json& args) {
+	setMask.handler = [&mcp, session](const json& args) {
 		Mesh* m = ShapeMesh(mcp, mcp.Shape(McpArgs::String(args, "shape")));
 		auto values = VertexValues(args, "vertices", m, 1.0f);
 		const bool replace = McpArgs::Bool(args, "replace", true);
 
-		frame->glView->ApplyMaskChanges({m}, [&](Mesh& mesh) {
+		session->ApplyMaskChanges({m}, [&](Mesh& mesh) {
 			std::unordered_map<int, float> changes;
 			if (replace)
 				changes = MaskOps::ClearChanges(mesh);
@@ -750,7 +750,7 @@ void AddEditTools(OutfitStudioMcp& mcp) {
 				changes[v.first] = std::clamp(v.second, 0.0f, 1.0f);
 			return changes;
 		});
-		frame->glView->Render();
+		session->Render();
 
 		McpToolResult result;
 		result.data = MaskSummary(*m);
@@ -811,7 +811,7 @@ void AddEditTools(OutfitStudioMcp& mcp) {
 		if (!maskProperties.contains(property.key()))
 			maskProperties[property.key()] = property.value();
 	maskOps.inputSchema = McpSchema(maskProperties, {"op"});
-	maskOps.handler = [&mcp, frame](const json& args) {
+	maskOps.handler = [&mcp, session](const json& args) {
 		std::string op = McpArgs::String(args, "op");
 		if (op == "from_analysis")
 			return McpMaskFromMetric(mcp, args);
@@ -836,7 +836,7 @@ void AddEditTools(OutfitStudioMcp& mcp) {
 						{"CoverShapes", by},
 						{"Outside", McpArgs::Float(args, "outside", 2.0f)},
 						{"Inside", McpArgs::Float(args, "inside", 1.0f)}});
-			frame->glView->Render();
+			session->Render();
 			return MaskSummaries(mcp, names);
 		}
 
@@ -878,7 +878,7 @@ void AddEditTools(OutfitStudioMcp& mcp) {
 
 		if (step.contains("type")) {
 			McpRunStep(mcp, step);
-			frame->glView->Render();
+			session->Render();
 			return MaskSummaries(mcp, names);
 		}
 
@@ -964,8 +964,8 @@ void AddEditTools(OutfitStudioMcp& mcp) {
 			McpArgs::Wrong("op", "one of the listed mask operations");
 
 		for (int i = 0; i < steps; i++)
-			frame->glView->ApplyMaskChanges(meshes, changes);
-		frame->glView->Render();
+			session->ApplyMaskChanges(meshes, changes);
+		session->Render();
 		return MaskSummaries(mcp, names);
 	};
 	mcp.AddTool(std::move(maskOps));
@@ -984,7 +984,7 @@ void AddEditTools(OutfitStudioMcp& mcp) {
 			{"merge", McpProp("boolean", "save: keep the other masks of an existing file. Default true.")},
 		},
 		{"op", "file", "name"});
-	maskFile.handler = [&mcp, frame](const json& args) {
+	maskFile.handler = [&mcp, session](const json& args) {
 		std::string op = McpArgs::String(args, "op");
 		json names = json::array();
 		for (auto* shape : mcp.Shapes(args, "shapes", true)) {
@@ -1000,7 +1000,7 @@ void AddEditTools(OutfitStudioMcp& mcp) {
 			McpRunStep(mcp, {{"type", "LoadMask"}, {"TargetMeshes", names}, {"MaskFile", file}, {"MaskName", name}});
 		else
 			McpArgs::Wrong("op", "save or load");
-		frame->glView->Render();
+		session->Render();
 
 		McpToolResult result = MaskSummaries(mcp, names);
 		result.data["file"] = file;

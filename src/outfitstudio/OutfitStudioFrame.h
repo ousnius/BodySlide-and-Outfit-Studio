@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include "OutfitStudioProjectHost.h"
+#include "OutfitStudioSession.h"
 #include "ToolID.h"
 #include "components/PoseData.h"
 #include "components/RefTemplates.h"
@@ -176,6 +177,8 @@ public:
 	ArchiveBrowser* archiveBrowser = nullptr;
 	OutfitStudioProjectHost projectHost{this};
 	std::unique_ptr<MainThreadDispatcher> dispatcher;
+	// What the MCP server and automation work with
+	OutfitStudioSession session{*this};
 	std::unique_ptr<OutfitStudioMcp> mcp;
 	OutfitProject* project = nullptr;
 	EditorState editor;

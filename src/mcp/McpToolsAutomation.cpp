@@ -6,7 +6,7 @@ See the included LICENSE file
 #include "OutfitStudioMcp.h"
 #include "components/AutomationJson.h"
 #include "project/AutomationRunner.h"
-#include "outfitstudio/OutfitStudioFrame.h"
+#include "project/StudioSession.h"
 #include "utils/ProjectUtil.h"
 
 #include <wx/dir.h>
@@ -85,7 +85,7 @@ json McpRunSteps(OutfitStudioMcp& mcp,
 				 bool stopOnError,
 				 bool& failed,
 				 const ObjImportOptions* objOptions) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	failed = false;
 
 	// Placeholders are filled in up front, like the automation dialog does
@@ -95,7 +95,7 @@ json McpRunSteps(OutfitStudioMcp& mcp,
 	if (!variables.empty())
 		execScript.SubstitutePlaceholders(variables);
 
-	AutomationRunner runner(frame);
+	AutomationRunner runner(*session);
 	// Imports take their default options instead of asking
 	runner.SetHeadless(true);
 	if (objOptions)

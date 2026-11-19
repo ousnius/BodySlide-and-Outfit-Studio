@@ -6,10 +6,9 @@ See the included LICENSE file
 #include "OutfitStudioMcp.h"
 #include "components/ArchiveIndex.h"
 #include "files/GameDataStream.h"
-#include "outfitstudio/OutfitStudioFrame.h"
-#include "outfitstudio/GLPanel.h"
+#include "project/ProjectOperations.h"
+#include "project/StudioSession.h"
 #include "utils/TargetGame.h"
-#include "ui/outfitstudio/ArchiveBrowser.h"
 #include "utils/ConfigurationManager.h"
 #include "utils/GameUtil.h"
 
@@ -203,7 +202,7 @@ const json SelectionProps = {
 } // namespace
 
 void AddArchiveTools(OutfitStudioMcp& mcp) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	auto cache = std::make_shared<ArchiveCache>();
 
 	McpTool browse;
@@ -296,7 +295,7 @@ void AddArchiveTools(OutfitStudioMcp& mcp) {
 	loadProps["maxFiles"] = McpProp("integer", "Refuse when more files than this match, so a broad selection doesn't load half the game. Default 10.");
 	loadProps["discardChanges"] = McpProp("boolean", "Replace mode: drop unsaved changes of the outfit. Default false, which refuses when there are any.");
 	load.inputSchema = McpSchema(loadProps);
-	load.handler = [&mcp, frame, cache](const json& args) {
+	load.handler = [&mcp, session, cache](const json& args) {
 		const ArchiveIndex& index = cache->Get(false);
 		FileSelection selection(args, ".nif", true);
 
@@ -330,10 +329,10 @@ void AddArchiveTools(OutfitStudioMcp& mcp) {
 			throw McpToolError("mode has to be \"import\" or \"replace\".");
 
 		bool replace = mode == "replace";
-		if (replace && frame->HasPendingChanges()) {
+		if (replace && session->HasPendingChanges()) {
 			if (!McpArgs::Bool(args, "discardChanges", false))
 				throw McpToolError("The project has unsaved changes. Save it with save_project first, or pass discardChanges: true to drop them.");
-			frame->SetPendingChanges(false);
+			session->SetPendingChanges(false);
 		}
 
 		OutfitProject& project = mcp.Project();
@@ -352,7 +351,7 @@ void AddArchiveTools(OutfitStudioMcp& mcp) {
 
 			// Replacing removes the outfit shapes, so then every outfit shape after is from this file
 			std::vector<std::string> before = replace ? std::vector<std::string>() : project.GetShapeOrder();
-			bool ok = frame->LoadMeshFromArchive(path, archivePath, !replace);
+			bool ok = session->LoadMeshFromArchive(path, archivePath, !replace);
 			replace = false;
 
 			NiShape* baseShape = project.GetBaseShape();
@@ -393,7 +392,7 @@ void AddArchiveTools(OutfitStudioMcp& mcp) {
 		{"op", {{"type", "string"}, {"enum", {"list", "set", "add", "remove"}}, {"description", "Default list"}}},
 		{"folders", McpStringList("set, add, remove: absolute folder paths")},
 	});
-	folders.handler = [&mcp, frame](const json& args) {
+	folders.handler = [&mcp, session](const json& args) {
 		const std::string op = McpArgs::String(args, "op", "list");
 		const int game = Config.GetIntValue("TargetGame");
 		std::vector<std::string> current = GameUtil::GetExtraDataFolders(game);
@@ -435,14 +434,13 @@ void AddArchiveTools(OutfitStudioMcp& mcp) {
 			GameUtil::SetExtraDataFolders(game, changed);
 			Config.SaveConfig(Config["AppDir"] + "/Config.xml");
 			GameUtil::InitArchives();
-			if (frame->archiveBrowser)
-				frame->archiveBrowser->Rebuild();
+			session->RefreshArchiveBrowser();
 
 			// Textures and materials are looked up again
-			frame->glView->gls.GetResourceLoader()->RetryMissingTextures();
+			session->RetryMissingTextures();
 			mcp.Project().SetTextures();
-			frame->MeshesFromProj(true);
-			frame->glView->Render();
+			session->MeshesFromProj(true);
+			session->Render();
 			current = GameUtil::GetExtraDataFolders(game);
 		}
 

@@ -804,7 +804,7 @@ void OutfitStudioFrame::OnMenuItem(wxCommandEvent& event) {
 
 bool OutfitStudioFrame::StartMcpServer(int port, bool showError) {
 	if (!mcp)
-		mcp = std::make_unique<OutfitStudioMcp>(this);
+		mcp = std::make_unique<OutfitStudioMcp>(session);
 
 	if (!mcp->IsRunning()) {
 		if (port <= 0)

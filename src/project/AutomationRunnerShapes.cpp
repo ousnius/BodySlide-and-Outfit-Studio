@@ -6,12 +6,10 @@ See the included LICENSE file
 // Automation steps: shapes, their geometry, transforms and partitions
 
 #include "AutomationRunner.h"
-#include "outfitstudio/SegmentPartitionEditor.h"
 #include "OutfitProject.h"
-#include "outfitstudio/OutfitStudioFrame.h"
-#include "outfitstudio/GLPanel.h"
+#include "ProjectOperations.h"
+#include "StudioSession.h"
 #include "BrushStrokeController.h"
-#include "outfitstudio/ShapeTreeItems.h"
 #include "components/UndoHistory.h"
 #include "components/UndoState.h"
 #include "utils/StringStuff.h"
@@ -24,6 +22,7 @@ See the included LICENSE file
 #include <unordered_map>
 #include <vector>
 #include <NifFile.hpp>
+#include <wx/log.h>
 #include <wx/msgdlg.h>
 
 using namespace nifly;
@@ -94,7 +93,7 @@ int AutomationRunner::ExecuteStepTransformShape(const AutomationStep& step) {
 		}
 	}
 
-	outfitStudio->ApplySliders();
+	session->ApplySliders();
 	return 0;
 }
 
@@ -159,7 +158,7 @@ int AutomationRunner::ExecuteStepRenameShape(const AutomationStep& step) {
 
 	wxLogMessage("Automation: Renaming shape '%s' to '%s'...", step.renameOldName, step.renameNewName);
 	project->RenameShape(shape, step.renameNewName);
-	outfitStudio->glView->RenameShape(step.renameOldName, step.renameNewName);
+	session->RenameMesh(step.renameOldName, step.renameNewName);
 	return 0;
 }
 
@@ -188,7 +187,7 @@ int AutomationRunner::ExecuteStepRefineMesh(const AutomationStep& step) {
 
 		// Determine unmasked vertices
 		std::unordered_map<uint16_t, float> mask;
-		outfitStudio->glView->GetShapeUnmasked(mask, shape->name.get());
+		session->GetShapeUnmasked(mask, shape->name.get());
 		std::vector<bool> pincs(nverts, false);
 		for (auto& m : mask)
 			pincs[m.first] = true;
@@ -209,7 +208,7 @@ int AutomationRunner::ExecuteStepRefineMesh(const AutomationStep& step) {
 			continue;
 		}
 
-		Mesh* m = outfitStudio->glView->GetMesh(shape->name.get());
+		Mesh* m = session->GetMesh(shape->name.get());
 		if (!m)
 			continue;
 
@@ -224,7 +223,7 @@ int AutomationRunner::ExecuteStepRefineMesh(const AutomationStep& step) {
 		project->ApplyShapeMeshUndo(shape, emptyMask, uss, false);
 	}
 
-	outfitStudio->ApplySliders();
+	session->ApplySliders();
 	return 0;
 }
 
@@ -249,7 +248,7 @@ int AutomationRunner::ExecuteStepApplyTransforms(const AutomationStep& step) {
 		return 0;
 	}
 
-	outfitStudio->ApplySliders();
+	session->ApplySliders();
 	return 0;
 }
 
@@ -321,7 +320,7 @@ int AutomationRunner::ExecuteStepChangePartitions(const AutomationStep& step) {
 	int updatedShapes = 0;
 	int affectedTriangles = 0;
 	int skippedShapes = 0;
-	NiShape* activeShape = outfitStudio->activeItem ? outfitStudio->activeItem->GetShape() : nullptr;
+	NiShape* activeShape = session->GetActiveShape();
 	bool activeShapeUpdated = false;
 
 	for (auto* shape : targetShapes) {
@@ -382,7 +381,7 @@ int AutomationRunner::ExecuteStepChangePartitions(const AutomationStep& step) {
 
 		workNif->SetShapePartitions(shape, partitionInfo, trianglePartitions);
 		workNif->RemoveEmptyPartitions(shape);
-		outfitStudio->MeshFromProj(shape, true);
+		session->MeshFromProj(shape, true);
 		if (shape == activeShape)
 			activeShapeUpdated = true;
 
@@ -396,11 +395,11 @@ int AutomationRunner::ExecuteStepChangePartitions(const AutomationStep& step) {
 	}
 
 	if (updatedShapes > 0) {
-		if (activeShapeUpdated && outfitStudio->activeItem && outfitStudio->activeItem->GetShape() == activeShape)
-			outfitStudio->segPartEditor->RefreshActivePartitionTree();
+		if (activeShapeUpdated && session->GetActiveShape() == activeShape)
+			session->RefreshPartitionTree();
 
-		outfitStudio->SetPendingChanges();
-		outfitStudio->glView->Render();
+		session->SetPendingChanges();
+		session->Render();
 		wxLogMessage("Automation: ChangePartitions - updated %d shape(s), changed %d triangle assignment(s), skipped %d shape(s).",
 			updatedShapes,
 			affectedTriangles,
@@ -485,7 +484,7 @@ int AutomationRunner::ExecuteStepRecalcNormals(const AutomationStep& step) {
 	}
 
 	if (recalcCount > 0)
-		outfitStudio->SetPendingChanges();
+		session->SetPendingChanges();
 
 	wxLogMessage("Automation: RecalcNormals - recalculated normals on %d shape(s).", recalcCount);
 	return 0;
@@ -524,7 +523,7 @@ int AutomationRunner::ExecuteStepCopySegPart(const AutomationStep& step) {
 			wxLogWarning("Automation: CopySegPart - %d triangle(s) of '%s' could not be matched.", failCount, shape->name.get());
 	}
 
-	outfitStudio->SetPendingChanges();
+	session->SetPendingChanges();
 	return 0;
 }
 
@@ -545,9 +544,9 @@ int AutomationRunner::ExecuteStepDeleteVertices(const AutomationStep& step) {
 
 		std::unordered_map<uint16_t, float> verts;
 		if (step.deleteVertsMasked)
-			outfitStudio->glView->GetShapeMask(verts, shapeName);
+			session->GetShapeMask(verts, shapeName);
 		else
-			outfitStudio->glView->GetShapeUnmasked(verts, shapeName);
+			session->GetShapeUnmasked(verts, shapeName);
 
 		if (verts.empty()) {
 			wxLogWarning("Automation: DeleteVertices - '%s' has no %s vertices, skipping.",
@@ -566,7 +565,7 @@ int AutomationRunner::ExecuteStepDeleteVertices(const AutomationStep& step) {
 	if (usss.empty() && emptiedShapes.empty())
 		return 0;
 
-	std::unordered_map<std::string, std::vector<float>> maskStash = outfitStudio->glView->StashMasks();
+	std::unordered_map<std::string, std::vector<float>> maskStash = session->StashMasks();
 
 	// Whole shapes go first and everything is looked up by name again, so that
 	// deleting a shape can't leave a stale pointer behind.
@@ -596,8 +595,8 @@ int AutomationRunner::ExecuteStepDeleteVertices(const AutomationStep& step) {
 	project->GetWorkAnim()->CleanupBones();
 
 	RefreshMeshesWithMasks(maskStash);
-	outfitStudio->SetPendingChanges();
-	outfitStudio->ApplySliders();
+	session->SetPendingChanges();
+	session->ApplySliders();
 	return 0;
 }
 
@@ -627,7 +626,7 @@ int AutomationRunner::ExecuteStepSeparateVertices(const AutomationStep& step) {
 	std::string shapeName = shape->name.get();
 
 	std::unordered_map<uint16_t, float> masked;
-	outfitStudio->glView->GetShapeMask(masked, shapeName);
+	session->GetShapeMask(masked, shapeName);
 	if (masked.empty()) {
 		wxLogError("Automation: SeparateVertices - '%s' has no masked vertices to separate.", shapeName);
 		return 1;
@@ -643,7 +642,7 @@ int AutomationRunner::ExecuteStepSeparateVertices(const AutomationStep& step) {
 
 	// The masked vertices go to the new shape, everything else stays behind
 	std::unordered_map<uint16_t, float> unmasked = masked;
-	outfitStudio->glView->InvertMaskTris(unmasked, shapeName);
+	session->InvertMaskTris(unmasked, shapeName);
 
 	UndoStateShape ussSource;
 	ussSource.shapeName = shapeName;
@@ -653,7 +652,7 @@ int AutomationRunner::ExecuteStepSeparateVertices(const AutomationStep& step) {
 	project->PrepareDeleteVerts(shape, masked, ussSource);
 	project->PrepareDeleteVerts(newShape, unmasked, ussNew);
 
-	std::unordered_map<std::string, std::vector<float>> maskStash = outfitStudio->glView->StashMasks();
+	std::unordered_map<std::string, std::vector<float>> maskStash = session->StashMasks();
 
 	project->ApplyShapeMeshUndo(shape, maskStash[ussSource.shapeName], ussSource, false);
 	project->ApplyShapeMeshUndo(newShape, maskStash[ussNew.shapeName], ussNew, false);
@@ -661,8 +660,8 @@ int AutomationRunner::ExecuteStepSeparateVertices(const AutomationStep& step) {
 	project->SetTextures();
 
 	RefreshMeshesWithMasks(maskStash);
-	outfitStudio->SetPendingChanges();
-	outfitStudio->ApplySliders();
+	session->SetPendingChanges();
+	session->ApplySliders();
 	return 0;
 }
 
@@ -726,7 +725,7 @@ int AutomationRunner::ExecuteStepMergeGeometry(const AutomationStep& step) {
 	uss.shapeName = step.mergeTargetShape;
 	project->PrepareCopyGeo(sourceShape, targetShape, uss);
 
-	std::unordered_map<std::string, std::vector<float>> maskStash = outfitStudio->glView->StashMasks();
+	std::unordered_map<std::string, std::vector<float>> maskStash = session->StashMasks();
 
 	project->ApplyShapeMeshUndo(targetShape, maskStash[uss.shapeName], uss, false);
 
@@ -739,8 +738,8 @@ int AutomationRunner::ExecuteStepMergeGeometry(const AutomationStep& step) {
 	}
 
 	RefreshMeshesWithMasks(maskStash);
-	outfitStudio->SetPendingChanges();
-	outfitStudio->ApplySliders();
+	session->SetPendingChanges();
+	session->ApplySliders();
 	return 0;
 }
 
@@ -757,14 +756,14 @@ int AutomationRunner::ExecuteStepSymmetrizeVertices(const AutomationStep& step) 
 	}
 
 	std::vector<std::string> normBones, notNormBones;
-	outfitStudio->GetNormalizeBones(&normBones, &notNormBones);
+	session->GetNormalizeBones(&normBones, &notNormBones);
 
-	UndoStateProject* usp = outfitStudio->glView->GetUndoHistory()->PushState();
+	UndoStateProject* usp = session->Editor().undoHistory.PushState();
 	usp->undoType = UndoType::Mesh;
 
 	for (auto* shape : shapes) {
 		std::string shapeName = shape->name.get();
-		Mesh* m = outfitStudio->glView->GetMesh(shapeName);
+		Mesh* m = session->GetMesh(shapeName);
 		if (!m || !m->mask)
 			continue;
 
@@ -795,13 +794,13 @@ int AutomationRunner::ExecuteStepSymmetrizeVertices(const AutomationStep& step) 
 	}
 
 	if (usp->usss.empty()) {
-		outfitStudio->glView->GetUndoHistory()->PopState();
+		session->Editor().undoHistory.PopState();
 		wxLogWarning("Automation: SymmetrizeVertices - none of the target shapes have a mesh to work on.");
 		return 0;
 	}
 
-	outfitStudio->glView->ApplyUndoState(usp, false);
-	outfitStudio->SetPendingChanges();
+	session->ApplyUndoState(usp, false);
+	session->SetPendingChanges();
 	return 0;
 }
 
@@ -814,7 +813,7 @@ int AutomationRunner::ExecuteStepSmoothVertices(const AutomationStep& step) {
 
 	std::vector<Mesh*> meshes;
 	for (auto* shape : shapes)
-		if (Mesh* m = outfitStudio->glView->GetMesh(shape->name.get()))
+		if (Mesh* m = session->GetMesh(shape->name.get()))
 			meshes.push_back(m);
 	if (meshes.empty()) {
 		wxLogWarning("Automation: SmoothVertices - none of the target shapes have a mesh to work on.");
@@ -824,7 +823,7 @@ int AutomationRunner::ExecuteStepSmoothVertices(const AutomationStep& step) {
 	// Shapes lying on the smoothed ones, by name or by pattern like the target shapes
 	std::vector<Mesh*> followers;
 	auto addFollower = [&](NiShape* shape) {
-		Mesh* m = shape ? outfitStudio->glView->GetMesh(shape->name.get()) : nullptr;
+		Mesh* m = shape ? session->GetMesh(shape->name.get()) : nullptr;
 		if (m && std::find(meshes.begin(), meshes.end(), m) == meshes.end() && std::find(followers.begin(), followers.end(), m) == followers.end())
 			followers.push_back(m);
 	};
@@ -847,27 +846,27 @@ int AutomationRunner::ExecuteStepSmoothVertices(const AutomationStep& step) {
 	wxLogMessage("Automation: Smoothing %zu shape(s) %d time(s) at strength %.3f, %zu shape(s) following...", meshes.size(), step.smoothIterations,
 				 step.smoothStrength, followers.size());
 
-	BrushStrokeController controller(*project, outfitStudio->editor);
+	BrushStrokeController controller(*project, session->Editor());
 	RefreshFlags refresh = controller.SmoothMeshes(meshes, step.smoothIterations, step.smoothStrength, step.smoothKeepBorders);
-	outfitStudio->ApplyRefresh(refresh);
+	session->ApplyRefresh(refresh);
 
 	if (!followers.empty()) {
-		UndoHistory* history = outfitStudio->glView->GetUndoHistory();
+		UndoHistory* history = &session->Editor().undoHistory;
 		auto moves = BrushStrokeController::FollowEdit(*history->GetCurState(), meshes, followers, Mesh::TransformDistNifToMesh(step.smoothFollowRadius));
 		if (!moves.empty()) {
 			UndoStateProject* usp = history->PushState();
 			usp->undoType = UndoType::VertexPosition;
 			usp->usss = std::move(moves);
-			if (outfitStudio->editor.bEditSlider) {
-				usp->sliderName = outfitStudio->editor.activeSlider;
+			if (session->Editor().bEditSlider) {
+				usp->sliderName = session->Editor().activeSlider;
 				float sliderscale = project->SliderValue(usp->sliderName);
 				usp->sliderscale = sliderscale == 0.0f ? 1.0f : sliderscale;
 			}
-			outfitStudio->glView->ApplyUndoState(usp, false);
+			session->ApplyUndoState(usp, false);
 		}
 	}
 
-	outfitStudio->SetPendingChanges();
-	outfitStudio->glView->Render();
+	session->SetPendingChanges();
+	session->Render();
 	return 0;
 }

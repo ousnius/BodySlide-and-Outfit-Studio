@@ -9,7 +9,8 @@ See the included LICENSE file
 #include "components/MeshAnalysis.h"
 #include "components/PhysicsChains.h"
 #include "physics/Controller.h"
-#include "outfitstudio/OutfitStudioFrame.h"
+#include "project/ProjectOperations.h"
+#include "project/StudioSession.h"
 
 #include <tinyxml2.h>
 
@@ -90,7 +91,7 @@ std::vector<std::vector<std::string>> ChainBoneNames(const std::string& prefix, 
 
 McpToolResult MakePhysicsChains(OutfitStudioMcp& mcp, const json& args) {
 	OutfitProject& project = mcp.Project();
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	AnimInfo* anim = project.GetWorkAnim();
 	AnimSkeleton& skeleton = AnimSkeleton::getInstance();
 
@@ -531,7 +532,7 @@ McpToolResult MakePhysicsChains(OutfitStudioMcp& mcp, const json& args) {
 	}
 	result.data["changedWeights"] = changed;
 
-	frame->UpdateAnimationGUI();
+	session->UpdateAnimationGUI();
 	return result;
 }
 

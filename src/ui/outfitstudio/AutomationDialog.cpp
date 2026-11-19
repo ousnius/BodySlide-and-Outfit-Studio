@@ -478,7 +478,7 @@ wxBEGIN_EVENT_TABLE(AutomationDialog, wxDialog)
 wxEND_EVENT_TABLE()
 
 AutomationDialog::AutomationDialog(OutfitStudioFrame* outfitStudio, OutfitProject* project, bool headless)
-	: outfitStudio(outfitStudio), project(project), runner(outfitStudio), headlessMode(headless) {
+	: outfitStudio(outfitStudio), project(project), runner(outfitStudio->session), headlessMode(headless) {
 	wxXmlResource* xrc = wxXmlResource::Get();
 	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/Automation.xrc");
 	xrc->LoadDialog(this, outfitStudio, "dlgAutomation");

@@ -5,7 +5,11 @@ See the included LICENSE file
 
 #include "OutfitStudioMcp.h"
 #include "McpSnapshots.h"
-#include "outfitstudio/OutfitStudioFrame.h"
+#include "project/OutfitProject.h"
+#include "project/ProjectHost.h"
+#include "project/ProjectOperations.h"
+#include "project/StudioSession.h"
+#include "utils/MainThreadDispatcher.h"
 
 #include <wx/log.h>
 
@@ -85,8 +89,8 @@ protected:
 
 } // namespace
 
-OutfitStudioMcp::OutfitStudioMcp(OutfitStudioFrame* inFrame)
-	: frame(inFrame)
+OutfitStudioMcp::OutfitStudioMcp(IStudioSession& inSession)
+	: session(inSession)
 	, protocol(registry, ServerName, InterfaceVersion, Instructions)
 	, server(protocol)
 	, snapshots(std::make_unique<McpSnapshotStore>()) {
@@ -131,7 +135,7 @@ void OutfitStudioMcp::Stop() {
 
 	// Calls waiting for the main thread are let through and give up right away
 	*stopping = true;
-	server.Stop([this]() { frame->GetDispatcher().ProcessPending(); });
+	server.Stop([this]() { session.Dispatcher().ProcessPending(); });
 	wxLogMessage("MCP server stopped.");
 }
 
@@ -146,7 +150,7 @@ void OutfitStudioMcp::AddTool(McpTool tool, std::chrono::milliseconds timeout) {
 }
 
 OutfitStudioMcp::ProgressHandler OutfitStudioMcp::OnMainThread(Handler handler, const std::string& toolName, std::chrono::milliseconds timeout, bool autoSnapshot) {
-	OutfitStudioFrame* owner = frame;
+	IStudioSession* owner = &session;
 	auto stoppingFlag = stopping;
 
 	return [this, owner, stoppingFlag, handler, toolName, timeout, autoSnapshot](const json& args, const McpProgress& progress) {
@@ -170,24 +174,24 @@ OutfitStudioMcp::ProgressHandler OutfitStudioMcp::OnMainThread(Handler handler, 
 			// The window's progress bar goes to the client, in steps of at least a percent. Operations only report
 			// progress while a progress bar runs, so the call runs with one, like the window's commands.
 			struct ProgressReset {
-				OutfitStudioFrame* frame;
+				IStudioSession* session;
 				bool started = false;
 				~ProgressReset() {
-					if (started && !frame->progressStack.empty())
-						frame->EndProgress("", true);
-					frame->progressListener = nullptr;
+					if (started && session->InProgress())
+						session->EndAllProgress();
+					session->SetProgressListener(nullptr);
 				}
 			} progressReset{owner};
 			if (progress) {
 				auto last = std::make_shared<int>(-1000);
-				owner->progressListener = [progress, last](int value, const wxString& message) {
+				owner->SetProgressListener([progress, last](int value, const std::string& message) {
 					if (std::abs(value - *last) < 100 && value < 10000)
 						return;
 					*last = value;
-					progress(value / 100.0, 100.0, message.ToUTF8().data());
-				};
-				if (owner->progressStack.empty()) {
-					owner->StartProgress(wxString::FromUTF8(toolName));
+					progress(value / 100.0, 100.0, message);
+				});
+				if (!owner->InProgress()) {
+					owner->StartProgress(toolName);
 					progressReset.started = true;
 				}
 			}
@@ -197,13 +201,13 @@ OutfitStudioMcp::ProgressHandler OutfitStudioMcp::OnMainThread(Handler handler, 
 			json logged;
 			{
 				wxLogChain chain(capture);
-				UnattendedScope scope(owner->projectHost);
+				UnattendedScope scope(owner->Host());
 
 				// A snapshot to go back to, the window can't undo what the tool does. A preview changes nothing.
 				std::string snapshotName;
 				const bool preview = ReadOnlyPreviewTools.count(toolName) && args.is_object() && args.contains("preview") && args["preview"].is_boolean() &&
 									 args["preview"].get<bool>();
-				if (autoSnapshot && !preview && owner->project) {
+				if (autoSnapshot && !preview && owner->GetProject()) {
 					try {
 						snapshotName = snapshots->SaveAutomatic(*this, toolName);
 					}
@@ -243,7 +247,7 @@ OutfitStudioMcp::ProgressHandler OutfitStudioMcp::OnMainThread(Handler handler, 
 				result->data["log"] = logged;
 		};
 
-		switch (owner->GetDispatcher().Run(run, timeout)) {
+		switch (owner->Dispatcher().Run(run, timeout)) {
 			case MainThreadDispatcher::Result::Done: return *result;
 			case MainThreadDispatcher::Result::TimedOut:
 				return McpToolResult::Error("The call timed out. It may still finish, check with get_status before trying again.");
@@ -253,13 +257,14 @@ OutfitStudioMcp::ProgressHandler OutfitStudioMcp::OnMainThread(Handler handler, 
 }
 
 OutfitProject& OutfitStudioMcp::Project() {
-	if (!frame->project)
+	OutfitProject* project = session.GetProject();
+	if (!project)
 		throw McpToolError("No project is open.");
-	return *frame->project;
+	return *project;
 }
 
 ProjectOperations OutfitStudioMcp::Ops() {
-	return ProjectOperations(Project(), frame->editor);
+	return ProjectOperations(Project(), session.Editor());
 }
 
 NiShape* OutfitStudioMcp::Shape(const std::string& name) {
@@ -273,7 +278,7 @@ std::vector<NiShape*> OutfitStudioMcp::Shapes(const json& args, const char* name
 	std::vector<std::string> names = McpArgs::Strings(args, name);
 	const bool fromSelection = names.empty();
 	if (fromSelection)
-		names = frame->GetSelectedShapeNames();
+		names = session.GetSelectedShapeNames();
 
 	std::vector<NiShape*> shapes;
 	for (auto& shapeName : names) {
@@ -368,9 +373,10 @@ const std::vector<bool>* OutfitStudioMcp::Excluded(NiShape* shape) {
 
 void OutfitStudioMcp::CheckPositionEdit() {
 	OutfitProject& project = Project();
-	if (frame->editor.bEditSlider) {
-		if (project.SliderValue(frame->editor.activeSlider) == 0.0f)
-			throw McpToolError("The slider '" + frame->editor.activeSlider + "' in edit mode is at 0, so the change wouldn't show. Set it to 1 with set_slider_values first.");
+	const EditorState& editor = session.Editor();
+	if (editor.bEditSlider) {
+		if (project.SliderValue(editor.activeSlider) == 0.0f)
+			throw McpToolError("The slider '" + editor.activeSlider + "' in edit mode is at 0, so the change wouldn't show. Set it to 1 with set_slider_values first.");
 	}
 	else if (!project.AllSlidersZero())
 		throw McpToolError("The base shape can only be changed with all sliders at 0, or the slider shapes would be baked into it. "
@@ -378,7 +384,7 @@ void OutfitStudioMcp::CheckPositionEdit() {
 }
 
 void OutfitStudioMcp::Apply(const OpResult& result) {
-	frame->ApplyRefresh(result.refresh);
+	session.ApplyRefresh(result.refresh);
 	if (!result.ok)
 		throw McpToolError(result.error);
 }

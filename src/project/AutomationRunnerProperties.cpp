@@ -7,8 +7,8 @@ See the included LICENSE file
 
 #include "AutomationRunner.h"
 #include "OutfitProject.h"
-#include "outfitstudio/OutfitStudioFrame.h"
-#include "outfitstudio/GLPanel.h"
+#include "ProjectOperations.h"
+#include "StudioSession.h"
 #include "utils/StringStuff.h"
 
 #include <algorithm>
@@ -18,6 +18,7 @@ See the included LICENSE file
 #include <string>
 #include <vector>
 #include <NifFile.hpp>
+#include <wx/log.h>
 #include <wx/msgdlg.h>
 
 using namespace nifly;
@@ -337,7 +338,7 @@ std::string ExtraDataTargetLabel(NiAVObject* target) {
 	return label.empty() ? "<root>" : label;
 }
 
-bool ConvertToSubIndexTriShape(NifFile* nif, OutfitStudioFrame* outfitStudio, NiShape*& shape) {
+bool ConvertToSubIndexTriShape(NifFile* nif, IStudioSession* session, NiShape*& shape) {
 	auto* bsTriShape = dynamic_cast<BSTriShape*>(shape);
 	if (!bsTriShape || shape->HasType<BSSubIndexTriShape>())
 		return false;
@@ -348,13 +349,13 @@ bool ConvertToSubIndexTriShape(NifFile* nif, OutfitStudioFrame* outfitStudio, Ni
 	bsSITS->name.get() = bsTriShape->name.get();
 
 	NiShape* newShape = bsSITS.get();
-	outfitStudio->UpdateShapeReference(bsTriShape, newShape);
+	session->UpdateShapeReference(bsTriShape, newShape);
 	nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), std::move(bsSITS));
 	shape = newShape;
 	return true;
 }
 
-bool ConvertFromSubIndexTriShape(NifFile* nif, OutfitStudioFrame* outfitStudio, NiShape*& shape) {
+bool ConvertFromSubIndexTriShape(NifFile* nif, IStudioSession* session, NiShape*& shape) {
 	auto* bsTriShape = dynamic_cast<BSTriShape*>(shape);
 	if (!bsTriShape || !shape->HasType<BSSubIndexTriShape>())
 		return false;
@@ -363,13 +364,13 @@ bool ConvertFromSubIndexTriShape(NifFile* nif, OutfitStudioFrame* outfitStudio, 
 	bsTS->name.get() = bsTriShape->name.get();
 
 	NiShape* newShape = bsTS.get();
-	outfitStudio->UpdateShapeReference(bsTriShape, newShape);
+	session->UpdateShapeReference(bsTriShape, newShape);
 	nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), std::move(bsTS));
 	shape = newShape;
 	return true;
 }
 
-bool ConvertToDynamicTriShape(NifFile* nif, OutfitStudioFrame* outfitStudio, NiShape*& shape) {
+bool ConvertToDynamicTriShape(NifFile* nif, IStudioSession* session, NiShape*& shape) {
 	auto* bsTriShape = dynamic_cast<BSTriShape*>(shape);
 	if (!bsTriShape || shape->HasType<BSDynamicTriShape>())
 		return false;
@@ -384,13 +385,13 @@ bool ConvertToDynamicTriShape(NifFile* nif, OutfitStudioFrame* outfitStudio, NiS
 	bsDTS->CalcDataSizes(nif->GetHeader().GetVersion());
 
 	NiShape* newShape = bsDTS.get();
-	outfitStudio->UpdateShapeReference(bsTriShape, newShape);
+	session->UpdateShapeReference(bsTriShape, newShape);
 	nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), std::move(bsDTS));
 	shape = newShape;
 	return true;
 }
 
-bool ConvertFromDynamicTriShape(NifFile* nif, OutfitStudioFrame* outfitStudio, NiShape*& shape) {
+bool ConvertFromDynamicTriShape(NifFile* nif, IStudioSession* session, NiShape*& shape) {
 	auto* bsTriShape = dynamic_cast<BSTriShape*>(shape);
 	if (!bsTriShape || !shape->HasType<BSDynamicTriShape>())
 		return false;
@@ -403,14 +404,14 @@ bool ConvertFromDynamicTriShape(NifFile* nif, OutfitStudioFrame* outfitStudio, N
 	bsTS->CalcDataSizes(nif->GetHeader().GetVersion());
 
 	NiShape* newShape = bsTS.get();
-	outfitStudio->UpdateShapeReference(bsTriShape, newShape);
+	session->UpdateShapeReference(bsTriShape, newShape);
 	nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), std::move(bsTS));
 	shape = newShape;
 	return true;
 }
 
 bool ApplyAutomationGeometryProperty(NifFile* nif,
-									 OutfitStudioFrame* outfitStudio,
+									 IStudioSession* session,
 									 OutfitProject* project,
 									 NiShape*& shape,
 									 const AutomationStep::GeometryProperty& prop,
@@ -462,7 +463,7 @@ bool ApplyAutomationGeometryProperty(NifFile* nif,
 			return false;
 		}
 
-		return prop.enabled ? ConvertToSubIndexTriShape(nif, outfitStudio, shape) : ConvertFromSubIndexTriShape(nif, outfitStudio, shape);
+		return prop.enabled ? ConvertToSubIndexTriShape(nif, session, shape) : ConvertFromSubIndexTriShape(nif, session, shape);
 	}
 
 	if (prop.name == "Dynamic") {
@@ -471,7 +472,7 @@ bool ApplyAutomationGeometryProperty(NifFile* nif,
 			return false;
 		}
 
-		return prop.enabled ? ConvertToDynamicTriShape(nif, outfitStudio, shape) : ConvertFromDynamicTriShape(nif, outfitStudio, shape);
+		return prop.enabled ? ConvertToDynamicTriShape(nif, session, shape) : ConvertFromDynamicTriShape(nif, session, shape);
 	}
 
 	return false;
@@ -544,7 +545,7 @@ int AutomationRunner::ExecuteStepSetShaderProperties(const AutomationStep& step)
 			updatedShapes++;
 			updatedValues += shapeUpdates;
 			project->SetTextures(shape);
-			outfitStudio->MeshFromProj(shape, true);
+			session->MeshFromProj(shape, true);
 			wxLogMessage("Automation: SetShaderProperties - updated %d shader properties on '%s'.",
 				shapeUpdates,
 				shape->name.get());
@@ -552,8 +553,8 @@ int AutomationRunner::ExecuteStepSetShaderProperties(const AutomationStep& step)
 	}
 
 	if (updatedShapes > 0) {
-		outfitStudio->SetPendingChanges();
-		outfitStudio->glView->Render();
+		session->SetPendingChanges();
+		session->Render();
 		wxLogMessage("Automation: SetShaderProperties - updated %d shader values on %d shapes.", updatedValues, updatedShapes);
 	}
 	else {
@@ -593,7 +594,7 @@ int AutomationRunner::ExecuteStepSetGeometryProperties(const AutomationStep& ste
 		int shapeUpdates = 0;
 		for (const char* propertyName : propertyOrder) {
 			for (const auto& prop : step.geometryProperties) {
-				if (prop.name == propertyName && ApplyAutomationGeometryProperty(nif, outfitStudio, project, shape, prop, removedSkinning))
+				if (prop.name == propertyName && ApplyAutomationGeometryProperty(nif, session, project, shape, prop, removedSkinning))
 					shapeUpdates++;
 			}
 		}
@@ -611,18 +612,18 @@ int AutomationRunner::ExecuteStepSetGeometryProperties(const AutomationStep& ste
 	if (updatedShapes > 0) {
 		if (removedSkinning) {
 			nif->DeleteUnreferencedNodes();
-			outfitStudio->UpdateAnimationGUI();
+			session->UpdateAnimationGUI();
 		}
 
 		for (auto* shape : changedShapes) {
 			if (!shape)
 				continue;
 			project->SetTextures(shape);
-			outfitStudio->MeshFromProj(shape, true);
+			session->MeshFromProj(shape, true);
 		}
 
-		outfitStudio->SetPendingChanges();
-		outfitStudio->glView->Render();
+		session->SetPendingChanges();
+		session->Render();
 		wxLogMessage("Automation: SetGeometryProperties - updated %d geometry values on %d shapes.", updatedValues, updatedShapes);
 	}
 	else {
@@ -742,8 +743,8 @@ int AutomationRunner::ExecuteStepSetExtraData(const AutomationStep& step) {
 	}
 
 	if (updatedBlocks > 0 || addedBlocks > 0) {
-		outfitStudio->SetPendingChanges();
-		outfitStudio->glView->Render();
+		session->SetPendingChanges();
+		session->Render();
 		wxLogMessage("Automation: SetExtraData - updated %d, added %d extra data blocks (%d existing-name blocks skipped).",
 			updatedBlocks,
 			addedBlocks,
@@ -817,8 +818,8 @@ int AutomationRunner::ExecuteStepDeleteExtraData(const AutomationStep& step) {
 	}
 
 	if (deletedBlocks > 0) {
-		outfitStudio->SetPendingChanges();
-		outfitStudio->glView->Render();
+		session->SetPendingChanges();
+		session->Render();
 		wxLogMessage("Automation: DeleteExtraData - removed %d extra data blocks.", deletedBlocks);
 	}
 	else {
@@ -920,11 +921,11 @@ int AutomationRunner::ExecuteStepSetTexturePaths(const AutomationStep& step) {
 			if (!shape)
 				continue;
 			project->SetTextures(shape);
-			outfitStudio->MeshFromProj(shape, true);
+			session->MeshFromProj(shape, true);
 		}
 
-		outfitStudio->SetPendingChanges();
-		outfitStudio->glView->Render();
+		session->SetPendingChanges();
+		session->Render();
 		wxLogMessage("Automation: SetTexturePaths - updated %d texture paths on %d shapes (%d skipped).", updatedValues, updatedShapes, skippedValues);
 	}
 	else {

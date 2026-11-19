@@ -7,8 +7,8 @@ See the included LICENSE file
 
 #include "AutomationRunner.h"
 #include "OutfitProject.h"
-#include "outfitstudio/OutfitStudioFrame.h"
-#include "outfitstudio/GLPanel.h"
+#include "ProjectOperations.h"
+#include "StudioSession.h"
 #include "GameImport.h"
 #include "utils/ConfigurationManager.h"
 
@@ -20,6 +20,7 @@ See the included LICENSE file
 #include <NifFile.hpp>
 #include <wx/dir.h>
 #include <wx/filename.h>
+#include <wx/log.h>
 #include <wx/msgdlg.h>
 
 using namespace nifly;
@@ -28,14 +29,14 @@ int AutomationRunner::ImportOBJFile(const std::string& fileName) {
 	if (headlessMode)
 		return project->ImportOBJ(fileName, objImportOptions);
 
-	return outfitStudio->ImportOBJWithDialog(fileName);
+	return session->ImportOBJWithDialog(fileName);
 }
 #ifdef USE_FBXSDK
 int AutomationRunner::ImportFBXFile(const std::string& fileName) {
 	if (headlessMode)
 		return project->ImportFBX(fileName, FBXImportOptions());
 
-	return outfitStudio->ImportFBXWithDialog(fileName);
+	return session->ImportFBXWithDialog(fileName);
 }
 #endif
 
@@ -61,7 +62,7 @@ int AutomationRunner::ExecuteStepLoadReference(const AutomationStep& step) {
 	source.appendNewSliders = step.refAppendNewSliders;
 	source.loadAddOns = step.refLoadAddOns;
 
-	OpResult result = ProjectOperations(*project, outfitStudio->editor).LoadReference(source);
+	OpResult result = ProjectOperations(*project, session->Editor()).LoadReference(source);
 	if (!result.ok) {
 		wxLogError("Automation: LoadReference - %s", result.error);
 		return 1;
@@ -79,7 +80,7 @@ int AutomationRunner::ExecuteStepAddProject(const AutomationStep& step) {
 	wxString refSourceFile = MakeAbsoluteToProject(wxString::FromUTF8(step.refSourceFile));
 	wxLogMessage("Automation: Adding project from '%s' (set: '%s')...", refSourceFile, step.refSet);
 
-	OpResult result = ProjectOperations(*project, outfitStudio->editor).AddProject(refSourceFile.ToUTF8().data(), step.refSet, step.refAppendNewSliders);
+	OpResult result = ProjectOperations(*project, session->Editor()).AddProject(refSourceFile.ToUTF8().data(), step.refSet, step.refAppendNewSliders);
 	if (!result.ok) {
 		wxLogError("Automation: AddProject - %s", result.error);
 		return 1;
@@ -90,7 +91,7 @@ int AutomationRunner::ExecuteStepAddProject(const AutomationStep& step) {
 
 int AutomationRunner::ExecuteStepSetBaseShape(const AutomationStep&) {
 	wxLogMessage("Automation: Setting base shape (baking slider values)...");
-	outfitStudio->SetBaseShape();
+	session->SetBaseShape();
 	return 0;
 }
 
@@ -248,13 +249,13 @@ int AutomationRunner::ExecuteStepSaveProject(const AutomationStep& step) {
 	options.sfMorphPath = step.saveSFMorphPath;
 	options.sfMorphTargetShape = step.saveSFMorphTargetShape;
 
-	OpResult result = ProjectOperations(*project, outfitStudio->editor).SaveProject(options);
+	OpResult result = ProjectOperations(*project, session->Editor()).SaveProject(options);
 	if (!result.ok) {
 		wxLogError("Automation: SaveProject - %s", result.error);
 		return 1;
 	}
 
-	outfitStudio->SetPendingChanges(false);
+	session->SetPendingChanges(false);
 	return 0;
 }
 
@@ -296,7 +297,7 @@ int AutomationRunner::ExecuteStepExportFile(const AutomationStep& step) {
 		options.shapes.push_back(shapes.front()->name.get());
 	}
 
-	OpResult result = ProjectOperations(*project, outfitStudio->editor).ExportFile(exportPath, options);
+	OpResult result = ProjectOperations(*project, session->Editor()).ExportFile(exportPath, options);
 	if (!result.ok) {
 		wxLogError("Automation: ExportFile - %s", result.error);
 		return 1;
@@ -406,7 +407,7 @@ int AutomationRunner::ExecuteStepMakeConversionRef(const AutomationStep& step) {
 	if (baseShape) {
 		// The reference mesh carries the current slider result; make that the new
 		// base geometry and let the conversion slider undo it.
-		Mesh* m = outfitStudio->glView->GetMesh(baseShape->name.get());
+		Mesh* m = session->GetMesh(baseShape->name.get());
 		if (m)
 			project->UpdateShapeFromMesh(baseShape, m);
 
@@ -423,7 +424,7 @@ int AutomationRunner::ExecuteStepMakeConversionRef(const AutomationStep& step) {
 		project->DeleteSlider(sliderName);
 	}
 
-	outfitStudio->glView->GetUndoHistory()->ClearHistory();
-	outfitStudio->SetPendingChanges();
+	session->Editor().undoHistory.ClearHistory();
+	session->SetPendingChanges();
 	return 0;
 }

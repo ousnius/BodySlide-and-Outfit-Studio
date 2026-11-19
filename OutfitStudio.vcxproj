@@ -822,6 +822,7 @@
     <ClInclude Include="src\components\SurfaceFit.h" />
     <ClInclude Include="src\components\TextureConvert.h" />
     <ClInclude Include="src\project\GameImport.h" />
+    <ClInclude Include="src\project\StudioSession.h" />
     <ClInclude Include="src\project\ProjectPacker.h" />
     <ClInclude Include="src\components\ClothData.h" />
     <ClInclude Include="src\components\DiffData.h" />
@@ -903,6 +904,7 @@
     <ClInclude Include="src\project\EditorState.h" />
     <ClInclude Include="src\ui\outfitstudio\BadBonesDialog.h" />
     <ClInclude Include="src\outfitstudio\OutfitStudioFrame.h" />
+    <ClInclude Include="src\outfitstudio\OutfitStudioSession.h" />
     <ClInclude Include="src\outfitstudio\FrameHelpers.h" />
     <ClInclude Include="src\render\ViewState.h" />
     <ClInclude Include="src\outfitstudio\ToolID.h" />
@@ -1088,6 +1090,7 @@
     <ClCompile Include="src\project\BrushStrokeController.cpp" />
     <ClCompile Include="src\ui\outfitstudio\BadBonesDialog.cpp" />
     <ClCompile Include="src\outfitstudio\OutfitStudioFrame.cpp" />
+    <ClCompile Include="src\outfitstudio\OutfitStudioSession.cpp" />
     <ClCompile Include="src\outfitstudio\OutfitStudioProjectHost.cpp" />
     <ClCompile Include="src\outfitstudio\OutfitStudioApp.cpp" />
     <ClCompile Include="src\outfitstudio\GLPanel.cpp" />

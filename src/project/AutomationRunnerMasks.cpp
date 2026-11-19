@@ -7,8 +7,8 @@ See the included LICENSE file
 
 #include "AutomationRunner.h"
 #include "OutfitProject.h"
-#include "outfitstudio/OutfitStudioFrame.h"
-#include "outfitstudio/GLPanel.h"
+#include "ProjectOperations.h"
+#include "StudioSession.h"
 #include "components/MaskOps.h"
 #include "components/MeshAnalysis.h"
 #include "files/MaskFile.h"
@@ -22,6 +22,7 @@ See the included LICENSE file
 #include <vector>
 #include <NifFile.hpp>
 #include <wx/filename.h>
+#include <wx/log.h>
 #include <wx/msgdlg.h>
 
 using namespace nifly;
@@ -35,7 +36,7 @@ int AutomationRunner::ExecuteStepClearMask(const AutomationStep& step) {
 
 	for (auto* shape : targetShapes) {
 		std::string shapeName = shape->name.get();
-		Mesh* mesh = outfitStudio->glView->GetMesh(shapeName);
+		Mesh* mesh = session->GetMesh(shapeName);
 		if (!mesh)
 			continue;
 
@@ -43,7 +44,7 @@ int AutomationRunner::ExecuteStepClearMask(const AutomationStep& step) {
 		mesh->MaskFill(0.0f);
 	}
 
-	outfitStudio->glView->Render();
+	session->Render();
 	return 0;
 }
 
@@ -82,7 +83,7 @@ int AutomationRunner::ExecuteStepLoadMask(const AutomationStep& step) {
 
 	for (auto* shape : targetShapes) {
 		std::string shapeName = shape->name.get();
-		Mesh* mesh = outfitStudio->glView->GetMesh(shapeName);
+		Mesh* mesh = session->GetMesh(shapeName);
 		if (!mesh)
 			continue;
 
@@ -96,10 +97,10 @@ int AutomationRunner::ExecuteStepLoadMask(const AutomationStep& step) {
 		wxLogMessage("Automation: Loading mask '%s' onto shape '%s' (matched from '%s')...",
 			step.loadMaskName, shapeName, matched->name);
 		auto maskCopy = matched->mask;
-		outfitStudio->glView->SetShapeMask(maskCopy, shapeName);
+		session->SetShapeMask(maskCopy, shapeName);
 	}
 
-	outfitStudio->glView->Render();
+	session->Render();
 	return 0;
 }
 
@@ -115,7 +116,7 @@ int AutomationRunner::ExecuteStepGrowShrinkMask(const AutomationStep& step) {
 
 	for (auto* shape : shapes) {
 		std::string shapeName = shape->name.get();
-		Mesh* m = outfitStudio->glView->GetMesh(shapeName);
+		Mesh* m = session->GetMesh(shapeName);
 		if (!m || !m->mask)
 			continue;
 
@@ -125,7 +126,7 @@ int AutomationRunner::ExecuteStepGrowShrinkMask(const AutomationStep& step) {
 			MaskOps::ApplyChanges(*m, MaskOps::GrowShrinkChanges(*m, grow));
 	}
 
-	outfitStudio->glView->Render();
+	session->Render();
 	return 0;
 }
 
@@ -141,7 +142,7 @@ int AutomationRunner::ExecuteStepMaskBox(const AutomationStep& step) {
 
 	for (auto* shape : shapes) {
 		std::string shapeName = shape->name.get();
-		Mesh* m = outfitStudio->glView->GetMesh(shapeName);
+		Mesh* m = session->GetMesh(shapeName);
 		if (!m || !m->mask)
 			continue;
 
@@ -163,7 +164,7 @@ int AutomationRunner::ExecuteStepMaskBox(const AutomationStep& step) {
 		MaskOps::ApplyChanges(*m, changes);
 	}
 
-	outfitStudio->glView->Render();
+	session->Render();
 	return 0;
 }
 
@@ -212,7 +213,7 @@ int AutomationRunner::ExecuteStepMaskCovered(const AutomationStep& step) {
 
 	for (auto* shape : shapes) {
 		std::string shapeName = shape->name.get();
-		Mesh* m = outfitStudio->glView->GetMesh(shapeName);
+		Mesh* m = session->GetMesh(shapeName);
 		if (!m || !m->mask)
 			continue;
 
@@ -241,7 +242,7 @@ int AutomationRunner::ExecuteStepMaskCovered(const AutomationStep& step) {
 		MaskOps::ApplyChanges(*m, changes);
 	}
 
-	outfitStudio->glView->Render();
+	session->Render();
 	return 0;
 }
 
@@ -255,7 +256,7 @@ int AutomationRunner::ExecuteStepSmoothMask(const AutomationStep& step) {
 	const int iterations = std::max(1, step.maskSmoothCount);
 	for (auto* shape : shapes) {
 		std::string shapeName = shape->name.get();
-		Mesh* m = outfitStudio->glView->GetMesh(shapeName);
+		Mesh* m = session->GetMesh(shapeName);
 		if (!m || !m->mask)
 			continue;
 
@@ -264,7 +265,7 @@ int AutomationRunner::ExecuteStepSmoothMask(const AutomationStep& step) {
 			MaskOps::ApplyChanges(*m, MaskOps::SmoothChanges(*m));
 	}
 
-	outfitStudio->glView->Render();
+	session->Render();
 	return 0;
 }
 
@@ -277,7 +278,7 @@ int AutomationRunner::ExecuteStepInvertMask(const AutomationStep& step) {
 
 	for (auto* shape : shapes) {
 		std::string shapeName = shape->name.get();
-		Mesh* m = outfitStudio->glView->GetMesh(shapeName);
+		Mesh* m = session->GetMesh(shapeName);
 		if (!m || !m->mask)
 			continue;
 
@@ -285,7 +286,7 @@ int AutomationRunner::ExecuteStepInvertMask(const AutomationStep& step) {
 		MaskOps::ApplyChanges(*m, MaskOps::InvertChanges(*m));
 	}
 
-	outfitStudio->glView->Render();
+	session->Render();
 	return 0;
 }
 
@@ -304,7 +305,7 @@ int AutomationRunner::ExecuteStepMaskWeighted(const AutomationStep& step) {
 
 	for (auto* shape : shapes) {
 		std::string shapeName = shape->name.get();
-		Mesh* m = outfitStudio->glView->GetMesh(shapeName);
+		Mesh* m = session->GetMesh(shapeName);
 		if (!m || !m->mask)
 			continue;
 
@@ -328,7 +329,7 @@ int AutomationRunner::ExecuteStepMaskWeighted(const AutomationStep& step) {
 		m->QueueUpdate(Mesh::UpdateType::Mask);
 	}
 
-	outfitStudio->glView->Render();
+	session->Render();
 	return 0;
 }
 
@@ -352,7 +353,7 @@ int AutomationRunner::ExecuteStepMaskBoneWeighted(const AutomationStep& step) {
 
 	for (auto* shape : shapes) {
 		std::string shapeName = shape->name.get();
-		Mesh* m = outfitStudio->glView->GetMesh(shapeName);
+		Mesh* m = session->GetMesh(shapeName);
 		if (!m || !m->mask)
 			continue;
 
@@ -372,7 +373,7 @@ int AutomationRunner::ExecuteStepMaskBoneWeighted(const AutomationStep& step) {
 		m->QueueUpdate(Mesh::UpdateType::Mask);
 	}
 
-	outfitStudio->glView->Render();
+	session->Render();
 	return 0;
 }
 
@@ -398,7 +399,7 @@ int AutomationRunner::ExecuteStepMaskSliderAffected(const AutomationStep& step) 
 		project->MaskAffected(step.maskSliderName, shape);
 	}
 
-	outfitStudio->glView->Render();
+	session->Render();
 	return 0;
 }
 
@@ -418,7 +419,7 @@ int AutomationRunner::ExecuteStepMaskAsymmetric(const AutomationStep& step) {
 
 	for (auto* shape : shapes) {
 		std::string shapeName = shape->name.get();
-		Mesh* m = outfitStudio->glView->GetMesh(shapeName);
+		Mesh* m = session->GetMesh(shapeName);
 		if (!m || !m->mask)
 			continue;
 
@@ -466,7 +467,7 @@ int AutomationRunner::ExecuteStepMaskAsymmetric(const AutomationStep& step) {
 		m->QueueUpdate(Mesh::UpdateType::Mask);
 	}
 
-	outfitStudio->glView->Render();
+	session->Render();
 	return 0;
 }
 
@@ -491,12 +492,12 @@ int AutomationRunner::ExecuteStepSaveMask(const AutomationStep& step) {
 	std::map<std::string, int> vertexCounts;
 	for (auto* shape : shapes) {
 		std::string shapeName = shape->name.get();
-		Mesh* m = outfitStudio->glView->GetMesh(shapeName);
+		Mesh* m = session->GetMesh(shapeName);
 		if (!m)
 			continue;
 
 		std::unordered_map<uint16_t, float> mask;
-		outfitStudio->glView->GetShapeMask(mask, shapeName);
+		session->GetShapeMask(mask, shapeName);
 		maskData[shapeName] = std::move(mask);
 		vertexCounts[shapeName] = m->nVerts;
 	}

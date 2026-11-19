@@ -6,11 +6,9 @@ See the included LICENSE file
 // Automation steps: bones, bone weights and poses
 
 #include "AutomationRunner.h"
-#include "outfitstudio/PosePanel.h"
 #include "OutfitProject.h"
-#include "outfitstudio/OutfitStudioFrame.h"
-#include "outfitstudio/GLPanel.h"
-#include "outfitstudio/ShapeTreeItems.h"
+#include "ProjectOperations.h"
+#include "StudioSession.h"
 #include "components/UndoState.h"
 #include "utils/StringStuff.h"
 
@@ -21,6 +19,7 @@ See the included LICENSE file
 #include <unordered_map>
 #include <vector>
 #include <NifFile.hpp>
+#include <wx/log.h>
 #include <wx/msgdlg.h>
 
 using namespace nifly;
@@ -39,13 +38,13 @@ int AutomationRunner::ExecuteStepCopyBoneWeights(const AutomationStep& step) {
 	options.normalize = step.weightNormalize;
 
 	UndoStateProject usp;
-	OpResult result = ProjectOperations(*project, outfitStudio->editor).CopyBoneWeights(shapes, options, usp);
+	OpResult result = ProjectOperations(*project, session->Editor()).CopyBoneWeights(shapes, options, usp);
 	if (!result.ok) {
 		wxLogError("Automation: CopyBoneWeights - %s", result.error);
 		return 1;
 	}
 
-	outfitStudio->ApplyRefresh(result.refresh);
+	session->ApplyRefresh(result.refresh);
 	return 0;
 }
 
@@ -183,7 +182,7 @@ int AutomationRunner::ExecuteStepApplyPose(const AutomationStep& step) {
 
 	// Find the pose by name
 	PoseData* posePtr = nullptr;
-	for (auto& pd : outfitStudio->poseDataCollection.poseData) {
+	for (auto& pd : session->Poses().poseData) {
 		if (pd.name == step.poseName) {
 			posePtr = &pd;
 			break;
@@ -237,9 +236,9 @@ int AutomationRunner::ExecuteStepApplyPose(const AutomationStep& step) {
 		bone->UpdatePoseTransform();
 	}
 
-	outfitStudio->posePanel->PoseToGUI();
-	outfitStudio->glView->UpdateBones();
-	outfitStudio->glView->ApplyUndoState(&usp, false);
+	session->PoseToGUI();
+	session->UpdateBones();
+	session->ApplyUndoState(&usp, false);
 	project->bPose = false;
 	return 0;
 }
@@ -272,7 +271,7 @@ int AutomationRunner::ExecuteStepAddBone(const AutomationStep& step) {
 	}
 
 	if (addedCount > 0)
-		outfitStudio->SetPendingChanges();
+		session->SetPendingChanges();
 
 	return 0;
 }
@@ -308,13 +307,13 @@ int AutomationRunner::ExecuteStepTransferWeights(const AutomationStep& step) {
 		// the weights they already have.
 		std::unordered_map<uint16_t, float> mask;
 		if (step.transferWeightUseMask)
-			outfitStudio->glView->GetShapeMask(mask, shapeName);
+			session->GetShapeMask(mask, shapeName);
 
 		wxLogMessage("Automation: Transferring bone weights to '%s'...", shapeName);
 		project->TransferSelectedWeights(shape, mask.empty() ? nullptr : &mask, boneList.empty() ? nullptr : &boneList);
 	}
 
-	outfitStudio->SetPendingChanges();
+	session->SetPendingChanges();
 	return 0;
 }
 
@@ -350,6 +349,6 @@ int AutomationRunner::ExecuteStepSetBoneTransform(const AutomationStep& step) {
 		}
 	}
 
-	outfitStudio->SetPendingChanges();
+	session->SetPendingChanges();
 	return 0;
 }

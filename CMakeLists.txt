@@ -530,6 +530,7 @@ target_link_libraries(bsos_mcp PUBLIC bsos_core)
 
 set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/outfitstudio/DropTargets.cpp
+	src/outfitstudio/OutfitStudioSession.cpp
 	src/outfitstudio/AnimationPlayer.cpp
 	src/outfitstudio/FrameBones.cpp
 	src/outfitstudio/FrameConform.cpp
