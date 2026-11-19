@@ -11,7 +11,6 @@ See the included LICENSE file
 #include <string>
 #include <utility>
 #include <vector>
-#include <wx/dir.h>
 
 using namespace tinyxml2;
 

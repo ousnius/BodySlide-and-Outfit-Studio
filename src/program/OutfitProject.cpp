@@ -31,7 +31,6 @@ See the included LICENSE file
 #include <regex>
 #include <sstream>
 #include <wx/log.h>
-#include <wx/collpane.h>
 
 extern ConfigurationManager Config;
 

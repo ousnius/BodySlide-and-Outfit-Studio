@@ -19,7 +19,7 @@ class AnimBone;
 #include <string>
 #include <unordered_set>
 #include <vector>
-#include <wx/dir.h>
+#include <wx/string.h>
 
 using namespace tinyxml2;
 

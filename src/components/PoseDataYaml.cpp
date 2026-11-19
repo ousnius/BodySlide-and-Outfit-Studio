@@ -6,6 +6,7 @@ See the included LICENSE file
 #include "PoseData.h"
 #include "../utils/PlatformUtil.h"
 
+#include <wx/dir.h>
 #include <wx/filename.h>
 
 #include <fkYAML/node.hpp>

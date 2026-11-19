@@ -6,6 +6,8 @@ See the included LICENSE file
 #include "SliderGroup.h"
 #include "../utils/PlatformUtil.h"
 
+#include <wx/dir.h>
+
 int SliderSetGroupCollection::LoadGroups(const std::string& basePath) {
 	groups.clear();
 

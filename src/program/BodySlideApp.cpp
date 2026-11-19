@@ -41,6 +41,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <wx/spinctrl.h>
 #include <wx/wrapsizer.h>
 #include <wx/debugrpt.h>
+#include <wx/dir.h>
 #include <wx/textctrl.h>
 
 using namespace nifly;
@@ -313,6 +314,37 @@ bool BodySlideApp::OnInit() {
 
 	return true;
 }
+
+static const wxCmdLineEntryDesc g_cmdLineDesc[] = {{wxCMD_LINE_OPTION, "gbuild", "groupbuild", "builds the specified group on launch", wxCMD_LINE_VAL_STRING},
+												   {wxCMD_LINE_OPTION,
+													"b",
+													"build",
+													"builds the specified outfits on launch, a single outfit name or a list of them separated by ',', ';' or '|'",
+													wxCMD_LINE_VAL_STRING},
+												   {wxCMD_LINE_OPTION,
+													"f",
+													"filter",
+													"builds all outfits matching the specified filter on launch, works like the outfit filter box",
+													wxCMD_LINE_VAL_STRING},
+												   {wxCMD_LINE_SWITCH, "regex", "regexfilter", "treats the value of the filter option as a regular expression"},
+												   {wxCMD_LINE_OPTION, "t", "targetdir", "build target directory, defaults to game data path", wxCMD_LINE_VAL_STRING},
+												   {wxCMD_LINE_OPTION,
+													"p",
+													"preset",
+													"preset to load on launch, use for the build or apply in preview mode, either a preset name or the "
+													"path to a preset XML file optionally followed by '?' and a preset name, defaults to last used preset",
+													wxCMD_LINE_VAL_STRING},
+												   {wxCMD_LINE_SWITCH, "tri", "trimorphs", "enables tri morph output for the specified build"},
+												   {wxCMD_LINE_SWITCH,
+													"conformaddons",
+													"conformaddons",
+													"conforms the sliders of the body's add-ons to outfits that don't have them, for the specified build"},
+												   {wxCMD_LINE_SWITCH,
+													"q",
+													"quiet",
+													"builds without dialogs: conflicting outputs take the saved or first choice without saving it, failures are only logged"},
+												   {wxCMD_LINE_OPTION, "preview", "preview", "open the specified nif files in preview mode", wxCMD_LINE_VAL_STRING},
+												   wxCMD_LINE_DESC_END};
 
 void BodySlideApp::OnInitCmdLine(wxCmdLineParser& parser) {
 	parser.SetDesc(g_cmdLineDesc);

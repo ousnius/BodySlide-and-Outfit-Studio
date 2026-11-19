@@ -11,7 +11,6 @@ See the included LICENSE file
 #include <wx/string.h>
 
 class Mesh;
-class wxWindow;
 
 namespace nifly {
 class NiShape;
@@ -51,9 +50,6 @@ public:
 
 	// Returns false if cancelled. 'value' holds the default on input.
 	virtual bool GetText(const wxString& msg, const wxString& title, wxString& value) = 0;
-
-	// Parent for the dialogs that the project still creates itself.
-	virtual wxWindow* GetDialogParent() { return nullptr; }
 
 	// Editable mesh of a shape, or nullptr if there is none.
 	virtual Mesh* GetShapeMesh(const std::string& WXUNUSED(shapeName)) { return nullptr; }

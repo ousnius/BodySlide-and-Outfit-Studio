@@ -6,6 +6,8 @@ See the included LICENSE file
 #include "SliderCategories.h"
 #include "../utils/PlatformUtil.h"
 
+#include <wx/dir.h>
+
 int SliderCategoryCollection::LoadCategories(const std::string& basePath) {
 	wxArrayString files;
 	wxDir::GetAllFiles(basePath, &files, "*.xml");

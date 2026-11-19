@@ -958,14 +958,6 @@ private:
 };
 
 
-static const wxCmdLineEntryDesc g_cmdLineDesc[] = {{wxCMD_LINE_OPTION, "proj", "project", "Project Name", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL},
-												   {wxCMD_LINE_OPTION, "single", "single-instance", "Force single instance behavior (yes/no)", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL},
-												   {wxCMD_LINE_OPTION, "a", "automation", "Run an automation script by name (no .xml extension); positional args are batch inputs", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL},
-												   {wxCMD_LINE_SWITCH, nullptr, "mcp", "Start the MCP server that lets AI agents control Outfit Studio", wxCMD_LINE_VAL_NONE, 0},
-												   {wxCMD_LINE_OPTION, nullptr, "mcp-port", "Port of the MCP server", wxCMD_LINE_VAL_NUMBER, wxCMD_LINE_PARAM_OPTIONAL},
-												   {wxCMD_LINE_PARAM, nullptr, nullptr, "Files", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL | wxCMD_LINE_PARAM_MULTIPLE},
-												   wxCMD_LINE_DESC_END};
-
 class OutfitStudio : public wxApp {
 public:
 	virtual ~OutfitStudio();
@@ -1059,8 +1051,6 @@ public:
 	bool ChooseMany(const wxString& msg, const wxString& title, const wxArrayString& choices, wxArrayInt& selections) override;
 	bool ChooseOne(const wxString& msg, const wxString& title, const wxArrayString& choices, int& selection) override;
 	bool GetText(const wxString& msg, const wxString& title, wxString& value) override;
-	wxWindow* GetDialogParent() override;
-
 	Mesh* GetShapeMesh(const std::string& shapeName) override;
 
 	void UpdateShapeMesh(const std::string& shapeName) override;
