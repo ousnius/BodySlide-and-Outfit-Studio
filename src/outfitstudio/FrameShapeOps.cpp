@@ -6,6 +6,7 @@ See the included LICENSE file
 // Outfit Studio window: shape operations such as transforms, mirroring, geometry edits, symmetry and normals
 
 #include "OutfitStudioFrame.h"
+#include "SegmentPartitionEditor.h"
 #include "OutfitStudioApp.h"
 #include "FrameHelpers.h"
 #include "ShapeTreeItems.h"
@@ -921,15 +922,13 @@ void OutfitStudioFrame::OnDeleteShape(wxCommandEvent& WXUNUSED(event)) {
 		if (wxMessageBox(_("Delete partition?  This action cannot be undone."), _("Confirm Delete"), wxYES_NO | wxICON_WARNING) == wxNO)
 			return;
 
-		wxCommandEvent evt;
-		OnDeletePartition(evt);
+		segPartEditor->DeleteSelectedPartition();
 	}
 	else if (currentTabButton == segmentTabButton) {
 		if (wxMessageBox(_("Delete segment?  This action cannot be undone."), _("Confirm Delete"), wxYES_NO | wxICON_WARNING) == wxNO)
 			return;
 
-		wxCommandEvent evt;
-		OnDeleteSegment(evt);
+		segPartEditor->DeleteSelectedSegment();
 	}
 }
 

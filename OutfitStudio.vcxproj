@@ -912,6 +912,7 @@
     <ClInclude Include="src\outfitstudio\GLPanel.h" />
     <ClInclude Include="src\outfitstudio\AnimationPlayer.h" />
     <ClInclude Include="src\outfitstudio\PhysicsPreview.h" />
+    <ClInclude Include="src\outfitstudio\SegmentPartitionEditor.h" />
     <ClInclude Include="src\outfitstudio\DropTargets.h" />
     <ClInclude Include="src\ui\PresetSaveDialog.h" />
     <ClInclude Include="src\ui\outfitstudio\ShapeProperties.h" />
@@ -1101,7 +1102,7 @@
     <ClCompile Include="src\outfitstudio\FrameSliderFiles.cpp" />
     <ClCompile Include="src\outfitstudio\FrameShapes.cpp" />
     <ClCompile Include="src\outfitstudio\FrameShapeOps.cpp" />
-    <ClCompile Include="src\outfitstudio\FrameSegments.cpp" />
+    <ClCompile Include="src\outfitstudio\SegmentPartitionEditor.cpp" />
     <ClCompile Include="src\outfitstudio\FrameProjectFile.cpp" />
     <ClCompile Include="src\outfitstudio\FramePose.cpp" />
     <ClCompile Include="src\outfitstudio\PhysicsPreview.cpp" />

@@ -6,6 +6,7 @@ See the included LICENSE file
 // Automation steps: shapes, their geometry, transforms and partitions
 
 #include "AutomationRunner.h"
+#include "outfitstudio/SegmentPartitionEditor.h"
 #include "OutfitProject.h"
 #include "outfitstudio/OutfitStudioFrame.h"
 #include "outfitstudio/GLPanel.h"
@@ -396,7 +397,7 @@ int AutomationRunner::ExecuteStepChangePartitions(const AutomationStep& step) {
 
 	if (updatedShapes > 0) {
 		if (activeShapeUpdated && outfitStudio->activeItem && outfitStudio->activeItem->GetShape() == activeShape)
-			outfitStudio->RefreshActivePartitionTree();
+			outfitStudio->segPartEditor->RefreshActivePartitionTree();
 
 		outfitStudio->SetPendingChanges();
 		outfitStudio->glView->Render();

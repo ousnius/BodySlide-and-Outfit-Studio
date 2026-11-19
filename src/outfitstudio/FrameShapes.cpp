@@ -6,6 +6,7 @@ See the included LICENSE file
 // Outfit Studio window: the shape list, shape selection and the meshes shown for the shapes
 
 #include "OutfitStudioFrame.h"
+#include "SegmentPartitionEditor.h"
 #include "ui/outfitstudio/EditUV.h"
 #include "OutfitStudioApp.h"
 #include "GLPanel.h"
@@ -32,8 +33,8 @@ void OutfitStudioFrame::UpdateActiveShape() {
 		if (glView->GetVertexEdit())
 			glView->ShowVertexEdit(false);
 
-		CreateSegmentTree();
-		CreatePartitionTree();
+		segPartEditor->CreateSegmentTree();
+		segPartEditor->CreatePartitionTree();
 		outfitBones->UnselectAll();
 		editor.lastSelectedBones.clear();
 
@@ -59,8 +60,8 @@ void OutfitStudioFrame::UpdateActiveShape() {
 		menuBar->Enable(XRCID("btnSmoothSeamsAngle"), m != nullptr);
 		menuBar->Enable(XRCID("btnLockNormals"), m != nullptr);
 
-		CreateSegmentTree(activeItem->GetShape());
-		CreatePartitionTree(activeItem->GetShape());
+		segPartEditor->CreateSegmentTree(activeItem->GetShape());
+		segPartEditor->CreatePartitionTree(activeItem->GetShape());
 	}
 
 	if (!smoothSeamNormals)

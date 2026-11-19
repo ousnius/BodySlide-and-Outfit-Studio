@@ -6,6 +6,7 @@ See the included LICENSE file
 // Viewport: the editing tools - brush strokes, vertex and edge tools, physics grab and brush settings
 
 #include "GLPanel.h"
+#include "SegmentPartitionEditor.h"
 #include "PhysicsPreview.h"
 #include "OutfitStudioFrame.h"
 #include "ShapeTreeItems.h"
@@ -184,7 +185,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 
 	if (activeBrush->Type() != TweakBrush::BrushType::Move && segmentMode) {
 		{
-			bool changed = os->PaintSegmentPartitionTriangles(hitMesh, hitTri, tpi.origin, activeBrush->getRadius());
+			bool changed = os->segPartEditor->PaintSegmentPartitionTriangles(hitMesh, hitTri, tpi.origin, activeBrush->getRadius());
 
 			if (GetToolOptionXMirror()) {
 				Vector3 mirrorHitOrigin;
@@ -193,13 +194,13 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 				int mirrorHitTri = -1;
 				if (gls.CollideMeshes(screenPos.x, screenPos.y, mirrorHitOrigin, mirrorHitNormal, true, &mirrorHitMesh, true, &mirrorHitTri) && mirrorHitMesh) {
 					mirrorHitOrigin = mirrorHitMesh->TransformPosMeshToModel(mirrorHitOrigin);
-					changed = os->PaintSegmentPartitionTriangles(mirrorHitMesh, mirrorHitTri, mirrorHitOrigin, activeBrush->getRadius()) || changed;
+					changed = os->segPartEditor->PaintSegmentPartitionTriangles(mirrorHitMesh, mirrorHitTri, mirrorHitOrigin, activeBrush->getRadius()) || changed;
 				}
 			}
 
 			if (changed) {
-				os->ShowSegment();
-				os->ShowPartition();
+				os->segPartEditor->ShowSegment();
+				os->segPartEditor->ShowPartition();
 			}
 		}
 	}
@@ -241,7 +242,7 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 		v = v * -1.0f;
 		tpi.view = v;
 		if (segmentMode) {
-			bool changed = os->PaintSegmentPartitionTriangles(hitMesh, hitTri, tpi.origin, activeBrush->getRadius());
+			bool changed = os->segPartEditor->PaintSegmentPartitionTriangles(hitMesh, hitTri, tpi.origin, activeBrush->getRadius());
 
 			if (GetToolOptionXMirror()) {
 				Vector3 mirrorHitOrigin;
@@ -250,13 +251,13 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 				int mirrorHitTri = -1;
 				if (gls.CollideMeshes(screenPos.x, screenPos.y, mirrorHitOrigin, mirrorHitNormal, true, &mirrorHitMesh, true, &mirrorHitTri) && mirrorHitMesh) {
 					mirrorHitOrigin = mirrorHitMesh->TransformPosMeshToModel(mirrorHitOrigin);
-					changed = os->PaintSegmentPartitionTriangles(mirrorHitMesh, mirrorHitTri, mirrorHitOrigin, activeBrush->getRadius()) || changed;
+					changed = os->segPartEditor->PaintSegmentPartitionTriangles(mirrorHitMesh, mirrorHitTri, mirrorHitOrigin, activeBrush->getRadius()) || changed;
 				}
 			}
 
 			if (changed) {
-				os->ShowSegment();
-				os->ShowPartition();
+				os->segPartEditor->ShowSegment();
+				os->segPartEditor->ShowPartition();
 			}
 		}
 		else {
@@ -267,8 +268,8 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 			ShowTransformTool();
 
 		if (segmentMode) {
-			os->ShowSegment();
-			os->ShowPartition();
+			os->segPartEditor->ShowSegment();
+			os->segPartEditor->ShowPartition();
 		}
 	}
 }
@@ -283,8 +284,8 @@ void wxGLPanel::EndBrushStroke() {
 			ShowTransformTool();
 
 		if (segmentMode) {
-			os->ShowSegment();
-			os->ShowPartition();
+			os->segPartEditor->ShowSegment();
+			os->segPartEditor->ShowPartition();
 
 			if (os->currentTabButton)
 				os->currentTabButton->SetPendingChanges();

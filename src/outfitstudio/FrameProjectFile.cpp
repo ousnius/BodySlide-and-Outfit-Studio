@@ -6,6 +6,7 @@ See the included LICENSE file
 // Outfit Studio window: creating, loading, saving and closing projects
 
 #include "OutfitStudioFrame.h"
+#include "SegmentPartitionEditor.h"
 #include "PhysicsPreview.h"
 #include "AnimationPlayer.h"
 #include "ui/outfitstudio/EditUV.h"
@@ -1688,8 +1689,7 @@ void OutfitStudioFrame::ClearProject() {
 	project->mCopyRef = true;
 
 	glView->gls.ClearOverlays();
-	activePartition.Unset();
-	activeSegment.Unset();
+	segPartEditor->ClearActive();
 
 	lastCheckedSlider.clear();
 	editor.lastSelectedBones.clear();

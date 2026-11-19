@@ -6,6 +6,7 @@ See the included LICENSE file
 // Outfit Studio window: the view around the viewport such as camera, display options, lights, backgrounds and tabs
 
 #include "OutfitStudioFrame.h"
+#include "SegmentPartitionEditor.h"
 #include "PhysicsPreview.h"
 #include "OutfitStudioApp.h"
 #include "GLPanel.h"
@@ -476,15 +477,15 @@ bool OutfitStudioFrame::ResolvePendingTabChanges() {
 	int res = dlg.ShowModal();
 	if (res == wxID_YES) {
 		if (currentTabButton == partitionTabButton)
-			ApplyPartitions();
+			segPartEditor->ApplyPartitions();
 		else if (currentTabButton == segmentTabButton)
-			ApplySegments();
+			segPartEditor->ApplySegments();
 	}
 	else if (res == wxID_NO) {
 		if (currentTabButton == partitionTabButton)
-			ResetPartitions();
+			segPartEditor->ResetPartitions();
 		else if (currentTabButton == segmentTabButton)
-			ResetSegments();
+			segPartEditor->ResetSegments();
 	}
 	else
 		return false;
@@ -509,7 +510,7 @@ void OutfitStudioFrame::LeaveSegmentTab() {
 	ShowWindowsByName(SegmentControls, false);
 
 	if (currentTabButton == segmentTabButton)
-		ResetSegmentVisibility();
+		segPartEditor->ResetSegmentVisibility();
 
 	LeaveSegmentPartitionMode();
 }
@@ -518,7 +519,7 @@ void OutfitStudioFrame::LeavePartitionTab() {
 	ShowWindowsByName(PartitionControls, false);
 
 	if (currentTabButton == partitionTabButton)
-		ResetPartitionVisibility();
+		segPartEditor->ResetPartitionVisibility();
 
 	LeaveSegmentPartitionMode();
 }
@@ -568,7 +569,7 @@ void OutfitStudioFrame::EnableStandardTools() {
 void OutfitStudioFrame::ShowTab(wxStateButton* tab, wxWindow* panel) {
 	currentTabButton = tab;
 
-	for (wxWindow* other : std::initializer_list<wxWindow*>{outfitShapes, outfitBones, colorSettings, segmentTree, partitionTree, lightSettings})
+	for (wxWindow* other : std::initializer_list<wxWindow*>{outfitShapes, outfitBones, colorSettings, segPartEditor->GetSegmentTree(), segPartEditor->GetPartitionTree(), lightSettings})
 		if (other != panel)
 			other->Hide();
 	panel->Show();
@@ -606,7 +607,7 @@ void OutfitStudioFrame::EnterBoneTab() {
 	EnableTools({"btnColorBrush", "btnAlphaBrush", "btnPivot", "btnVertexEdit", "btnCollapseVertex", "btnFlipEdgeTool", "btnSplitEdgeTool", "deleteVerts", "refineMesh"},
 				false);
 
-	SetNoSubMeshes();
+	segPartEditor->SetNoSubMeshes();
 
 	ReselectBone();
 	UpdateUndoTools();
@@ -643,7 +644,7 @@ void OutfitStudioFrame::EnterColorsTab() {
 				 "refineMesh"},
 				false);
 
-	SetNoSubMeshes();
+	segPartEditor->SetNoSubMeshes();
 }
 
 // Segments and partitions are painted with the mask brush (see PaintSegmentPartitionTriangles), every other tool is off
@@ -674,21 +675,21 @@ void OutfitStudioFrame::EnterSegmentPartitionMode() {
 }
 
 void OutfitStudioFrame::EnterSegmentTab() {
-	ShowTab(segmentTabButton, segmentTree);
+	ShowTab(segmentTabButton, segPartEditor->GetSegmentTree());
 	ShowWindowsByName(SegmentControls, true);
 	EnterSegmentPartitionMode();
 
-	ResetSegmentVisibility();
-	ShowSegment(segmentTree->GetSelection());
+	segPartEditor->ResetSegmentVisibility();
+	segPartEditor->ShowSegment(segPartEditor->GetSegmentTree()->GetSelection());
 }
 
 void OutfitStudioFrame::EnterPartitionTab() {
-	ShowTab(partitionTabButton, partitionTree);
+	ShowTab(partitionTabButton, segPartEditor->GetPartitionTree());
 	ShowWindowsByName(PartitionControls, true);
 	EnterSegmentPartitionMode();
 
-	ResetPartitionVisibility();
-	ShowPartition(partitionTree->GetSelection());
+	segPartEditor->ResetPartitionVisibility();
+	segPartEditor->ShowPartition(segPartEditor->GetPartitionTree()->GetSelection());
 }
 
 void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
@@ -727,7 +728,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		ShowTab(meshTabButton, outfitShapes);
 		masksPane->Show();
 
-		SetNoSubMeshes();
+		segPartEditor->SetNoSubMeshes();
 		SelectTool(glView->GetLastTool());
 	}
 	else if (id == boneTabButton->GetId())
@@ -741,7 +742,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 	else if (id == lightsTabButton->GetId()) {
 		ShowTab(lightsTabButton, lightSettings);
 
-		SetNoSubMeshes();
+		segPartEditor->SetNoSubMeshes();
 		SelectTool(glView->GetLastTool());
 	}
 

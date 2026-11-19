@@ -95,6 +95,7 @@ struct ClippingFixOptions;
 class OutfitStudioFrame;
 class AnimationPlayer;
 class PhysicsPreview;
+class SegmentPartitionEditor;
 class ArchiveBrowser;
 class BrushStrokeController;
 class EditUV;
@@ -181,9 +182,9 @@ public:
 	OutfitProject* project = nullptr;
 	EditorState editor;
 	ShapeItemData* activeItem = nullptr;
+	std::vector<ShapeItemData*> selectedItems;
+	bool ShapeSelectionCheck();
 	bool autoFrameSelected = false;
-	std::vector<int> triParts;	// the partition index for each triangle, or -1 for none
-	std::vector<int> triSParts; // the segment partition index for each triangle, or -1 for none
 
 	std::deque<ProjectHistoryEntry> projectHistory;
 
@@ -193,8 +194,6 @@ public:
 	wxTreeCtrl* outfitShapes = nullptr;
 	wxTreeCtrl* outfitBones = nullptr;
 	wxPanel* colorSettings = nullptr;
-	wxTreeCtrl* segmentTree = nullptr;
-	wxTreeCtrl* partitionTree = nullptr;
 	wxPanel* lightSettings = nullptr;
 	wxChoice* hdriBackground = nullptr;
 	// Set when the user picks "No background" themselves. A project full of Complex Materials turns
@@ -251,8 +250,6 @@ public:
 	wxTreeItemId shapesRoot;
 	wxTreeItemId outfitRoot;
 	wxTreeItemId bonesRoot;
-	wxTreeItemId segmentRoot;
-	wxTreeItemId partitionRoot;
 
 	std::map<std::string, wxSliderPanel*> sliderPanels;
 
@@ -344,23 +341,8 @@ public:
 	void CalcAutoXMirrorBone();
 	std::string GetXMirrorBone();
 
-	void ShowSegment(const wxTreeItemId& item = nullptr);
-	void UpdateSegmentNames();
-	void ApplySegmentVisibility(Mesh* m);
-	void ResetSegmentVisibility();
-	bool GrowShrinkSegmentPartitionSelection(bool grow);
-	bool PaintSegmentPartitionTriangles(Mesh* hitMesh, int hitTri, const nifly::Vector3& hitPointModel, float radiusModel);
-
-	void ShowPartition(const wxTreeItemId& item = nullptr);
-	void RefreshActivePartitionTree();
-	void RefreshActiveSegmentTree();
-	void UpdatePartitionNames();
-	void ApplyPartitionVisibility(Mesh* m);
-	void ResetPartitionVisibility();
-
-	void SetSubMeshesForPartitions(Mesh* m, const std::vector<int>& tp);
-	void SetNoSubMeshes(Mesh* m);
-	void SetNoSubMeshes();
+	// The segments and partitions of the active shape, with the trees and controls of their tabs
+	std::unique_ptr<SegmentPartitionEditor> segPartEditor;
 
 	void LockShapeSelect();
 	void UnlockShapeSelect();
@@ -436,15 +418,12 @@ private:
 	bool pendingChanges = false;
 
 	bool selectionLocked = false;
-	std::vector<ShapeItemData*> selectedItems;
 	bool recursingUI = false;
 	// The transform tool was on when hiding bones/nodes on the bones tab turned it off
 	bool boneTransformSuspended = false;
 	// Parent for bones added from a viewport context menu opened on a bone that
 	// isn't in the project, used instead of the active bone
 	std::string contextParentBone;
-	wxTreeItemId activeSegment;
-	wxTreeItemId activePartition;
 	std::string lastCheckedSlider;
 
 	std::vector<RefTemplate> refTemplates;
@@ -463,14 +442,12 @@ private:
 
 	void UpdateMeshFromSet(nifly::NiShape* shape);
 
-	bool ShapeSelectionCheck();
 
 	bool HasUnweightedCheck();
 	void CalcCopySkinTransOption(WeightCopyOptions& options);
 	void CopyWeightsToSelectedShapes(bool selectedBonesOnly);
 	void ReselectBone();
 
-	int CopySegPartForShapes(std::vector<nifly::NiShape*> shapes, bool silent = false);
 
 	bool ShowVertexAsym(Mesh* m, const SymmetricVertices& symverts, const VertexAsymmetries& asyms, VertexAsymmetryTasks& tasks, const std::vector<bool>& selVerts, bool trize);
 
@@ -597,41 +574,6 @@ private:
 	void OnBoneContext(wxTreeEvent& event);
 	void OnBoneTreeContext(wxCommandEvent& event);
 
-	int CalcMaxSegPartID();
-	void OnSegmentSelect(wxTreeEvent& event);
-	void OnSegmentVisToggle(wxTreeEvent& event);
-	void OnSegmentContext(wxTreeEvent& event);
-	void OnSegmentTreeContext(wxCommandEvent& event);
-	void OnAddSegment(wxCommandEvent& event);
-	void OnAddSubSegment(wxCommandEvent& event);
-	void OnDeleteSegment(wxCommandEvent& event);
-	void OnDeleteSubSegment(wxCommandEvent& event);
-
-	void UpdateActiveSlotID();
-	void OnSegmentSlotChanged(wxCommandEvent& event);
-
-	void OnSegmentTypeChanged(wxCommandEvent& event);
-	void OnSegmentApply(wxCommandEvent& event);
-	void ApplySegments();
-	void OnSegmentReset(wxCommandEvent& event);
-	void ResetSegments();
-	void OnSegmentEditSSF(wxCommandEvent& event);
-
-	void OnPartitionSelect(wxTreeEvent& event);
-	void OnPartitionVisToggle(wxTreeEvent& event);
-	void OnPartitionContext(wxTreeEvent& event);
-	void OnPartitionTreeContext(wxCommandEvent& event);
-	void OnAddPartition(wxCommandEvent& event);
-	void OnDeletePartition(wxCommandEvent& event);
-	void OnPartitionTypeChanged(wxCommandEvent& event);
-	void OnPartitionApply(wxCommandEvent& event);
-	void ApplyPartitions();
-	void OnPartitionReset(wxCommandEvent& event);
-	void ResetPartitions();
-
-	void CreateSegmentTree(nifly::NiShape* shape = nullptr);
-	void CreatePartitionTree(nifly::NiShape* shape = nullptr);
-
 	void OnSelectTool(wxCommandEvent& event);
 
 	void OnSetView(wxCommandEvent& event);
@@ -751,7 +693,6 @@ private:
 	void OnMaskWeighted(wxCommandEvent& event);
 	void OnCheckBadBones(wxCommandEvent& event);
 	void OnMaskBoneWeighted(wxCommandEvent& event);
-	void OnCopySegPart(wxCommandEvent& event);
 	void OnMaskSymVert(wxCommandEvent& event);
 	void OnSymVert(wxCommandEvent& event);
 	void OnMaskSymTri(wxCommandEvent& event);

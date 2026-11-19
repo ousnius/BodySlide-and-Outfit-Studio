@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioProjectHost.h"
+#include "SegmentPartitionEditor.h"
 #include "OutfitStudioFrame.h"
 #include "FrameHelpers.h"
 #include "GLPanel.h"
@@ -119,7 +120,7 @@ void OutfitStudioProjectHost::OnAnimationChanged() {
 }
 
 void OutfitStudioProjectHost::OnPartitionsChanged() {
-	frame->ShowPartition();
+	frame->segPartEditor->ShowPartition();
 }
 
 void OutfitStudioProjectHost::OnShapeDeleting(NiShape* shape) {

@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
+#include "outfitstudio/SegmentPartitionEditor.h"
 #include "McpHelpers.h"
 #include "outfitstudio/OutfitStudioFrame.h"
 #include "outfitstudio/GLPanel.h"
@@ -1045,7 +1046,7 @@ McpToolResult SetPartitions(OutfitStudioMcp& mcp, const json& args) {
 		throw McpToolError(std::to_string(unassigned) + " triangles have no partition. Assign them, e.g. with all: true.");
 
 	nif->SetShapePartitions(shape, partitions, triParts);
-	frame->RefreshActivePartitionTree();
+	frame->segPartEditor->RefreshActivePartitionTree();
 	frame->SetPendingChanges();
 	return GetPartitions(mcp, {{"shape", shape->name.get()}});
 }
@@ -1149,7 +1150,7 @@ McpToolResult SetSegments(OutfitStudioMcp& mcp, const json& args) {
 
 	NifFile::SetShapeSegments(shape, segments, triParts);
 	frame->MeshFromProj(shape);
-	frame->RefreshActiveSegmentTree();
+	frame->segPartEditor->RefreshActiveSegmentTree();
 	frame->SetPendingChanges();
 	return GetPartitions(mcp, {{"shape", shape->name.get()}});
 }

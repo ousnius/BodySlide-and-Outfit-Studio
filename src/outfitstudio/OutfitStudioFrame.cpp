@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "OutfitStudioFrame.h"
+#include "SegmentPartitionEditor.h"
 #include "PhysicsPreview.h"
 #include "AnimationPlayer.h"
 #include "ui/AppSetup.h"
@@ -310,7 +311,6 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("maskWeightedVerts"), OutfitStudioFrame::OnMaskWeighted)
 	EVT_MENU(XRCID("checkBadBones"), OutfitStudioFrame::OnCheckBadBones)
 	EVT_MENU(XRCID("maskBoneWeightedVerts"), OutfitStudioFrame::OnMaskBoneWeighted)
-	EVT_MENU(XRCID("copySegPart"), OutfitStudioFrame::OnCopySegPart)
 	EVT_MENU(XRCID("maskSymVert"), OutfitStudioFrame::OnMaskSymVert)
 	EVT_MENU(XRCID("symVert"), OutfitStudioFrame::OnSymVert)
 	EVT_MENU(XRCID("maskSymTri"), OutfitStudioFrame::OnMaskSymTri)
@@ -339,29 +339,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_TREE_ITEM_RIGHT_CLICK(XRCID("outfitBones"), OutfitStudioFrame::OnBoneContext)
 	EVT_COMMAND_RIGHT_CLICK(XRCID("outfitBones"), OutfitStudioFrame::OnBoneTreeContext)
 
-	EVT_TREE_STATE_IMAGE_CLICK(XRCID("segmentTree"), OutfitStudioFrame::OnSegmentVisToggle)
-	EVT_TREE_SEL_CHANGED(XRCID("segmentTree"), OutfitStudioFrame::OnSegmentSelect)
-	EVT_TREE_ITEM_RIGHT_CLICK(XRCID("segmentTree"), OutfitStudioFrame::OnSegmentContext)
-	EVT_COMMAND_RIGHT_CLICK(XRCID("segmentTree"), OutfitStudioFrame::OnSegmentTreeContext)
-	EVT_MENU(XRCID("addSegment"), OutfitStudioFrame::OnAddSegment)
-	EVT_MENU(XRCID("addSubSegment"), OutfitStudioFrame::OnAddSubSegment)
-	EVT_MENU(XRCID("deleteSegment"), OutfitStudioFrame::OnDeleteSegment)
-	EVT_MENU(XRCID("deleteSubSegment"), OutfitStudioFrame::OnDeleteSubSegment)
-	EVT_CHOICE(XRCID("segmentSlot"), OutfitStudioFrame::OnSegmentSlotChanged)
-	EVT_CHOICE(XRCID("segmentType"), OutfitStudioFrame::OnSegmentTypeChanged)
-	EVT_BUTTON(XRCID("segmentApply"), OutfitStudioFrame::OnSegmentApply)
-	EVT_BUTTON(XRCID("segmentReset"), OutfitStudioFrame::OnSegmentReset)
-	EVT_BUTTON(XRCID("segmentSSFEdit"), OutfitStudioFrame::OnSegmentEditSSF)
 
-	EVT_TREE_STATE_IMAGE_CLICK(XRCID("partitionTree"), OutfitStudioFrame::OnPartitionVisToggle)
-	EVT_TREE_SEL_CHANGED(XRCID("partitionTree"), OutfitStudioFrame::OnPartitionSelect)
-	EVT_TREE_ITEM_RIGHT_CLICK(XRCID("partitionTree"), OutfitStudioFrame::OnPartitionContext)
-	EVT_COMMAND_RIGHT_CLICK(XRCID("partitionTree"), OutfitStudioFrame::OnPartitionTreeContext)
-	EVT_MENU(XRCID("addPartition"), OutfitStudioFrame::OnAddPartition)
-	EVT_MENU(XRCID("deletePartition"), OutfitStudioFrame::OnDeletePartition)
-	EVT_CHOICE(XRCID("partitionType"), OutfitStudioFrame::OnPartitionTypeChanged)
-	EVT_BUTTON(XRCID("partitionApply"), OutfitStudioFrame::OnPartitionApply)
-	EVT_BUTTON(XRCID("partitionReset"), OutfitStudioFrame::OnPartitionReset)
 
 	EVT_BUTTON(XRCID("meshTabButton"), OutfitStudioFrame::OnTabButtonClick)
 	EVT_BUTTON(XRCID("boneTabButton"), OutfitStudioFrame::OnTabButtonClick)
@@ -435,6 +413,7 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	dispatcher = std::make_unique<MainThreadDispatcher>([this]() { CallAfter([this]() { dispatcher->ProcessPending(); }); });
 	animation = std::make_unique<AnimationPlayer>(*this);
 	physicsPreview = std::make_unique<PhysicsPreview>(*this);
+	segPartEditor = std::make_unique<SegmentPartitionEditor>(*this);
 
 	wxLogMessage("Loading Outfit Studio frame at X:%d Y:%d with W:%d H:%d...", pos.x, pos.y, size.GetWidth(), size.GetHeight());
 
@@ -590,35 +569,7 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 
 	colorSettings = (wxPanel*)FindWindowByName("colorSettings");
 
-	segmentTree = (wxTreeCtrl*)FindWindowByName("segmentTree");
-	if (segmentTree) {
-		wxImageList* segmentStateImages = new wxImageList(16, 16, false, 2);
-		wxBitmap visImg(wxString::FromUTF8(Config["AppDir"]) + "/res/images/icoVisible.png", wxBITMAP_TYPE_PNG);
-		wxBitmap invImg(wxString::FromUTF8(Config["AppDir"]) + "/res/images/icoInvisible.png", wxBITMAP_TYPE_PNG);
-
-		if (visImg.IsOk())
-			segmentStateImages->Add(visImg);
-		if (invImg.IsOk())
-			segmentStateImages->Add(invImg);
-
-		segmentTree->AssignStateImageList(segmentStateImages);
-		segmentRoot = segmentTree->AddRoot("Segments");
-	}
-
-	partitionTree = (wxTreeCtrl*)FindWindowByName("partitionTree");
-	if (partitionTree) {
-		wxImageList* partitionStateImages = new wxImageList(16, 16, false, 2);
-		wxBitmap visImg(wxString::FromUTF8(Config["AppDir"]) + "/res/images/icoVisible.png", wxBITMAP_TYPE_PNG);
-		wxBitmap invImg(wxString::FromUTF8(Config["AppDir"]) + "/res/images/icoInvisible.png", wxBITMAP_TYPE_PNG);
-
-		if (visImg.IsOk())
-			partitionStateImages->Add(visImg);
-		if (invImg.IsOk())
-			partitionStateImages->Add(invImg);
-
-		partitionTree->AssignStateImageList(partitionStateImages);
-		partitionRoot = partitionTree->AddRoot("Partitions");
-	}
+	segPartEditor->Init();
 
 	int ambient = Config.GetIntValue("Lights/Ambient");
 	int frontal = Config.GetIntValue("Lights/Frontal");

@@ -3,8 +3,8 @@ BodySlide and Outfit Studio
 See the included LICENSE file
 */
 
-// Outfit Studio window: segments and partitions
 
+#include "SegmentPartitionEditor.h"
 #include "OutfitStudioFrame.h"
 #include "FrameHelpers.h"
 #include "ShapeTreeItems.h"
@@ -22,11 +22,85 @@ See the included LICENSE file
 
 using namespace nifly;
 
-void OutfitStudioFrame::OnSegmentSelect(wxTreeEvent& event) {
+SegmentPartitionEditor::SegmentPartitionEditor(OutfitStudioFrame& frame)
+	: frame(frame) {}
+
+void SegmentPartitionEditor::Init() {
+	segmentTree = (wxTreeCtrl*)frame.FindWindowByName("segmentTree");
+	if (segmentTree) {
+		wxImageList* segmentStateImages = new wxImageList(16, 16, false, 2);
+		wxBitmap visImg(wxString::FromUTF8(Config["AppDir"]) + "/res/images/icoVisible.png", wxBITMAP_TYPE_PNG);
+		wxBitmap invImg(wxString::FromUTF8(Config["AppDir"]) + "/res/images/icoInvisible.png", wxBITMAP_TYPE_PNG);
+
+		if (visImg.IsOk())
+			segmentStateImages->Add(visImg);
+		if (invImg.IsOk())
+			segmentStateImages->Add(invImg);
+
+		segmentTree->AssignStateImageList(segmentStateImages);
+		segmentRoot = segmentTree->AddRoot("Segments");
+	}
+
+	partitionTree = (wxTreeCtrl*)frame.FindWindowByName("partitionTree");
+	if (partitionTree) {
+		wxImageList* partitionStateImages = new wxImageList(16, 16, false, 2);
+		wxBitmap visImg(wxString::FromUTF8(Config["AppDir"]) + "/res/images/icoVisible.png", wxBITMAP_TYPE_PNG);
+		wxBitmap invImg(wxString::FromUTF8(Config["AppDir"]) + "/res/images/icoInvisible.png", wxBITMAP_TYPE_PNG);
+
+		if (visImg.IsOk())
+			partitionStateImages->Add(visImg);
+		if (invImg.IsOk())
+			partitionStateImages->Add(invImg);
+
+		partitionTree->AssignStateImageList(partitionStateImages);
+		partitionRoot = partitionTree->AddRoot("Partitions");
+	}
+
+	frame.Bind(wxEVT_MENU, &SegmentPartitionEditor::OnCopySegPart, this, XRCID("copySegPart"));
+	frame.Bind(wxEVT_TREE_STATE_IMAGE_CLICK, &SegmentPartitionEditor::OnSegmentVisToggle, this, XRCID("segmentTree"));
+	frame.Bind(wxEVT_TREE_SEL_CHANGED, &SegmentPartitionEditor::OnSegmentSelect, this, XRCID("segmentTree"));
+	frame.Bind(wxEVT_TREE_ITEM_RIGHT_CLICK, &SegmentPartitionEditor::OnSegmentContext, this, XRCID("segmentTree"));
+	frame.Bind(wxEVT_COMMAND_RIGHT_CLICK, &SegmentPartitionEditor::OnSegmentTreeContext, this, XRCID("segmentTree"));
+	frame.Bind(wxEVT_MENU, &SegmentPartitionEditor::OnAddSegment, this, XRCID("addSegment"));
+	frame.Bind(wxEVT_MENU, &SegmentPartitionEditor::OnAddSubSegment, this, XRCID("addSubSegment"));
+	frame.Bind(wxEVT_MENU, &SegmentPartitionEditor::OnDeleteSegment, this, XRCID("deleteSegment"));
+	frame.Bind(wxEVT_MENU, &SegmentPartitionEditor::OnDeleteSubSegment, this, XRCID("deleteSubSegment"));
+	frame.Bind(wxEVT_CHOICE, &SegmentPartitionEditor::OnSegmentSlotChanged, this, XRCID("segmentSlot"));
+	frame.Bind(wxEVT_CHOICE, &SegmentPartitionEditor::OnSegmentTypeChanged, this, XRCID("segmentType"));
+	frame.Bind(wxEVT_BUTTON, &SegmentPartitionEditor::OnSegmentApply, this, XRCID("segmentApply"));
+	frame.Bind(wxEVT_BUTTON, &SegmentPartitionEditor::OnSegmentReset, this, XRCID("segmentReset"));
+	frame.Bind(wxEVT_BUTTON, &SegmentPartitionEditor::OnSegmentEditSSF, this, XRCID("segmentSSFEdit"));
+	frame.Bind(wxEVT_TREE_STATE_IMAGE_CLICK, &SegmentPartitionEditor::OnPartitionVisToggle, this, XRCID("partitionTree"));
+	frame.Bind(wxEVT_TREE_SEL_CHANGED, &SegmentPartitionEditor::OnPartitionSelect, this, XRCID("partitionTree"));
+	frame.Bind(wxEVT_TREE_ITEM_RIGHT_CLICK, &SegmentPartitionEditor::OnPartitionContext, this, XRCID("partitionTree"));
+	frame.Bind(wxEVT_COMMAND_RIGHT_CLICK, &SegmentPartitionEditor::OnPartitionTreeContext, this, XRCID("partitionTree"));
+	frame.Bind(wxEVT_MENU, &SegmentPartitionEditor::OnAddPartition, this, XRCID("addPartition"));
+	frame.Bind(wxEVT_MENU, &SegmentPartitionEditor::OnDeletePartition, this, XRCID("deletePartition"));
+	frame.Bind(wxEVT_CHOICE, &SegmentPartitionEditor::OnPartitionTypeChanged, this, XRCID("partitionType"));
+	frame.Bind(wxEVT_BUTTON, &SegmentPartitionEditor::OnPartitionApply, this, XRCID("partitionApply"));
+	frame.Bind(wxEVT_BUTTON, &SegmentPartitionEditor::OnPartitionReset, this, XRCID("partitionReset"));
+}
+
+void SegmentPartitionEditor::DeleteSelectedSegment() {
+	wxCommandEvent evt;
+	OnDeleteSegment(evt);
+}
+
+void SegmentPartitionEditor::DeleteSelectedPartition() {
+	wxCommandEvent evt;
+	OnDeletePartition(evt);
+}
+
+void SegmentPartitionEditor::ClearActive() {
+	activePartition.Unset();
+	activeSegment.Unset();
+}
+
+void SegmentPartitionEditor::OnSegmentSelect(wxTreeEvent& event) {
 	ShowSegment(event.GetItem());
 }
 
-void OutfitStudioFrame::OnSegmentVisToggle(wxTreeEvent& event) {
+void SegmentPartitionEditor::OnSegmentVisToggle(wxTreeEvent& event) {
 	wxTreeItemId item = event.GetItem();
 	if (!item.IsOk() || !segmentTree->GetItemParent(item).IsOk()) {
 		event.Skip();
@@ -51,21 +125,21 @@ void OutfitStudioFrame::OnSegmentVisToggle(wxTreeEvent& event) {
 	}
 
 	Mesh* m = nullptr;
-	if (activeItem && activeItem->GetShape())
-		m = glView->GetMesh(activeItem->GetShape()->name.get());
+	if (frame.activeItem && frame.activeItem->GetShape())
+		m = frame.glView->GetMesh(frame.activeItem->GetShape()->name.get());
 
 	if (m) {
 		if (m->subMeshes.empty())
 			SetSubMeshesForPartitions(m, triSParts);
 
 		ApplySegmentVisibility(m);
-		glView->Render();
+		frame.glView->Render();
 	}
 
 	event.Skip();
 }
 
-void OutfitStudioFrame::OnSegmentContext(wxTreeEvent& event) {
+void SegmentPartitionEditor::OnSegmentContext(wxTreeEvent& event) {
 	if (!event.GetItem().IsOk())
 		return;
 
@@ -79,20 +153,20 @@ void OutfitStudioFrame::OnSegmentContext(wxTreeEvent& event) {
 		menu = wxXmlResource::Get()->LoadMenu("menuSegmentContext");
 
 	if (menu) {
-		PopupMenu(menu);
+		frame.PopupMenu(menu);
 		delete menu;
 	}
 }
 
-void OutfitStudioFrame::OnSegmentTreeContext(wxCommandEvent& WXUNUSED(event)) {
+void SegmentPartitionEditor::OnSegmentTreeContext(wxCommandEvent& WXUNUSED(event)) {
 	wxMenu* menu = wxXmlResource::Get()->LoadMenu("menuSegmentTreeContext");
 	if (menu) {
-		PopupMenu(menu);
+		frame.PopupMenu(menu);
 		delete menu;
 	}
 }
 
-int OutfitStudioFrame::CalcMaxSegPartID() {
+int SegmentPartitionEditor::CalcMaxSegPartID() {
 	int maxid = -1;
 	wxTreeItemIdValue cookie;
 	wxTreeItemId child = segmentTree->GetFirstChild(segmentRoot, cookie);
@@ -113,7 +187,7 @@ int OutfitStudioFrame::CalcMaxSegPartID() {
 	return maxid;
 }
 
-void OutfitStudioFrame::OnAddSegment(wxCommandEvent& WXUNUSED(event)) {
+void SegmentPartitionEditor::OnAddSegment(wxCommandEvent& WXUNUSED(event)) {
 	int newPartID = CalcMaxSegPartID() + 1;
 	wxTreeItemId newItem;
 	if (!activeSegment.IsOk() || segmentTree->GetChildrenCount(segmentRoot) <= 0) {
@@ -133,10 +207,10 @@ void OutfitStudioFrame::OnAddSegment(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	UpdateSegmentNames();
-	segmentTabButton->SetPendingChanges();
+	frame.segmentTabButton->SetPendingChanges();
 }
 
-void OutfitStudioFrame::OnAddSubSegment(wxCommandEvent& WXUNUSED(event)) {
+void SegmentPartitionEditor::OnAddSubSegment(wxCommandEvent& WXUNUSED(event)) {
 	int newPartID = CalcMaxSegPartID() + 1;
 	wxTreeItemId newItem;
 	wxTreeItemId parent = segmentTree->GetItemParent(activeSegment);
@@ -163,10 +237,10 @@ void OutfitStudioFrame::OnAddSubSegment(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	UpdateSegmentNames();
-	segmentTabButton->SetPendingChanges();
+	frame.segmentTabButton->SetPendingChanges();
 }
 
-void OutfitStudioFrame::OnDeleteSegment(wxCommandEvent& WXUNUSED(event)) {
+void SegmentPartitionEditor::OnDeleteSegment(wxCommandEvent& WXUNUSED(event)) {
 	SegmentItemData* segmentData = dynamic_cast<SegmentItemData*>(segmentTree->GetItemData(activeSegment));
 	if (segmentData) {
 		// Collect list of partition IDs that will be disappearing.
@@ -213,10 +287,10 @@ void OutfitStudioFrame::OnDeleteSegment(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	UpdateSegmentNames();
-	segmentTabButton->SetPendingChanges();
+	frame.segmentTabButton->SetPendingChanges();
 }
 
-void OutfitStudioFrame::OnDeleteSubSegment(wxCommandEvent& WXUNUSED(event)) {
+void SegmentPartitionEditor::OnDeleteSubSegment(wxCommandEvent& WXUNUSED(event)) {
 	SubSegmentItemData* subSegmentData = dynamic_cast<SubSegmentItemData*>(segmentTree->GetItemData(activeSegment));
 	wxTreeItemId newSelItem;
 	if (subSegmentData) {
@@ -254,11 +328,11 @@ void OutfitStudioFrame::OnDeleteSubSegment(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	UpdateSegmentNames();
-	segmentTabButton->SetPendingChanges();
+	frame.segmentTabButton->SetPendingChanges();
 }
 
-void OutfitStudioFrame::UpdateActiveSlotID() {
-	wxChoice* segmentSlot = (wxChoice*)FindWindowByName("segmentSlot");
+void SegmentPartitionEditor::UpdateActiveSlotID() {
+	wxChoice* segmentSlot = (wxChoice*)frame.FindWindowByName("segmentSlot");
 
 	if (activeSegment.IsOk() && segmentTree->GetItemParent(activeSegment).IsOk()) {
 		SubSegmentItemData* subSegmentData = dynamic_cast<SubSegmentItemData*>(segmentTree->GetItemData(activeSegment));
@@ -277,16 +351,16 @@ void OutfitStudioFrame::UpdateActiveSlotID() {
 			}
 
 			UpdateSegmentNames();
-			segmentTabButton->SetPendingChanges();
+			frame.segmentTabButton->SetPendingChanges();
 		}
 	}
 }
 
-void OutfitStudioFrame::OnSegmentSlotChanged(wxCommandEvent& WXUNUSED(event)) {
+void SegmentPartitionEditor::OnSegmentSlotChanged(wxCommandEvent& WXUNUSED(event)) {
 	UpdateActiveSlotID();
 }
 
-void OutfitStudioFrame::OnSegmentTypeChanged(wxCommandEvent& event) {
+void SegmentPartitionEditor::OnSegmentTypeChanged(wxCommandEvent& event) {
 	wxChoice* segmentType = (wxChoice*)event.GetEventObject();
 
 	if (activeSegment.IsOk() && segmentTree->GetItemParent(activeSegment).IsOk()) {
@@ -301,16 +375,16 @@ void OutfitStudioFrame::OnSegmentTypeChanged(wxCommandEvent& event) {
 
 			subSegmentData->material = type;
 			UpdateSegmentNames();
-			segmentTabButton->SetPendingChanges();
+			frame.segmentTabButton->SetPendingChanges();
 		}
 	}
 }
 
-void OutfitStudioFrame::OnSegmentApply(wxCommandEvent& WXUNUSED(event)) {
+void SegmentPartitionEditor::OnSegmentApply(wxCommandEvent& WXUNUSED(event)) {
 	ApplySegments();
 }
 
-void OutfitStudioFrame::ApplySegments() {
+void SegmentPartitionEditor::ApplySegments() {
 	NifSegmentationInfo inf;
 
 	wxTreeItemIdValue cookie;
@@ -348,48 +422,48 @@ void OutfitStudioFrame::ApplySegments() {
 		child = segmentTree->GetNextChild(segmentRoot, cookie);
 	}
 
-	wxTextCtrl* segmentSSF = (wxTextCtrl*)FindWindowByName("segmentSSF");
+	wxTextCtrl* segmentSSF = (wxTextCtrl*)frame.FindWindowByName("segmentSSF");
 	inf.ssfFile = segmentSSF->GetValue().ToStdString();
 
-	project->GetWorkNif()->SetShapeSegments(activeItem->GetShape(), inf, triSParts);
-	MeshFromProj(activeItem->GetShape());
+	frame.project->GetWorkNif()->SetShapeSegments(frame.activeItem->GetShape(), inf, triSParts);
+	frame.MeshFromProj(frame.activeItem->GetShape());
 
-	CreateSegmentTree(activeItem->GetShape());
-	SetPendingChanges();
+	CreateSegmentTree(frame.activeItem->GetShape());
+	frame.SetPendingChanges();
 }
 
-void OutfitStudioFrame::OnSegmentReset(wxCommandEvent& WXUNUSED(event)) {
+void SegmentPartitionEditor::OnSegmentReset(wxCommandEvent& WXUNUSED(event)) {
 	ResetSegments();
 }
 
-void OutfitStudioFrame::ResetSegments() {
-	if (activeItem)
-		CreateSegmentTree(activeItem->GetShape());
+void SegmentPartitionEditor::ResetSegments() {
+	if (frame.activeItem)
+		CreateSegmentTree(frame.activeItem->GetShape());
 	else
 		CreateSegmentTree(nullptr);
 }
 
-void OutfitStudioFrame::OnSegmentEditSSF(wxCommandEvent& WXUNUSED(event)) {
-	auto segmentSSF = (wxTextCtrl*)FindWindowByName("segmentSSF");
+void SegmentPartitionEditor::OnSegmentEditSSF(wxCommandEvent& WXUNUSED(event)) {
+	auto segmentSSF = (wxTextCtrl*)frame.FindWindowByName("segmentSSF");
 
-	wxString result = GetTextFromUser(_("Please enter an SSF file path."), _("SSF File"), segmentSSF->GetValue(), this);
+	wxString result = GetTextFromUser(_("Please enter an SSF file path."), _("SSF File"), segmentSSF->GetValue(), &frame);
 	if (result.empty())
 		return;
 
 	segmentSSF->ChangeValue(result);
-	segmentTabButton->SetPendingChanges();
+	frame.segmentTabButton->SetPendingChanges();
 }
 
-void OutfitStudioFrame::CreateSegmentTree(NiShape* shape) {
+void SegmentPartitionEditor::CreateSegmentTree(NiShape* shape) {
 	if (segmentTree->GetChildrenCount(segmentRoot) > 0) {
 		triSParts.clear(); // DeleteChildren calls OnSegmentSelect
 		segmentTree->DeleteChildren(segmentRoot);
 	}
 
-	segmentTabButton->SetPendingChanges(false);
+	frame.segmentTabButton->SetPendingChanges(false);
 
 	NifSegmentationInfo inf;
-	if (project->GetWorkNif()->GetShapeSegments(shape, inf, triSParts)) {
+	if (frame.project->GetWorkNif()->GetShapeSegments(shape, inf, triSParts)) {
 		for (size_t i = 0; i < inf.segs.size(); i++) {
 			wxTreeItemId segID = segmentTree->AppendItem(segmentRoot, "Segment", -1, -1, new SegmentItemData(inf.segs[i].partID));
 			if (segID.IsOk()) {
@@ -403,7 +477,7 @@ void OutfitStudioFrame::CreateSegmentTree(NiShape* shape) {
 		}
 	}
 
-	wxTextCtrl* segmentSSF = (wxTextCtrl*)FindWindowByName("segmentSSF");
+	wxTextCtrl* segmentSSF = (wxTextCtrl*)frame.FindWindowByName("segmentSSF");
 	segmentSSF->ChangeValue(inf.ssfFile);
 
 	UpdateSegmentNames();
@@ -415,7 +489,7 @@ void OutfitStudioFrame::CreateSegmentTree(NiShape* shape) {
 		segmentTree->SelectItem(child);
 }
 
-void OutfitStudioFrame::ApplySegmentVisibility(Mesh* m) {
+void SegmentPartitionEditor::ApplySegmentVisibility(Mesh* m) {
 	if (!m)
 		return;
 
@@ -452,7 +526,7 @@ void OutfitStudioFrame::ApplySegmentVisibility(Mesh* m) {
 	}
 }
 
-void OutfitStudioFrame::ResetSegmentVisibility() {
+void SegmentPartitionEditor::ResetSegmentVisibility() {
 	if (segmentTree && segmentRoot.IsOk()) {
 		wxTreeItemIdValue cookie;
 		wxTreeItemId child = segmentTree->GetFirstChild(segmentRoot, cookie);
@@ -470,19 +544,19 @@ void OutfitStudioFrame::ResetSegmentVisibility() {
 		}
 	}
 
-	if (glView) {
-		for (auto& m : glView->gls.GetMeshes()) {
+	if (frame.glView) {
+		for (auto& m : frame.glView->gls.GetMeshes()) {
 			if (m)
 				m->subMeshesVisible.assign(m->subMeshes.size(), true);
 		}
 	}
 }
 
-bool OutfitStudioFrame::PaintSegmentPartitionTriangles(Mesh* hitMesh, int hitTri, const Vector3& hitPointModel, float radiusModel) {
-	if (!hitMesh || !activeItem || !glView->GetSegmentMode())
+bool SegmentPartitionEditor::PaintSegmentPartitionTriangles(Mesh* hitMesh, int hitTri, const Vector3& hitPointModel, float radiusModel) {
+	if (!hitMesh || !frame.activeItem || !frame.glView->GetSegmentMode())
 		return false;
 
-	auto shape = activeItem->GetShape();
+	auto shape = frame.activeItem->GetShape();
 	if (!shape || shape->name.get() != hitMesh->shapeName)
 		return false;
 
@@ -563,11 +637,11 @@ bool OutfitStudioFrame::PaintSegmentPartitionTriangles(Mesh* hitMesh, int hitTri
 	return changed;
 }
 
-bool OutfitStudioFrame::GrowShrinkSegmentPartitionSelection(bool grow) {
-	if (!activeItem || !glView->GetSegmentMode())
+bool SegmentPartitionEditor::GrowShrinkSegmentPartitionSelection(bool grow) {
+	if (!frame.activeItem || !frame.glView->GetSegmentMode())
 		return false;
 
-	auto shape = activeItem->GetShape();
+	auto shape = frame.activeItem->GetShape();
 	if (!shape)
 		return false;
 
@@ -766,21 +840,21 @@ bool OutfitStudioFrame::GrowShrinkSegmentPartitionSelection(bool grow) {
 		}
 	}
 
-	if (changed && currentTabButton)
-		currentTabButton->SetPendingChanges();
+	if (changed && frame.currentTabButton)
+		frame.currentTabButton->SetPendingChanges();
 
 	return changed;
 }
 
-void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item) {
-	if (!activeItem || !glView->GetSegmentMode())
+void SegmentPartitionEditor::ShowSegment(const wxTreeItemId& item) {
+	if (!frame.activeItem || !frame.glView->GetSegmentMode())
 		return;
 
-	wxChoice* segmentType = (wxChoice*)FindWindowByName("segmentType");
+	wxChoice* segmentType = (wxChoice*)frame.FindWindowByName("segmentType");
 	segmentType->Disable();
 	segmentType->SetSelection(0);
 
-	wxChoice* segmentSlot = (wxChoice*)FindWindowByName("segmentSlot");
+	wxChoice* segmentSlot = (wxChoice*)frame.FindWindowByName("segmentSlot");
 	segmentSlot->Disable();
 	segmentSlot->SetSelection(0);
 
@@ -792,8 +866,8 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item) {
 
 	// Get all triangles of the active shape
 	std::vector<Triangle> tris;
-	if (activeItem->GetShape())
-		activeItem->GetShape()->GetTriangles(tris);
+	if (frame.activeItem->GetShape())
+		frame.activeItem->GetShape()->GetTriangles(tris);
 	if (triSParts.size() != tris.size())
 		return;
 
@@ -855,7 +929,7 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item) {
 	}
 
 	// Display segmentation colors depending on what is selected
-	Mesh* m = glView->GetMesh(activeItem->GetShape()->name.get());
+	Mesh* m = frame.glView->GetMesh(frame.activeItem->GetShape()->name.get());
 	if (m) {
 		SetSubMeshesForPartitions(m, triSParts);
 		ApplySegmentVisibility(m);
@@ -871,17 +945,17 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item) {
 			}
 			else {
 				float colorValue = (pi + 1.0f) / (nsm + 1);
-				m->subMeshesColor[pi] = glView->CreateColorRamp(colorValue);
+				m->subMeshesColor[pi] = frame.glView->CreateColorRamp(colorValue);
 			}
 		}
 	}
 
-	glView->Render();
+	frame.glView->Render();
 }
 
-void OutfitStudioFrame::UpdateSegmentNames() {
-	auto segmentType = (wxChoice*)FindWindowByName("segmentType");
-	auto segmentSlot = (wxChoice*)FindWindowByName("segmentSlot");
+void SegmentPartitionEditor::UpdateSegmentNames() {
+	auto segmentType = (wxChoice*)frame.FindWindowByName("segmentType");
+	auto segmentSlot = (wxChoice*)frame.FindWindowByName("segmentSlot");
 
 	int segmentIndex = 0;
 	wxTreeItemIdValue cookie;
@@ -942,11 +1016,11 @@ void OutfitStudioFrame::UpdateSegmentNames() {
 	}
 }
 
-void OutfitStudioFrame::OnPartitionSelect(wxTreeEvent& event) {
+void SegmentPartitionEditor::OnPartitionSelect(wxTreeEvent& event) {
 	ShowPartition(event.GetItem());
 }
 
-void OutfitStudioFrame::OnPartitionVisToggle(wxTreeEvent& event) {
+void SegmentPartitionEditor::OnPartitionVisToggle(wxTreeEvent& event) {
 	wxTreeItemId item = event.GetItem();
 	if (!item.IsOk() || !partitionTree->GetItemParent(item).IsOk()) {
 		event.Skip();
@@ -956,21 +1030,21 @@ void OutfitStudioFrame::OnPartitionVisToggle(wxTreeEvent& event) {
 	partitionTree->SetItemState(item, partitionTree->GetItemState(item) == 1 ? 0 : 1);
 
 	Mesh* m = nullptr;
-	if (activeItem && activeItem->GetShape())
-		m = glView->GetMesh(activeItem->GetShape()->name.get());
+	if (frame.activeItem && frame.activeItem->GetShape())
+		m = frame.glView->GetMesh(frame.activeItem->GetShape()->name.get());
 
 	if (m) {
 		if (m->subMeshes.empty())
 			SetSubMeshesForPartitions(m, triParts);
 
 		ApplyPartitionVisibility(m);
-		glView->Render();
+		frame.glView->Render();
 	}
 
 	event.Skip();
 }
 
-void OutfitStudioFrame::OnPartitionContext(wxTreeEvent& event) {
+void SegmentPartitionEditor::OnPartitionContext(wxTreeEvent& event) {
 	if (!event.GetItem().IsOk())
 		return;
 
@@ -982,20 +1056,20 @@ void OutfitStudioFrame::OnPartitionContext(wxTreeEvent& event) {
 		menu = wxXmlResource::Get()->LoadMenu("menuPartitionContext");
 
 	if (menu) {
-		PopupMenu(menu);
+		frame.PopupMenu(menu);
 		delete menu;
 	}
 }
 
-void OutfitStudioFrame::OnPartitionTreeContext(wxCommandEvent& WXUNUSED(event)) {
+void SegmentPartitionEditor::OnPartitionTreeContext(wxCommandEvent& WXUNUSED(event)) {
 	wxMenu* menu = wxXmlResource::Get()->LoadMenu("menuPartitionTreeContext");
 	if (menu) {
-		PopupMenu(menu);
+		frame.PopupMenu(menu);
 		delete menu;
 	}
 }
 
-void OutfitStudioFrame::OnAddPartition(wxCommandEvent& WXUNUSED(event)) {
+void SegmentPartitionEditor::OnAddPartition(wxCommandEvent& WXUNUSED(event)) {
 	bool isSkyrim = wxGetApp().targetGame == SKYRIM || wxGetApp().targetGame == SKYRIMSE || wxGetApp().targetGame == SKYRIMVR;
 
 	// Find an unused partition index
@@ -1016,7 +1090,7 @@ void OutfitStudioFrame::OnAddPartition(wxCommandEvent& WXUNUSED(event)) {
 	// Create partition item
 	wxTreeItemId newItem;
 	if (!activePartition.IsOk() || partitionTree->GetChildrenCount(partitionRoot) <= 0) {
-		auto shape = activeItem->GetShape();
+		auto shape = frame.activeItem->GetShape();
 		if (shape && shape->GetNumVertices() > 0) {
 			newItem = partitionTree->AppendItem(partitionRoot, "Partition", -1, -1, new PartitionItemData(partInd, isSkyrim ? 32 : 0));
 		}
@@ -1034,10 +1108,10 @@ void OutfitStudioFrame::OnAddPartition(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	UpdatePartitionNames();
-	partitionTabButton->SetPendingChanges();
+	frame.partitionTabButton->SetPendingChanges();
 }
 
-void OutfitStudioFrame::OnDeletePartition(wxCommandEvent& WXUNUSED(event)) {
+void SegmentPartitionEditor::OnDeletePartition(wxCommandEvent& WXUNUSED(event)) {
 	PartitionItemData* partitionData = dynamic_cast<PartitionItemData*>(partitionTree->GetItemData(activePartition));
 	if (partitionData) {
 		wxTreeItemId sibling = partitionTree->GetPrevSibling(activePartition);
@@ -1068,10 +1142,10 @@ void OutfitStudioFrame::OnDeletePartition(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	UpdatePartitionNames();
-	partitionTabButton->SetPendingChanges();
+	frame.partitionTabButton->SetPendingChanges();
 }
 
-void OutfitStudioFrame::OnPartitionTypeChanged(wxCommandEvent& event) {
+void SegmentPartitionEditor::OnPartitionTypeChanged(wxCommandEvent& event) {
 	wxChoice* partitionType = (wxChoice*)event.GetEventObject();
 
 	if (activePartition.IsOk() && partitionTree->GetItemParent(activePartition).IsOk()) {
@@ -1084,15 +1158,15 @@ void OutfitStudioFrame::OnPartitionTypeChanged(wxCommandEvent& event) {
 	}
 
 	UpdatePartitionNames();
-	partitionTabButton->SetPendingChanges();
+	frame.partitionTabButton->SetPendingChanges();
 }
 
-void OutfitStudioFrame::OnPartitionApply(wxCommandEvent& WXUNUSED(event)) {
+void SegmentPartitionEditor::OnPartitionApply(wxCommandEvent& WXUNUSED(event)) {
 	ApplyPartitions();
 }
 
-void OutfitStudioFrame::ApplyPartitions() {
-	auto shape = activeItem->GetShape();
+void SegmentPartitionEditor::ApplyPartitions() {
+	auto shape = frame.activeItem->GetShape();
 	if (!shape)
 		return;
 
@@ -1123,49 +1197,49 @@ void OutfitStudioFrame::ApplyPartitions() {
 		if (delPartFlags[pi])
 			delPartInds.push_back(pi);
 
-	project->GetWorkNif()->SetShapePartitions(shape, partitionInfo, triParts);
+	frame.project->GetWorkNif()->SetShapePartitions(shape, partitionInfo, triParts);
 	if (!delPartInds.empty())
-		project->GetWorkNif()->DeletePartitions(shape, delPartInds);
+		frame.project->GetWorkNif()->DeletePartitions(shape, delPartInds);
 
 	CreatePartitionTree(shape);
-	SetPendingChanges();
+	frame.SetPendingChanges();
 }
 
-void OutfitStudioFrame::OnPartitionReset(wxCommandEvent& WXUNUSED(event)) {
+void SegmentPartitionEditor::OnPartitionReset(wxCommandEvent& WXUNUSED(event)) {
 	ResetPartitions();
 }
 
-void OutfitStudioFrame::ResetPartitions() {
-	if (activeItem)
-		CreatePartitionTree(activeItem->GetShape());
+void SegmentPartitionEditor::ResetPartitions() {
+	if (frame.activeItem)
+		CreatePartitionTree(frame.activeItem->GetShape());
 	else
 		CreatePartitionTree(nullptr);
 }
 
-void OutfitStudioFrame::RefreshActivePartitionTree() {
-	if (activeItem)
-		CreatePartitionTree(activeItem->GetShape());
+void SegmentPartitionEditor::RefreshActivePartitionTree() {
+	if (frame.activeItem)
+		CreatePartitionTree(frame.activeItem->GetShape());
 	else
 		CreatePartitionTree(nullptr);
 }
 
-void OutfitStudioFrame::RefreshActiveSegmentTree() {
-	if (activeItem)
-		CreateSegmentTree(activeItem->GetShape());
+void SegmentPartitionEditor::RefreshActiveSegmentTree() {
+	if (frame.activeItem)
+		CreateSegmentTree(frame.activeItem->GetShape());
 	else
 		CreateSegmentTree(nullptr);
 }
 
-void OutfitStudioFrame::CreatePartitionTree(NiShape* shape) {
+void SegmentPartitionEditor::CreatePartitionTree(NiShape* shape) {
 	if (partitionTree->GetChildrenCount(partitionRoot) > 0) {
 		triParts.clear(); // DeleteChildren calls OnPartitionSelect
 		partitionTree->DeleteChildren(partitionRoot);
 	}
 
-	partitionTabButton->SetPendingChanges(false);
+	frame.partitionTabButton->SetPendingChanges(false);
 
 	NiVector<BSDismemberSkinInstance::PartitionInfo> partitionInfo;
-	if (project->GetWorkNif()->GetShapePartitions(shape, partitionInfo, triParts)) {
+	if (frame.project->GetWorkNif()->GetShapePartitions(shape, partitionInfo, triParts)) {
 		for (uint32_t i = 0; i < partitionInfo.size(); i++) {
 			wxTreeItemId item = partitionTree->AppendItem(partitionRoot, "Partition", -1, -1, new PartitionItemData(static_cast<int>(i), partitionInfo[i].partID));
 			partitionTree->SetItemState(item, 0);
@@ -1181,7 +1255,7 @@ void OutfitStudioFrame::CreatePartitionTree(NiShape* shape) {
 		partitionTree->SelectItem(child);
 }
 
-void OutfitStudioFrame::ApplyPartitionVisibility(Mesh* m) {
+void SegmentPartitionEditor::ApplyPartitionVisibility(Mesh* m) {
 	if (!m)
 		return;
 
@@ -1202,7 +1276,7 @@ void OutfitStudioFrame::ApplyPartitionVisibility(Mesh* m) {
 	}
 }
 
-void OutfitStudioFrame::ResetPartitionVisibility() {
+void SegmentPartitionEditor::ResetPartitionVisibility() {
 	if (partitionTree && partitionRoot.IsOk()) {
 		wxTreeItemIdValue cookie;
 		wxTreeItemId child = partitionTree->GetFirstChild(partitionRoot, cookie);
@@ -1212,23 +1286,23 @@ void OutfitStudioFrame::ResetPartitionVisibility() {
 		}
 	}
 
-	if (glView) {
-		for (auto& m : glView->gls.GetMeshes()) {
+	if (frame.glView) {
+		for (auto& m : frame.glView->gls.GetMeshes()) {
 			if (m)
 				m->subMeshesVisible.assign(m->subMeshes.size(), true);
 		}
 	}
 }
 
-void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item) {
-	if (!activeItem || !glView->GetSegmentMode())
+void SegmentPartitionEditor::ShowPartition(const wxTreeItemId& item) {
+	if (!frame.activeItem || !frame.glView->GetSegmentMode())
 		return;
 
-	auto shape = activeItem->GetShape();
+	auto shape = frame.activeItem->GetShape();
 	if (!shape)
 		return;
 
-	wxChoice* partitionType = (wxChoice*)FindWindowByName("partitionType");
+	wxChoice* partitionType = (wxChoice*)frame.FindWindowByName("partitionType");
 	partitionType->Disable();
 	partitionType->SetSelection(0);
 	wxArrayString partitionStrings = partitionType->GetStrings();
@@ -1257,7 +1331,7 @@ void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item) {
 	}
 
 	// Display partition colors depending on what is selected
-	Mesh* m = glView->GetMesh(activeItem->GetShape()->name.get());
+	Mesh* m = frame.glView->GetMesh(frame.activeItem->GetShape()->name.get());
 	if (m) {
 		SetSubMeshesForPartitions(m, triParts);
 		ApplyPartitionVisibility(m);
@@ -1268,7 +1342,7 @@ void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item) {
 
 		for (int pi = 0; pi < nsm; ++pi) {
 			float colorValue = (pi + 1.0f) / (nsm + 1);
-			m->subMeshesColor[pi] = glView->CreateColorRamp(colorValue);
+			m->subMeshesColor[pi] = frame.glView->CreateColorRamp(colorValue);
 		}
 
 		// Set color for selected partition
@@ -1281,11 +1355,11 @@ void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item) {
 		}
 	}
 
-	glView->Render();
+	frame.glView->Render();
 }
 
-void OutfitStudioFrame::UpdatePartitionNames() {
-	wxChoice* partitionType = (wxChoice*)FindWindowByName("partitionType");
+void SegmentPartitionEditor::UpdatePartitionNames() {
+	wxChoice* partitionType = (wxChoice*)frame.FindWindowByName("partitionType");
 	wxArrayString partitionStrings = partitionType->GetStrings();
 
 	wxTreeItemIdValue cookie;
@@ -1311,7 +1385,7 @@ void OutfitStudioFrame::UpdatePartitionNames() {
 	}
 }
 
-void OutfitStudioFrame::SetSubMeshesForPartitions(Mesh* m, const std::vector<int>& tp) {
+void SegmentPartitionEditor::SetSubMeshesForPartitions(Mesh* m, const std::vector<int>& tp) {
 	uint32_t nTris = static_cast<uint32_t>(tp.size());
 
 	// Sort triangles (via triInds) by partition number, negative partition
@@ -1361,7 +1435,7 @@ void OutfitStudioFrame::SetSubMeshesForPartitions(Mesh* m, const std::vector<int
 	m->QueueUpdate(Mesh::UpdateType::Indices);
 }
 
-void OutfitStudioFrame::SetNoSubMeshes(Mesh* m) {
+void SegmentPartitionEditor::SetNoSubMeshes(Mesh* m) {
 	if (!m)
 		return;
 
@@ -1376,25 +1450,25 @@ void OutfitStudioFrame::SetNoSubMeshes(Mesh* m) {
 	m->QueueUpdate(Mesh::UpdateType::Indices);
 }
 
-void OutfitStudioFrame::SetNoSubMeshes() {
-	if (!activeItem)
+void SegmentPartitionEditor::SetNoSubMeshes() {
+	if (!frame.activeItem)
 		return;
 
-	SetNoSubMeshes(glView->GetMesh(activeItem->GetShape()->name.get()));
+	SetNoSubMeshes(frame.glView->GetMesh(frame.activeItem->GetShape()->name.get()));
 }
 
-void OutfitStudioFrame::OnCopySegPart(wxCommandEvent& WXUNUSED(event)) {
-	if (!ShapeSelectionCheck())
+void SegmentPartitionEditor::OnCopySegPart(wxCommandEvent& WXUNUSED(event)) {
+	if (!frame.ShapeSelectionCheck())
 		return;
 
-	if (!project->GetBaseShape()) {
+	if (!frame.project->GetBaseShape()) {
 		wxMessageBox(_("There is no reference shape!"), _("Error"));
 		return;
 	}
 
 	std::vector<NiShape*> selectedShapes;
-	for (auto& s : selectedItems) {
-		if (auto shape = s->GetShape(); !project->IsBaseShape(shape))
+	for (auto& s : frame.selectedItems) {
+		if (auto shape = s->GetShape(); !frame.project->IsBaseShape(shape))
 			selectedShapes.push_back(s->GetShape());
 		else
 			wxMessageBox(_("Sorry, you can't copy partitions/segments from the reference shape to itself. Skipping this shape."), _("Can't copy segments/partitions"), wxICON_WARNING);
@@ -1408,43 +1482,43 @@ void OutfitStudioFrame::OnCopySegPart(wxCommandEvent& WXUNUSED(event)) {
 	CopySegPartForShapes(selectedShapes);
 }
 
-int OutfitStudioFrame::CopySegPartForShapes(std::vector<NiShape*> shapes, bool silent) {
+int SegmentPartitionEditor::CopySegPartForShapes(std::vector<NiShape*> shapes, bool silent) {
 	if (shapes.empty())
 		return 0;
 
 	int failshapes = 0;
 
-	StartProgress(_("Copying segments/partitions..."));
+	frame.StartProgress(_("Copying segments/partitions..."));
 
 	const int inc = 100 / shapes.size() - 1;
 
 	for (size_t i = 0; i < shapes.size(); i++) {
 		NiShape* shape = shapes[i];
 		wxLogMessage("Copying segments/partitions to '%s'...", shape->name.get());
-		StartSubProgress(i * inc, i * inc + inc);
+		frame.StartSubProgress(i * inc, i * inc + inc);
 
-		int failcount = project->CopySegPart(shape);
+		int failcount = frame.project->CopySegPart(shape);
 		if (failcount && !silent)
 			wxMessageBox(wxString::Format(_("The partitions/segments could not be copied for '%s' because %d triangles could not be matched."), shape->name.get(), failcount), _("Error"));
 		if (failcount)
 			++failshapes;
 
 		if (!failcount) {
-			MeshFromProj(shape);
+			frame.MeshFromProj(shape);
 
-			if (shape == activeItem->GetShape()) {
+			if (shape == frame.activeItem->GetShape()) {
 				CreateSegmentTree(shape);
 				CreatePartitionTree(shape);
 			}
 		}
 
-		EndProgress();
+		frame.EndProgress();
 	}
 
-	SetPendingChanges();
-	UpdateUndoTools();
+	frame.SetPendingChanges();
+	frame.UpdateUndoTools();
 
-	EndProgress();
+	frame.EndProgress();
 
 	return failshapes;
 }

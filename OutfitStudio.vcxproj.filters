@@ -967,6 +967,9 @@
     <ClInclude Include="src\outfitstudio\PhysicsPreview.h">
       <Filter>Outfit Studio</Filter>
     </ClInclude>
+    <ClInclude Include="src\outfitstudio\SegmentPartitionEditor.h">
+      <Filter>Outfit Studio</Filter>
+    </ClInclude>
     <ClInclude Include="src\outfitstudio\DropTargets.h">
       <Filter>Outfit Studio</Filter>
     </ClInclude>
@@ -2502,7 +2505,7 @@
     <ClCompile Include="src\outfitstudio\FrameShapeOps.cpp">
       <Filter>Outfit Studio</Filter>
     </ClCompile>
-    <ClCompile Include="src\outfitstudio\FrameSegments.cpp">
+    <ClCompile Include="src\outfitstudio\SegmentPartitionEditor.cpp">
       <Filter>Outfit Studio</Filter>
     </ClCompile>
     <ClCompile Include="src\outfitstudio\FrameProjectFile.cpp">

@@ -6,6 +6,7 @@ See the included LICENSE file
 // Outfit Studio window: masks
 
 #include "OutfitStudioFrame.h"
+#include "SegmentPartitionEditor.h"
 #include "OutfitStudioApp.h"
 #include "GLPanel.h"
 #include "ShapeTreeItems.h"
@@ -102,9 +103,9 @@ void OutfitStudioFrame::OnMaskLess(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	if (glView->GetSegmentMode()) {
-		if (GrowShrinkSegmentPartitionSelection(false)) {
-			ShowSegment();
-			ShowPartition();
+		if (segPartEditor->GrowShrinkSegmentPartitionSelection(false)) {
+			segPartEditor->ShowSegment();
+			segPartEditor->ShowPartition();
 		}
 
 		if (glView->GetTransformMode())
@@ -127,9 +128,9 @@ void OutfitStudioFrame::OnMaskMore(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	if (glView->GetSegmentMode()) {
-		if (GrowShrinkSegmentPartitionSelection(true)) {
-			ShowSegment();
-			ShowPartition();
+		if (segPartEditor->GrowShrinkSegmentPartitionSelection(true)) {
+			segPartEditor->ShowSegment();
+			segPartEditor->ShowPartition();
 		}
 
 		if (glView->GetTransformMode())
