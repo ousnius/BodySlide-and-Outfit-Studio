@@ -47,7 +47,8 @@ std::set<std::string> ProjectDataFiles(SliderSet& set, const std::string& sep) {
 			std::string targetDataName = set[i].TargetDataName(target);
 			if (set[i].IsLocalData(targetDataName) && !set[i].IsInheritedData(targetDataName)) {
 				std::string dataFileName = set[i].DataFileName(targetDataName);
-				if (dataFileName.compare(dataFileName.size() - 4, dataFileName.size(), ".bsd") != 0) {
+				const bool isBSD = dataFileName.size() >= 4 && dataFileName.compare(dataFileName.size() - 4, 4, ".bsd") == 0;
+				if (!isBSD) {
 					// Split target file name to get OSD file name
 					int split = dataFileName.find_last_of('/');
 					if (split < 0)
@@ -156,6 +157,11 @@ PackResult PackProjects(const std::map<std::string, SliderSet>& sources,
 	const std::string shapeData = ProjectUtil::GetProjectPath() + sep + "ShapeData" + sep;
 
 	std::string mergedFilePath{wxFileName::CreateTempFileName("os").ToUTF8()};
+	// The targets copy the merged project right away, so the temporary file goes when packing ends either way
+	struct RemoveOnExit {
+		const std::string& path;
+		~RemoveOnExit() { wxRemoveFile(wxString::FromUTF8(path)); }
+	} removeMerged{mergedFilePath};
 	SliderSetFile projectFile;
 	projectFile.New(mergedFilePath);
 
