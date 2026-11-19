@@ -20,46 +20,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "components/AddOnSliders.h"
 #include "components/Anim.h"
 #include "components/BuildSelection.h"
-#include "components/ClippingFixer.h"
 #include "components/PoseData.h"
 #include "components/SliderCategories.h"
 #include "components/SliderData.h"
 #include "components/SliderGroup.h"
 #include "components/SliderManager.h"
-#include "files/TriFile.h"
 #include "physics/Controller.h"
 #include "physics/PumpClock.h"
 #include "utils/ConfigurationManager.h"
 #include "utils/Log.h"
 #include "utils/TargetGame.h"
-#include "ui/GroupManager.h"
-#include "ui/PresetSaveDialog.h"
-#include "PreviewWindow.h"
-#include "ui/bodyslide/PreviewPanel.h"
-#include "ui/wxFavoriteChoice.h"
-#include "ui/wxStateButton.h"
 
-#include "FSEngine/FSEngine.h"
-#include "FSEngine/FSManager.h"
-
-#include <wx/clrpicker.h>
+#include <wx/app.h>
 #include <wx/cmdline.h>
-#include <wx/collpane.h>
-#include <wx/dcbuffer.h>
-#include <wx/dir.h>
-#include <wx/html/htmlwin.h>
-#include <wx/imagpng.h>
 #include <wx/intl.h>
-#include <wx/listctrl.h>
-#include <wx/treelist.h>
-#include <wx/progdlg.h>
-#include <wx/splitter.h>
-#include <wx/srchctrl.h>
-#include <wx/statline.h>
-#include <wx/stdpaths.h>
-#include <wx/tokenzr.h>
-#include <wx/wxprec.h>
-#include <wx/xrc/xmlres.h>
 
 #include <atomic>
 #include <cstddef>
@@ -73,6 +47,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <unordered_set>
 #include <vector>
 
+class BodySlideFrame;
+class PreviewPanel;
+class PreviewWindow;
+class wxDialog;
+class wxTreeListCtrl;
+
+extern ConfigurationManager BodySlideConfig;
 
 // Marks favorites in the outfit, preset and animation lists and on their buttons
 constexpr const char* FavoriteStar = "\xE2\x98\x85";
@@ -86,8 +67,6 @@ struct ShapePreviewData {
 	std::vector<uint16_t> zapIdx;
 	int projectIdx = 0;
 };
-
-class BodySlideFrame;
 
 class BodySlideApp : public wxApp {
 	/* UI Managers */
@@ -150,6 +129,9 @@ private:
 	std::shared_ptr<ConformBody> GetConformBody(const ConformBodyRef& ref, bool conform, std::vector<std::string>& warnings);
 	// Logs the warnings and the vertex counts of stacked add-ons that don't fit the NIF anymore
 	void LogProjectAddOns(const SliderSet& set, const ProjectAddOns& addOns, nifly::NifFile* nif = nullptr);
+	// Logs what loading the base project of a variant or add-on turned up. With the NIF file, also
+	// whether the base project's shapes still fit the data of an add-on.
+	static void LogBaseProjectStatus(const SliderSet& set, nifly::NifFile* nif = nullptr);
 
 	/* Localization */
 	wxLocale* locale = nullptr;
@@ -590,287 +572,4 @@ public:
 	int SavePresetGroups(const std::string& outputFile, const std::string& presetName, std::vector<std::string>& groups);
 };
 
-#define DELAYLOAD_TIMER 299
-#define SLIDER_LO 1
-#define SLIDER_HI 2
-
-class SliderCategoryUI {
-	bool isCreated = false;
-
-public:
-	bool isShown = false;
-	bool isEnabled = false;
-	bool oneSize = false;
-
-	std::string categoryName;
-	std::vector<std::string> sliderNames;
-
-	wxPanel* dummyPanel1 = nullptr;
-	wxCheckBox* check = nullptr;
-	wxStaticText* label = nullptr;
-	wxPanel* dummyPanel2 = nullptr;
-	wxStateButton* tabButton = nullptr;
-
-	SliderCategoryUI();
-
-	bool IsCreated() { return isCreated; }
-
-	bool Create(wxScrolledWindow* scrollWindow,
-				wxSizer* sliderLayout,
-				wxSizer* categoryTabSizer,
-				const std::string& name,
-				const std::vector<std::string>& sliders,
-				bool pEnabled = true,
-				bool pOneSize = false);
-	void Show(bool show = true);
-	void Destroy();
-};
-
-// How a slider is marked in the slider list
-enum class SliderMarker {
-	None,
-	AddOn,		  // From an add-on
-	AutoConformed // Conformed from an add-on of the body when loading
-};
-
-class SliderDisplay {
-	bool isCreated = false;
-
-public:
-	bool isShown = false;
-	bool isZap = false; // Shown as a check box, for zaps and toggles
-	bool oneSize = false;
-	bool isForced = false; // Held at a value by a ticked toggle
-	wxString markerTip;
-
-	std::string sliderName;
-	std::string displayName;
-	std::string categoryName;
-
-	wxStaticText* lblSliderLo = nullptr;
-	wxSlider* sliderLo = nullptr;
-	wxTextCtrl* sliderReadoutLo = nullptr;
-	wxStaticText* lblSliderHi = nullptr;
-	wxSlider* sliderHi = nullptr;
-	wxTextCtrl* sliderReadoutHi = nullptr;
-	wxCheckBox* zapCheckHi = nullptr;
-	wxCheckBox* zapCheckLo = nullptr;
-
-	SliderDisplay();
-
-	bool IsCreated() { return isCreated; }
-
-	bool Create(
-		wxScrolledWindow* scrollWindow, wxSizer* sliderLayout, const std::string& name, const std::string& category, const std::string& display, int minValue, int maxValue, bool pIsZap, bool pOneSize = false);
-	void Show(bool show = true);
-	// Colors the labels and gives the slider a tooltip, which pooled sliders take over otherwise
-	void SetMarker(SliderMarker marker, const wxString& tip);
-	// Holds the slider at the value that the named toggle sets, or gives it back with an empty name
-	void SetForcedBy(const wxString& toggleName);
-};
-
-class SliderDisplayPool {
-	std::vector<SliderDisplay*> pool;
-
-	const size_t MaxPoolSize = 500;
-
-public:
-	SliderDisplay* Push();
-	void CreatePool(size_t poolSize, wxScrolledWindow* scrollWindow, wxSizer* sliderLayout);
-	SliderDisplay* Get(size_t index);
-	SliderDisplay* GetNext();
-	void Clear();
-};
-
-class BodySlideFrame : public wxFrame {
-public:
-	SliderDisplayPool sliderPool;
-	std::unordered_map<std::string, SliderDisplay*> sliderDisplays;
-	std::unordered_map<std::string, SliderCategoryUI*> sliderCategories;
-
-	wxTimer delayLoad;
-
-	wxFavoriteChoice* outfitChoice = nullptr;
-	wxStaticText* lblOutfitBase = nullptr;
-	wxStaticText* lblOutfitAddOns = nullptr;
-	wxFavoriteChoice* presetChoice = nullptr;
-	wxButton* btnFavoriteOutfit = nullptr;
-	wxButton* btnFavoritePreset = nullptr;
-	wxButton* btnSavePreset = nullptr;
-	wxSearchCtrl* search = nullptr;
-	wxSearchCtrl* outfitsearch = nullptr;
-	wxSearchCtrl* sliderFilter = nullptr;
-	wxSearchCtrl* presetFilter = nullptr;
-	wxSizer* categoryTabSizer = nullptr;
-
-	wxScrolledWindow* sliderScroll = nullptr;
-	wxFlexGridSizer* sliderLayout = nullptr;
-
-	wxListCtrl* batchBuildList = nullptr;
-
-	// Batch build list items that are checked by default, and the ones whose output was last built from them
-	enum class BatchBuildState { NotBuilt, BuiltWithPreset, BuiltWithOtherPreset, OtherOutfitBuilt };
-	std::vector<bool> batchBuildDefaults;
-	std::vector<BatchBuildState> batchBuildStates;
-
-	wxMenu* fileCollisionMenu = nullptr;
-	std::vector<std::string> outfitChoiceNames;
-	std::vector<std::string> presetChoiceNames;
-	bool populatingChoices = false;
-
-	// Splitter and embedded preview
-	wxSplitterWindow* splitter = nullptr;
-	wxPanel* leftPanel = nullptr;
-	PreviewPanel* previewPanel = nullptr;
-	bool previewVisible = true;
-	bool previewOnLeft = false;
-	int savedSashPosition = -1;
-	int savedPreviewWidth = 0;
-
-	// Helpers for preview docking/undocking
-	void UnsplitPreview();
-	void SplitPreview(wxPanel* panel = nullptr);
-	void SetPreviewOnLeft(bool onLeft);
-	void UpdatePreviewButtonLabel();
-
-	BodySlideFrame(BodySlideApp* app, const wxSize& size);
-	~BodySlideFrame() { delete fileCollisionMenu; }
-
-	void HideSlider(SliderDisplay* slider);
-	void ShowLowColumn(bool show);
-	void AddCategorySliderUI(const std::string& name, const std::vector<std::string>& sliders, bool enabled, bool oneSize);
-	void AddSliderGUI(const std::string& name,
-					  const std::string& display,
-					  const std::string& categoryName,
-					  bool isZap,
-					  bool oneSize = false,
-					  SliderMarker marker = SliderMarker::None,
-					  const wxString& markerTip = wxEmptyString);
-
-	SliderDisplay* GetSliderDisplay(const std::string& name) {
-		if (sliderDisplays.find(name) != sliderDisplays.end())
-			return sliderDisplays[name];
-
-		return nullptr;
-	}
-
-	SliderCategoryUI* GetSliderCategory(const std::string& name) {
-		if (sliderCategories.find(name) != sliderCategories.end())
-			return sliderCategories[name];
-
-		return nullptr;
-	}
-
-	void ClearPresetList();
-	void ClearOutfitList();
-	// Shows under the outfit list what the loaded project is an add-on or variant of
-	void ShowOutfitBaseProject(const SliderSet* set);
-	// Shows next to it what add-ons the loaded project has sliders of, and which ones it misses
-	void ShowOutfitAddOns(const BodySlideApp::ProjectAddOns* addOns);
-	void ClearSliderGUI();
-	void SetPresetChanged(bool changed = true);
-
-	void PopulateOutfitList(const wxArrayString& items, const wxString& selectItem);
-	void PopulatePresetList(const wxArrayString& items, const wxString& selectItem);
-	std::string GetSelectedOutfitName() const;
-	std::string GetSelectedPresetName() const;
-
-	void SetSliderPosition(const wxString& name, float newValue, short HiLo);
-	void DoFilterSliders();
-
-	int lastScroll = 0;
-
-private:
-	void OnExit(wxCommandEvent& event);
-	void OnClose(wxCloseEvent& event);
-	void OnActivateFrame(wxActivateEvent& event);
-	void OnIconizeFrame(wxIconizeEvent& event);
-	void PostIconizeFrame();
-
-	void OnLinkClicked(wxHtmlLinkEvent& link);
-	void OnEnterClose(wxKeyEvent& event);
-
-	void OnEnterSliderWindow(wxMouseEvent& event);
-	wxString OutfitChoiceSuffix(const std::string& name) const;
-	bool SelectChoiceName(wxFavoriteChoice* choice, const std::vector<std::string>& names, const std::string& selectItem) const;
-	void SetFavoriteButtonBitmap(wxButton* button, bool favorite) const;
-	void UpdateFavoriteButtons();
-	void RebuildOutfitChoice(const std::string& selectItem);
-	void RebuildPresetChoice(const std::string& selectItem);
-	void OnSliderChange(wxScrollEvent& event);
-	void OnSliderReadoutChange(wxCommandEvent& event);
-	void OnSearchChange(wxCommandEvent& event);
-	void OnOutfitSearchChange(wxCommandEvent& event);
-
-	void OnSliderFilterChanged(wxCommandEvent&);
-	void OnPresetFilterChanged(wxCommandEvent&);
-
-	void OnZapCheckChanged(wxCommandEvent& event);
-	void OnCategoryCheckChanged(wxCommandEvent& event);
-	void OnCategoryTabButton(wxCommandEvent& event);
-
-	void OnEraseBackground(wxEraseEvent& event);
-
-	void OnDelayLoad(wxTimerEvent& event);
-
-	void OnChooseGroups(wxCommandEvent& event);
-	void OnRefreshGroups(wxCommandEvent& event);
-	void OnBrowseOutfitFolder(wxCommandEvent& event);
-	void OnSaveGroups(wxCommandEvent& event);
-	void OnRefreshOutfits(wxCommandEvent& event);
-	void OnRegexOutfits(wxCommandEvent& event);
-	void OnFilterHasZaps(wxCommandEvent& event);
-	void OnFilterOutputWinners(wxCommandEvent& event);
-
-	void OnChooseOutfit(wxCommandEvent& event);
-	void OnChoosePreset(wxCommandEvent& event);
-	void OnFavoriteOutfit(wxCommandEvent& event);
-	void OnFavoritePreset(wxCommandEvent& event);
-
-	void OnDeleteProject(wxCommandEvent& event);
-	void OnDeletePreset(wxCommandEvent& event);
-
-	void OnEditPreset(wxCommandEvent& event);
-	void OnSavePreset(wxCommandEvent& event);
-	void OnSavePresetAs(wxCommandEvent& event);
-	void OnGroupManager(wxCommandEvent& event);
-	void OnConflictPopup(wxMouseEvent& event);
-	void OnOutfitChoiceSelect(wxCommandEvent& event);
-
-	void OnPreview(wxCommandEvent& event);
-	void OnSashPosChanging(wxSplitterEvent& event);
-	void OnSashPosChanged(wxSplitterEvent& event);
-	void OnPreviewPopout(wxCommandEvent& event);
-	void OnPreviewWindowClosed();
-
-	void OnHighToLow(wxCommandEvent& event);
-	void OnLowToHigh(wxCommandEvent& event);
-	void OnBuildBodies(wxCommandEvent& event);
-	void OnConformAddOns(wxCommandEvent& event);
-	void OnBatchBuild(wxCommandEvent& event);
-	void OnBatchBuildContext(wxContextMenuEvent& event);
-	void OnBatchBuildKey(wxKeyEvent& event);
-	void OnBatchBuildSelect(wxCommandEvent& event);
-	void OnOutfitStudio(wxCommandEvent& event);
-	void OnSettings(wxCommandEvent& event);
-	void OnAbout(wxCommandEvent& event);
-	void OnMoveWindow(wxMoveEvent& event);
-	void OnSetSize(wxSizeEvent& event);
-
-	void OnEditProject(wxCommandEvent& event);
-
-	void OnClippingStrengthChanged(wxCommandEvent& event);
-
-	bool OutfitIsEmpty() {
-		if (!GetSelectedOutfitName().empty())
-			return false;
-
-		return true;
-	}
-
-	void RefreshTargetGameState();
-
-	BodySlideApp* app;
-
-	wxDECLARE_EVENT_TABLE();
-};
+wxDECLARE_APP(BodySlideApp);

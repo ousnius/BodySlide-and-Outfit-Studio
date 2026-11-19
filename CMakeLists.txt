@@ -594,6 +594,7 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 
 set(BSOS_BODYSLIDE_SOURCES
 	src/bodyslide/BodySlideApp.cpp
+	src/bodyslide/SliderDisplay.cpp
 	src/bodyslide/PreviewWindow.cpp
 	src/ui/bodyslide/NormalsGenDialog.cpp
 	src/ui/bodyslide/PreviewPanel.cpp

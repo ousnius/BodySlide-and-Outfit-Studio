@@ -757,6 +757,12 @@
     <ClInclude Include="src\bodyslide\BodySlideApp.h">
       <Filter>BodySlide</Filter>
     </ClInclude>
+    <ClInclude Include="src\bodyslide\SliderDisplay.h">
+      <Filter>BodySlide</Filter>
+    </ClInclude>
+    <ClInclude Include="src\bodyslide\BodySlideFrame.h">
+      <Filter>BodySlide</Filter>
+    </ClInclude>
     <ClInclude Include="src\ui\GroupManager.h">
       <Filter>UI</Filter>
     </ClInclude>
@@ -1906,6 +1912,9 @@
       <Filter>BodySlide</Filter>
     </ClCompile>
     <ClCompile Include="src\bodyslide\BodySlideApp.cpp">
+      <Filter>BodySlide</Filter>
+    </ClCompile>
+    <ClCompile Include="src\bodyslide\SliderDisplay.cpp">
       <Filter>BodySlide</Filter>
     </ClCompile>
     <ClCompile Include="src\ui\GroupManager.cpp">

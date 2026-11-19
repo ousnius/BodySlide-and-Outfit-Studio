@@ -9,6 +9,8 @@ See the included LICENSE file
 #include "physics/Controller.h"
 #include "physics/PumpClock.h"
 #include "bodyslide/BodySlideApp.h"
+#include "FSEngine/FSEngine.h"
+#include "FSEngine/FSManager.h"
 #include "utils/PlatformUtil.h"
 
 #include <regex>
