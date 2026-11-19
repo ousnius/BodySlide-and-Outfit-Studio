@@ -7,6 +7,9 @@ See the included LICENSE file
 #include "components/MaskOps.h"
 #include "project/BrushStrokeController.h"
 #include "outfitstudio/OutfitStudioFrame.h"
+#include "outfitstudio/GLPanel.h"
+#include "components/TweakBrush.h"
+#include "components/UndoHistory.h"
 
 #include <algorithm>
 #include <cfloat>

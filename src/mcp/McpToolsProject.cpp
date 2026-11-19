@@ -8,6 +8,7 @@ See the included LICENSE file
 #include "components/AutomationJson.h"
 #include "project/AutomationRunner.h"
 #include "outfitstudio/OutfitStudioFrame.h"
+#include "utils/TargetGame.h"
 #include "utils/ConfigurationManager.h"
 #include "utils/GameUtil.h"
 #include "utils/ProjectUtil.h"

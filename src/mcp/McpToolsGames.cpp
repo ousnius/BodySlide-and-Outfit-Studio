@@ -9,6 +9,7 @@ See the included LICENSE file
 #include "files/GameDataStream.h"
 #include "project/GameImport.h"
 #include "outfitstudio/OutfitStudioFrame.h"
+#include "outfitstudio/GLPanel.h"
 #include "utils/ConfigurationManager.h"
 
 #include <wx/filename.h>

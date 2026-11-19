@@ -5,10 +5,16 @@ See the included LICENSE file
 
 #pragma once
 
-#include "outfitstudio/OutfitStudioFrame.h"
-
+#include <wx/button.h>
+#include <wx/checkbox.h>
+#include <wx/panel.h>
 #include <wx/popupwin.h>
 #include <wx/spinctrl.h>
+#include <wx/slider.h>
+#include <wx/sizer.h>
+#include <wx/stattext.h>
+
+class OutfitStudioFrame;
 
 class wxBrushSettingsPopupBase {
 protected:

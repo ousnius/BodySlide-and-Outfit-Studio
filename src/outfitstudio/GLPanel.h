@@ -87,19 +87,7 @@ public:
 
 	TweakBrush* GetActiveBrush() { return activeBrush; }
 
-	std::vector<TweakBrush*> GetBrushList() {
-		std::vector<TweakBrush*> brushList{&inflateBrush,
-										   &deflateBrush,
-										   &moveBrush,
-										   &smoothBrush,
-										   &undiffBrush,
-										   &maskBrush,
-										   &weightBrush,
-										   &colorBrush,
-										   &alphaBrush};
-
-		return brushList;
-	}
+	std::vector<TweakBrush*> GetBrushList();
 
 	void SetColorBrush(const nifly::Vector3& color) { colorBrush.color = color; }
 
@@ -188,42 +176,19 @@ public:
 	void SetBrushMode(bool on = true) { brushMode = on; }
 
 	bool GetVertexEdit() { return vertexEdit; }
-	void SetVertexEdit(bool on = true) {
-		vertexEdit = on;
-		ShowVertexEdit(on);
-		Render();
-	}
+	void SetVertexEdit(bool on = true);
 
 	bool GetTransformMode() { return transformMode; }
-	void SetTransformMode(bool on = true) {
-		transformMode = on;
-		ShowTransformTool(on);
-	}
+	void SetTransformMode(bool on = true);
 
 	bool GetPivotMode() { return pivotMode; }
-	void SetPivotMode(bool on = true) {
-		pivotMode = on;
-		ShowPivot(on);
-
-		if (transformMode)
-			ShowTransformTool();
-	}
+	void SetPivotMode(bool on = true);
 
 	bool GetSegmentMode() { return segmentMode; }
 	void SetSegmentMode(bool on = true) { segmentMode = on; }
 
-	bool GetToolOptionXMirror() {
-		if (activeTool == ToolID::WeightBrush)
-			return toolOptionXMirrorWeight;
-		return toolOptionXMirror;
-	}
-	void SetToolOptionXMirror(bool on = true) {
-		if (activeTool == ToolID::WeightBrush)
-			toolOptionXMirrorWeight = on;
-		else
-			toolOptionXMirror = on;
-		gls.SetXMirrorCursor(on);
-	}
+	bool GetToolOptionXMirror();
+	void SetToolOptionXMirror(bool on = true);
 
 	bool GetToolOptionConnectedOnly() { return toolOptionConnectedOnly; }
 	void SetToolOptionConnectedOnly(bool on = true) { toolOptionConnectedOnly = on; }
@@ -249,95 +214,25 @@ public:
 	bool GetToolOptionEdgeSlideUVCorrection() { return toolOptionEdgeSlideUVCorrection; }
 	void SetToolOptionEdgeSlideUVCorrection(bool on = true) { toolOptionEdgeSlideUVCorrection = on; }
 
-	void SetShapeGhostMode(const std::string& shapeName, bool on = true) {
-		Mesh* m = gls.GetMesh(shapeName);
-		if (!m)
-			return;
+	void SetShapeGhostMode(const std::string& shapeName, bool on = true);
 
-		if (on)
-			m->rendermode = Mesh::RenderMode::LitWire;
-		else
-			m->rendermode = Mesh::RenderMode::Normal;
-	}
+	void SetNormalSeamSmoothMode(bool enable);
 
-	void SetNormalSeamSmoothMode(bool enable) {
-		for (auto& m : gls.GetActiveMeshes()) {
-			m->smoothSeamNormals = enable;
-			m->SmoothNormals();
-		}
-	}
+	void SetLockNormalsMode(bool enable);
 
-	void SetLockNormalsMode(bool enable) {
-		for (auto& m : gls.GetActiveMeshes())
-			m->lockNormals = enable;
-	}
-
-	void RecalcNormals(const std::string& shapeName, bool force = false) {
-		Mesh* m = gls.GetMesh(shapeName);
-		if (!m)
-			return;
-
-		bool oldLockNormals = m->lockNormals;
-		if (m->lockNormals && force)
-			m->lockNormals = false;
-
-		m->SmoothNormals();
-		m->lockNormals = oldLockNormals;
-	}
+	void RecalcNormals(const std::string& shapeName, bool force = false);
 
 	float GetBrushSize() { return brushSize / BrushSizeScale; }
-	void SetBrushSize(float val) {
-		val *= BrushSizeScale;
-		brushSize = val;
-		gls.SetCursorSize(val);
-	}
-	void ResetBrushSize() {
-		brushSize = 0.45f;
-		gls.SetCursorSize(brushSize);
-	}
+	void SetBrushSize(float val);
+	void ResetBrushSize();
 
-	float IncBrush(float step = 0.010f) {
-		gls.SetCursorSize(gls.GetCursorSize() + step);
-		brushSize += step;
-		LimitBrushSize();
-		return brushSize;
-	}
-	float DecBrush(float step = 0.010f) {
-		gls.SetCursorSize(gls.GetCursorSize() - step);
-		brushSize -= step;
-		LimitBrushSize();
-		return brushSize;
-	}
+	float IncBrush(float step = 0.010f);
+	float DecBrush(float step = 0.010f);
 
-	void LimitBrushSize() {
-		if (brushSize < 0.000f) {
-			gls.SetCursorSize(0.000f);
-			brushSize = 0.000f;
-		}
-		else if (brushSize > BrushSizeScale) {
-			gls.SetCursorSize(BrushSizeScale);
-			brushSize = BrushSizeScale;
-		}
-	}
+	void LimitBrushSize();
 
-	float IncStr() {
-		if (!activeBrush)
-			return 0.0f;
-
-		float str = activeBrush->getStrength();
-		str += 0.010f;
-		activeBrush->setStrength(str);
-		return str;
-	}
-	float DecStr() {
-		if (!activeBrush)
-			return 0.0f;
-
-		float str = activeBrush->getStrength();
-		str -= 0.010f;
-		activeBrush->setStrength(str);
-		return str;
-	}
+	float IncStr();
+	float DecStr();
 
 	void SetCursorType(GLSurface::CursorType cursorType) { gls.SetCursorType(cursorType); }
 
@@ -355,86 +250,23 @@ public:
 
 	void SetColorsVisible(bool bVisible = true) { gls.SetVertexColors(bVisible); }
 
-	void ClearMasks() {
-		for (auto& m : gls.GetMeshes())
-			if (!m->bPrimitive)
-				m->MaskFill(0.0f);
-	}
+	void ClearMasks();
 
-	void ClearActiveMask() {
-		for (auto& m : gls.GetActiveMeshes())
-			m->MaskFill(0.0f);
-	}
+	void ClearActiveMask();
 
-	void ClearColors() {
-		for (auto& m : gls.GetMeshes())
-			if (!m->bPrimitive)
-				m->ColorFill(nifly::Vector3());
-	}
+	void ClearColors();
 
-	void ClearActiveColors() {
-		for (auto& m : gls.GetActiveMeshes())
-			m->ColorFill(nifly::Vector3());
-	}
+	void ClearActiveColors();
 
-	void GetActiveMask(std::unordered_map<uint16_t, float>& mask) {
-		if (gls.GetActiveMeshes().empty())
-			return;
+	void GetActiveMask(std::unordered_map<uint16_t, float>& mask);
 
-		Mesh* m = gls.GetActiveMeshes().back();
+	void GetActiveUnmasked(std::unordered_map<uint16_t, float>& mask);
 
-		for (int i = 0; i < m->nVerts; i++) {
-			if (m->mask[i] != 0.0f)
-				mask[i] = m->mask[i];
-		}
-	}
+	void GetShapeMask(std::unordered_map<uint16_t, float>& mask, const std::string& shapeName);
 
-	void GetActiveUnmasked(std::unordered_map<uint16_t, float>& mask) {
-		if (gls.GetActiveMeshes().empty())
-			return;
+	void GetShapeUnmasked(std::unordered_map<uint16_t, float>& mask, const std::string& shapeName);
 
-		Mesh* m = gls.GetActiveMeshes().back();
-
-		for (int i = 0; i < m->nVerts; i++)
-			if (m->mask[i] == 0.0f)
-				mask[i] = m->mask[i];
-	}
-
-	void GetShapeMask(std::unordered_map<uint16_t, float>& mask, const std::string& shapeName) {
-		Mesh* m = gls.GetMesh(shapeName);
-		if (!m)
-			return;
-
-		for (int i = 0; i < m->nVerts; i++) {
-			if (m->mask[i] != 0.0f)
-				mask[i] = m->mask[i];
-		}
-	}
-
-	void GetShapeUnmasked(std::unordered_map<uint16_t, float>& mask, const std::string& shapeName) {
-		Mesh* m = gls.GetMesh(shapeName);
-		if (!m)
-			return;
-
-		for (int i = 0; i < m->nVerts; i++)
-			if (m->mask[i] == 0.0f)
-				mask[i] = m->mask[i];
-	}
-
-	void SetShapeMask(std::unordered_map<uint16_t, float>& mask, const std::string& shapeName) {
-		Mesh* m = gls.GetMesh(shapeName);
-		if (!m)
-			return;
-
-		for (int i = 0; i < m->nVerts; i++) {
-			if (mask.find(i) != mask.end())
-				m->mask[i] = mask[i];
-			else
-				m->mask[i] = 0.0f;
-		}
-
-		m->QueueUpdate(Mesh::UpdateType::Mask);
-	}
+	void SetShapeMask(std::unordered_map<uint16_t, float>& mask, const std::string& shapeName);
 
 	std::unordered_map<std::string, std::vector<float>> StashMasks();
 	void UnstashMasks(const std::unordered_map<std::string, std::vector<float>>& stash);
@@ -447,131 +279,21 @@ public:
 	void InvertMask();
 	void ClearMask();
 
-	void InvertMaskTris(std::unordered_map<uint16_t, float>& mask, const std::string& shapeName) {
-		Mesh* m = gls.GetMesh(shapeName);
-		if (!m)
-			return;
+	void InvertMaskTris(std::unordered_map<uint16_t, float>& mask, const std::string& shapeName);
 
-		std::unordered_map<uint16_t, float> triMask;
-		for (int t = 0; t < m->nTris; t++) {
-			auto& tri = m->tris[t];
-			if (mask.find(tri.p1) != mask.end() || mask.find(tri.p2) != mask.end() || mask.find(tri.p3) != mask.end()) {
-				triMask.emplace(tri.p1, 1.0f);
-				triMask.emplace(tri.p2, 1.0f);
-				triMask.emplace(tri.p3, 1.0f);
-			}
-		}
+	nifly::Vector3 CreateColorRamp(const float value);
 
-		std::unordered_map<uint16_t, float> invertMask;
-		for (int t = 0; t < m->nTris; t++) {
-			auto& tri = m->tris[t];
-			if (triMask.find(tri.p1) == triMask.end())
-				invertMask.emplace(tri.p1, 1.0f);
-			if (triMask.find(tri.p2) == triMask.end())
-				invertMask.emplace(tri.p2, 1.0f);
-			if (triMask.find(tri.p3) == triMask.end())
-				invertMask.emplace(tri.p3, 1.0f);
-		}
+	void DeleteMesh(const std::string& shape);
 
-		mask = std::move(invertMask);
-	}
+	void Cleanup();
 
-	nifly::Vector3 CreateColorRamp(const float value) {
-		float r;
-		float g;
-		float b;
+	void SetView(const char type);
 
-		if (value <= 0.0f) {
-			r = g = b = 1.0;
-		}
-		else if (value <= 0.25) {
-			r = 0.0;
-			b = 1.0;
-			g = value / 0.25;
-		}
-		else if (value <= 0.5) {
-			r = 0.0;
-			g = 1.0;
-			b = 1.0 + (-1.0) * (value - 0.25) / 0.25;
-		}
-		else if (value <= 0.75) {
-			r = (value - 0.5) / 0.25;
-			g = 1.0;
-			b = 0.0;
-		}
-		else {
-			r = 1.0;
-			g = 1.0 + (-1.0) * (value - 0.75) / 0.25;
-			b = 0.0;
-		}
+	void SetPerspective(const bool enabled);
 
-		return nifly::Vector3(r, g, b);
-	}
+	void SetFieldOfView(const int fieldOfView);
 
-	void DeleteMesh(const std::string& shape) {
-		Mesh* m = gls.GetMesh(shape);
-		if (m) {
-			BVHUpdateQueue.erase(m);
-			gls.DeleteMesh(m);
-		}
-	}
-
-	void Cleanup() {
-		XMoveMesh = nullptr;
-		YMoveMesh = nullptr;
-		ZMoveMesh = nullptr;
-		XRotateMesh = nullptr;
-		YRotateMesh = nullptr;
-		ZRotateMesh = nullptr;
-		XScaleMesh = nullptr;
-		YScaleMesh = nullptr;
-		ZScaleMesh = nullptr;
-		ScaleUniformMesh = nullptr;
-
-		XPivotMesh = nullptr;
-		YPivotMesh = nullptr;
-		ZPivotMesh = nullptr;
-		PivotCenterMesh = nullptr;
-
-		RotationCenterMesh = nullptr;
-		RotationCenterMeshRingX = nullptr;
-		RotationCenterMeshRingY = nullptr;
-		RotationCenterMeshRingZ = nullptr;
-
-		nodesPoints.clear();
-		nodesLines.clear();
-		bonesPoints.clear();
-		bonesLines.clear();
-		floorMeshes.clear();
-
-		BVHUpdateQueue.clear();
-
-		gls.Cleanup();
-	}
-
-	void SetView(const char type) {
-		gls.SetView(type);
-
-		if (transformMode)
-			ShowTransformTool();
-		else
-			Render();
-	}
-
-	void SetPerspective(const bool enabled) {
-		gls.SetPerspective(enabled);
-		gls.RenderOneFrame();
-	}
-
-	void SetFieldOfView(const int fieldOfView) {
-		gls.SetFieldOfView(fieldOfView);
-		gls.RenderOneFrame();
-	}
-
-	void SetDepthClip(const float zNear, const float zFar) {
-		gls.SetDepthClip(zNear, zFar);
-		gls.RenderOneFrame();
-	}
+	void SetDepthClip(const float zNear, const float zFar);
 
 	void UpdateLights(const int ambient,
 					  const int frontal,
@@ -580,18 +302,11 @@ public:
 					  const int directional2,
 					  const nifly::Vector3& directional0Dir = nifly::Vector3(),
 					  const nifly::Vector3& directional1Dir = nifly::Vector3(),
-					  const nifly::Vector3& directonal2Dir = nifly::Vector3()) {
-		gls.UpdateLights(ambient, frontal, directional0, directional1, directional2, directional0Dir, directional1Dir, directonal2Dir);
-		gls.RenderOneFrame();
-	}
+					  const nifly::Vector3& directonal2Dir = nifly::Vector3());
 
 	// Loads an HDRi from res/hdri as the environment, empty for none. Also changes what shapes with a
 	// dynamic cubemap reflect, but not the meshes or their textures.
-	bool SetHDRiBackground(const std::string& fileName) {
-		const bool loaded = gls.SetHDRiBackground(fileName);
-		gls.RenderOneFrame();
-		return loaded;
-	}
+	bool SetHDRiBackground(const std::string& fileName);
 
 	bool HasHDRiBackground() const { return gls.HasHDRiBackground(); }
 

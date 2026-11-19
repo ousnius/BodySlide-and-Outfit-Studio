@@ -16,6 +16,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "OutfitStudioFrame.h"
+#include "GLPanel.h"
+#include "ShapeTreeItems.h"
+#include "ViewState.h"
+#include "utils/ConfigurationManager.h"
+#include "ui/wxStateButton.h"
+#include "ui/outfitstudio/WeightCopyDialog.h"
+#include "FSEngine/FSManager.h"
+#include "components/TweakBrush.h"
+#include "components/UndoHistory.h"
+#include "render/GLSurface.h"
+#include "utils/TargetGame.h"
 #include "DropTargets.h"
 #include "OutfitStudioApp.h"
 #include "mcp/OutfitStudioMcp.h"
@@ -4915,6 +4926,117 @@ wxString OutfitStudioFrame::ProjectNodeTooltip() const {
 		tip += "\n\n" + _("Sliders that come from the base project change with it.");
 
 	return tip;
+}
+
+void OutfitStudioFrame::CheckBrushBounds() {
+	TweakBrush* brush = glView->GetActiveBrush();
+	if (!brush)
+		return;
+
+	float size = glView->GetBrushSize();
+	float strength = brush->getStrength();
+	//float focus = brush->getFocus();
+	//float spacing = brush->getSpacing();
+
+	if (size >= 1.0f)
+		menuBar->Enable(XRCID("btnIncreaseSize"), false);
+	else
+		menuBar->Enable(XRCID("btnIncreaseSize"), true);
+
+	if (size <= 0.0f)
+		menuBar->Enable(XRCID("btnDecreaseSize"), false);
+	else
+		menuBar->Enable(XRCID("btnDecreaseSize"), true);
+
+	if (strength >= 1.0f)
+		menuBar->Enable(XRCID("btnIncreaseStr"), false);
+	else
+		menuBar->Enable(XRCID("btnIncreaseStr"), true);
+
+	if (strength <= 0.0f)
+		menuBar->Enable(XRCID("btnDecreaseStr"), false);
+	else
+		menuBar->Enable(XRCID("btnDecreaseStr"), true);
+}
+
+void OutfitStudioFrame::StartProgress(const wxString& msg) {
+	if (progressStack.empty()) {
+		progressVal = 0;
+		progressStack.emplace_back(0, 10000);
+
+		wxRect rect;
+		statusBar->GetFieldRect(1, rect);
+
+		wxBeginBusyCursor();
+		progressBar = new wxGauge(statusBar, wxID_ANY, 10000, rect.GetPosition(), rect.GetSize());
+
+		if (msg.IsEmpty())
+			statusBar->SetStatusText(_("Starting..."));
+		else
+			statusBar->SetStatusText(msg);
+
+		if (progressListener)
+			progressListener(0, msg);
+	}
+}
+
+void OutfitStudioFrame::StartSubProgress(int min, int max) {
+	if (progressStack.empty())
+		return;
+
+	int range = progressStack.back().second - progressStack.back().first;
+	float mindiv = min / 100.0f;
+	float maxdiv = max / 100.0f;
+	int minoff = mindiv * range + 1;
+	int maxoff = maxdiv * range + 1;
+	progressStack.emplace_back(minoff + progressStack.back().first, maxoff + progressStack.back().first);
+}
+
+void OutfitStudioFrame::EndProgress(const wxString& msg, bool forceEmpty) {
+	if (progressStack.empty())
+		return;
+
+	if (forceEmpty) {
+		progressBar->SetValue(progressStack.front().second);
+		progressStack.clear();
+	}
+	else {
+		progressBar->SetValue(progressStack.back().second);
+		progressStack.pop_back();
+	}
+
+	if (progressStack.empty()) {
+		if (msg.IsEmpty())
+			statusBar->SetStatusText(_("Ready!"));
+		else
+			statusBar->SetStatusText(msg);
+
+		if (progressListener)
+			progressListener(10000, msg);
+
+		delete progressBar;
+		progressBar = nullptr;
+		wxEndBusyCursor();
+	}
+}
+
+void OutfitStudioFrame::UpdateProgress(int val, const wxString& msg) {
+	if (progressStack.empty())
+		return;
+
+	int range = progressStack.back().second - progressStack.back().first;
+	float div = val / 100.0f;
+	int offset = range * div + 1;
+
+	progressVal = progressStack.back().first + offset;
+	if (progressVal > 10000)
+		progressVal = 10000;
+
+	statusBar->SetStatusText(msg);
+	progressBar->SetValue(progressVal);
+
+	if (progressListener)
+		progressListener(progressVal, msg);
 }
 
 void OutfitStudioFrame::AddProjectHistory(const std::string& fileName, const std::string& projectName) {
@@ -14553,6 +14675,95 @@ void OutfitStudioFrame::OnNPWizChangeSetNameChoice(wxCommandEvent& event) {
 	refShapeChoice->SetSelection(0);
 }
 
+void OutfitStudioFrame::OnXMirror(wxCommandEvent& event) {
+	glView->SetToolOptionXMirror(event.IsChecked());
+	if (event.IsChecked() && glView->GetActiveTool() == ToolID::MoveVertex) {
+		glView->SetToolOptionWeld(false);
+		glView->SetToolOptionMerge(false);
+	}
+	ReToggleToolOptionsUI();
+}
+
+void OutfitStudioFrame::OnConnectedOnly(wxCommandEvent& event) {
+	glView->SetToolOptionConnectedOnly(event.IsChecked());
+	ReToggleToolOptionsUI();
+}
+
+void OutfitStudioFrame::OnToolOptionMerge(wxCommandEvent& event) {
+	glView->SetToolOptionMerge(event.IsChecked());
+	if (event.IsChecked()) {
+		glView->SetToolOptionRestrictSurface(true);
+		glView->SetToolOptionXMirror(false);
+	}
+	ReToggleToolOptionsUI();
+}
+
+void OutfitStudioFrame::OnToolOptionWeld(wxCommandEvent& event) {
+	glView->SetToolOptionWeld(event.IsChecked());
+	if (event.IsChecked()) {
+		glView->SetToolOptionRestrictSurface(true);
+		glView->SetToolOptionXMirror(false);
+	}
+	ReToggleToolOptionsUI();
+}
+
+void OutfitStudioFrame::OnToolOptionRestrictSurface(wxCommandEvent& event) {
+	glView->SetToolOptionRestrictSurface(event.IsChecked());
+	if (event.IsChecked()) {
+		glView->SetToolOptionRestrictPlane(false);
+		glView->SetToolOptionEdgeSlide(false);
+	}
+	ReToggleToolOptionsUI();
+}
+
+void OutfitStudioFrame::OnToolOptionRestrictPlane(wxCommandEvent& event) {
+	glView->SetToolOptionRestrictPlane(event.IsChecked());
+	if (event.IsChecked()) {
+		glView->SetToolOptionRestrictSurface(false);
+		glView->SetToolOptionRestrictNormal(false);
+		glView->SetToolOptionEdgeSlide(false);
+	}
+	ReToggleToolOptionsUI();
+}
+
+void OutfitStudioFrame::OnToolOptionRestrictNormal(wxCommandEvent& event) {
+	glView->SetToolOptionRestrictNormal(event.IsChecked());
+	if (event.IsChecked()) {
+		glView->SetToolOptionRestrictPlane(false);
+		glView->SetToolOptionEdgeSlide(false);
+	}
+	ReToggleToolOptionsUI();
+}
+
+void OutfitStudioFrame::OnToolOptionEdgeSlide(wxCommandEvent& event) {
+	glView->SetToolOptionEdgeSlide(event.IsChecked());
+	if (event.IsChecked()) {
+		glView->SetToolOptionRestrictSurface(false);
+		glView->SetToolOptionRestrictPlane(false);
+		glView->SetToolOptionRestrictNormal(false);
+	}
+	ReEnableToolOptionsUI();
+	ReToggleToolOptionsUI();
+}
+
+void OutfitStudioFrame::OnUndo(wxCommandEvent& WXUNUSED(event)) {
+	if (glView->GetSegmentMode())
+		return;
+
+	glView->UndoStroke();
+	UpdateUndoTools();
+	SetPendingChanges();
+}
+
+void OutfitStudioFrame::OnRedo(wxCommandEvent& WXUNUSED(event)) {
+	if (glView->GetSegmentMode())
+		return;
+
+	glView->RedoStroke();
+	UpdateUndoTools();
+	SetPendingChanges();
+}
+
 void OutfitStudioFrame::OnLoadOutfitFP_File(wxFileDirPickerEvent& event) {
 	wxWindow* win = ((wxDialog*)event.GetEventObject())->GetParent();
 	XRCCTRL((*win), "npWorkFile", wxRadioButton)->SetValue(true);
@@ -14688,6 +14899,134 @@ void OutfitStudioFrame::OnEditUV(wxCommandEvent& WXUNUSED(event)) {
 		editUV->CenterOnParent();
 		editUV->Show();
 	}
+}
+
+void OutfitStudioFrame::CheckDisplayToggle(int id, bool enabled) {
+	menuBar->Check(id, enabled);
+	toolBarV->ToggleTool(id, enabled);
+}
+
+void OutfitStudioFrame::OnShowWireframe(wxCommandEvent& event) {
+	CheckDisplayToggle(event.GetId(), event.IsChecked());
+	glView->SetWireframe(event.IsChecked());
+	glView->Render();
+}
+
+void OutfitStudioFrame::OnEnableLighting(wxCommandEvent& event) {
+	CheckDisplayToggle(event.GetId(), event.IsChecked());
+	glView->SetLighting(event.IsChecked());
+	glView->Render();
+}
+
+void OutfitStudioFrame::OnEnableTextures(wxCommandEvent& event) {
+	CheckDisplayToggle(event.GetId(), event.IsChecked());
+	glView->SetTextures(event.IsChecked());
+	glView->Render();
+}
+
+void OutfitStudioFrame::OnEnableTints(wxCommandEvent& event) {
+	CheckDisplayToggle(event.GetId(), event.IsChecked());
+	glView->SetTints(event.IsChecked());
+	glView->Render();
+}
+
+void OutfitStudioFrame::OnEnableVertexColors(wxCommandEvent& e) {
+	// The colors tab always shows them, the choice applies when leaving it
+	CheckDisplayToggle(e.GetId(), e.IsChecked());
+	if (colorSettings->IsShown())
+		return;
+
+	glView->SetColorsVisible(e.IsChecked());
+	if (e.IsChecked())
+		FillVertexColors();
+	else
+		glView->ClearColors();
+
+	glView->Render();
+}
+
+void OutfitStudioFrame::OnIncBrush(wxCommandEvent& WXUNUSED(event)) {
+	if (glView->GetActiveBrush() && glView->GetBrushSize() < 1.0f) {
+		float v = glView->IncBrush() / BrushSizeScale;
+		if (statusBar)
+			statusBar->SetStatusText(wxString::Format("Rad: %f", v), 2);
+
+		CheckBrushBounds();
+		UpdateBrushSettings();
+	}
+}
+
+void OutfitStudioFrame::OnDecBrush(wxCommandEvent& WXUNUSED(event)) {
+	if (glView->GetActiveBrush() && glView->GetBrushSize() > 0.0f) {
+		float v = glView->DecBrush() / BrushSizeScale;
+		if (statusBar)
+			statusBar->SetStatusText(wxString::Format("Rad: %f", v), 2);
+
+		CheckBrushBounds();
+		UpdateBrushSettings();
+	}
+}
+
+void OutfitStudioFrame::OnIncStr(wxCommandEvent& WXUNUSED(event)) {
+	if (glView->GetActiveBrush() && glView->GetActiveBrush()->getStrength() < 1.0f) {
+		float v = glView->IncStr();
+		if (statusBar)
+			statusBar->SetStatusText(wxString::Format("Str: %f", v), 2);
+
+		CheckBrushBounds();
+		UpdateBrushSettings();
+	}
+}
+
+void OutfitStudioFrame::OnDecStr(wxCommandEvent& WXUNUSED(event)) {
+	if (glView->GetActiveBrush() && glView->GetActiveBrush()->getStrength() > 0.0f) {
+		float v = glView->DecStr();
+		if (statusBar)
+			statusBar->SetStatusText(wxString::Format("Str: %f", v), 2);
+
+		CheckBrushBounds();
+		UpdateBrushSettings();
+	}
+}
+
+void OutfitStudioFrame::OnClearMask(wxCommandEvent& WXUNUSED(event)) {
+	if (!activeItem)
+		return;
+
+	glView->gls.DeleteOverlay("refineErrorEdges");
+	glView->ClearMask();
+
+	if (glView->GetTransformMode())
+		glView->ShowTransformTool();
+	else
+		glView->Render();
+}
+
+void OutfitStudioFrame::OnInvertMask(wxCommandEvent& WXUNUSED(event)) {
+	if (!activeItem)
+		return;
+
+	glView->InvertMask();
+
+	if (glView->GetTransformMode())
+		glView->ShowTransformTool();
+	else
+		glView->Render();
+}
+
+void OutfitStudioFrame::OnDiscord(wxCommandEvent& WXUNUSED(event)) {
+	wxString url = "https://discordapp.com/invite/2qg2Rzw";
+	wxLaunchDefaultBrowser(url);
+}
+
+void OutfitStudioFrame::OnGitHub(wxCommandEvent& WXUNUSED(event)) {
+	wxString url = "https://github.com/ousnius/BodySlide-and-Outfit-Studio";
+	wxLaunchDefaultBrowser(url);
+}
+
+void OutfitStudioFrame::OnPayPal(wxCommandEvent& WXUNUSED(event)) {
+	wxString url = "https://www.paypal.me/ousnius";
+	wxLaunchDefaultBrowser(url);
 }
 
 void OutfitStudioFrame::OnSelectMask(wxCommandEvent& WXUNUSED(event)) {
@@ -16883,6 +17222,20 @@ void wxGLPanel::SetLastTool(ToolID tool) {
 	lastTool = tool;
 }
 
+std::vector<TweakBrush*> wxGLPanel::GetBrushList() {
+	std::vector<TweakBrush*> brushList{&inflateBrush,
+									   &deflateBrush,
+									   &moveBrush,
+									   &smoothBrush,
+									   &undiffBrush,
+									   &maskBrush,
+									   &weightBrush,
+									   &colorBrush,
+									   &alphaBrush};
+
+	return brushList;
+}
+
 void wxGLPanel::OnKeys(wxKeyEvent& event) {
 	// No editing shortcuts while an animation is playing.
 	if (os && os->IsAnimationPlaying()) {
@@ -18713,6 +19066,143 @@ void wxGLPanel::ClearMask() {
 	ApplyMaskChanges([](Mesh& m) { return MaskOps::ClearChanges(m); });
 }
 
+void wxGLPanel::InvertMaskTris(std::unordered_map<uint16_t, float>& mask, const std::string& shapeName) {
+	Mesh* m = gls.GetMesh(shapeName);
+	if (!m)
+		return;
+
+	std::unordered_map<uint16_t, float> triMask;
+	for (int t = 0; t < m->nTris; t++) {
+		auto& tri = m->tris[t];
+		if (mask.find(tri.p1) != mask.end() || mask.find(tri.p2) != mask.end() || mask.find(tri.p3) != mask.end()) {
+			triMask.emplace(tri.p1, 1.0f);
+			triMask.emplace(tri.p2, 1.0f);
+			triMask.emplace(tri.p3, 1.0f);
+		}
+	}
+
+	std::unordered_map<uint16_t, float> invertMask;
+	for (int t = 0; t < m->nTris; t++) {
+		auto& tri = m->tris[t];
+		if (triMask.find(tri.p1) == triMask.end())
+			invertMask.emplace(tri.p1, 1.0f);
+		if (triMask.find(tri.p2) == triMask.end())
+			invertMask.emplace(tri.p2, 1.0f);
+		if (triMask.find(tri.p3) == triMask.end())
+			invertMask.emplace(tri.p3, 1.0f);
+	}
+
+	mask = std::move(invertMask);
+}
+
+nifly::Vector3 wxGLPanel::CreateColorRamp(const float value) {
+	float r;
+	float g;
+	float b;
+
+	if (value <= 0.0f) {
+		r = g = b = 1.0;
+	}
+	else if (value <= 0.25) {
+		r = 0.0;
+		b = 1.0;
+		g = value / 0.25;
+	}
+	else if (value <= 0.5) {
+		r = 0.0;
+		g = 1.0;
+		b = 1.0 + (-1.0) * (value - 0.25) / 0.25;
+	}
+	else if (value <= 0.75) {
+		r = (value - 0.5) / 0.25;
+		g = 1.0;
+		b = 0.0;
+	}
+	else {
+		r = 1.0;
+		g = 1.0 + (-1.0) * (value - 0.75) / 0.25;
+		b = 0.0;
+	}
+
+	return nifly::Vector3(r, g, b);
+}
+
+void wxGLPanel::DeleteMesh(const std::string& shape) {
+	Mesh* m = gls.GetMesh(shape);
+	if (m) {
+		BVHUpdateQueue.erase(m);
+		gls.DeleteMesh(m);
+	}
+}
+
+void wxGLPanel::Cleanup() {
+	XMoveMesh = nullptr;
+	YMoveMesh = nullptr;
+	ZMoveMesh = nullptr;
+	XRotateMesh = nullptr;
+	YRotateMesh = nullptr;
+	ZRotateMesh = nullptr;
+	XScaleMesh = nullptr;
+	YScaleMesh = nullptr;
+	ZScaleMesh = nullptr;
+	ScaleUniformMesh = nullptr;
+
+	XPivotMesh = nullptr;
+	YPivotMesh = nullptr;
+	ZPivotMesh = nullptr;
+	PivotCenterMesh = nullptr;
+
+	RotationCenterMesh = nullptr;
+	RotationCenterMeshRingX = nullptr;
+	RotationCenterMeshRingY = nullptr;
+	RotationCenterMeshRingZ = nullptr;
+
+	nodesPoints.clear();
+	nodesLines.clear();
+	bonesPoints.clear();
+	bonesLines.clear();
+	floorMeshes.clear();
+
+	BVHUpdateQueue.clear();
+
+	gls.Cleanup();
+}
+
+void wxGLPanel::SetView(const char type) {
+	gls.SetView(type);
+
+	if (transformMode)
+		ShowTransformTool();
+	else
+		Render();
+}
+
+void wxGLPanel::SetPerspective(const bool enabled) {
+	gls.SetPerspective(enabled);
+	gls.RenderOneFrame();
+}
+
+void wxGLPanel::SetFieldOfView(const int fieldOfView) {
+	gls.SetFieldOfView(fieldOfView);
+	gls.RenderOneFrame();
+}
+
+void wxGLPanel::SetDepthClip(const float zNear, const float zFar) {
+	gls.SetDepthClip(zNear, zFar);
+	gls.RenderOneFrame();
+}
+
+void wxGLPanel::UpdateLights(const int ambient, const int frontal, const int directional0, const int directional1, const int directional2, const nifly::Vector3& directional0Dir, const nifly::Vector3& directional1Dir, const nifly::Vector3& directonal2Dir) {
+	gls.UpdateLights(ambient, frontal, directional0, directional1, directional2, directional0Dir, directional1Dir, directonal2Dir);
+	gls.RenderOneFrame();
+}
+
+bool wxGLPanel::SetHDRiBackground(const std::string& fileName) {
+	const bool loaded = gls.SetHDRiBackground(fileName);
+	gls.RenderOneFrame();
+	return loaded;
+}
+
 bool wxGLPanel::RestoreMode(UndoStateProject* usp) {
 	bool modeChanged = false;
 	UndoType undoType = usp->undoType;
@@ -19693,6 +20183,212 @@ void wxGLPanel::ShowVertexEdit(bool show) {
 			}
 		}
 	}
+}
+
+void wxGLPanel::SetVertexEdit(bool on) {
+	vertexEdit = on;
+	ShowVertexEdit(on);
+	Render();
+}
+
+void wxGLPanel::SetTransformMode(bool on) {
+	transformMode = on;
+	ShowTransformTool(on);
+}
+
+void wxGLPanel::SetPivotMode(bool on) {
+	pivotMode = on;
+	ShowPivot(on);
+
+	if (transformMode)
+		ShowTransformTool();
+}
+
+bool wxGLPanel::GetToolOptionXMirror() {
+	if (activeTool == ToolID::WeightBrush)
+		return toolOptionXMirrorWeight;
+	return toolOptionXMirror;
+}
+
+void wxGLPanel::SetToolOptionXMirror(bool on) {
+	if (activeTool == ToolID::WeightBrush)
+		toolOptionXMirrorWeight = on;
+	else
+		toolOptionXMirror = on;
+	gls.SetXMirrorCursor(on);
+}
+
+void wxGLPanel::SetShapeGhostMode(const std::string& shapeName, bool on) {
+	Mesh* m = gls.GetMesh(shapeName);
+	if (!m)
+		return;
+
+	if (on)
+		m->rendermode = Mesh::RenderMode::LitWire;
+	else
+		m->rendermode = Mesh::RenderMode::Normal;
+}
+
+void wxGLPanel::SetNormalSeamSmoothMode(bool enable) {
+	for (auto& m : gls.GetActiveMeshes()) {
+		m->smoothSeamNormals = enable;
+		m->SmoothNormals();
+	}
+}
+
+void wxGLPanel::SetLockNormalsMode(bool enable) {
+	for (auto& m : gls.GetActiveMeshes())
+		m->lockNormals = enable;
+}
+
+void wxGLPanel::RecalcNormals(const std::string& shapeName, bool force) {
+	Mesh* m = gls.GetMesh(shapeName);
+	if (!m)
+		return;
+
+	bool oldLockNormals = m->lockNormals;
+	if (m->lockNormals && force)
+		m->lockNormals = false;
+
+	m->SmoothNormals();
+	m->lockNormals = oldLockNormals;
+}
+
+void wxGLPanel::SetBrushSize(float val) {
+	val *= BrushSizeScale;
+	brushSize = val;
+	gls.SetCursorSize(val);
+}
+
+void wxGLPanel::ResetBrushSize() {
+	brushSize = 0.45f;
+	gls.SetCursorSize(brushSize);
+}
+
+float wxGLPanel::IncBrush(float step) {
+	gls.SetCursorSize(gls.GetCursorSize() + step);
+	brushSize += step;
+	LimitBrushSize();
+	return brushSize;
+}
+
+float wxGLPanel::DecBrush(float step) {
+	gls.SetCursorSize(gls.GetCursorSize() - step);
+	brushSize -= step;
+	LimitBrushSize();
+	return brushSize;
+}
+
+void wxGLPanel::LimitBrushSize() {
+	if (brushSize < 0.000f) {
+		gls.SetCursorSize(0.000f);
+		brushSize = 0.000f;
+	}
+	else if (brushSize > BrushSizeScale) {
+		gls.SetCursorSize(BrushSizeScale);
+		brushSize = BrushSizeScale;
+	}
+}
+
+float wxGLPanel::IncStr() {
+	if (!activeBrush)
+		return 0.0f;
+
+	float str = activeBrush->getStrength();
+	str += 0.010f;
+	activeBrush->setStrength(str);
+	return str;
+}
+
+float wxGLPanel::DecStr() {
+	if (!activeBrush)
+		return 0.0f;
+
+	float str = activeBrush->getStrength();
+	str -= 0.010f;
+	activeBrush->setStrength(str);
+	return str;
+}
+
+void wxGLPanel::ClearMasks() {
+	for (auto& m : gls.GetMeshes())
+		if (!m->bPrimitive)
+			m->MaskFill(0.0f);
+}
+
+void wxGLPanel::ClearActiveMask() {
+	for (auto& m : gls.GetActiveMeshes())
+		m->MaskFill(0.0f);
+}
+
+void wxGLPanel::ClearColors() {
+	for (auto& m : gls.GetMeshes())
+		if (!m->bPrimitive)
+			m->ColorFill(nifly::Vector3());
+}
+
+void wxGLPanel::ClearActiveColors() {
+	for (auto& m : gls.GetActiveMeshes())
+		m->ColorFill(nifly::Vector3());
+}
+
+void wxGLPanel::GetActiveMask(std::unordered_map<uint16_t, float>& mask) {
+	if (gls.GetActiveMeshes().empty())
+		return;
+
+	Mesh* m = gls.GetActiveMeshes().back();
+
+	for (int i = 0; i < m->nVerts; i++) {
+		if (m->mask[i] != 0.0f)
+			mask[i] = m->mask[i];
+	}
+}
+
+void wxGLPanel::GetActiveUnmasked(std::unordered_map<uint16_t, float>& mask) {
+	if (gls.GetActiveMeshes().empty())
+		return;
+
+	Mesh* m = gls.GetActiveMeshes().back();
+
+	for (int i = 0; i < m->nVerts; i++)
+		if (m->mask[i] == 0.0f)
+			mask[i] = m->mask[i];
+}
+
+void wxGLPanel::GetShapeMask(std::unordered_map<uint16_t, float>& mask, const std::string& shapeName) {
+	Mesh* m = gls.GetMesh(shapeName);
+	if (!m)
+		return;
+
+	for (int i = 0; i < m->nVerts; i++) {
+		if (m->mask[i] != 0.0f)
+			mask[i] = m->mask[i];
+	}
+}
+
+void wxGLPanel::GetShapeUnmasked(std::unordered_map<uint16_t, float>& mask, const std::string& shapeName) {
+	Mesh* m = gls.GetMesh(shapeName);
+	if (!m)
+		return;
+
+	for (int i = 0; i < m->nVerts; i++)
+		if (m->mask[i] == 0.0f)
+			mask[i] = m->mask[i];
+}
+
+void wxGLPanel::SetShapeMask(std::unordered_map<uint16_t, float>& mask, const std::string& shapeName) {
+	Mesh* m = gls.GetMesh(shapeName);
+	if (!m)
+		return;
+
+	for (int i = 0; i < m->nVerts; i++) {
+		if (mask.find(i) != mask.end())
+			m->mask[i] = mask[i];
+		else
+			m->mask[i] = 0.0f;
+	}
+
+	m->QueueUpdate(Mesh::UpdateType::Mask);
 }
 
 void wxGLPanel::OnIdle(wxIdleEvent& WXUNUSED(event)) {

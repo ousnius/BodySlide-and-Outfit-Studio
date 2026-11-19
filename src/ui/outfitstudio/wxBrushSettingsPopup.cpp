@@ -4,6 +4,8 @@ See the included LICENSE file
 */
 
 #include "wxBrushSettingsPopup.h"
+#include "outfitstudio/GLPanel.h"
+#include "outfitstudio/OutfitStudioFrame.h"
 
 #include <algorithm>
 #include <cmath>

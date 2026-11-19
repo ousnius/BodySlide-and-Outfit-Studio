@@ -13,6 +13,8 @@ See the included LICENSE file
 #include "components/PoseMath.h"
 #include "components/SurfaceFit.h"
 #include "outfitstudio/OutfitStudioFrame.h"
+#include "outfitstudio/GLPanel.h"
+#include "components/UndoHistory.h"
 
 #include <algorithm>
 #include <cfloat>

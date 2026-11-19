@@ -8,6 +8,9 @@ See the included LICENSE file
 #include "components/MaskOps.h"
 #include "components/StarfieldSpace.h"
 #include "outfitstudio/OutfitStudioFrame.h"
+#include "outfitstudio/GLPanel.h"
+#include "components/UndoHistory.h"
+#include "utils/TargetGame.h"
 #include "utils/ConfigurationManager.h"
 
 #include <algorithm>

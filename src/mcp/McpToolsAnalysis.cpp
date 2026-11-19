@@ -7,6 +7,8 @@ See the included LICENSE file
 #include "components/MaskOps.h"
 #include "project/AutomationRunner.h"
 #include "outfitstudio/OutfitStudioFrame.h"
+#include "outfitstudio/GLPanel.h"
+#include "outfitstudio/ViewState.h"
 
 #include <wx/filename.h>
 

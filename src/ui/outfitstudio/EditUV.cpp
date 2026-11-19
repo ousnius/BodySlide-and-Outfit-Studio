@@ -4,6 +4,8 @@ See the included LICENSE file
 */
 
 #include "EditUV.h"
+#include "outfitstudio/GLPanel.h"
+#include "outfitstudio/OutfitStudioFrame.h"
 #include "render/GLOffscreenBuffer.h"
 #include "files/GameDataStream.h"
 

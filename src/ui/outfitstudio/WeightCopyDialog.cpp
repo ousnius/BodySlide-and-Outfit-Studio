@@ -7,6 +7,7 @@ See the included LICENSE file
 
 #include "project/OutfitProject.h"
 #include "outfitstudio/OutfitStudioFrame.h"
+#include "outfitstudio/GLPanel.h"
 
 #include <wx/xrc/xmlres.h>
 

@@ -5,6 +5,8 @@ See the included LICENSE file
 
 #include "OutfitStudioMcp.h"
 #include "outfitstudio/OutfitStudioFrame.h"
+#include "outfitstudio/GLPanel.h"
+#include "components/UndoHistory.h"
 #include "ui/outfitstudio/PartitionTypeChoices.h"
 
 #include <algorithm>

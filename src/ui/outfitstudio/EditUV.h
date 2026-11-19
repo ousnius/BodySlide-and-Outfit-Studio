@@ -5,12 +5,14 @@ See the included LICENSE file
 
 #pragma once
 
-#include "outfitstudio/OutfitStudioFrame.h"
+#include "render/GLSurface.h"
 
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <wx/frame.h>
+#include <wx/glcanvas.h>
 
 const int EDITUV_MAX_UNDO = 200;
 
@@ -21,6 +23,8 @@ const int EDITUV_DIRECTION_UP = 0x4;
 const int EDITUV_DIRECTION_DOWN = 0x8;
 
 enum class EditUVTool { BoxSelection, RopeSelection, VertexSelection, Move, Scale, Rotate };
+
+class OutfitStudioFrame;
 
 class EditUVAction {
 	Mesh* actionMesh = nullptr;

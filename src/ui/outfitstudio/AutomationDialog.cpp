@@ -7,6 +7,7 @@ See the included LICENSE file
 
 #include "project/OutfitProject.h"
 #include "outfitstudio/OutfitStudioFrame.h"
+#include "utils/ConfigurationManager.h"
 #include "PartitionTypeChoices.h"
 
 #include "files/MaskFile.h"

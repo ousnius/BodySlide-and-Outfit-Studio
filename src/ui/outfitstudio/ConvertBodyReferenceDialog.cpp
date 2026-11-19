@@ -14,6 +14,7 @@ See the included LICENSE file
 #include <regex>
 
 #include "outfitstudio/OutfitStudioFrame.h"
+#include "outfitstudio/GLPanel.h"
 
 using namespace std;
 class RefTemplate;

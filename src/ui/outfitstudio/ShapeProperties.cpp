@@ -4,6 +4,8 @@ See the included LICENSE file
 */
 
 #include "ShapeProperties.h"
+#include "outfitstudio/GLPanel.h"
+#include "outfitstudio/OutfitStudioFrame.h"
 #include "files/GameDataStream.h"
 
 #include <wx/grid.h>

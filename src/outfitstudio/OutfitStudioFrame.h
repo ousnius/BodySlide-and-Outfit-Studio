@@ -17,32 +17,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
-#include "GLPanel.h"
 #include "OutfitStudioProjectHost.h"
-#include "ShapeTreeItems.h"
 #include "ToolID.h"
-#include "ViewState.h"
-#include "components/Automorph.h"
 #include "components/PoseData.h"
 #include "components/RefTemplates.h"
-#include "components/TweakBrush.h"
-#include "components/UndoHistory.h"
-#include "physics/Controller.h"
 #include "physics/PumpClock.h"
-#include "render/GLSurface.h"
-#include "ui/outfitstudio/WeightCopyDialog.h"
-#include "ui/wxSliderPanel.h"
-#include "ui/wxStateButton.h"
-#include "utils/ConfigurationManager.h"
-#include "utils/Log.h"
-#include "utils/MainThreadDispatcher.h"
-#include "utils/TargetGame.h"
 #include "project/EditorState.h"
-#include "project/OutfitProject.h"
 #include "project/ProjectOperations.h"
-
-#include "FSEngine/FSEngine.h"
-#include "FSEngine/FSManager.h"
+#include "ui/wxSliderPanel.h"
+#include "utils/MainThreadDispatcher.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -92,6 +75,20 @@ struct SharedFilesTarget {
 	bool addOn = false;
 	bool hasBase = false;
 };
+
+class Mesh;
+class ShapeItemData;
+class UndoStateProject;
+class wxGLPanel;
+class wxStateButton;
+struct ViewState;
+struct WeightCopyOptions;
+enum class ShapeDisplayMode;
+
+namespace Physics {
+class Controller;
+struct GrabTarget;
+} // namespace Physics
 
 struct ConformOptions;
 struct ClippingFixOptions;
@@ -474,36 +471,7 @@ public:
 	void UpdateProjectNode();
 	wxString ProjectNodeTooltip() const;
 
-	void CheckBrushBounds() {
-		TweakBrush* brush = glView->GetActiveBrush();
-		if (!brush)
-			return;
-
-		float size = glView->GetBrushSize();
-		float strength = brush->getStrength();
-		//float focus = brush->getFocus();
-		//float spacing = brush->getSpacing();
-
-		if (size >= 1.0f)
-			menuBar->Enable(XRCID("btnIncreaseSize"), false);
-		else
-			menuBar->Enable(XRCID("btnIncreaseSize"), true);
-
-		if (size <= 0.0f)
-			menuBar->Enable(XRCID("btnDecreaseSize"), false);
-		else
-			menuBar->Enable(XRCID("btnDecreaseSize"), true);
-
-		if (strength >= 1.0f)
-			menuBar->Enable(XRCID("btnIncreaseStr"), false);
-		else
-			menuBar->Enable(XRCID("btnIncreaseStr"), true);
-
-		if (strength <= 0.0f)
-			menuBar->Enable(XRCID("btnDecreaseStr"), false);
-		else
-			menuBar->Enable(XRCID("btnDecreaseStr"), true);
-	}
+	void CheckBrushBounds();
 
 	wxGauge* progressBar = nullptr;
 	std::vector<std::pair<int, int>> progressStack;
@@ -511,85 +479,13 @@ public:
 	// Told the progress (0 to 10000) and message while a progress bar shows, e.g. to report it over MCP
 	std::function<void(int value, const wxString& msg)> progressListener;
 
-	void StartProgress(const wxString& msg = "") {
-		if (progressStack.empty()) {
-			progressVal = 0;
-			progressStack.emplace_back(0, 10000);
+	void StartProgress(const wxString& msg = "");
 
-			wxRect rect;
-			statusBar->GetFieldRect(1, rect);
+	void StartSubProgress(int min, int max);
 
-			wxBeginBusyCursor();
-			progressBar = new wxGauge(statusBar, wxID_ANY, 10000, rect.GetPosition(), rect.GetSize());
+	void EndProgress(const wxString& msg = "", bool forceEmpty = false);
 
-			if (msg.IsEmpty())
-				statusBar->SetStatusText(_("Starting..."));
-			else
-				statusBar->SetStatusText(msg);
-
-			if (progressListener)
-				progressListener(0, msg);
-		}
-	}
-
-	void StartSubProgress(int min, int max) {
-		if (progressStack.empty())
-			return;
-
-		int range = progressStack.back().second - progressStack.back().first;
-		float mindiv = min / 100.0f;
-		float maxdiv = max / 100.0f;
-		int minoff = mindiv * range + 1;
-		int maxoff = maxdiv * range + 1;
-		progressStack.emplace_back(minoff + progressStack.back().first, maxoff + progressStack.back().first);
-	}
-
-	void EndProgress(const wxString& msg = "", bool forceEmpty = false) {
-		if (progressStack.empty())
-			return;
-
-		if (forceEmpty) {
-			progressBar->SetValue(progressStack.front().second);
-			progressStack.clear();
-		}
-		else {
-			progressBar->SetValue(progressStack.back().second);
-			progressStack.pop_back();
-		}
-
-		if (progressStack.empty()) {
-			if (msg.IsEmpty())
-				statusBar->SetStatusText(_("Ready!"));
-			else
-				statusBar->SetStatusText(msg);
-
-			if (progressListener)
-				progressListener(10000, msg);
-
-			delete progressBar;
-			progressBar = nullptr;
-			wxEndBusyCursor();
-		}
-	}
-
-	void UpdateProgress(int val, const wxString& msg = "") {
-		if (progressStack.empty())
-			return;
-
-		int range = progressStack.back().second - progressStack.back().first;
-		float div = val / 100.0f;
-		int offset = range * div + 1;
-
-		progressVal = progressStack.back().first + offset;
-		if (progressVal > 10000)
-			progressVal = 10000;
-
-		statusBar->SetStatusText(msg);
-		progressBar->SetValue(progressVal);
-
-		if (progressListener)
-			progressListener(progressVal, msg);
-	}
+	void UpdateProgress(int val, const wxString& msg = "");
 
 private:
 	bool pendingChanges = false;
@@ -909,94 +805,25 @@ private:
 	void OnNPWizChangeSliderSetFile(wxFileDirPickerEvent& event);
 	void OnNPWizChangeSetNameChoice(wxCommandEvent& event);
 
-	void OnXMirror(wxCommandEvent& event) {
-		glView->SetToolOptionXMirror(event.IsChecked());
-		if (event.IsChecked() && glView->GetActiveTool() == ToolID::MoveVertex) {
-			glView->SetToolOptionWeld(false);
-			glView->SetToolOptionMerge(false);
-		}
-		ReToggleToolOptionsUI();
-	}
+	void OnXMirror(wxCommandEvent& event);
 
-	void OnConnectedOnly(wxCommandEvent& event) {
-		glView->SetToolOptionConnectedOnly(event.IsChecked());
-		ReToggleToolOptionsUI();
-	}
+	void OnConnectedOnly(wxCommandEvent& event);
 
-	void OnToolOptionMerge(wxCommandEvent& event) {
-		glView->SetToolOptionMerge(event.IsChecked());
-		if (event.IsChecked()) {
-			glView->SetToolOptionRestrictSurface(true);
-			glView->SetToolOptionXMirror(false);
-		}
-		ReToggleToolOptionsUI();
-	}
+	void OnToolOptionMerge(wxCommandEvent& event);
 
-	void OnToolOptionWeld(wxCommandEvent& event) {
-		glView->SetToolOptionWeld(event.IsChecked());
-		if (event.IsChecked()) {
-			glView->SetToolOptionRestrictSurface(true);
-			glView->SetToolOptionXMirror(false);
-		}
-		ReToggleToolOptionsUI();
-	}
+	void OnToolOptionWeld(wxCommandEvent& event);
 
-	void OnToolOptionRestrictSurface(wxCommandEvent& event) {
-		glView->SetToolOptionRestrictSurface(event.IsChecked());
-		if (event.IsChecked()) {
-			glView->SetToolOptionRestrictPlane(false);
-			glView->SetToolOptionEdgeSlide(false);
-		}
-		ReToggleToolOptionsUI();
-	}
+	void OnToolOptionRestrictSurface(wxCommandEvent& event);
 
-	void OnToolOptionRestrictPlane(wxCommandEvent& event) {
-		glView->SetToolOptionRestrictPlane(event.IsChecked());
-		if (event.IsChecked()) {
-			glView->SetToolOptionRestrictSurface(false);
-			glView->SetToolOptionRestrictNormal(false);
-			glView->SetToolOptionEdgeSlide(false);
-		}
-		ReToggleToolOptionsUI();
-	}
+	void OnToolOptionRestrictPlane(wxCommandEvent& event);
 
-	void OnToolOptionRestrictNormal(wxCommandEvent& event) {
-		glView->SetToolOptionRestrictNormal(event.IsChecked());
-		if (event.IsChecked()) {
-			glView->SetToolOptionRestrictPlane(false);
-			glView->SetToolOptionEdgeSlide(false);
-		}
-		ReToggleToolOptionsUI();
-	}
+	void OnToolOptionRestrictNormal(wxCommandEvent& event);
 
-	void OnToolOptionEdgeSlide(wxCommandEvent& event) {
-		glView->SetToolOptionEdgeSlide(event.IsChecked());
-		if (event.IsChecked()) {
-			glView->SetToolOptionRestrictSurface(false);
-			glView->SetToolOptionRestrictPlane(false);
-			glView->SetToolOptionRestrictNormal(false);
-		}
-		ReEnableToolOptionsUI();
-		ReToggleToolOptionsUI();
-	}
+	void OnToolOptionEdgeSlide(wxCommandEvent& event);
 
-	void OnUndo(wxCommandEvent& WXUNUSED(event)) {
-		if (glView->GetSegmentMode())
-			return;
+	void OnUndo(wxCommandEvent& WXUNUSED(event));
 
-		glView->UndoStroke();
-		UpdateUndoTools();
-		SetPendingChanges();
-	}
-
-	void OnRedo(wxCommandEvent& WXUNUSED(event)) {
-		if (glView->GetSegmentMode())
-			return;
-
-		glView->RedoStroke();
-		UpdateUndoTools();
-		SetPendingChanges();
-	}
+	void OnRedo(wxCommandEvent& WXUNUSED(event));
 
 	void OnRecalcNormals(wxCommandEvent& WXUNUSED(event));
 	void OnDisableNormalsCalc(wxCommandEvent& WXUNUSED(event));
@@ -1009,130 +836,32 @@ private:
 	void OnToggleVisibility(wxCommandEvent& WXUNUSED(event)) { ToggleVisibility(); }
 
 	// The display toggles are in both the view menu and the vertical toolbar, keep the two in step
-	void CheckDisplayToggle(int id, bool enabled) {
-		menuBar->Check(id, enabled);
-		toolBarV->ToggleTool(id, enabled);
-	}
+	void CheckDisplayToggle(int id, bool enabled);
 
-	void OnShowWireframe(wxCommandEvent& event) {
-		CheckDisplayToggle(event.GetId(), event.IsChecked());
-		glView->SetWireframe(event.IsChecked());
-		glView->Render();
-	}
+	void OnShowWireframe(wxCommandEvent& event);
 
-	void OnEnableLighting(wxCommandEvent& event) {
-		CheckDisplayToggle(event.GetId(), event.IsChecked());
-		glView->SetLighting(event.IsChecked());
-		glView->Render();
-	}
+	void OnEnableLighting(wxCommandEvent& event);
 
-	void OnEnableTextures(wxCommandEvent& event) {
-		CheckDisplayToggle(event.GetId(), event.IsChecked());
-		glView->SetTextures(event.IsChecked());
-		glView->Render();
-	}
+	void OnEnableTextures(wxCommandEvent& event);
 
-	void OnEnableTints(wxCommandEvent& event) {
-		CheckDisplayToggle(event.GetId(), event.IsChecked());
-		glView->SetTints(event.IsChecked());
-		glView->Render();
-	}
+	void OnEnableTints(wxCommandEvent& event);
 
-	void OnEnableVertexColors(wxCommandEvent& e) {
-		// The colors tab always shows them, the choice applies when leaving it
-		CheckDisplayToggle(e.GetId(), e.IsChecked());
-		if (colorSettings->IsShown())
-			return;
+	void OnEnableVertexColors(wxCommandEvent& e);
 
-		glView->SetColorsVisible(e.IsChecked());
-		if (e.IsChecked())
-			FillVertexColors();
-		else
-			glView->ClearColors();
+	void OnIncBrush(wxCommandEvent& WXUNUSED(event));
+	void OnDecBrush(wxCommandEvent& WXUNUSED(event));
+	void OnIncStr(wxCommandEvent& WXUNUSED(event));
+	void OnDecStr(wxCommandEvent& WXUNUSED(event));
 
-		glView->Render();
-	}
+	void OnClearMask(wxCommandEvent& WXUNUSED(event));
 
-	void OnIncBrush(wxCommandEvent& WXUNUSED(event)) {
-		if (glView->GetActiveBrush() && glView->GetBrushSize() < 1.0f) {
-			float v = glView->IncBrush() / BrushSizeScale;
-			if (statusBar)
-				statusBar->SetStatusText(wxString::Format("Rad: %f", v), 2);
+	void OnInvertMask(wxCommandEvent& WXUNUSED(event));
 
-			CheckBrushBounds();
-			UpdateBrushSettings();
-		}
-	}
-	void OnDecBrush(wxCommandEvent& WXUNUSED(event)) {
-		if (glView->GetActiveBrush() && glView->GetBrushSize() > 0.0f) {
-			float v = glView->DecBrush() / BrushSizeScale;
-			if (statusBar)
-				statusBar->SetStatusText(wxString::Format("Rad: %f", v), 2);
+	void OnDiscord(wxCommandEvent& WXUNUSED(event));
 
-			CheckBrushBounds();
-			UpdateBrushSettings();
-		}
-	}
-	void OnIncStr(wxCommandEvent& WXUNUSED(event)) {
-		if (glView->GetActiveBrush() && glView->GetActiveBrush()->getStrength() < 1.0f) {
-			float v = glView->IncStr();
-			if (statusBar)
-				statusBar->SetStatusText(wxString::Format("Str: %f", v), 2);
+	void OnGitHub(wxCommandEvent& WXUNUSED(event));
 
-			CheckBrushBounds();
-			UpdateBrushSettings();
-		}
-	}
-	void OnDecStr(wxCommandEvent& WXUNUSED(event)) {
-		if (glView->GetActiveBrush() && glView->GetActiveBrush()->getStrength() > 0.0f) {
-			float v = glView->DecStr();
-			if (statusBar)
-				statusBar->SetStatusText(wxString::Format("Str: %f", v), 2);
-
-			CheckBrushBounds();
-			UpdateBrushSettings();
-		}
-	}
-
-	void OnClearMask(wxCommandEvent& WXUNUSED(event)) {
-		if (!activeItem)
-			return;
-
-		glView->gls.DeleteOverlay("refineErrorEdges");
-		glView->ClearMask();
-
-		if (glView->GetTransformMode())
-			glView->ShowTransformTool();
-		else
-			glView->Render();
-	}
-
-	void OnInvertMask(wxCommandEvent& WXUNUSED(event)) {
-		if (!activeItem)
-			return;
-
-		glView->InvertMask();
-
-		if (glView->GetTransformMode())
-			glView->ShowTransformTool();
-		else
-			glView->Render();
-	}
-
-	void OnDiscord(wxCommandEvent& WXUNUSED(event)) {
-		wxString url = "https://discordapp.com/invite/2qg2Rzw";
-		wxLaunchDefaultBrowser(url);
-	}
-
-	void OnGitHub(wxCommandEvent& WXUNUSED(event)) {
-		wxString url = "https://github.com/ousnius/BodySlide-and-Outfit-Studio";
-		wxLaunchDefaultBrowser(url);
-	}
-
-	void OnPayPal(wxCommandEvent& WXUNUSED(event)) {
-		wxString url = "https://www.paypal.me/ousnius";
-		wxLaunchDefaultBrowser(url);
-	}
+	void OnPayPal(wxCommandEvent& WXUNUSED(event));
 
 	void OnSelectMask(wxCommandEvent& event);
 	void OnSaveMask(wxCommandEvent& event);

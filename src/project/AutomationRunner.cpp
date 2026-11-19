@@ -9,6 +9,10 @@ See the included LICENSE file
 #include "GameImport.h"
 #include "OutfitProject.h"
 #include "outfitstudio/OutfitStudioFrame.h"
+#include "outfitstudio/GLPanel.h"
+#include "outfitstudio/ShapeTreeItems.h"
+#include "utils/ConfigurationManager.h"
+#include "components/UndoHistory.h"
 
 #include "components/ClippingFixer.h"
 #include "components/DiffData.h"

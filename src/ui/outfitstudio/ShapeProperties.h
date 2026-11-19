@@ -5,18 +5,28 @@ See the included LICENSE file
 
 #pragma once
 
-#include "outfitstudio/OutfitStudioFrame.h"
 #include "ShaderFlagDefs.h"
+#include "NifFile.hpp"
 
 #include <cstdint>
 #include <string>
 #include <vector>
 
+#include <wx/button.h>
+#include <wx/checkbox.h>
 #include <wx/checklst.h>
+#include <wx/choice.h>
 #include <wx/clrpicker.h>
 #include <wx/collpane.h>
 #include <wx/notebook.h>
+#include <wx/panel.h>
+#include <wx/sizer.h>
 #include <wx/spinctrl.h>
+#include <wx/stattext.h>
+#include <wx/textctrl.h>
+#include <wx/dialog.h>
+
+class OutfitStudioFrame;
 
 class ShapeProperties : public wxDialog {
 public:

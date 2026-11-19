@@ -13,6 +13,8 @@ See the included LICENSE file
 #include "utils/ConfigurationManager.h"
 #include "utils/ProjectUtil.h"
 #include "outfitstudio/OutfitStudioFrame.h"
+#include "outfitstudio/GLPanel.h"
+#include "components/UndoHistory.h"
 
 #include <wx/filename.h>
 
