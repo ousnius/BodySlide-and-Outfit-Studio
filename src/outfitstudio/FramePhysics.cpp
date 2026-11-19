@@ -69,17 +69,18 @@ void OutfitStudioFrame::OnPhysicsProbeSlider(wxScrollEvent& e, wxTextCtrl* text)
 	ApplyPhysicsProbe();
 }
 
-void OutfitStudioFrame::OnPhysicsProbeXSlider(wxScrollEvent& e) {
-	OnPhysicsProbeSlider(e, physicsProbeXText);
-}
-void OutfitStudioFrame::OnPhysicsProbeYSlider(wxScrollEvent& e) {
-	OnPhysicsProbeSlider(e, physicsProbeYText);
-}
-void OutfitStudioFrame::OnPhysicsProbeZSlider(wxScrollEvent& e) {
-	OnPhysicsProbeSlider(e, physicsProbeZText);
-}
-void OutfitStudioFrame::OnPhysicsProbeSizeSlider(wxScrollEvent& e) {
-	OnPhysicsProbeSlider(e, physicsProbeSizeText);
+// The probe position and size controls, in the same order
+static const char* const PhysicsProbeSliderNames[] = {"physicsProbeX", "physicsProbeY", "physicsProbeZ", "physicsProbeSize"};
+static const char* const PhysicsProbeTextNames[] = {"physicsProbeXText", "physicsProbeYText", "physicsProbeZText", "physicsProbeSizeText"};
+
+void OutfitStudioFrame::OnPhysicsProbeAxisSlider(wxScrollEvent& event) {
+	wxTextCtrl* texts[] = {physicsProbeXText, physicsProbeYText, physicsProbeZText, physicsProbeSizeText};
+	for (int i = 0; i < 4; i++) {
+		if (event.GetId() == XRCID(PhysicsProbeSliderNames[i])) {
+			OnPhysicsProbeSlider(event, texts[i]);
+			return;
+		}
+	}
 }
 
 void OutfitStudioFrame::OnPhysicsProbeText(wxTextCtrl* text, wxSlider* slider) {
@@ -96,17 +97,15 @@ void OutfitStudioFrame::OnPhysicsProbeText(wxTextCtrl* text, wxSlider* slider) {
 	ApplyPhysicsProbe();
 }
 
-void OutfitStudioFrame::OnPhysicsProbeXText(wxCommandEvent& WXUNUSED(e)) {
-	OnPhysicsProbeText(physicsProbeXText, physicsProbeX);
-}
-void OutfitStudioFrame::OnPhysicsProbeYText(wxCommandEvent& WXUNUSED(e)) {
-	OnPhysicsProbeText(physicsProbeYText, physicsProbeY);
-}
-void OutfitStudioFrame::OnPhysicsProbeZText(wxCommandEvent& WXUNUSED(e)) {
-	OnPhysicsProbeText(physicsProbeZText, physicsProbeZ);
-}
-void OutfitStudioFrame::OnPhysicsProbeSizeText(wxCommandEvent& WXUNUSED(e)) {
-	OnPhysicsProbeText(physicsProbeSizeText, physicsProbeSize);
+void OutfitStudioFrame::OnPhysicsProbeAxisText(wxCommandEvent& event) {
+	wxTextCtrl* texts[] = {physicsProbeXText, physicsProbeYText, physicsProbeZText, physicsProbeSizeText};
+	wxSlider* sliders[] = {physicsProbeX, physicsProbeY, physicsProbeZ, physicsProbeSize};
+	for (int i = 0; i < 4; i++) {
+		if (event.GetId() == XRCID(PhysicsProbeTextNames[i])) {
+			OnPhysicsProbeText(texts[i], sliders[i]);
+			return;
+		}
+	}
 }
 
 void OutfitStudioFrame::UpdatePhysicsProbeControl(bool enabled) {

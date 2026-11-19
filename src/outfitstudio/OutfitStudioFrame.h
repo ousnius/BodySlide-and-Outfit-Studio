@@ -31,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <cstdint>
 #include <deque>
 #include <functional>
+#include <initializer_list>
 #include <map>
 #include <memory>
 #include <optional>
@@ -90,6 +91,7 @@ class Controller;
 struct GrabTarget;
 } // namespace Physics
 
+struct ShapeTransformDialogSpec;
 struct ConformOptions;
 struct ClippingFixOptions;
 class OutfitStudioFrame;
@@ -604,6 +606,23 @@ private:
 	void OnSliderCheckBox(wxCommandEvent& event);
 
 	void OnTabButtonClick(wxCommandEvent& event);
+	// Parts of switching tabs
+	bool ResolvePendingTabChanges();
+	void ShowTab(wxStateButton* tab, wxWindow* panel);
+	void LeaveSegmentTab();
+	void LeavePartitionTab();
+	void LeaveSegmentPartitionMode();
+	void LeaveBoneTab();
+	void EnableStandardTools();
+	void EnterBoneTab();
+	void EnterColorsTab();
+	void EnterSegmentTab();
+	void EnterPartitionTab();
+	void EnterSegmentPartitionMode();
+	// Enables or disables tools in the menu and in their tool bar, and checks a tool in both
+	void EnableTools(std::initializer_list<const char*> names, bool enable);
+	void CheckTool(const char* name);
+	void ShowWindowsByName(std::initializer_list<const char*> names, bool show);
 	void OnBrushColorChanged(wxColourPickerEvent& event);
 	void OnColorClampMaxValueSlider(wxCommandEvent& event);
 	void OnColorClampMaxValueChanged(wxCommandEvent& event);
@@ -756,6 +775,8 @@ private:
 	void OnScaleShape(wxCommandEvent& event);
 	void OnRotateShape(wxCommandEvent& event);
 	void OnInflateShape(wxCommandEvent& event);
+	// The Move, Scale, Rotate and Inflate Shape dialogs, with a live preview of the change
+	void RunShapeTransformDialog(const ShapeTransformDialogSpec& spec);
 	void OnFixClippingShape(wxCommandEvent& event);
 
 	void OnRenameShape(wxCommandEvent& event);
@@ -888,21 +909,9 @@ private:
 	void OnPoseBoneChanged(wxCommandEvent& event);
 	void OnPoseValChanged(int cind, float val);
 	void OnAnyPoseSlider(wxScrollEvent& e, wxTextCtrl* t, int cind);
-	void OnRXPoseSlider(wxScrollEvent& event);
-	void OnRYPoseSlider(wxScrollEvent& event);
-	void OnRZPoseSlider(wxScrollEvent& event);
-	void OnTXPoseSlider(wxScrollEvent& event);
-	void OnTYPoseSlider(wxScrollEvent& event);
-	void OnTZPoseSlider(wxScrollEvent& event);
-	void OnScPoseSlider(wxScrollEvent& event);
+	void OnPoseSlider(wxScrollEvent& event);
 	void OnAnyPoseTextChanged(wxTextCtrl* t, wxSlider* s, int cind);
-	void OnRXPoseTextChanged(wxCommandEvent& event);
-	void OnRYPoseTextChanged(wxCommandEvent& event);
-	void OnRZPoseTextChanged(wxCommandEvent& event);
-	void OnTXPoseTextChanged(wxCommandEvent& event);
-	void OnTYPoseTextChanged(wxCommandEvent& event);
-	void OnTZPoseTextChanged(wxCommandEvent& event);
-	void OnScPoseTextChanged(wxCommandEvent& event);
+	void OnPoseTextChanged(wxCommandEvent& event);
 	void OnResetBonePose(wxCommandEvent& event);
 	void OnResetAllPose(wxCommandEvent& event);
 	void OnPoseToMesh(wxCommandEvent& event);
@@ -1008,15 +1017,9 @@ private:
 	// Each ball slider writes its value into the field beside it, and each field
 	// puts the handle back where the value is; either way the field is what is read.
 	void OnPhysicsProbeSlider(wxScrollEvent& event, wxTextCtrl* text);
-	void OnPhysicsProbeXSlider(wxScrollEvent& event);
-	void OnPhysicsProbeYSlider(wxScrollEvent& event);
-	void OnPhysicsProbeZSlider(wxScrollEvent& event);
-	void OnPhysicsProbeSizeSlider(wxScrollEvent& event);
+	void OnPhysicsProbeAxisSlider(wxScrollEvent& event);
 	void OnPhysicsProbeText(wxTextCtrl* text, wxSlider* slider);
-	void OnPhysicsProbeXText(wxCommandEvent& event);
-	void OnPhysicsProbeYText(wxCommandEvent& event);
-	void OnPhysicsProbeZText(wxCommandEvent& event);
-	void OnPhysicsProbeSizeText(wxCommandEvent& event);
+	void OnPhysicsProbeAxisText(wxCommandEvent& event);
 	// The same for the collision ball checkbox
 	void UpdatePhysicsProbeControl(bool enabled);
 	// Shows or hides the ball, its controls and its collider to match the box

@@ -22,6 +22,7 @@ See the included LICENSE file
 
 #include <cmath>
 #include <cstdlib>
+#include <cstring>
 #include <iterator>
 #include <sstream>
 #include <wx/dir.h>
@@ -430,33 +431,271 @@ void OutfitStudioFrame::ApplyAutoHDRiBackground() {
 #endif
 }
 
+// Tool menu items without a tool bar button, and the ones whose button is in the vertical tool bar.
+// The buttons of all other tools are in the horizontal tool bar.
+static bool IsMenuOnlyTool(const char* name) {
+	return strcmp(name, "deleteVerts") == 0 || strcmp(name, "refineMesh") == 0 || strcmp(name, "btnClearMask") == 0 || strcmp(name, "btnInvertMask") == 0;
+}
+
+static bool IsVerticalToolBarTool(const char* name) {
+	return strcmp(name, "btnTransform") == 0 || strcmp(name, "btnPivot") == 0 || strcmp(name, "btnVertexEdit") == 0;
+}
+
+void OutfitStudioFrame::EnableTools(std::initializer_list<const char*> names, bool enable) {
+	for (const char* name : names) {
+		const int id = XRCID(name);
+		menuBar->Enable(id, enable);
+		if (IsVerticalToolBarTool(name))
+			toolBarV->EnableTool(id, enable);
+		else if (!IsMenuOnlyTool(name))
+			toolBarH->EnableTool(id, enable);
+	}
+}
+
+void OutfitStudioFrame::CheckTool(const char* name) {
+	menuBar->Check(XRCID(name), true);
+	toolBarH->ToggleTool(XRCID(name), true);
+}
+
+void OutfitStudioFrame::ShowWindowsByName(std::initializer_list<const char*> names, bool show) {
+	for (const char* name : names)
+		FindWindowByName(name)->Show(show);
+}
+
+bool OutfitStudioFrame::ResolvePendingTabChanges() {
+	if (!currentTabButton || !currentTabButton->HasPendingChanges())
+		return true;
+
+	wxMessageDialog dlg(this,
+						_("Your changes were not applied yet. Do you want to apply or reset them?"),
+						_("Pending Changes"),
+						wxYES_NO | wxCANCEL | wxICON_WARNING | wxCANCEL_DEFAULT);
+	dlg.SetYesNoCancelLabels(_("Apply"), _("Reset"), _("Cancel"));
+
+	int res = dlg.ShowModal();
+	if (res == wxID_YES) {
+		if (currentTabButton == partitionTabButton)
+			ApplyPartitions();
+		else if (currentTabButton == segmentTabButton)
+			ApplySegments();
+	}
+	else if (res == wxID_NO) {
+		if (currentTabButton == partitionTabButton)
+			ResetPartitions();
+		else if (currentTabButton == segmentTabButton)
+			ResetSegments();
+	}
+	else
+		return false;
+
+	return true;
+}
+
+static const std::initializer_list<const char*> SegmentControls = {"segmentTypeLabel", "segmentType", "segmentSlotLabel", "segmentSlot", "segmentSSFLabel",
+																   "segmentSSFEdit", "segmentSSF", "segmentApply", "segmentReset"};
+static const std::initializer_list<const char*> PartitionControls = {"partitionTypeLabel", "partitionType", "partitionApply", "partitionReset"};
+static const std::initializer_list<const char*> BoneControls = {"totalBoneCountLabel", "selectedBoneCountLabel", "cbFixedWeight", "cbNormalizeWeights", "xMirrorBoneLabel"};
+
+// What leaving the segment or partition tab turns back on
+void OutfitStudioFrame::LeaveSegmentPartitionMode() {
+	glView->SetSegmentMode(false);
+	glView->SetMaskVisible();
+
+	EnableTools({"btnSelect", "btnClearMask", "btnInvertMask", "deleteVerts", "refineMesh"}, true);
+}
+
+void OutfitStudioFrame::LeaveSegmentTab() {
+	ShowWindowsByName(SegmentControls, false);
+
+	if (currentTabButton == segmentTabButton)
+		ResetSegmentVisibility();
+
+	LeaveSegmentPartitionMode();
+}
+
+void OutfitStudioFrame::LeavePartitionTab() {
+	ShowWindowsByName(PartitionControls, false);
+
+	if (currentTabButton == partitionTabButton)
+		ResetPartitionVisibility();
+
+	LeaveSegmentPartitionMode();
+}
+
+void OutfitStudioFrame::LeaveBoneTab() {
+	boneTransformSuspended = false;
+	cXMirrorBone->Show(false);
+
+	ShowWindowsByName(BoneControls, false);
+	posePane->Show(false);
+	if (physicsPane)
+		physicsPane->Show(false);
+	if (animationPane)
+		animationPane->Show(false);
+	bonesFilter->GetParent()->Show(false);
+
+	if (project->bPose) {
+		project->bPose = false;
+		UpdatePhysicsState();
+		ApplyPose();
+	}
+
+	glView->SetWeightVisible(false);
+}
+
+// The tools of the tabs other than the bone and colors tabs
+void OutfitStudioFrame::EnableStandardTools() {
+	CheckTool("btnInflateBrush");
+	EnableTools({"btnTransform",
+				 "btnPivot",
+				 "btnVertexEdit",
+				 "btnInflateBrush",
+				 "btnDeflateBrush",
+				 "btnMoveBrush",
+				 "btnSmoothBrush",
+				 "btnUndiffBrush",
+				 "btnCollapseVertex",
+				 "btnFlipEdgeTool",
+				 "btnSplitEdgeTool",
+				 "btnMoveVertexTool",
+				 "deleteVerts",
+				 "refineMesh"},
+				true);
+	EnableTools({"btnWeightBrush", "btnColorBrush", "btnAlphaBrush"}, false);
+}
+
+void OutfitStudioFrame::ShowTab(wxStateButton* tab, wxWindow* panel) {
+	currentTabButton = tab;
+
+	for (wxWindow* other : std::initializer_list<wxWindow*>{outfitShapes, outfitBones, colorSettings, segmentTree, partitionTree, lightSettings})
+		if (other != panel)
+			other->Hide();
+	panel->Show();
+
+	for (wxStateButton* other : {meshTabButton, boneTabButton, colorsTabButton, segmentTabButton, partitionTabButton, lightsTabButton})
+		if (other != tab)
+			other->SetCheck(false);
+}
+
+void OutfitStudioFrame::EnterBoneTab() {
+	ShowTab(boneTabButton, outfitBones);
+
+	cXMirrorBone->Show();
+
+	ShowWindowsByName(BoneControls, true);
+	posePane->Show();
+	if (physicsPane)
+		physicsPane->Show(physicsAvailable);
+	if (animationPane)
+		animationPane->Show();
+	bonesFilter->GetParent()->Show();
+
+	UpdateBoneTransformToolEnabled();
+
+	SelectTool(ToolID::WeightBrush);
+	glView->SetWeightVisible();
+
+	project->bPose = cbPose->GetValue();
+
+	if (project->bPose)
+		ApplyPose();
+
+	CheckTool("btnWeightBrush");
+	EnableTools({"btnWeightBrush", "btnInflateBrush", "btnDeflateBrush", "btnMoveBrush", "btnSmoothBrush", "btnUndiffBrush", "btnMoveVertexTool"}, true);
+	EnableTools({"btnColorBrush", "btnAlphaBrush", "btnPivot", "btnVertexEdit", "btnCollapseVertex", "btnFlipEdgeTool", "btnSplitEdgeTool", "deleteVerts", "refineMesh"},
+				false);
+
+	SetNoSubMeshes();
+
+	ReselectBone();
+	UpdateUndoTools();
+}
+
+void OutfitStudioFrame::EnterColorsTab() {
+	ShowTab(colorsTabButton, colorSettings);
+
+	glView->SetTransformMode(false);
+	SelectTool(ToolID::ColorBrush);
+	glView->SetColorsVisible();
+
+	wxButton* btnSwapBrush = (wxButton*)FindWindowById(XRCID("btnSwapBrush"), colorSettings);
+	btnSwapBrush->SetLabel(_("Edit Alpha"));
+
+	FillVertexColors();
+
+	CheckTool("btnColorBrush");
+	EnableTools({"btnColorBrush", "btnAlphaBrush"}, true);
+	EnableTools({"btnWeightBrush",
+				 "btnTransform",
+				 "btnPivot",
+				 "btnVertexEdit",
+				 "btnInflateBrush",
+				 "btnDeflateBrush",
+				 "btnMoveBrush",
+				 "btnSmoothBrush",
+				 "btnUndiffBrush",
+				 "btnCollapseVertex",
+				 "btnFlipEdgeTool",
+				 "btnSplitEdgeTool",
+				 "btnMoveVertexTool",
+				 "deleteVerts",
+				 "refineMesh"},
+				false);
+
+	SetNoSubMeshes();
+}
+
+// Segments and partitions are painted with the mask brush (see PaintSegmentPartitionTriangles), every other tool is off
+void OutfitStudioFrame::EnterSegmentPartitionMode() {
+	glView->SetSegmentMode();
+	SelectTool(ToolID::MaskBrush);
+	glView->SetMaskVisible(false);
+
+	CheckTool("btnMaskBrush");
+	EnableTools({"btnSelect",
+				 "btnTransform",
+				 "btnPivot",
+				 "btnVertexEdit",
+				 "btnInflateBrush",
+				 "btnDeflateBrush",
+				 "btnMoveBrush",
+				 "btnSmoothBrush",
+				 "btnUndiffBrush",
+				 "btnClearMask",
+				 "btnInvertMask",
+				 "btnCollapseVertex",
+				 "btnFlipEdgeTool",
+				 "btnSplitEdgeTool",
+				 "btnMoveVertexTool",
+				 "deleteVerts",
+				 "refineMesh"},
+				false);
+}
+
+void OutfitStudioFrame::EnterSegmentTab() {
+	ShowTab(segmentTabButton, segmentTree);
+	ShowWindowsByName(SegmentControls, true);
+	EnterSegmentPartitionMode();
+
+	ResetSegmentVisibility();
+	ShowSegment(segmentTree->GetSelection());
+}
+
+void OutfitStudioFrame::EnterPartitionTab() {
+	ShowTab(partitionTabButton, partitionTree);
+	ShowWindowsByName(PartitionControls, true);
+	EnterSegmentPartitionMode();
+
+	ResetPartitionVisibility();
+	ShowPartition(partitionTree->GetSelection());
+}
+
 void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 	int id = event.GetId();
 
-	if (currentTabButton && currentTabButton->HasPendingChanges()) {
-		wxMessageDialog dlg(this,
-							_("Your changes were not applied yet. Do you want to apply or reset them?"),
-							_("Pending Changes"),
-							wxYES_NO | wxCANCEL | wxICON_WARNING | wxCANCEL_DEFAULT);
-		dlg.SetYesNoCancelLabels(_("Apply"), _("Reset"), _("Cancel"));
-
-		int res = dlg.ShowModal();
-		if (res == wxID_YES) {
-			if (currentTabButton == partitionTabButton)
-				ApplyPartitions();
-			else if (currentTabButton == segmentTabButton)
-				ApplySegments();
-		}
-		else if (res == wxID_NO) {
-			if (currentTabButton == partitionTabButton)
-				ResetPartitions();
-			else if (currentTabButton == segmentTabButton)
-				ResetSegments();
-		}
-		else {
-			event.Skip();
-			return;
-		}
+	if (!ResolvePendingTabChanges()) {
+		event.Skip();
+		return;
 	}
 
 	if ((id == segmentTabButton->GetId() || id == partitionTabButton->GetId()) && selectedItems.size() != 1) {
@@ -468,469 +707,38 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 	if (id != meshTabButton->GetId())
 		masksPane->Hide();
 
-	if (id != segmentTabButton->GetId()) {
-		wxStaticText* segmentTypeLabel = (wxStaticText*)FindWindowByName("segmentTypeLabel");
-		wxChoice* segmentType = (wxChoice*)FindWindowByName("segmentType");
-		wxStaticText* segmentSlotLabel = (wxStaticText*)FindWindowByName("segmentSlotLabel");
-		wxChoice* segmentSlot = (wxChoice*)FindWindowByName("segmentSlot");
-		wxStaticText* segmentSSFLabel = (wxStaticText*)FindWindowByName("segmentSSFLabel");
-		wxButton* segmentSSFEdit = (wxButton*)FindWindowByName("segmentSSFEdit");
-		wxTextCtrl* segmentSSF = (wxTextCtrl*)FindWindowByName("segmentSSF");
-		wxButton* segmentApply = (wxButton*)FindWindowByName("segmentApply");
-		wxButton* segmentReset = (wxButton*)FindWindowByName("segmentReset");
+	if (id != segmentTabButton->GetId())
+		LeaveSegmentTab();
 
-		segmentTypeLabel->Show(false);
-		segmentType->Show(false);
-		segmentSlotLabel->Show(false);
-		segmentSlot->Show(false);
-		segmentSSFLabel->Show(false);
-		segmentSSFEdit->Show(false);
-		segmentSSF->Show(false);
-		segmentApply->Show(false);
-		segmentReset->Show(false);
+	if (id != partitionTabButton->GetId())
+		LeavePartitionTab();
 
-		if (currentTabButton == segmentTabButton)
-			ResetSegmentVisibility();
+	if (id != boneTabButton->GetId())
+		LeaveBoneTab();
 
-		glView->SetSegmentMode(false);
-		glView->SetMaskVisible();
-
-		menuBar->Enable(XRCID("btnSelect"), true);
-		menuBar->Enable(XRCID("btnClearMask"), true);
-		menuBar->Enable(XRCID("btnInvertMask"), true);
-		menuBar->Enable(XRCID("deleteVerts"), true);
-		menuBar->Enable(XRCID("refineMesh"), true);
-
-		toolBarH->EnableTool(XRCID("btnSelect"), true);
-	}
-
-	if (id != partitionTabButton->GetId()) {
-		wxStaticText* partitionTypeLabel = (wxStaticText*)FindWindowByName("partitionTypeLabel");
-		wxChoice* partitionType = (wxChoice*)FindWindowByName("partitionType");
-		wxButton* partitionApply = (wxButton*)FindWindowByName("partitionApply");
-		wxButton* partitionReset = (wxButton*)FindWindowByName("partitionReset");
-
-		partitionTypeLabel->Show(false);
-		partitionType->Show(false);
-		partitionApply->Show(false);
-		partitionReset->Show(false);
-
-		if (currentTabButton == partitionTabButton)
-			ResetPartitionVisibility();
-
-		glView->SetSegmentMode(false);
-		glView->SetMaskVisible();
-
-		menuBar->Enable(XRCID("btnSelect"), true);
-		menuBar->Enable(XRCID("btnClearMask"), true);
-		menuBar->Enable(XRCID("btnInvertMask"), true);
-		menuBar->Enable(XRCID("deleteVerts"), true);
-		menuBar->Enable(XRCID("refineMesh"), true);
-
-		toolBarH->EnableTool(XRCID("btnSelect"), true);
-	}
-
-	if (id != boneTabButton->GetId()) {
-		boneTransformSuspended = false;
-		cXMirrorBone->Show(false);
-
-		wxStaticText* totalBoneCountLabel = (wxStaticText*)FindWindowByName("totalBoneCountLabel");
-		wxStaticText* selectedBoneCountLabel = (wxStaticText*)FindWindowByName("selectedBoneCountLabel");
-		wxCheckBox* cbFixedWeight = (wxCheckBox*)FindWindowByName("cbFixedWeight");
-		wxCheckBox* cbNormalizeWeights = (wxCheckBox*)FindWindowByName("cbNormalizeWeights");
-		wxStaticText* xMirrorBoneLabel = (wxStaticText*)FindWindowByName("xMirrorBoneLabel");
-
-		totalBoneCountLabel->Show(false);
-		selectedBoneCountLabel->Show(false);
-		cbFixedWeight->Show(false);
-		cbNormalizeWeights->Show(false);
-		xMirrorBoneLabel->Show(false);
-		posePane->Show(false);
-		if (physicsPane)
-			physicsPane->Show(false);
-		if (animationPane)
-			animationPane->Show(false);
-		bonesFilter->GetParent()->Show(false);
-
-		if (project->bPose) {
-			project->bPose = false;
-			UpdatePhysicsState();
-			ApplyPose();
-		}
-
-		glView->SetWeightVisible(false);
-	}
-
-	if (id != colorsTabButton->GetId()) {
+	if (id != colorsTabButton->GetId())
 		UpdateVertexColors();
-	}
 
-	if (id != boneTabButton->GetId() && id != colorsTabButton->GetId()) {
-		menuBar->Check(XRCID("btnInflateBrush"), true);
-		menuBar->Enable(XRCID("btnTransform"), true);
-		menuBar->Enable(XRCID("btnPivot"), true);
-		menuBar->Enable(XRCID("btnVertexEdit"), true);
-		menuBar->Enable(XRCID("btnWeightBrush"), false);
-		menuBar->Enable(XRCID("btnColorBrush"), false);
-		menuBar->Enable(XRCID("btnAlphaBrush"), false);
-		menuBar->Enable(XRCID("btnInflateBrush"), true);
-		menuBar->Enable(XRCID("btnDeflateBrush"), true);
-		menuBar->Enable(XRCID("btnMoveBrush"), true);
-		menuBar->Enable(XRCID("btnSmoothBrush"), true);
-		menuBar->Enable(XRCID("btnUndiffBrush"), true);
-		menuBar->Enable(XRCID("btnCollapseVertex"), true);
-		menuBar->Enable(XRCID("btnFlipEdgeTool"), true);
-		menuBar->Enable(XRCID("btnSplitEdgeTool"), true);
-		menuBar->Enable(XRCID("btnMoveVertexTool"), true);
-		menuBar->Enable(XRCID("deleteVerts"), true);
-		menuBar->Enable(XRCID("refineMesh"), true);
-
-		toolBarH->ToggleTool(XRCID("btnInflateBrush"), true);
-		toolBarH->EnableTool(XRCID("btnWeightBrush"), false);
-		toolBarH->EnableTool(XRCID("btnColorBrush"), false);
-		toolBarH->EnableTool(XRCID("btnAlphaBrush"), false);
-		toolBarV->EnableTool(XRCID("btnTransform"), true);
-		toolBarV->EnableTool(XRCID("btnPivot"), true);
-		toolBarV->EnableTool(XRCID("btnVertexEdit"), true);
-		toolBarH->EnableTool(XRCID("btnInflateBrush"), true);
-		toolBarH->EnableTool(XRCID("btnDeflateBrush"), true);
-		toolBarH->EnableTool(XRCID("btnMoveBrush"), true);
-		toolBarH->EnableTool(XRCID("btnSmoothBrush"), true);
-		toolBarH->EnableTool(XRCID("btnUndiffBrush"), true);
-		toolBarH->EnableTool(XRCID("btnCollapseVertex"), true);
-		toolBarH->EnableTool(XRCID("btnFlipEdgeTool"), true);
-		toolBarH->EnableTool(XRCID("btnSplitEdgeTool"), true);
-		toolBarH->EnableTool(XRCID("btnMoveVertexTool"), true);
-	}
+	if (id != boneTabButton->GetId() && id != colorsTabButton->GetId())
+		EnableStandardTools();
 
 	if (id == meshTabButton->GetId()) {
-		currentTabButton = meshTabButton;
-
-		outfitBones->Hide();
-		colorSettings->Hide();
-		segmentTree->Hide();
-		partitionTree->Hide();
-		lightSettings->Hide();
-		outfitShapes->Show();
-
-		boneTabButton->SetCheck(false);
-		colorsTabButton->SetCheck(false);
-		segmentTabButton->SetCheck(false);
-		partitionTabButton->SetCheck(false);
-		lightsTabButton->SetCheck(false);
-
+		ShowTab(meshTabButton, outfitShapes);
 		masksPane->Show();
 
 		SetNoSubMeshes();
 		SelectTool(glView->GetLastTool());
 	}
-	else if (id == boneTabButton->GetId()) {
-		currentTabButton = boneTabButton;
-
-		outfitShapes->Hide();
-		colorSettings->Hide();
-		segmentTree->Hide();
-		partitionTree->Hide();
-		lightSettings->Hide();
-		outfitBones->Show();
-
-		meshTabButton->SetCheck(false);
-		colorsTabButton->SetCheck(false);
-		segmentTabButton->SetCheck(false);
-		partitionTabButton->SetCheck(false);
-		lightsTabButton->SetCheck(false);
-
-		cXMirrorBone->Show();
-
-		wxStaticText* totalBoneCountLabel = (wxStaticText*)FindWindowByName("totalBoneCountLabel");
-		wxStaticText* selectedBoneCountLabel = (wxStaticText*)FindWindowByName("selectedBoneCountLabel");
-		wxCheckBox* cbFixedWeight = (wxCheckBox*)FindWindowByName("cbFixedWeight");
-		wxCheckBox* cbNormalizeWeights = (wxCheckBox*)FindWindowByName("cbNormalizeWeights");
-		wxStaticText* xMirrorBoneLabel = (wxStaticText*)FindWindowByName("xMirrorBoneLabel");
-
-		totalBoneCountLabel->Show();
-		selectedBoneCountLabel->Show();
-		cbFixedWeight->Show();
-		cbNormalizeWeights->Show();
-		xMirrorBoneLabel->Show();
-		posePane->Show();
-		if (physicsPane)
-			physicsPane->Show(physicsAvailable);
-		if (animationPane)
-			animationPane->Show();
-		bonesFilter->GetParent()->Show();
-
-		UpdateBoneTransformToolEnabled();
-
-		SelectTool(ToolID::WeightBrush);
-		glView->SetWeightVisible();
-
-		project->bPose = cbPose->GetValue();
-
-		if (project->bPose)
-			ApplyPose();
-
-		menuBar->Check(XRCID("btnWeightBrush"), true);
-		menuBar->Enable(XRCID("btnWeightBrush"), true);
-		menuBar->Enable(XRCID("btnColorBrush"), false);
-		menuBar->Enable(XRCID("btnAlphaBrush"), false);
-		menuBar->Enable(XRCID("btnPivot"), false);
-		menuBar->Enable(XRCID("btnVertexEdit"), false);
-		menuBar->Enable(XRCID("btnInflateBrush"), true);
-		menuBar->Enable(XRCID("btnDeflateBrush"), true);
-		menuBar->Enable(XRCID("btnMoveBrush"), true);
-		menuBar->Enable(XRCID("btnSmoothBrush"), true);
-		menuBar->Enable(XRCID("btnUndiffBrush"), true);
-		menuBar->Enable(XRCID("btnCollapseVertex"), false);
-		menuBar->Enable(XRCID("btnFlipEdgeTool"), false);
-		menuBar->Enable(XRCID("btnSplitEdgeTool"), false);
-		menuBar->Enable(XRCID("btnMoveVertexTool"), true);
-		menuBar->Enable(XRCID("deleteVerts"), false);
-		menuBar->Enable(XRCID("refineMesh"), false);
-
-		toolBarH->ToggleTool(XRCID("btnWeightBrush"), true);
-		toolBarH->EnableTool(XRCID("btnWeightBrush"), true);
-		toolBarH->EnableTool(XRCID("btnColorBrush"), false);
-		toolBarH->EnableTool(XRCID("btnAlphaBrush"), false);
-		toolBarV->EnableTool(XRCID("btnPivot"), false);
-		toolBarV->EnableTool(XRCID("btnVertexEdit"), false);
-		toolBarH->EnableTool(XRCID("btnInflateBrush"), true);
-		toolBarH->EnableTool(XRCID("btnDeflateBrush"), true);
-		toolBarH->EnableTool(XRCID("btnMoveBrush"), true);
-		toolBarH->EnableTool(XRCID("btnSmoothBrush"), true);
-		toolBarH->EnableTool(XRCID("btnUndiffBrush"), true);
-		toolBarH->EnableTool(XRCID("btnCollapseVertex"), false);
-		toolBarH->EnableTool(XRCID("btnFlipEdgeTool"), false);
-		toolBarH->EnableTool(XRCID("btnSplitEdgeTool"), false);
-		toolBarH->EnableTool(XRCID("btnMoveVertexTool"), true);
-
-		SetNoSubMeshes();
-
-		ReselectBone();
-		UpdateUndoTools();
-	}
-	else if (id == colorsTabButton->GetId()) {
-		currentTabButton = colorsTabButton;
-
-		outfitShapes->Hide();
-		outfitBones->Hide();
-		segmentTree->Hide();
-		partitionTree->Hide();
-		lightSettings->Hide();
-		colorSettings->Show();
-
-		meshTabButton->SetCheck(false);
-		boneTabButton->SetCheck(false);
-		segmentTabButton->SetCheck(false);
-		partitionTabButton->SetCheck(false);
-		lightsTabButton->SetCheck(false);
-
-		glView->SetTransformMode(false);
-		SelectTool(ToolID::ColorBrush);
-		glView->SetColorsVisible();
-
-		wxButton* btnSwapBrush = (wxButton*)FindWindowById(XRCID("btnSwapBrush"), colorSettings);
-		btnSwapBrush->SetLabel(_("Edit Alpha"));
-
-		FillVertexColors();
-
-		menuBar->Check(XRCID("btnColorBrush"), true);
-		menuBar->Enable(XRCID("btnColorBrush"), true);
-		menuBar->Enable(XRCID("btnAlphaBrush"), true);
-		menuBar->Enable(XRCID("btnWeightBrush"), false);
-		menuBar->Enable(XRCID("btnTransform"), false);
-		menuBar->Enable(XRCID("btnPivot"), false);
-		menuBar->Enable(XRCID("btnVertexEdit"), false);
-		menuBar->Enable(XRCID("btnInflateBrush"), false);
-		menuBar->Enable(XRCID("btnDeflateBrush"), false);
-		menuBar->Enable(XRCID("btnMoveBrush"), false);
-		menuBar->Enable(XRCID("btnSmoothBrush"), false);
-		menuBar->Enable(XRCID("btnUndiffBrush"), false);
-		menuBar->Enable(XRCID("btnCollapseVertex"), false);
-		menuBar->Enable(XRCID("btnFlipEdgeTool"), false);
-		menuBar->Enable(XRCID("btnSplitEdgeTool"), false);
-		menuBar->Enable(XRCID("btnMoveVertexTool"), false);
-		menuBar->Enable(XRCID("deleteVerts"), false);
-		menuBar->Enable(XRCID("refineMesh"), false);
-
-		toolBarH->ToggleTool(XRCID("btnColorBrush"), true);
-		toolBarH->EnableTool(XRCID("btnColorBrush"), true);
-		toolBarH->EnableTool(XRCID("btnAlphaBrush"), true);
-		toolBarH->EnableTool(XRCID("btnWeightBrush"), false);
-		toolBarV->EnableTool(XRCID("btnTransform"), false);
-		toolBarV->EnableTool(XRCID("btnPivot"), false);
-		toolBarV->EnableTool(XRCID("btnVertexEdit"), false);
-		toolBarH->EnableTool(XRCID("btnInflateBrush"), false);
-		toolBarH->EnableTool(XRCID("btnDeflateBrush"), false);
-		toolBarH->EnableTool(XRCID("btnMoveBrush"), false);
-		toolBarH->EnableTool(XRCID("btnSmoothBrush"), false);
-		toolBarH->EnableTool(XRCID("btnUndiffBrush"), false);
-		toolBarH->EnableTool(XRCID("btnCollapseVertex"), false);
-		toolBarH->EnableTool(XRCID("btnFlipEdgeTool"), false);
-		toolBarH->EnableTool(XRCID("btnSplitEdgeTool"), false);
-		toolBarH->EnableTool(XRCID("btnMoveVertexTool"), false);
-
-		SetNoSubMeshes();
-	}
-	else if (id == segmentTabButton->GetId()) {
-		currentTabButton = segmentTabButton;
-
-		outfitShapes->Hide();
-		outfitBones->Hide();
-		colorSettings->Hide();
-		partitionTree->Hide();
-		lightSettings->Hide();
-		segmentTree->Show();
-
-		meshTabButton->SetCheck(false);
-		boneTabButton->SetCheck(false);
-		colorsTabButton->SetCheck(false);
-		partitionTabButton->SetCheck(false);
-		lightsTabButton->SetCheck(false);
-
-		wxStaticText* segmentTypeLabel = (wxStaticText*)FindWindowByName("segmentTypeLabel");
-		wxChoice* segmentType = (wxChoice*)FindWindowByName("segmentType");
-		wxStaticText* segmentSlotLabel = (wxStaticText*)FindWindowByName("segmentSlotLabel");
-		wxChoice* segmentSlot = (wxChoice*)FindWindowByName("segmentSlot");
-		wxStaticText* segmentSSFLabel = (wxStaticText*)FindWindowByName("segmentSSFLabel");
-		wxButton* segmentSSFEdit = (wxButton*)FindWindowByName("segmentSSFEdit");
-		wxTextCtrl* segmentSSF = (wxTextCtrl*)FindWindowByName("segmentSSF");
-		wxButton* segmentApply = (wxButton*)FindWindowByName("segmentApply");
-		wxButton* segmentReset = (wxButton*)FindWindowByName("segmentReset");
-
-		segmentTypeLabel->Show();
-		segmentType->Show();
-		segmentSlotLabel->Show();
-		segmentSlot->Show();
-		segmentSSFLabel->Show();
-		segmentSSFEdit->Show();
-		segmentSSF->Show();
-		segmentApply->Show();
-		segmentReset->Show();
-
-		glView->SetSegmentMode();
-		SelectTool(ToolID::MaskBrush); // Use mask brush for segment editing (but with custom painting function 'PaintSegmentPartitionTriangles')
-		glView->SetMaskVisible(false);
-
-		menuBar->Check(XRCID("btnMaskBrush"), true);
-		menuBar->Enable(XRCID("btnSelect"), false);
-		menuBar->Enable(XRCID("btnTransform"), false);
-		menuBar->Enable(XRCID("btnPivot"), false);
-		menuBar->Enable(XRCID("btnVertexEdit"), false);
-		menuBar->Enable(XRCID("btnInflateBrush"), false);
-		menuBar->Enable(XRCID("btnDeflateBrush"), false);
-		menuBar->Enable(XRCID("btnMoveBrush"), false);
-		menuBar->Enable(XRCID("btnSmoothBrush"), false);
-		menuBar->Enable(XRCID("btnUndiffBrush"), false);
-		menuBar->Enable(XRCID("btnClearMask"), false);
-		menuBar->Enable(XRCID("btnInvertMask"), false);
-		menuBar->Enable(XRCID("btnCollapseVertex"), false);
-		menuBar->Enable(XRCID("btnFlipEdgeTool"), false);
-		menuBar->Enable(XRCID("btnSplitEdgeTool"), false);
-		menuBar->Enable(XRCID("btnMoveVertexTool"), false);
-		menuBar->Enable(XRCID("deleteVerts"), false);
-		menuBar->Enable(XRCID("refineMesh"), false);
-
-		toolBarH->ToggleTool(XRCID("btnMaskBrush"), true);
-		toolBarH->EnableTool(XRCID("btnSelect"), false);
-		toolBarV->EnableTool(XRCID("btnTransform"), false);
-		toolBarV->EnableTool(XRCID("btnPivot"), false);
-		toolBarV->EnableTool(XRCID("btnVertexEdit"), false);
-		toolBarH->EnableTool(XRCID("btnInflateBrush"), false);
-		toolBarH->EnableTool(XRCID("btnDeflateBrush"), false);
-		toolBarH->EnableTool(XRCID("btnMoveBrush"), false);
-		toolBarH->EnableTool(XRCID("btnSmoothBrush"), false);
-		toolBarH->EnableTool(XRCID("btnUndiffBrush"), false);
-		toolBarH->EnableTool(XRCID("btnCollapseVertex"), false);
-		toolBarH->EnableTool(XRCID("btnFlipEdgeTool"), false);
-		toolBarH->EnableTool(XRCID("btnSplitEdgeTool"), false);
-		toolBarH->EnableTool(XRCID("btnMoveVertexTool"), false);
-
-		ResetSegmentVisibility();
-		ShowSegment(segmentTree->GetSelection());
-	}
-	else if (id == partitionTabButton->GetId()) {
-		currentTabButton = partitionTabButton;
-
-		outfitShapes->Hide();
-		outfitBones->Hide();
-		colorSettings->Hide();
-		segmentTree->Hide();
-		lightSettings->Hide();
-		partitionTree->Show();
-
-		meshTabButton->SetCheck(false);
-		boneTabButton->SetCheck(false);
-		colorsTabButton->SetCheck(false);
-		segmentTabButton->SetCheck(false);
-		lightsTabButton->SetCheck(false);
-
-		wxStaticText* partitionTypeLabel = (wxStaticText*)FindWindowByName("partitionTypeLabel");
-		wxChoice* partitionType = (wxChoice*)FindWindowByName("partitionType");
-		wxButton* partitionApply = (wxButton*)FindWindowByName("partitionApply");
-		wxButton* partitionReset = (wxButton*)FindWindowByName("partitionReset");
-
-		partitionTypeLabel->Show();
-		partitionType->Show();
-		partitionApply->Show();
-		partitionReset->Show();
-
-		glView->SetSegmentMode();
-		SelectTool(ToolID::MaskBrush); // Use mask brush for partition editing (but with custom painting function 'PaintSegmentPartitionTriangles')
-		glView->SetMaskVisible(false);
-
-		menuBar->Check(XRCID("btnMaskBrush"), true);
-		menuBar->Enable(XRCID("btnSelect"), false);
-		menuBar->Enable(XRCID("btnTransform"), false);
-		menuBar->Enable(XRCID("btnPivot"), false);
-		menuBar->Enable(XRCID("btnVertexEdit"), false);
-		menuBar->Enable(XRCID("btnInflateBrush"), false);
-		menuBar->Enable(XRCID("btnDeflateBrush"), false);
-		menuBar->Enable(XRCID("btnMoveBrush"), false);
-		menuBar->Enable(XRCID("btnSmoothBrush"), false);
-		menuBar->Enable(XRCID("btnUndiffBrush"), false);
-		menuBar->Enable(XRCID("btnClearMask"), false);
-		menuBar->Enable(XRCID("btnInvertMask"), false);
-		menuBar->Enable(XRCID("btnCollapseVertex"), false);
-		menuBar->Enable(XRCID("btnFlipEdgeTool"), false);
-		menuBar->Enable(XRCID("btnSplitEdgeTool"), false);
-		menuBar->Enable(XRCID("btnMoveVertexTool"), false);
-		menuBar->Enable(XRCID("deleteVerts"), false);
-		menuBar->Enable(XRCID("refineMesh"), false);
-
-		toolBarH->ToggleTool(XRCID("btnMaskBrush"), true);
-		toolBarH->EnableTool(XRCID("btnSelect"), false);
-		toolBarV->EnableTool(XRCID("btnTransform"), false);
-		toolBarV->EnableTool(XRCID("btnPivot"), false);
-		toolBarV->EnableTool(XRCID("btnVertexEdit"), false);
-		toolBarH->EnableTool(XRCID("btnInflateBrush"), false);
-		toolBarH->EnableTool(XRCID("btnDeflateBrush"), false);
-		toolBarH->EnableTool(XRCID("btnMoveBrush"), false);
-		toolBarH->EnableTool(XRCID("btnSmoothBrush"), false);
-		toolBarH->EnableTool(XRCID("btnUndiffBrush"), false);
-		toolBarH->EnableTool(XRCID("btnCollapseVertex"), false);
-		toolBarH->EnableTool(XRCID("btnFlipEdgeTool"), false);
-		toolBarH->EnableTool(XRCID("btnSplitEdgeTool"), false);
-		toolBarH->EnableTool(XRCID("btnMoveVertexTool"), false);
-
-		ResetPartitionVisibility();
-		ShowPartition(partitionTree->GetSelection());
-	}
+	else if (id == boneTabButton->GetId())
+		EnterBoneTab();
+	else if (id == colorsTabButton->GetId())
+		EnterColorsTab();
+	else if (id == segmentTabButton->GetId())
+		EnterSegmentTab();
+	else if (id == partitionTabButton->GetId())
+		EnterPartitionTab();
 	else if (id == lightsTabButton->GetId()) {
-		currentTabButton = lightsTabButton;
-
-		outfitShapes->Hide();
-		outfitBones->Hide();
-		colorSettings->Hide();
-		segmentTree->Hide();
-		partitionTree->Hide();
-		lightSettings->Show();
-
-		meshTabButton->SetCheck(false);
-		boneTabButton->SetCheck(false);
-		colorsTabButton->SetCheck(false);
-		segmentTabButton->SetCheck(false);
-		partitionTabButton->SetCheck(false);
+		ShowTab(lightsTabButton, lightSettings);
 
 		SetNoSubMeshes();
 		SelectTool(glView->GetLastTool());

@@ -158,26 +158,18 @@ void OutfitStudioFrame::OnAnyPoseSlider(wxScrollEvent& e, wxTextCtrl* t, int cin
 	OnPoseValChanged(cind, val);
 }
 
-void OutfitStudioFrame::OnRXPoseSlider(wxScrollEvent& e) {
-	OnAnyPoseSlider(e, rxPoseText, 0);
-}
-void OutfitStudioFrame::OnRYPoseSlider(wxScrollEvent& e) {
-	OnAnyPoseSlider(e, ryPoseText, 1);
-}
-void OutfitStudioFrame::OnRZPoseSlider(wxScrollEvent& e) {
-	OnAnyPoseSlider(e, rzPoseText, 2);
-}
-void OutfitStudioFrame::OnTXPoseSlider(wxScrollEvent& e) {
-	OnAnyPoseSlider(e, txPoseText, 3);
-}
-void OutfitStudioFrame::OnTYPoseSlider(wxScrollEvent& e) {
-	OnAnyPoseSlider(e, tyPoseText, 4);
-}
-void OutfitStudioFrame::OnTZPoseSlider(wxScrollEvent& e) {
-	OnAnyPoseSlider(e, tzPoseText, 5);
-}
-void OutfitStudioFrame::OnScPoseSlider(wxScrollEvent& e) {
-	OnAnyPoseSlider(e, scPoseText, 6);
+// The pose controls of each pose value, in the order OnPoseValChanged numbers them
+static const char* const PoseSliderNames[] = {"rxPoseSlider", "ryPoseSlider", "rzPoseSlider", "txPoseSlider", "tyPoseSlider", "tzPoseSlider", "scPoseSlider"};
+static const char* const PoseTextNames[] = {"rxPoseText", "ryPoseText", "rzPoseText", "txPoseText", "tyPoseText", "tzPoseText", "scPoseText"};
+
+void OutfitStudioFrame::OnPoseSlider(wxScrollEvent& event) {
+	wxTextCtrl* texts[] = {rxPoseText, ryPoseText, rzPoseText, txPoseText, tyPoseText, tzPoseText, scPoseText};
+	for (int i = 0; i < 7; i++) {
+		if (event.GetId() == XRCID(PoseSliderNames[i])) {
+			OnAnyPoseSlider(event, texts[i], i);
+			return;
+		}
+	}
 }
 
 void OutfitStudioFrame::OnAnyPoseTextChanged(wxTextCtrl* t, wxSlider* s, int cind) {
@@ -193,26 +185,15 @@ void OutfitStudioFrame::OnAnyPoseTextChanged(wxTextCtrl* t, wxSlider* s, int cin
 	OnPoseValChanged(cind, val);
 }
 
-void OutfitStudioFrame::OnRXPoseTextChanged(wxCommandEvent& WXUNUSED(event)) {
-	OnAnyPoseTextChanged(rxPoseText, rxPoseSlider, 0);
-}
-void OutfitStudioFrame::OnRYPoseTextChanged(wxCommandEvent& WXUNUSED(event)) {
-	OnAnyPoseTextChanged(ryPoseText, ryPoseSlider, 1);
-}
-void OutfitStudioFrame::OnRZPoseTextChanged(wxCommandEvent& WXUNUSED(event)) {
-	OnAnyPoseTextChanged(rzPoseText, rzPoseSlider, 2);
-}
-void OutfitStudioFrame::OnTXPoseTextChanged(wxCommandEvent& WXUNUSED(event)) {
-	OnAnyPoseTextChanged(txPoseText, txPoseSlider, 3);
-}
-void OutfitStudioFrame::OnTYPoseTextChanged(wxCommandEvent& WXUNUSED(event)) {
-	OnAnyPoseTextChanged(tyPoseText, tyPoseSlider, 4);
-}
-void OutfitStudioFrame::OnTZPoseTextChanged(wxCommandEvent& WXUNUSED(event)) {
-	OnAnyPoseTextChanged(tzPoseText, tzPoseSlider, 5);
-}
-void OutfitStudioFrame::OnScPoseTextChanged(wxCommandEvent& WXUNUSED(event)) {
-	OnAnyPoseTextChanged(scPoseText, scPoseSlider, 6);
+void OutfitStudioFrame::OnPoseTextChanged(wxCommandEvent& event) {
+	wxTextCtrl* texts[] = {rxPoseText, ryPoseText, rzPoseText, txPoseText, tyPoseText, tzPoseText, scPoseText};
+	wxSlider* sliders[] = {rxPoseSlider, ryPoseSlider, rzPoseSlider, txPoseSlider, tyPoseSlider, tzPoseSlider, scPoseSlider};
+	for (int i = 0; i < 7; i++) {
+		if (event.GetId() == XRCID(PoseTextNames[i])) {
+			OnAnyPoseTextChanged(texts[i], sliders[i], i);
+			return;
+		}
+	}
 }
 
 void OutfitStudioFrame::OnResetBonePose(wxCommandEvent& WXUNUSED(event)) {

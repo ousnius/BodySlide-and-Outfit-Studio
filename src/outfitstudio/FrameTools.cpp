@@ -17,6 +17,7 @@ See the included LICENSE file
 #include <cstdlib>
 #include <iterator>
 #include <sstream>
+#include <utility>
 #include <wx/textctrl.h>
 
 using namespace nifly;
@@ -329,45 +330,37 @@ void OutfitStudioFrame::CheckBrushBounds() {
 		menuBar->Enable(XRCID("btnDecreaseStr"), true);
 }
 
-void OutfitStudioFrame::OnSelectTool(wxCommandEvent& event) {
-	int id = event.GetId();
+// The tool each tool button selects
+static const std::pair<const char*, ToolID> ToolButtons[] = {
+	{"btnSelect", ToolID::Select},
+	{"btnTransform", ToolID::Transform},
+	{"btnPivot", ToolID::Pivot},
+	{"btnVertexEdit", ToolID::VertexEdit},
+	{"btnMaskBrush", ToolID::MaskBrush},
+	{"btnInflateBrush", ToolID::InflateBrush},
+	{"btnDeflateBrush", ToolID::DeflateBrush},
+	{"btnMoveBrush", ToolID::MoveBrush},
+	{"btnSmoothBrush", ToolID::SmoothBrush},
+	{"btnUndiffBrush", ToolID::UndiffBrush},
+	{"btnWeightBrush", ToolID::WeightBrush},
+	{"btnColorBrush", ToolID::ColorBrush},
+	{"btnAlphaBrush", ToolID::AlphaBrush},
+	{"btnCollapseVertex", ToolID::CollapseVertex},
+	{"btnFlipEdgeTool", ToolID::FlipEdge},
+	{"btnSplitEdgeTool", ToolID::SplitEdge},
+	{"btnMoveVertexTool", ToolID::MoveVertex},
+};
 
-	if (id == XRCID("btnSelect"))
-		SelectTool(ToolID::Select);
-	else if (id == XRCID("btnTransform"))
-		SelectTool(ToolID::Transform);
-	else if (id == XRCID("btnPivot"))
-		SelectTool(ToolID::Pivot);
-	else if (id == XRCID("btnVertexEdit"))
-		SelectTool(ToolID::VertexEdit);
-	else if (id == XRCID("btnMaskBrush"))
-		SelectTool(ToolID::MaskBrush);
-	else if (id == XRCID("btnInflateBrush"))
-		SelectTool(ToolID::InflateBrush);
-	else if (id == XRCID("btnDeflateBrush"))
-		SelectTool(ToolID::DeflateBrush);
-	else if (id == XRCID("btnMoveBrush"))
-		SelectTool(ToolID::MoveBrush);
-	else if (id == XRCID("btnSmoothBrush"))
-		SelectTool(ToolID::SmoothBrush);
-	else if (id == XRCID("btnUndiffBrush"))
-		SelectTool(ToolID::UndiffBrush);
-	else if (id == XRCID("btnWeightBrush"))
-		SelectTool(ToolID::WeightBrush);
-	else if (id == XRCID("btnColorBrush"))
-		SelectTool(ToolID::ColorBrush);
-	else if (id == XRCID("btnAlphaBrush"))
-		SelectTool(ToolID::AlphaBrush);
-	else if (id == XRCID("btnCollapseVertex"))
-		SelectTool(ToolID::CollapseVertex);
-	else if (id == XRCID("btnFlipEdgeTool"))
-		SelectTool(ToolID::FlipEdge);
-	else if (id == XRCID("btnSplitEdgeTool"))
-		SelectTool(ToolID::SplitEdge);
-	else if (id == XRCID("btnMoveVertexTool"))
-		SelectTool(ToolID::MoveVertex);
-	else
-		SelectTool(ToolID::Any);
+void OutfitStudioFrame::OnSelectTool(wxCommandEvent& event) {
+	ToolID tool = ToolID::Any;
+	for (auto& button : ToolButtons) {
+		if (event.GetId() == XRCID(button.first)) {
+			tool = button.second;
+			break;
+		}
+	}
+
+	SelectTool(tool);
 
 	// Remember last standard tool used in regular tabs
 	if (meshTabButton->GetCheck() || lightsTabButton->GetCheck()) {
