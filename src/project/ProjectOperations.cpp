@@ -1301,10 +1301,10 @@ RefreshFlags ProjectOperations::ClearPreviewPose() {
 
 void ProjectOperations::ResetPose() {
 	std::vector<std::string> bones;
-	AnimSkeleton::getInstance().GetBoneNames(bones);
+	project.GetSkeleton().GetBoneNames(bones);
 
 	for (const std::string& boneName : bones) {
-		AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
+		AnimBone* bone = project.GetSkeleton().GetBonePtr(boneName);
 		if (!bone || bone->IsUnposed())
 			continue;
 

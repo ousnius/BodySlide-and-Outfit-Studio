@@ -402,6 +402,8 @@ public:
 
 	nifly::NifFile* GetWorkNif() { return &workNif; }
 	AnimInfo* GetWorkAnim() { return &workAnim; }
+	// The skeleton the shapes of the project are bound to
+	AnimSkeleton& GetSkeleton() const { return workAnim.GetSkeleton(); }
 
 	// Resolves a physics XML path referenced by a "HDT Skinned Mesh Physics
 	// Object" extra data to a readable stream (loose game data folder file,

@@ -510,7 +510,7 @@ Vector3 OutfitProject::InversePoseDiff(int vertIndex, const Vector3& diffNif, An
 	float totalWeight = 0;
 
 	for (auto& boneNameIt : animSkin.boneNames) {
-		AnimBone* animB = AnimSkeleton::getInstance().GetBonePtr(boneNameIt.first);
+		AnimBone* animB = GetSkeleton().GetBonePtr(boneNameIt.first);
 		if (!animB)
 			continue;
 

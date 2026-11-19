@@ -22,11 +22,11 @@ See the included LICENSE file
 using namespace nifly;
 
 size_t OutfitProject::GetActiveBoneCount() {
-	return AnimSkeleton::getInstance().GetActiveBoneCount();
+	return GetSkeleton().GetActiveBoneCount();
 }
 
 void OutfitProject::GetActiveBones(std::vector<std::string>& outBoneNames) {
-	AnimSkeleton::getInstance().GetActiveBoneNames(outBoneNames);
+	GetSkeleton().GetActiveBoneNames(outBoneNames);
 }
 
 void OutfitProject::CopyBoneWeights(NiShape* shape,
@@ -255,10 +255,10 @@ void OutfitProject::AddBoneRef(const std::string& boneName) {
 }
 
 void OutfitProject::AddCustomBoneRef(const std::string& boneName, const std::string& parentBone, const MatTransform& xformToParent) {
-	AnimBone& customBone = AnimSkeleton::getInstance().AddCustomBone(boneName);
+	AnimBone& customBone = GetSkeleton().AddCustomBone(boneName);
 	customBone.SetTransformBoneToParent(xformToParent);
 	// An empty name is no parent, not a bone that happens to have no name
-	customBone.SetParentBone(parentBone.empty() ? nullptr : AnimSkeleton::getInstance().GetBonePtr(parentBone));
+	customBone.SetParentBone(parentBone.empty() ? nullptr : GetSkeleton().GetBonePtr(parentBone));
 
 	for (auto& s : workNif.GetShapeNames())
 		workAnim.AddShapeBone(s, boneName);
@@ -266,7 +266,7 @@ void OutfitProject::AddCustomBoneRef(const std::string& boneName, const std::str
 
 void OutfitProject::ModifyCustomBone(AnimBone* bPtr, const std::string& parentBone, const MatTransform& xformToParent) {
 	bPtr->SetTransformBoneToParent(xformToParent);
-	bPtr->SetParentBone(parentBone.empty() ? nullptr : AnimSkeleton::getInstance().GetBonePtr(parentBone));
+	bPtr->SetParentBone(parentBone.empty() ? nullptr : GetSkeleton().GetBonePtr(parentBone));
 
 	for (auto& s : workNif.GetShapeNames())
 		workAnim.RecursiveRecalcXFormSkinToBone(s, bPtr);
@@ -372,7 +372,7 @@ bool OutfitProject::DuplicateBones(const std::vector<std::string>& boneNames,
 								   std::vector<std::string>& outNewNames,
 								   std::string& error) {
 	outNewNames.clear();
-	AnimSkeleton& skel = AnimSkeleton::getInstance();
+	AnimSkeleton& skel = GetSkeleton();
 
 	std::vector<AnimBone*> bones;
 	for (auto& name : boneNames) {
@@ -442,7 +442,7 @@ bool OutfitProject::DuplicateBones(const std::vector<std::string>& boneNames,
 }
 
 std::vector<UndoStateBoneXform> OutfitProject::MirrorBonesX(const std::vector<std::string>& boneNames) {
-	AnimSkeleton& skel = AnimSkeleton::getInstance();
+	AnimSkeleton& skel = GetSkeleton();
 
 	std::vector<AnimBone*> bones;
 	for (auto& name : boneNames) {
@@ -490,7 +490,7 @@ std::vector<UndoStateBoneXform> OutfitProject::MirrorBonesX(const std::vector<st
 void OutfitProject::ApplyBoneXforms(const std::vector<UndoStateBoneXform>& xforms, bool undo) {
 	// Parents first in both directions: each change recalculates the skin binds of its whole subtree
 	for (auto& xform : xforms) {
-		AnimBone* bPtr = AnimSkeleton::getInstance().GetBonePtr(xform.boneName);
+		AnimBone* bPtr = GetSkeleton().GetBonePtr(xform.boneName);
 		if (bPtr && !bPtr->isStandardBone)
 			SetCustomBoneTransform(bPtr, undo ? xform.startXformToParent : xform.endXformToParent);
 	}
@@ -737,7 +737,7 @@ void OutfitProject::GetAllPoseTransforms(NiShape* s, std::vector<MatTransform>& 
 	bool isSF = workNif.GetHeader().GetVersion().IsSF();
 
 	for (auto& boneNamesIt : animSkin.boneNames) {
-		AnimBone* animB = AnimSkeleton::getInstance().GetBonePtr(boneNamesIt.first);
+		AnimBone* animB = GetSkeleton().GetBonePtr(boneNamesIt.first);
 		if (!animB)
 			continue;
 		AnimWeight& animW = animSkin.boneWeights[boneNamesIt.second];

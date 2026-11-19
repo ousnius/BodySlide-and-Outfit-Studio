@@ -803,10 +803,10 @@ int OutfitProject::ImportFBX(const std::string& fileName, const FBXImportOptions
 			workAnim.SetTransformGlobalToShape(newShape, workAnim.GetTransformGlobalToShape(baseShape));
 
 		for (auto& bn : fbxShape->boneNames) {
-			if (!AnimSkeleton::getInstance().GetBonePtr(bn)) {
+			if (!GetSkeleton().GetBonePtr(bn)) {
 				// Not found in reference skeleton, use default values
-				AnimSkeleton::getInstance().AddCustomBone(bn);
-				//AnimBone& cstm = AnimSkeleton::getInstance().AddCustomBone(bn);
+				GetSkeleton().AddCustomBone(bn);
+				//AnimBone& cstm = GetSkeleton().AddCustomBone(bn);
 				// TODO: call SetParentBone (FbxNode::GetParent?)
 				// TODO: call SetTransformBoneToParent (FbxNode::LclTranslation and LclRotation?)
 				nonRefBones += bn + "\n";
@@ -825,7 +825,7 @@ int OutfitProject::ImportFBX(const std::string& fileName, const FBXImportOptions
 
 int OutfitProject::ExportFBX(const std::string& fileName, const std::vector<NiShape*>& shapes, bool transToGlobal) {
 	FBXWrangler fbxw;
-	fbxw.AddSkeleton(&AnimSkeleton::getInstance().refSkeletonNif);
+	fbxw.AddSkeleton(&GetSkeleton().refSkeletonNif);
 
 	for (auto& s : shapes) {
 		fbxw.AddNif(&workNif, &workAnim, transToGlobal, s);

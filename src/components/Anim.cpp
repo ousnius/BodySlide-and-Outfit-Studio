@@ -26,7 +26,7 @@ bool AnimInfo::AddShapeBone(const std::string& shape, const std::string& boneNam
 
 	skin.boneNames[boneName] = shapeBones[shape].size();
 	shapeBones[shape].push_back(boneName);
-	AnimSkeleton::getInstance().RefBone(boneName);
+	GetSkeleton().RefBone(boneName);
 	if (bind)
 		SetXFormSkinToBone(shape, boneName, *bind);
 	else
@@ -35,7 +35,7 @@ bool AnimInfo::AddShapeBone(const std::string& shape, const std::string& boneNam
 }
 
 bool AnimInfo::LacksSkeletonBind(const std::string& boneName) const {
-	return refNif && refNif->GetHeader().GetVersion().IsSF() && !AnimSkeleton::getInstance().GetBonePtr(boneName);
+	return refNif && refNif->GetHeader().GetVersion().IsSF() && !GetSkeleton().GetBonePtr(boneName);
 }
 
 std::optional<MatTransform> AnimInfo::BindFromShape(const std::string& sourceShape, const std::string& targetShape, const std::string& boneName) const {
@@ -83,10 +83,10 @@ bool AnimInfo::RemoveShapeBone(const std::string& shape, const std::string& bone
 	bones.erase(std::remove(bones.begin(), bones.end(), boneName), bones.end());
 	shapeSkinning[shape].RemoveBone(boneName);
 
-	AnimSkeleton::getInstance().ReleaseBone(boneName);
+	GetSkeleton().ReleaseBone(boneName);
 
 	if (refNif && refNif->IsValid()) {
-		if (AnimSkeleton::getInstance().GetBoneRefCount(boneName) <= 0) {
+		if (GetSkeleton().GetBoneRefCount(boneName) <= 0) {
 			if (refNif->CanDeleteNode(boneName))
 				refNif->DeleteNode(boneName);
 		}
@@ -95,13 +95,17 @@ bool AnimInfo::RemoveShapeBone(const std::string& shape, const std::string& bone
 	return true;
 }
 
+AnimSkeleton& AnimInfo::GetSkeleton() const {
+	return AnimSkeleton::getInstance();
+}
+
 void AnimInfo::Clear() {
 	if (refNif && refNif->IsValid()) {
 		for (auto& shapeBoneList : shapeBones) {
 			for (auto& boneName : shapeBoneList.second) {
-				AnimSkeleton::getInstance().ReleaseBone(boneName);
+				GetSkeleton().ReleaseBone(boneName);
 
-				if (AnimSkeleton::getInstance().GetBoneRefCount(boneName) <= 0) {
+				if (GetSkeleton().GetBoneRefCount(boneName) <= 0) {
 					if (refNif->CanDeleteNode(boneName))
 						refNif->DeleteNode(boneName);
 				}
@@ -117,7 +121,7 @@ void AnimInfo::Clear() {
 	else {
 		for (auto& shapeBoneList : shapeBones)
 			for (auto& boneName : shapeBoneList.second)
-				AnimSkeleton::getInstance().ReleaseBone(boneName);
+				GetSkeleton().ReleaseBone(boneName);
 
 		shapeSkinning.clear();
 		shapeBones.clear();
@@ -129,10 +133,10 @@ void AnimInfo::ClearShape(const std::string& shape) {
 		return;
 
 	for (auto& boneName : shapeBones[shape]) {
-		AnimSkeleton::getInstance().ReleaseBone(boneName);
+		GetSkeleton().ReleaseBone(boneName);
 
 		if (refNif && refNif->IsValid()) {
-			if (AnimSkeleton::getInstance().GetBoneRefCount(boneName) <= 0) {
+			if (GetSkeleton().GetBoneRefCount(boneName) <= 0) {
 				if (refNif->CanDeleteNode(boneName))
 					refNif->DeleteNode(boneName);
 			}
@@ -247,17 +251,17 @@ bool AnimInfo::LoadFromNif(NifFile* nif, NiShape* shape, bool newRefNif) {
 	}
 
 	for (auto& bn : boneNames) {
-		if (!AnimSkeleton::getInstance().RefBone(bn)) {
-			AnimBone* cstm = AnimSkeleton::getInstance().LoadCustomBoneFromNif(nif, bn);
+		if (!GetSkeleton().RefBone(bn)) {
+			AnimBone* cstm = GetSkeleton().LoadCustomBoneFromNif(nif, bn);
 			if (!cstm) {
 				// SF body NIFs have no bone NiNodes — look up in the reference skeleton
-				NifFile& skelNif = AnimSkeleton::getInstance().refSkeletonNif;
-				cstm = AnimSkeleton::getInstance().LoadCustomBoneFromNif(&skelNif, bn);
+				NifFile& skelNif = GetSkeleton().refSkeletonNif;
+				cstm = GetSkeleton().LoadCustomBoneFromNif(&skelNif, bn);
 			}
 			if (cstm) {
 				if (!cstm->isStandardBone)
 					nonRefBones += bn + "\n";
-				AnimSkeleton::getInstance().RefBone(bn);
+				GetSkeleton().RefBone(bn);
 			}
 		}
 
@@ -291,7 +295,7 @@ bool AnimInfo::CloneShape(NifFile* nif, NiShape* shape, const std::string& newSh
 
 	auto& newBones = shapeBones[newShape];
 	for (auto& bn : boneNames) {
-		AnimSkeleton::getInstance().RefBone(bn);
+		GetSkeleton().RefBone(bn);
 		newBones.push_back(bn);
 	}
 
@@ -300,7 +304,7 @@ bool AnimInfo::CloneShape(NifFile* nif, NiShape* shape, const std::string& newSh
 }
 
 void AnimInfo::SetShapeSkin(const std::string& shape, const std::vector<std::string>& bones, const AnimSkin& skin) {
-	auto& skeleton = AnimSkeleton::getInstance();
+	auto& skeleton = GetSkeleton();
 	std::vector<std::string> oldBones = std::move(shapeBones[shape]);
 
 	// Reference the new bones first, so the ones in both lists never drop to zero
@@ -379,7 +383,7 @@ void AnimInfo::RecalcXFormSkinToBone(const std::string& shape, const std::string
 	// then inverting
 	MatTransform xformGlobalToSkin = shapeSkinning[shape].xformGlobalToSkin;
 	MatTransform xformBoneToGlobal;
-	const bool known = AnimSkeleton::getInstance().GetBoneTransformToGlobal(boneName, xformBoneToGlobal);
+	const bool known = GetSkeleton().GetBoneTransformToGlobal(boneName, xformBoneToGlobal);
 	MatTransform xformBoneToSkin = xformGlobalToSkin.ComposeTransforms(xformBoneToGlobal);
 	SetXFormSkinToBone(shape, boneName, xformBoneToSkin.InverseTransform());
 
@@ -420,7 +424,7 @@ bool AnimInfo::BoneHasInconsistentTransforms(const std::string& shape, const std
 		return false;
 	const AnimWeight& aw = skin.boneWeights.at(bnit->second);
 
-	const AnimBone* animB = AnimSkeleton::getInstance().GetBonePtr(bone);
+	const AnimBone* animB = GetSkeleton().GetBonePtr(bone);
 	if (!animB)
 		return false;
 
@@ -435,7 +439,7 @@ bool AnimInfo::BoneHasInconsistentTransforms(const std::string& shape, const std
 void AnimInfo::FindBonesWithInconsistentTransforms(const std::string& shape, std::unordered_map<std::string, MatTransform>& badStandard, std::unordered_map<std::string, MatTransform>& badCustom) {
 	AnimSkin& skin = shapeSkinning[shape];
 	for (auto& boneName : skin.boneNames) {
-		AnimBone* animB = AnimSkeleton::getInstance().GetBonePtr(boneName.first);
+		AnimBone* animB = GetSkeleton().GetBonePtr(boneName.first);
 		if (!animB)
 			continue;
 		AnimWeight& aw = skin.boneWeights[boneName.second];
@@ -456,7 +460,7 @@ void AnimInfo::FindBonesWithInconsistentTransforms(const std::string& shape, std
 }
 
 void AnimInfo::RecalcCustomBoneXFormsFromSkin(const std::string& shape, const std::string& boneName) {
-	AnimBone* bptr = AnimSkeleton::getInstance().GetBonePtr(boneName);
+	AnimBone* bptr = GetSkeleton().GetBonePtr(boneName);
 	if (!bptr)
 		return;	// Shouldn't be possible
 	// Calculate boneToGlobal by composing:
@@ -564,7 +568,7 @@ void AnimInfo::WriteNodesToNif(NifFile* nif, const std::string& shapeException) 
 	std::unordered_set<const AnimBone*> neededBones;
 	for (auto& bones : shapeBones) {
 		for (auto& bone : bones.second) {
-			const AnimBone* bptr = AnimSkeleton::getInstance().GetBonePtr(bone);
+			const AnimBone* bptr = GetSkeleton().GetBonePtr(bone);
 			if (!bptr)
 				continue;
 
@@ -628,7 +632,7 @@ void AnimInfo::WriteNodesToNif(NifFile* nif, const std::string& shapeException) 
 	// Set the node-to-parent transform for every standard-bone node,
 	// even ones we don't use.
 	for (NiNode* node : nif->GetNodes()) {
-		const AnimBone* bptr = AnimSkeleton::getInstance().GetBonePtr(node->name.get());
+		const AnimBone* bptr = GetSkeleton().GetBonePtr(node->name.get());
 		if (!bptr)
 			continue; // Don't touch bones we don't know about
 		if (!bptr->isStandardBone)
@@ -643,7 +647,7 @@ void AnimInfo::WriteNodesToNif(NifFile* nif, const std::string& shapeException) 
 		else {
 			// The parent node does not match our skeletal structure, so we
 			// must calculate the transform.
-			const AnimBone* nparent = AnimSkeleton::getInstance().GetBonePtr(pNode->name.get());
+			const AnimBone* nparent = GetSkeleton().GetBonePtr(pNode->name.get());
 			if (nparent) {
 				MatTransform p2g = nparent->xformToGlobal;
 				// Now compose: bone cs -> global cs -> parent node's bone cs
@@ -698,7 +702,7 @@ bool AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException, const
 			if (boneIDMap.find(bone) != boneIDMap.end())
 				continue;
 
-			const AnimBone* bptr = AnimSkeleton::getInstance().GetBonePtr(bone);
+			const AnimBone* bptr = GetSkeleton().GetBonePtr(bone);
 			if (!bptr)
 				continue;
 
@@ -750,7 +754,7 @@ bool AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException, const
 
 		std::unordered_map<uint16_t, VertexBoneWeights> vertWeights;
 		for (auto& boneName : shapeBoneList.second) {
-			AnimBone* bptr = AnimSkeleton::getInstance().GetBonePtr(boneName);
+			AnimBone* bptr = GetSkeleton().GetBonePtr(boneName);
 
 			int bid = GetShapeBoneIndex(shapeBoneList.first, boneName);
 			AnimWeight& bw = shapeSkinning[shapeBoneList.first].boneWeights[bid];
@@ -852,7 +856,7 @@ void AnimInfo::SwapBonesLR(const std::string& shapeName) {
 	auto shapeSkinningIt = shapeSkinning.find(shapeName);
 	if (shapeBonesIt != shapeBones.end() && shapeSkinningIt != shapeSkinning.end()) {
 		std::vector<std::string> boneNames;
-		AnimSkeleton::getInstance().GetBoneNames(boneNames);
+		GetSkeleton().GetBoneNames(boneNames);
 
 		std::vector<std::pair<std::string, std::string>> pairs;
 		std::vector<std::string> singles;
@@ -1284,7 +1288,7 @@ void ApplySkinningToVerts(AnimInfo& anim,
 	MatTransform globalToSkin = anim.GetTransformGlobalToShape(shape);
 
 	for (auto& boneNamesIt : animSkin.boneNames) {
-		AnimBone* animB = AnimSkeleton::getInstance().GetBonePtr(boneNamesIt.first);
+		AnimBone* animB = anim.GetSkeleton().GetBonePtr(boneNamesIt.first);
 		if (animB) {
 			AnimWeight& animW = animSkin.boneWeights[boneNamesIt.second];
 
