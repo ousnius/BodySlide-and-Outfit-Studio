@@ -11,9 +11,9 @@ See the included LICENSE file
 #include "utils/ProjectUtil.h"
 #include "utils/GameUtil.h"
 
-#include <wx/wx.h>
 #include <algorithm>
 #include <utility>
+#include <wx/wx.h>
 
 using namespace nifly;
 

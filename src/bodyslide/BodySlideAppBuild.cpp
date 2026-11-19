@@ -16,9 +16,6 @@ See the included LICENSE file
 #include "utils/StringStuff.h"
 #include "utils/ProjectUtil.h"
 
-#include <wx/filename.h>
-#include <wx/wx.h>
-#include <wx/xrc/xmlres.h>
 #include <algorithm>
 #include <atomic>
 #include <mutex>
@@ -27,9 +24,12 @@ See the included LICENSE file
 #include <thread>
 #include <unordered_map>
 #include <utility>
+#include <wx/filename.h>
+#include <wx/progdlg.h>
 #include <wx/textctrl.h>
 #include <wx/treelist.h>
-#include <wx/progdlg.h>
+#include <wx/wx.h>
+#include <wx/xrc/xmlres.h>
 
 using namespace nifly;
 

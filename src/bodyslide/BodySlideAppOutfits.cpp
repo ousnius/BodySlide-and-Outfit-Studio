@@ -12,14 +12,14 @@ See the included LICENSE file
 #include "utils/StringStuff.h"
 #include "utils/ProjectUtil.h"
 
-#include <wx/filename.h>
-#include <wx/wx.h>
-#include <wx/xrc/xmlres.h>
 #include <algorithm>
 #include <mutex>
 #include <set>
 #include <utility>
 #include <wx/dir.h>
+#include <wx/filename.h>
+#include <wx/wx.h>
+#include <wx/xrc/xmlres.h>
 
 using namespace nifly;
 

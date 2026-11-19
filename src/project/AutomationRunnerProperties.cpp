@@ -11,14 +11,14 @@ See the included LICENSE file
 #include "outfitstudio/GLPanel.h"
 #include "utils/StringStuff.h"
 
-#include <NifFile.hpp>
-#include <wx/msgdlg.h>
 #include <algorithm>
 #include <cstdint>
 #include <limits>
 #include <memory>
 #include <string>
 #include <vector>
+#include <NifFile.hpp>
+#include <wx/msgdlg.h>
 
 using namespace nifly;
 

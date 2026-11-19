@@ -9,11 +9,11 @@ See the included LICENSE file
 #include "files/TriFile.h"
 #include "files/SFMorphFile.h"
 
-#include <wx/filename.h>
-#include <wx/wx.h>
 #include <algorithm>
 #include <unordered_map>
 #include <utility>
+#include <wx/filename.h>
+#include <wx/wx.h>
 
 using namespace nifly;
 

@@ -12,13 +12,13 @@ See the included LICENSE file
 #include "ui/SettingsDialogShared.h"
 #include "utils/GameUtil.h"
 
-#include <wx/wx.h>
-#include <wx/xrc/xmlres.h>
 #include <algorithm>
 #include <utility>
+#include <wx/collpane.h>
 #include <wx/spinctrl.h>
 #include <wx/textctrl.h>
-#include <wx/collpane.h>
+#include <wx/wx.h>
+#include <wx/xrc/xmlres.h>
 
 using namespace nifly;
 

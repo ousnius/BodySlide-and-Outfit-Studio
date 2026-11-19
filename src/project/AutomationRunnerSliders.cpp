@@ -14,10 +14,6 @@ See the included LICENSE file
 #include "files/TriFile.h"
 #include "utils/StringStuff.h"
 
-#include <wx/filename.h>
-#include <NifFile.hpp>
-#include <wx/dir.h>
-#include <wx/msgdlg.h>
 #include <algorithm>
 #include <cstdint>
 #include <limits>
@@ -25,6 +21,10 @@ See the included LICENSE file
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <NifFile.hpp>
+#include <wx/dir.h>
+#include <wx/filename.h>
+#include <wx/msgdlg.h>
 
 using namespace nifly;
 

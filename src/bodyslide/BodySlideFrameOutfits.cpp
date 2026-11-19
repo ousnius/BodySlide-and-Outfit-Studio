@@ -13,12 +13,12 @@ See the included LICENSE file
 #include "utils/StringStuff.h"
 #include "utils/ProjectUtil.h"
 
-#include <wx/filename.h>
-#include <wx/wx.h>
 #include <algorithm>
 #include <set>
 #include <utility>
+#include <wx/filename.h>
 #include <wx/tokenzr.h>
+#include <wx/wx.h>
 
 using namespace nifly;
 

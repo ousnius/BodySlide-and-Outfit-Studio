@@ -8,10 +8,10 @@ See the included LICENSE file
 #include "BodySlideApp.h"
 #include "BodySlideFrame.h"
 
-#include <wx/wx.h>
 #include <algorithm>
 #include <set>
 #include <utility>
+#include <wx/wx.h>
 
 using namespace nifly;
 

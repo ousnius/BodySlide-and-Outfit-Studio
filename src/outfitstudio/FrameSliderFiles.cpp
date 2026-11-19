@@ -18,9 +18,9 @@ See the included LICENSE file
 #include "ui/outfitstudio/SliderDataImportDialog.h"
 #include "utils/ProjectUtil.h"
 
-#include <functional>
 #include <cmath>
 #include <cstdlib>
+#include <functional>
 #include <iterator>
 #include <sstream>
 

@@ -76,8 +76,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <sstream>
 #include <wx/debugrpt.h>
 #include <wx/dir.h>
-#include <wx/grid.h>
 #include <wx/display.h>
+#include <wx/grid.h>
 #include <wx/listctrl.h>
 #include <wx/textctrl.h>
 #include <wx/wfstream.h>

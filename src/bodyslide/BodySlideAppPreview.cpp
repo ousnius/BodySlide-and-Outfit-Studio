@@ -17,13 +17,13 @@ See the included LICENSE file
 #include "utils/StringStuff.h"
 #include "utils/ProjectUtil.h"
 
-#include <wx/filename.h>
 #include <algorithm>
 #include <mutex>
 #include <set>
 #include <thread>
 #include <unordered_map>
 #include <utility>
+#include <wx/filename.h>
 
 using namespace nifly;
 

@@ -10,14 +10,14 @@ See the included LICENSE file
 #include "utils/StringStuff.h"
 #include "utils/ProjectUtil.h"
 
-#include <wx/wx.h>
-#include <wx/xrc/xmlres.h>
 #include <algorithm>
 #include <regex>
 #include <set>
 #include <unordered_map>
 #include <utility>
 #include <wx/tokenzr.h>
+#include <wx/wx.h>
+#include <wx/xrc/xmlres.h>
 
 using namespace nifly;
 

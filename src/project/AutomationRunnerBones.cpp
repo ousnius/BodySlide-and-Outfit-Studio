@@ -14,14 +14,14 @@ See the included LICENSE file
 #include "components/UndoState.h"
 #include "utils/StringStuff.h"
 
-#include <NifFile.hpp>
-#include <wx/msgdlg.h>
 #include <algorithm>
 #include <cstdint>
 #include <limits>
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <NifFile.hpp>
+#include <wx/msgdlg.h>
 
 using namespace nifly;
 

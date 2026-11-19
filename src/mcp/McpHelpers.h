@@ -9,9 +9,9 @@ See the included LICENSE file
 #include "project/OutfitProject.h"
 
 #include <cmath>
-#include <nlohmann/json.hpp>
 #include <string>
 #include <vector>
+#include <nlohmann/json.hpp>
 #include <wx/string.h>
 
 // Small helpers the MCP tool files share

@@ -30,8 +30,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <algorithm>
 #include <utility>
 #include <wx/debugrpt.h>
-#include <wx/textctrl.h>
 #include <wx/stdpaths.h>
+#include <wx/textctrl.h>
 #include <wx/tokenzr.h>
 #include <wx/xrc/xmlres.h>
 

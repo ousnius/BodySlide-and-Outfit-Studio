@@ -11,8 +11,8 @@ See the included LICENSE file
 #include <memory>
 #include <set>
 #include <string>
-#include <wx/string.h>
 #include <wx/stream.h>
+#include <wx/string.h>
 
 class wxFFileOutputStream;
 class wxZipOutputStream;

@@ -12,15 +12,15 @@ See the included LICENSE file
 #include "GameImport.h"
 #include "utils/ConfigurationManager.h"
 
-#include <wx/filename.h>
-#include <NifFile.hpp>
-#include <wx/dir.h>
-#include <wx/msgdlg.h>
 #include <algorithm>
 #include <cstdint>
 #include <limits>
 #include <string>
 #include <vector>
+#include <NifFile.hpp>
+#include <wx/dir.h>
+#include <wx/filename.h>
+#include <wx/msgdlg.h>
 
 using namespace nifly;
 

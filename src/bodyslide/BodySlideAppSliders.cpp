@@ -9,9 +9,9 @@ See the included LICENSE file
 #include "BodySlideFrame.h"
 #include "ui/bodyslide/PreviewPanel.h"
 
-#include <wx/wx.h>
 #include <algorithm>
 #include <utility>
+#include <wx/wx.h>
 
 using namespace nifly;
 
