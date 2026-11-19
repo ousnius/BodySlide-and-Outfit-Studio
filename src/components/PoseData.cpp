@@ -5,8 +5,8 @@ See the included LICENSE file
 
 #include "PoseData.h"
 #include "Anim.h"
-#include "../utils/PlatformUtil.h"
-#include "../utils/StringStuff.h"
+#include "utils/PlatformUtil.h"
+#include "utils/StringStuff.h"
 
 #include <wx/dir.h>
 #include <wx/filename.h>

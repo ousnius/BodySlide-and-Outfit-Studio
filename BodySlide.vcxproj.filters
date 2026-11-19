@@ -1,6 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <Filter Include="BodySlide">
+      <UniqueIdentifier>{95cefcf3-e327-469a-be6b-dc1dad0444ca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UI\BodySlide">
+      <UniqueIdentifier>{2a82de98-76d0-4314-b6b5-521ea9963deb}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Physics">
       <UniqueIdentifier>{a3f1c2d4-9b7e-4f21-8c5a-2d6e0b1f4a37}</UniqueIdentifier>
     </Filter>
@@ -43,9 +49,6 @@
     </Filter>
     <Filter Include="Files">
       <UniqueIdentifier>{782be5c1-aa6f-4e54-acb4-c89dc11d2fcb}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Program">
-      <UniqueIdentifier>{82ef2505-7b08-4871-b498-b758d860f25c}</UniqueIdentifier>
     </Filter>
     <Filter Include="Rendering">
       <UniqueIdentifier>{def5c486-38d5-46f3-87b8-5d17825c309e}</UniqueIdentifier>
@@ -745,17 +748,17 @@
     <ClInclude Include="src\files\MaterialFile.h">
       <Filter>Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\program\PresetSaveDialog.h">
-      <Filter>Program</Filter>
+    <ClInclude Include="src\ui\PresetSaveDialog.h">
+      <Filter>UI</Filter>
     </ClInclude>
-    <ClInclude Include="src\program\PreviewWindow.h">
-      <Filter>Program</Filter>
+    <ClInclude Include="src\bodyslide\PreviewWindow.h">
+      <Filter>BodySlide</Filter>
     </ClInclude>
-    <ClInclude Include="src\program\BodySlideApp.h">
-      <Filter>Program</Filter>
+    <ClInclude Include="src\bodyslide\BodySlideApp.h">
+      <Filter>BodySlide</Filter>
     </ClInclude>
-    <ClInclude Include="src\program\GroupManager.h">
-      <Filter>Program</Filter>
+    <ClInclude Include="src\ui\GroupManager.h">
+      <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="src\render\GLShader.h">
       <Filter>Rendering</Filter>
@@ -796,17 +799,17 @@
     <ClInclude Include="src\render\GLOffscreenBuffer.h">
       <Filter>Rendering</Filter>
     </ClInclude>
-    <ClInclude Include="src\program\NormalsGenDialog.h">
-      <Filter>Program</Filter>
+    <ClInclude Include="src\ui\bodyslide\NormalsGenDialog.h">
+      <Filter>UI\BodySlide</Filter>
     </ClInclude>
-    <ClInclude Include="src\ui\PreviewPanel.h">
-      <Filter>UI</Filter>
+    <ClInclude Include="src\ui\bodyslide\PreviewPanel.h">
+      <Filter>UI\BodySlide</Filter>
     </ClInclude>
     <ClInclude Include="src\ui\wxFavoriteChoice.h">
       <Filter>UI</Filter>
     </ClInclude>
-    <ClInclude Include="src\ui\wxNormalsGenDlg.h">
-      <Filter>UI</Filter>
+    <ClInclude Include="src\ui\bodyslide\wxNormalsGenDlg.h">
+      <Filter>UI\BodySlide</Filter>
     </ClInclude>
     <ClInclude Include="src\components\NormalGenLayers.h">
       <Filter>Components</Filter>
@@ -814,8 +817,8 @@
     <ClInclude Include="src\utils\PlatformUtil.h">
       <Filter>Utilities</Filter>
     </ClInclude>
-    <ClInclude Include="src\utils\SettingsDialogShared.h">
-      <Filter>Utilities</Filter>
+    <ClInclude Include="src\ui\SettingsDialogShared.h">
+      <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="src\utils\StackTrace.h">
       <Filter>Utilities</Filter>
@@ -1893,17 +1896,17 @@
     <ClCompile Include="src\files\MaterialFile.cpp">
       <Filter>Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\program\PresetSaveDialog.cpp">
-      <Filter>Program</Filter>
+    <ClCompile Include="src\ui\PresetSaveDialog.cpp">
+      <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="src\program\PreviewWindow.cpp">
-      <Filter>Program</Filter>
+    <ClCompile Include="src\bodyslide\PreviewWindow.cpp">
+      <Filter>BodySlide</Filter>
     </ClCompile>
-    <ClCompile Include="src\program\BodySlideApp.cpp">
-      <Filter>Program</Filter>
+    <ClCompile Include="src\bodyslide\BodySlideApp.cpp">
+      <Filter>BodySlide</Filter>
     </ClCompile>
-    <ClCompile Include="src\program\GroupManager.cpp">
-      <Filter>Program</Filter>
+    <ClCompile Include="src\ui\GroupManager.cpp">
+      <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="src\render\GLSurface.cpp">
       <Filter>Rendering</Filter>
@@ -1944,17 +1947,17 @@
     <ClCompile Include="src\render\MeshBuffers.cpp">
       <Filter>Rendering</Filter>
     </ClCompile>
-    <ClCompile Include="src\program\NormalsGenDialog.cpp">
-      <Filter>Program</Filter>
+    <ClCompile Include="src\ui\bodyslide\NormalsGenDialog.cpp">
+      <Filter>UI\BodySlide</Filter>
     </ClCompile>
-    <ClCompile Include="src\ui\PreviewPanel.cpp">
-      <Filter>UI</Filter>
+    <ClCompile Include="src\ui\bodyslide\PreviewPanel.cpp">
+      <Filter>UI\BodySlide</Filter>
     </ClCompile>
     <ClCompile Include="src\ui\wxFavoriteChoice.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="src\ui\wxNormalsGenDlg.cpp">
-      <Filter>UI</Filter>
+    <ClCompile Include="src\ui\bodyslide\wxNormalsGenDlg.cpp">
+      <Filter>UI\BodySlide</Filter>
     </ClCompile>
     <ClCompile Include="src\components\NormalGenLayers.cpp">
       <Filter>Components</Filter>
@@ -1962,8 +1965,8 @@
     <ClCompile Include="src\utils\PlatformUtil.cpp">
       <Filter>Utilities</Filter>
     </ClCompile>
-    <ClCompile Include="src\utils\SettingsDialogShared.cpp">
-      <Filter>Utilities</Filter>
+    <ClCompile Include="src\ui\SettingsDialogShared.cpp">
+      <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="src\utils\StackTrace.cpp">
       <Filter>Utilities</Filter>

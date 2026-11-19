@@ -1,8 +1,8 @@
-#include "../src/components/StarfieldSpace.h"
-#include "../src/files/GameDataStream.h"
-#include "../src/files/SFMaterialResolver.h"
-#include "../src/files/SFMorphFile.h"
-#include "../src/utils/ConfigurationManager.h"
+#include "components/StarfieldSpace.h"
+#include "files/GameDataStream.h"
+#include "files/SFMaterialResolver.h"
+#include "files/SFMorphFile.h"
+#include "utils/ConfigurationManager.h"
 
 #include "FSEngine/FSManager.h"
 #include "NifFile.hpp"

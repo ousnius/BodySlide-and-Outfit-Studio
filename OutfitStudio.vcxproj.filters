@@ -1,6 +1,15 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <Filter Include="Outfit Studio">
+      <UniqueIdentifier>{1be6e3b2-245a-44da-aa53-7eeb76d34a53}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Project">
+      <UniqueIdentifier>{f1acdf47-f2a9-4a65-98e8-81f0b0913ca5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UI\Outfit Studio">
+      <UniqueIdentifier>{058df6d5-84ce-47d2-8e22-e484761fa4af}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Resources">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
@@ -43,9 +52,6 @@
     </Filter>
     <Filter Include="Files">
       <UniqueIdentifier>{782be5c1-aa6f-4e54-acb4-c89dc11d2fcb}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Program">
-      <UniqueIdentifier>{82ef2505-7b08-4871-b498-b758d860f25c}</UniqueIdentifier>
     </Filter>
     <Filter Include="MCP">
       <UniqueIdentifier>{5d0c7a3e-2f41-4b8e-9c55-6a1e8f3b2d47}</UniqueIdentifier>
@@ -802,8 +808,8 @@
     <ClInclude Include="src\components\TextureConvert.h">
       <Filter>Components</Filter>
     </ClInclude>
-    <ClInclude Include="src\program\GameImport.h">
-      <Filter>Program</Filter>
+    <ClInclude Include="src\project\GameImport.h">
+      <Filter>Project</Filter>
     </ClInclude>
     <ClInclude Include="src\files\ObjFile.h">
       <Filter>Files</Filter>
@@ -928,35 +934,35 @@
     <ClInclude Include="src\physics\hdt\hdtVertex.h">
       <Filter>Physics\hdt</Filter>
     </ClInclude>
-    <ClInclude Include="src\program\OutfitStudio.h">
-      <Filter>Program</Filter>
+    <ClInclude Include="src\outfitstudio\OutfitStudio.h">
+      <Filter>Outfit Studio</Filter>
     </ClInclude>
-    <ClInclude Include="src\program\PresetSaveDialog.h">
-      <Filter>Program</Filter>
+    <ClInclude Include="src\ui\PresetSaveDialog.h">
+      <Filter>UI</Filter>
     </ClInclude>
-    <ClInclude Include="src\program\ShapeProperties.h">
-      <Filter>Program</Filter>
+    <ClInclude Include="src\ui\outfitstudio\ShapeProperties.h">
+      <Filter>UI\Outfit Studio</Filter>
     </ClInclude>
-    <ClInclude Include="src\program\SliderDataDialog.h">
-      <Filter>Program</Filter>
+    <ClInclude Include="src\ui\outfitstudio\SliderDataDialog.h">
+      <Filter>UI\Outfit Studio</Filter>
     </ClInclude>
-    <ClInclude Include="src\program\OutfitProject.h">
-      <Filter>Program</Filter>
+    <ClInclude Include="src\project\OutfitProject.h">
+      <Filter>Project</Filter>
     </ClInclude>
-    <ClInclude Include="src\program\ProjectHost.h">
-      <Filter>Program</Filter>
+    <ClInclude Include="src\project\ProjectHost.h">
+      <Filter>Project</Filter>
     </ClInclude>
-    <ClInclude Include="src\program\ProjectOperations.h">
-      <Filter>Program</Filter>
+    <ClInclude Include="src\project\ProjectOperations.h">
+      <Filter>Project</Filter>
     </ClInclude>
-    <ClInclude Include="src\program\BrushStrokeController.h">
-      <Filter>Program</Filter>
+    <ClInclude Include="src\project\BrushStrokeController.h">
+      <Filter>Project</Filter>
     </ClInclude>
-    <ClInclude Include="src\program\EditorState.h">
-      <Filter>Program</Filter>
+    <ClInclude Include="src\project\EditorState.h">
+      <Filter>Project</Filter>
     </ClInclude>
-    <ClInclude Include="src\program\BadBonesDialog.h">
-      <Filter>Program</Filter>
+    <ClInclude Include="src\ui\outfitstudio\BadBonesDialog.h">
+      <Filter>UI\Outfit Studio</Filter>
     </ClInclude>
     <ClInclude Include="src\render\GLShader.h">
       <Filter>Rendering</Filter>
@@ -982,8 +988,8 @@
     <ClInclude Include="src\components\Anim.h">
       <Filter>Components</Filter>
     </ClInclude>
-    <ClInclude Include="src\program\FBXImportDialog.h">
-      <Filter>Program</Filter>
+    <ClInclude Include="src\ui\outfitstudio\FBXImportDialog.h">
+      <Filter>UI\Outfit Studio</Filter>
     </ClInclude>
     <ClInclude Include="src\render\GLExtensions.h">
       <Filter>Rendering</Filter>
@@ -1003,8 +1009,8 @@
     <ClInclude Include="src\utils\PlatformUtil.h">
       <Filter>Utilities</Filter>
     </ClInclude>
-    <ClInclude Include="src\utils\SettingsDialogShared.h">
-      <Filter>Utilities</Filter>
+    <ClInclude Include="src\ui\SettingsDialogShared.h">
+      <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="src\utils\StackTrace.h">
       <Filter>Utilities</Filter>
@@ -1612,11 +1618,11 @@
     <ClInclude Include="lib\LZ4F\lz4frame.h">
       <Filter>Libraries\LZ4F</Filter>
     </ClInclude>
-    <ClInclude Include="src\program\GroupManager.h">
-      <Filter>Program</Filter>
+    <ClInclude Include="src\ui\GroupManager.h">
+      <Filter>UI</Filter>
     </ClInclude>
-    <ClInclude Include="src\program\EditUV.h">
-      <Filter>Program</Filter>
+    <ClInclude Include="src\ui\outfitstudio\EditUV.h">
+      <Filter>UI\Outfit Studio</Filter>
     </ClInclude>
     <ClInclude Include="src\components\RefTemplates.h">
       <Filter>Components</Filter>
@@ -1624,26 +1630,26 @@
     <ClInclude Include="src\components\PoseData.h">
       <Filter>Components</Filter>
     </ClInclude>
-    <ClInclude Include="src\ui\wxBrushSettingsPopup.h">
-      <Filter>UI</Filter>
+    <ClInclude Include="src\ui\outfitstudio\wxBrushSettingsPopup.h">
+      <Filter>UI\Outfit Studio</Filter>
     </ClInclude>
-    <ClInclude Include="src\ui\ArchiveBrowser.h">
-      <Filter>UI</Filter>
+    <ClInclude Include="src\ui\outfitstudio\ArchiveBrowser.h">
+      <Filter>UI\Outfit Studio</Filter>
     </ClInclude>
-    <ClInclude Include="src\ui\WeightCopyDialog.h">
-      <Filter>UI</Filter>
+    <ClInclude Include="src\ui\outfitstudio\WeightCopyDialog.h">
+      <Filter>UI\Outfit Studio</Filter>
     </ClInclude>
     <ClInclude Include="src\ui\wxSliderPanel.h">
       <Filter>UI</Filter>
     </ClInclude>
-    <ClInclude Include="src\program\ConvertBodyReferenceDialog.h">
-      <Filter>Program</Filter>
+    <ClInclude Include="src\ui\outfitstudio\ConvertBodyReferenceDialog.h">
+      <Filter>UI\Outfit Studio</Filter>
     </ClInclude>
-    <ClInclude Include="src\program\AutomationDialog.h">
-      <Filter>Program</Filter>
+    <ClInclude Include="src\ui\outfitstudio\AutomationDialog.h">
+      <Filter>UI\Outfit Studio</Filter>
     </ClInclude>
-    <ClInclude Include="src\program\AutomationRunner.h">
-      <Filter>Program</Filter>
+    <ClInclude Include="src\project\AutomationRunner.h">
+      <Filter>Project</Filter>
     </ClInclude>
     <ClInclude Include="src\components\Automation.h">
       <Filter>Components</Filter>
@@ -1651,14 +1657,14 @@
     <ClInclude Include="src\components\AutomationJson.h">
       <Filter>Components</Filter>
     </ClInclude>
-    <ClInclude Include="src\utils\ConfigDialogUtil.h">
-      <Filter>Utilities</Filter>
+    <ClInclude Include="src\ui\ConfigDialogUtil.h">
+      <Filter>UI</Filter>
     </ClInclude>
-    <ClInclude Include="src\program\SliderDataImportDialog.h">
-      <Filter>Program</Filter>
+    <ClInclude Include="src\ui\outfitstudio\SliderDataImportDialog.h">
+      <Filter>UI\Outfit Studio</Filter>
     </ClInclude>
-    <ClInclude Include="src\program\AddProjectDialog.h">
-      <Filter>Program</Filter>
+    <ClInclude Include="src\ui\outfitstudio\AddProjectDialog.h">
+      <Filter>UI\Outfit Studio</Filter>
     </ClInclude>
     <ClInclude Include="src\mcp\McpArgs.h">
       <Filter>MCP</Filter>
@@ -2107,8 +2113,8 @@
     <ClInclude Include="src\render\GLDialog.h">
       <Filter>Rendering</Filter>
     </ClInclude>
-    <ClInclude Include="src\program\ObjImportDialog.h">
-      <Filter>Program</Filter>
+    <ClInclude Include="src\ui\outfitstudio\ObjImportDialog.h">
+      <Filter>UI\Outfit Studio</Filter>
     </ClInclude>
     <ClInclude Include="lib\SOIL2\stb_image.h">
       <Filter>Libraries\SOIL2</Filter>
@@ -2295,8 +2301,8 @@
     <ClCompile Include="src\components\TextureConvert.cpp">
       <Filter>Components</Filter>
     </ClCompile>
-    <ClCompile Include="src\program\GameImport.cpp">
-      <Filter>Program</Filter>
+    <ClCompile Include="src\project\GameImport.cpp">
+      <Filter>Project</Filter>
     </ClCompile>
     <ClCompile Include="src\mcp\McpToolsFitting.cpp">
       <Filter>MCP</Filter>
@@ -2403,32 +2409,32 @@
     <ClCompile Include="src\physics\hdt\hdtVertex.cpp">
       <Filter>Physics\hdt</Filter>
     </ClCompile>
-    <ClCompile Include="src\program\OutfitStudio.cpp">
-      <Filter>Program</Filter>
+    <ClCompile Include="src\outfitstudio\OutfitStudio.cpp">
+      <Filter>Outfit Studio</Filter>
     </ClCompile>
-    <ClCompile Include="src\program\PresetSaveDialog.cpp">
-      <Filter>Program</Filter>
+    <ClCompile Include="src\ui\PresetSaveDialog.cpp">
+      <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="src\program\ShapeProperties.cpp">
-      <Filter>Program</Filter>
+    <ClCompile Include="src\ui\outfitstudio\ShapeProperties.cpp">
+      <Filter>UI\Outfit Studio</Filter>
     </ClCompile>
-    <ClCompile Include="src\program\SliderDataDialog.cpp">
-      <Filter>Program</Filter>
+    <ClCompile Include="src\ui\outfitstudio\SliderDataDialog.cpp">
+      <Filter>UI\Outfit Studio</Filter>
     </ClCompile>
-    <ClCompile Include="src\program\OutfitProject.cpp">
-      <Filter>Program</Filter>
+    <ClCompile Include="src\project\OutfitProject.cpp">
+      <Filter>Project</Filter>
     </ClCompile>
-    <ClCompile Include="src\program\ProjectHost.cpp">
-      <Filter>Program</Filter>
+    <ClCompile Include="src\project\ProjectHost.cpp">
+      <Filter>Project</Filter>
     </ClCompile>
-    <ClCompile Include="src\program\ProjectOperations.cpp">
-      <Filter>Program</Filter>
+    <ClCompile Include="src\project\ProjectOperations.cpp">
+      <Filter>Project</Filter>
     </ClCompile>
-    <ClCompile Include="src\program\BrushStrokeController.cpp">
-      <Filter>Program</Filter>
+    <ClCompile Include="src\project\BrushStrokeController.cpp">
+      <Filter>Project</Filter>
     </ClCompile>
-    <ClCompile Include="src\program\BadBonesDialog.cpp">
-      <Filter>Program</Filter>
+    <ClCompile Include="src\ui\outfitstudio\BadBonesDialog.cpp">
+      <Filter>UI\Outfit Studio</Filter>
     </ClCompile>
     <ClCompile Include="src\render\GLSurface.cpp">
       <Filter>Rendering</Filter>
@@ -2451,8 +2457,8 @@
     <ClCompile Include="src\components\Anim.cpp">
       <Filter>Components</Filter>
     </ClCompile>
-    <ClCompile Include="src\program\FBXImportDialog.cpp">
-      <Filter>Program</Filter>
+    <ClCompile Include="src\ui\outfitstudio\FBXImportDialog.cpp">
+      <Filter>UI\Outfit Studio</Filter>
     </ClCompile>
     <ClCompile Include="src\render\GLExtensions.cpp">
       <Filter>Rendering</Filter>
@@ -2478,8 +2484,8 @@
     <ClCompile Include="src\utils\PlatformUtil.cpp">
       <Filter>Utilities</Filter>
     </ClCompile>
-    <ClCompile Include="src\utils\SettingsDialogShared.cpp">
-      <Filter>Utilities</Filter>
+    <ClCompile Include="src\ui\SettingsDialogShared.cpp">
+      <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="src\utils\StackTrace.cpp">
       <Filter>Utilities</Filter>
@@ -2505,11 +2511,11 @@
     <ClCompile Include="lib\LZ4F\lz4.c">
       <Filter>Libraries\LZ4F</Filter>
     </ClCompile>
-    <ClCompile Include="src\program\GroupManager.cpp">
-      <Filter>Program</Filter>
+    <ClCompile Include="src\ui\GroupManager.cpp">
+      <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="src\program\EditUV.cpp">
-      <Filter>Program</Filter>
+    <ClCompile Include="src\ui\outfitstudio\EditUV.cpp">
+      <Filter>UI\Outfit Studio</Filter>
     </ClCompile>
     <ClCompile Include="src\components\RefTemplates.cpp">
       <Filter>Components</Filter>
@@ -2565,29 +2571,29 @@
     <ClCompile Include="src\components\PoseDataHkx.cpp">
       <Filter>Components</Filter>
     </ClCompile>
-    <ClCompile Include="src\ui\wxBrushSettingsPopup.cpp">
-      <Filter>UI</Filter>
+    <ClCompile Include="src\ui\outfitstudio\wxBrushSettingsPopup.cpp">
+      <Filter>UI\Outfit Studio</Filter>
     </ClCompile>
-    <ClCompile Include="src\ui\ArchiveBrowser.cpp">
-      <Filter>UI</Filter>
+    <ClCompile Include="src\ui\outfitstudio\ArchiveBrowser.cpp">
+      <Filter>UI\Outfit Studio</Filter>
     </ClCompile>
     <ClCompile Include="src\components\ArchiveIndex.cpp">
       <Filter>Components</Filter>
     </ClCompile>
-    <ClCompile Include="src\ui\WeightCopyDialog.cpp">
-      <Filter>UI</Filter>
+    <ClCompile Include="src\ui\outfitstudio\WeightCopyDialog.cpp">
+      <Filter>UI\Outfit Studio</Filter>
     </ClCompile>
     <ClCompile Include="src\ui\wxSliderPanel.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="src\program\ConvertBodyReferenceDialog.cpp">
-      <Filter>Program</Filter>
+    <ClCompile Include="src\ui\outfitstudio\ConvertBodyReferenceDialog.cpp">
+      <Filter>UI\Outfit Studio</Filter>
     </ClCompile>
-    <ClCompile Include="src\program\AutomationDialog.cpp">
-      <Filter>Program</Filter>
+    <ClCompile Include="src\ui\outfitstudio\AutomationDialog.cpp">
+      <Filter>UI\Outfit Studio</Filter>
     </ClCompile>
-    <ClCompile Include="src\program\AutomationRunner.cpp">
-      <Filter>Program</Filter>
+    <ClCompile Include="src\project\AutomationRunner.cpp">
+      <Filter>Project</Filter>
     </ClCompile>
     <ClCompile Include="src\components\Automation.cpp">
       <Filter>Components</Filter>
@@ -2595,11 +2601,11 @@
     <ClCompile Include="src\components\AutomationJson.cpp">
       <Filter>Components</Filter>
     </ClCompile>
-    <ClCompile Include="src\program\SliderDataImportDialog.cpp">
-      <Filter>Program</Filter>
+    <ClCompile Include="src\ui\outfitstudio\SliderDataImportDialog.cpp">
+      <Filter>UI\Outfit Studio</Filter>
     </ClCompile>
-    <ClCompile Include="src\program\AddProjectDialog.cpp">
-      <Filter>Program</Filter>
+    <ClCompile Include="src\ui\outfitstudio\AddProjectDialog.cpp">
+      <Filter>UI\Outfit Studio</Filter>
     </ClCompile>
     <ClCompile Include="src\mcp\McpProtocol.cpp">
       <Filter>MCP</Filter>
@@ -2664,8 +2670,8 @@
     <ClCompile Include="src\render\GLCanvas.cpp">
       <Filter>Rendering</Filter>
     </ClCompile>
-    <ClCompile Include="src\program\ObjImportDialog.cpp">
-      <Filter>Program</Filter>
+    <ClCompile Include="src\ui\outfitstudio\ObjImportDialog.cpp">
+      <Filter>UI\Outfit Studio</Filter>
     </ClCompile>
     <ClCompile Include="lib\SOIL2\wfETC.c">
       <Filter>Libraries\SOIL2</Filter>

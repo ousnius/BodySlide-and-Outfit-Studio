@@ -5,9 +5,9 @@ See the included LICENSE file
 
 #include "ClippingFixer.h"
 
-#include "../utils/AABBTree.h"
+#include "utils/AABBTree.h"
 
-#include "../utils/ParallelFor.h"
+#include "utils/ParallelFor.h"
 
 #include <cfloat>
 

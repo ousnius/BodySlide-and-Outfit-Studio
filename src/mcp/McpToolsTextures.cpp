@@ -4,12 +4,12 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
-#include "../components/TextureConvert.h"
-#include "../utils/ConfigurationManager.h"
+#include "components/TextureConvert.h"
+#include "utils/ConfigurationManager.h"
 
-#include "../../lib/SOIL2/stb_image.h"
+#include "SOIL2/stb_image.h"
 extern "C" {
-#include "../../lib/SOIL2/image_DXT.h"
+#include "SOIL2/image_DXT.h"
 }
 
 #include <cstdio>

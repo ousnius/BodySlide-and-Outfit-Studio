@@ -4,10 +4,10 @@ See the included LICENSE file
 */
 
 #include "PoseData.h"
-#include "../files/HkxFile.h"
-#include "../utils/ConfigurationManager.h"
-#include "../utils/PlatformUtil.h"
-#include "../utils/StringStuff.h"
+#include "files/HkxFile.h"
+#include "utils/ConfigurationManager.h"
+#include "utils/PlatformUtil.h"
+#include "utils/StringStuff.h"
 
 #include <algorithm>
 #include <cmath>

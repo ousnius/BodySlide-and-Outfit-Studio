@@ -4,11 +4,11 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
-#include "../components/Anim.h"
-#include "../components/MeshAnalysis.h"
-#include "../components/PhysicsChains.h"
-#include "../physics/Controller.h"
-#include "../program/OutfitStudio.h"
+#include "components/Anim.h"
+#include "components/MeshAnalysis.h"
+#include "components/PhysicsChains.h"
+#include "physics/Controller.h"
+#include "outfitstudio/OutfitStudio.h"
 
 #include <tinyxml2.h>
 

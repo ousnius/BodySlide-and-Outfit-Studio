@@ -6,7 +6,7 @@ See the included LICENSE file
 #include "GLSurface.h"
 #include "GLOffscreenBuffer.h"
 #include "MeshBuffers.h"
-#include "../utils/ConfigurationManager.h"
+#include "utils/ConfigurationManager.h"
 
 #include <wx/log.h>
 #include <wx/msgdlg.h>

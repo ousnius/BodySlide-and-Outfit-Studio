@@ -5,7 +5,7 @@ See the included LICENSE file
 
 #pragma once
 
-#include "../components/Mesh.h"
+#include "components/Mesh.h"
 #include "GLExtensions.h"
 
 #include <cstdint>

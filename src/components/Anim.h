@@ -5,7 +5,7 @@ See the included LICENSE file
 
 #pragma once
 
-#include "../utils/ConfigurationManager.h"
+#include "utils/ConfigurationManager.h"
 #include "NifFile.hpp"
 #include "StarfieldSpace.h"
 

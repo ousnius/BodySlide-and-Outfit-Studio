@@ -29,9 +29,9 @@ WindDirection WindDirectionFromIndex(int index) {
 #include "NiflyBullet.h"
 #include "DebugDraw.h"
 #include "SystemBuilder.h"
-#include "hdt/hdtSkinnedMeshWorld.h"
+#include "physics/hdt/hdtSkinnedMeshWorld.h"
 
-#include "../components/Anim.h"
+#include "components/Anim.h"
 
 #include <ExtraData.hpp>
 #include <NifFile.hpp>

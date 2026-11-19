@@ -7,7 +7,7 @@ See the included LICENSE file
 
 #include <tinyxml2.h>
 
-#include "../files/HkxFile.h"
+#include "files/HkxFile.h"
 #include "Object3d.hpp"
 
 class AnimBone;

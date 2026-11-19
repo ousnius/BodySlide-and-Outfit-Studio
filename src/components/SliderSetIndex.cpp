@@ -5,8 +5,8 @@ See the included LICENSE file
 
 #include "SliderSetIndex.h"
 #include "SliderDataFileUtil.h"
-#include "../utils/PlatformUtil.h"
-#include "../utils/StringStuff.h"
+#include "utils/PlatformUtil.h"
+#include "utils/StringStuff.h"
 
 #include <algorithm>
 #include <filesystem>

@@ -4,9 +4,9 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
-#include "../components/MaskOps.h"
-#include "../program/BrushStrokeController.h"
-#include "../program/OutfitStudio.h"
+#include "components/MaskOps.h"
+#include "project/BrushStrokeController.h"
+#include "outfitstudio/OutfitStudio.h"
 
 #include <algorithm>
 #include <cfloat>

@@ -4,7 +4,7 @@ See the included LICENSE file
 */
 
 #include "NormalGenLayers.h"
-#include "../utils/ConfigurationManager.h"
+#include "utils/ConfigurationManager.h"
 #include <sstream>
 
 extern ConfigurationManager Config;

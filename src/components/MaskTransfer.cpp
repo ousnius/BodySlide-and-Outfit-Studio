@@ -4,7 +4,7 @@ See the included LICENSE file
 */
 
 #include "MaskTransfer.h"
-#include "../utils/AABBTree.h"
+#include "utils/AABBTree.h"
 
 #include <algorithm>
 

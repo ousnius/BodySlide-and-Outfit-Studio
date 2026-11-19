@@ -5,11 +5,11 @@ See the included LICENSE file
 
 #include "OutfitStudioMcp.h"
 #include "McpSnapshots.h"
-#include "../files/MaterialFile.h"
-#include "../files/GameDataStream.h"
-#include "../program/GameImport.h"
-#include "../program/OutfitStudio.h"
-#include "../utils/ConfigurationManager.h"
+#include "files/MaterialFile.h"
+#include "files/GameDataStream.h"
+#include "project/GameImport.h"
+#include "outfitstudio/OutfitStudio.h"
+#include "utils/ConfigurationManager.h"
 
 #include <wx/filename.h>
 #include <wx/log.h>

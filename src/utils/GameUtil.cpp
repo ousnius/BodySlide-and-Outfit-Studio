@@ -6,7 +6,7 @@ See the included LICENSE file
 #include "GameUtil.h"
 #include "ConfigurationManager.h"
 #include "StringStuff.h"
-#include "../../lib/FSEngine/FSManager.h"
+#include "FSEngine/FSManager.h"
 
 #include <wx/dir.h>
 #include <wx/filename.h>

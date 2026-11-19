@@ -6,8 +6,8 @@ See the included LICENSE file
 #include "SliderSet.h"
 #include "SliderDataFileUtil.h"
 #include "SliderSetInheritance.h"
-#include "../utils/PlatformUtil.h"
-#include "../utils/StringStuff.h"
+#include "utils/PlatformUtil.h"
+#include "utils/StringStuff.h"
 
 #include <chrono>
 #include <cstdio>

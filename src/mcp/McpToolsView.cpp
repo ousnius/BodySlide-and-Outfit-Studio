@@ -4,8 +4,8 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
-#include "../components/PoseMath.h"
-#include "../program/OutfitStudio.h"
+#include "components/PoseMath.h"
+#include "outfitstudio/OutfitStudio.h"
 
 #include <wx/dcmemory.h>
 #include <wx/mstream.h>

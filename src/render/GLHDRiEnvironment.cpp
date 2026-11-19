@@ -4,8 +4,8 @@ See the included LICENSE file
 */
 
 #include "GLHDRiEnvironment.h"
-#include "../files/EXRImage.h"
-#include "../utils/ConfigurationManager.h"
+#include "files/EXRImage.h"
+#include "utils/ConfigurationManager.h"
 #include "GLMaterial.h"
 
 #include <wx/log.h>

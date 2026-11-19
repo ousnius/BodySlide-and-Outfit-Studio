@@ -5,14 +5,14 @@ See the included LICENSE file
 
 #include "OutfitStudioMcp.h"
 #include "McpSnapshots.h"
-#include "../components/MaskOps.h"
-#include "../components/MeshAnalysis.h"
-#include "../components/MeshDeform.h"
-#include "../components/PoseData.h"
-#include "../components/PoseFit.h"
-#include "../components/PoseMath.h"
-#include "../components/SurfaceFit.h"
-#include "../program/OutfitStudio.h"
+#include "components/MaskOps.h"
+#include "components/MeshAnalysis.h"
+#include "components/MeshDeform.h"
+#include "components/PoseData.h"
+#include "components/PoseFit.h"
+#include "components/PoseMath.h"
+#include "components/SurfaceFit.h"
+#include "outfitstudio/OutfitStudio.h"
 
 #include <algorithm>
 #include <cfloat>

@@ -4,8 +4,8 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
-#include "../components/MeshAnalysis.h"
-#include "../program/OutfitStudio.h"
+#include "components/MeshAnalysis.h"
+#include "outfitstudio/OutfitStudio.h"
 
 #include <algorithm>
 #include <cfloat>

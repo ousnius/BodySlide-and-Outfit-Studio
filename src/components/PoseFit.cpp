@@ -7,7 +7,7 @@ See the included LICENSE file
 #include "MeshAnalysis.h"
 #include "PoseMath.h"
 #include "SurfaceFit.h"
-#include "../utils/ParallelFor.h"
+#include "utils/ParallelFor.h"
 
 #include "KDMatcher.hpp"
 

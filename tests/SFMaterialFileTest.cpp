@@ -1,4 +1,4 @@
-#include "../src/files/SFMaterialFile.h"
+#include "files/SFMaterialFile.h"
 
 #include <catch2/catch_test_macros.hpp>
 

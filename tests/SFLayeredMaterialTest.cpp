@@ -1,5 +1,5 @@
-#include "../src/files/SFLayeredMaterial.h"
-#include "../src/files/SFMaterialFile.h"
+#include "files/SFLayeredMaterial.h"
+#include "files/SFMaterialFile.h"
 
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>

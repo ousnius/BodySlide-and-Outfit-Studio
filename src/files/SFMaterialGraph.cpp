@@ -5,7 +5,7 @@ See the included LICENSE file
 
 #include "SFMaterialGraph.h"
 
-#include "../utils/StringStuff.h"
+#include "utils/StringStuff.h"
 
 #include <algorithm>
 #include <cstdlib>

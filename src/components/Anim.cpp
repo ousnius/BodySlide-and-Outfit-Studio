@@ -5,7 +5,7 @@ See the included LICENSE file
 
 #include "Anim.h"
 #include "NifUtil.hpp"
-#include "../utils/StringStuff.h"
+#include "utils/StringStuff.h"
 #include <algorithm>
 #include <unordered_set>
 #include <wx/filename.h>

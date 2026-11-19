@@ -5,7 +5,7 @@ See the included LICENSE file
 
 #include "PhysicsXmlFile.h"
 
-#include "../utils/StringStuff.h"
+#include "utils/StringStuff.h"
 
 #include <tinyxml2.h>
 

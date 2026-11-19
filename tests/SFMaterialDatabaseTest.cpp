@@ -1,5 +1,5 @@
-#include "../src/files/SFMaterialDatabase.h"
-#include "../src/files/SFMaterialFile.h"
+#include "files/SFMaterialDatabase.h"
+#include "files/SFMaterialFile.h"
 
 #include <catch2/catch_test_macros.hpp>
 

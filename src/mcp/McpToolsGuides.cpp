@@ -4,7 +4,7 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
-#include "../utils/ConfigurationManager.h"
+#include "utils/ConfigurationManager.h"
 
 #include <wx/dir.h>
 #include <wx/file.h>

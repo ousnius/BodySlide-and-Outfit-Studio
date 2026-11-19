@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <Filter Include="Project">
+      <UniqueIdentifier>{0a5dab4f-7dc6-47d2-84c5-d6a1bdb927a3}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Tests">
       <UniqueIdentifier>{35f7b2f0-3283-4f40-9375-e6a33bf0cc9f}</UniqueIdentifier>
     </Filter>
@@ -15,9 +18,6 @@
     </Filter>
     <Filter Include="Libraries">
       <UniqueIdentifier>{a8c4e2d1-6f3b-4e9a-b7c5-1d2e3f4a5b61}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Program">
-      <UniqueIdentifier>{9ed9cc48-20eb-4905-80a2-636e7a41bed8}</UniqueIdentifier>
     </Filter>
     <Filter Include="MCP">
       <UniqueIdentifier>{1167e2be-804d-40e9-8edc-0c0c42c78cc5}</UniqueIdentifier>
@@ -410,11 +410,11 @@
     <ClCompile Include="src\files\TriFile.cpp">
       <Filter>Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\program\OutfitProject.cpp">
-      <Filter>Program</Filter>
+    <ClCompile Include="src\project\OutfitProject.cpp">
+      <Filter>Project</Filter>
     </ClCompile>
-    <ClCompile Include="src\program\ProjectHost.cpp">
-      <Filter>Program</Filter>
+    <ClCompile Include="src\project\ProjectHost.cpp">
+      <Filter>Project</Filter>
     </ClCompile>
     <ClCompile Include="src\mcp\McpProtocol.cpp">
       <Filter>MCP</Filter>
@@ -422,11 +422,11 @@
     <ClCompile Include="src\mcp\McpServer.cpp">
       <Filter>MCP</Filter>
     </ClCompile>
-    <ClCompile Include="src\program\ProjectOperations.cpp">
-      <Filter>Program</Filter>
+    <ClCompile Include="src\project\ProjectOperations.cpp">
+      <Filter>Project</Filter>
     </ClCompile>
-    <ClCompile Include="src\program\BrushStrokeController.cpp">
-      <Filter>Program</Filter>
+    <ClCompile Include="src\project\BrushStrokeController.cpp">
+      <Filter>Project</Filter>
     </ClCompile>
     <ClCompile Include="src\components\TweakBrush.cpp">
       <Filter>Components</Filter>

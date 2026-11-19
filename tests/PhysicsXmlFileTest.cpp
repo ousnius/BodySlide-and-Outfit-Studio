@@ -1,4 +1,4 @@
-#include "../src/files/PhysicsXmlFile.h"
+#include "files/PhysicsXmlFile.h"
 
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>

@@ -5,9 +5,9 @@ See the included LICENSE file
 
 #pragma once
 
-#include "../files/MaterialFile.h"
-#include "../files/SFLayeredMaterial.h"
-#include "../utils/AABBTree.h"
+#include "files/MaterialFile.h"
+#include "files/SFLayeredMaterial.h"
+#include "utils/AABBTree.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>

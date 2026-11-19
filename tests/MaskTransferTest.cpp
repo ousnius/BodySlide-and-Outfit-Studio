@@ -1,4 +1,4 @@
-#include "../src/components/MaskTransfer.h"
+#include "components/MaskTransfer.h"
 
 #include <catch2/catch_test_macros.hpp>
 

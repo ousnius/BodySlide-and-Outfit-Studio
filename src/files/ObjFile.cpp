@@ -4,7 +4,7 @@ See the included LICENSE file
 */
 
 #include "ObjFile.h"
-#include "../utils/PlatformUtil.h"
+#include "utils/PlatformUtil.h"
 #include <sstream>
 #include <unordered_map>
 

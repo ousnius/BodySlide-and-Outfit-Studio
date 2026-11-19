@@ -1,0 +1,2314 @@
+/*
+BodySlide and Outfit Studio
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#pragma once
+
+#include "components/Automorph.h"
+#include "components/PoseData.h"
+#include "components/RefTemplates.h"
+#include "components/TweakBrush.h"
+#include "components/UndoHistory.h"
+#include "physics/Controller.h"
+#include "physics/PumpClock.h"
+#include "render/GLSurface.h"
+#include "ui/outfitstudio/WeightCopyDialog.h"
+#include "ui/wxSliderPanel.h"
+#include "ui/wxStateButton.h"
+#include "utils/ConfigurationManager.h"
+#include "utils/Log.h"
+#include "utils/MainThreadDispatcher.h"
+#include "utils/TargetGame.h"
+#include "project/EditorState.h"
+#include "project/OutfitProject.h"
+#include "project/ProjectOperations.h"
+
+#include "FSEngine/FSEngine.h"
+#include "FSEngine/FSManager.h"
+
+#include <cstddef>
+#include <cstdint>
+#include <deque>
+#include <functional>
+#include <map>
+#include <memory>
+#include <optional>
+#include <set>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
+#include <wx/clrpicker.h>
+#include <wx/cmdline.h>
+#include <wx/collpane.h>
+#include <wx/dataview.h>
+#include <wx/filepicker.h>
+#include <wx/grid.h>
+#include <wx/html/htmlwin.h>
+#include <wx/spinctrl.h>
+#include <wx/splitter.h>
+#include <wx/srchctrl.h>
+#include <wx/stdpaths.h>
+#include <wx/stopwatch.h>
+#include <wx/timer.h>
+#include <wx/tokenzr.h>
+#include <wx/treectrl.h>
+#include <wx/wizard.h>
+#include <wx/xrc/xmlres.h>
+#include <wx/snglinst.h>
+#include <wx/ipc.h>
+#ifdef _WINDOWS
+#include <wx/msw/registry.h>
+#endif
+
+#define ANIM_PLAYBACK_TIMER 300
+#define PHYSICS_TIMER 301
+
+struct MergeCheckErrors;
+
+
+class ShapeItemData : public wxTreeItemData {
+	nifly::NiShape* shape = nullptr;
+public:
+	ShapeItemData(nifly::NiShape* inShape) { shape = inShape; }
+
+	nifly::NiShape* GetShape() { return shape; }
+
+	void SetShape(nifly::NiShape* newShape) { shape = newShape; }
+};
+
+struct ShapeItemState {
+	std::string shapeName;
+	int state = 0;
+	bool selected = false;
+};
+
+// NIF and .osd file that saving writes, and the project that writes them
+struct SharedFilesTarget {
+	std::string dataDir; // Relative to the "ShapeData" folder
+	std::string nifName;
+	std::string osdName;
+	std::string setFile;
+	std::string setName;
+	bool addOn = false;
+	bool hasBase = false;
+};
+
+class SegmentItemData : public wxTreeItemData {
+public:
+	// partID: a small nonnegative integer uniquely identifying this
+	// segment among all the segments and subsegments.  Used as a value
+	// in triSParts.  Not in the file.
+	int partID;
+
+	SegmentItemData(const int inPartitionID) { partID = inPartitionID; }
+};
+
+class SubSegmentItemData : public wxTreeItemData {
+public:
+	// partID: a small nonnegative integer uniquely identifying this
+	// subsegment among all the segments and subsegments.  Used as a value
+	// in triSParts.  Not in the file.
+	int partID;
+	uint32_t userSlotID;
+	uint32_t material;
+	std::vector<float> extraData;
+
+	SubSegmentItemData(const int inPartitionID, const uint32_t& inUserSlotID, const uint32_t& inMaterial, const std::vector<float>& inExtraData = std::vector<float>()) {
+		partID = inPartitionID;
+		userSlotID = inUserSlotID;
+		material = inMaterial;
+		extraData = inExtraData;
+	}
+};
+
+class PartitionItemData : public wxTreeItemData {
+public:
+	int index;
+	uint16_t type;
+
+	PartitionItemData(const int inIndex, const uint16_t& inType) {
+		index = inIndex;
+		type = inType;
+	}
+};
+
+
+
+enum class ToolID {
+	Any = -1,
+	Select = 0,
+	MaskBrush,
+	InflateBrush,
+	DeflateBrush,
+	MoveBrush,
+	SmoothBrush,
+	UndiffBrush,
+	WeightBrush,
+	ColorBrush,
+	AlphaBrush,
+	CollapseVertex,
+	FlipEdge,
+	SplitEdge,
+	MoveVertex,
+	Transform,
+	Pivot,
+	VertexEdit
+};
+
+
+struct ConformOptions;
+struct ClippingFixOptions;
+class OutfitStudioFrame;
+class ArchiveBrowser;
+class BrushStrokeController;
+class EditUV;
+class OutfitStudioMcp;
+struct SymmetricVertices;
+struct VertexAsymmetries;
+struct VertexAsymmetryTasks;
+
+enum OverlayLayer : uint32_t {
+	Default = 0,
+	NodeSelection = 10,
+};
+
+enum class RotationCenterMode { Zero, MeshCenter, Picked };
+
+enum class MoveVertexOperation { None, Move, Weld, Merge };
+
+constexpr float BrushSizeScale = 3.0f;
+
+class wxGLPanel : public wxGLCanvas {
+public:
+	GLSurface gls;
+	RotationCenterMode rotationCenterMode = RotationCenterMode::Zero;
+
+	wxGLPanel(wxWindow* parent, const wxSize& size, const wxGLAttributes& attribs);
+	~wxGLPanel();
+
+	void SetNotifyWindow(wxWindow* win);
+
+	void AddMeshFromNif(nifly::NifFile* nif, const std::string& shapeName);
+
+	void RenameShape(const std::string& shapeName, const std::string& newShapeName) { gls.RenameMesh(shapeName, newShapeName); }
+
+	void SetMeshTextures(const std::string& shapeName,
+						 const std::vector<std::string>& textureFiles,
+						 const bool hasMatFile = false,
+						 const MaterialFile& matFile = MaterialFile(),
+						 const bool reloadTextures = false,
+						 const std::shared_ptr<const SFLayeredMaterial>& sfMaterial = nullptr);
+
+	Mesh* GetMesh(const std::string& shapeName) { return gls.GetMesh(shapeName); }
+
+	void UpdateMeshVertices(const std::string& shapeName,
+							std::vector<nifly::Vector3>* verts,
+							bool updateBVH = true,
+							bool recalcNormals = true,
+							bool render = true,
+							std::vector<nifly::Vector2>* uvs = nullptr);
+	void RecalculateMeshBVH(const std::string& shapeName);
+
+	void ShowShape(const std::string& shapeName, bool show = true);
+	void SetActiveShapes(const std::vector<std::string>& shapeNames);
+	void SetSelectedShape(const std::string& shapeName);
+
+	UndoHistory* GetUndoHistory();
+	// A brush stroke or a transform is in progress
+	bool IsStrokeActive() const;
+	// Renders the view offscreen at the given size and saves it as a PNG
+	bool SaveViewImage(const wxString& fileName, int width, int height);
+	bool RenderViewImage(int width, int height, wxImage& outImage);
+
+	void SetActiveTool(ToolID brushID);
+	ToolID GetActiveTool() { return activeTool; }
+
+	void SetLastTool(ToolID tool);
+	ToolID GetLastTool() { return lastTool; }
+
+	TweakBrush* GetActiveBrush() { return activeBrush; }
+
+	std::vector<TweakBrush*> GetBrushList() {
+		std::vector<TweakBrush*> brushList{&inflateBrush,
+										   &deflateBrush,
+										   &moveBrush,
+										   &smoothBrush,
+										   &undiffBrush,
+										   &maskBrush,
+										   &weightBrush,
+										   &colorBrush,
+										   &alphaBrush};
+
+		return brushList;
+	}
+
+	void SetColorBrush(const nifly::Vector3& color) { colorBrush.color = color; }
+
+	bool StartBrushStroke(const wxPoint& screenPos);
+	void UpdateBrushStroke(const wxPoint& screenPos);
+	void EndBrushStroke();
+
+	bool StartTransform(const wxPoint& screenPos);
+	void UpdateTransform(const wxPoint& screenPos);
+	void EndTransform();
+
+	bool StartPivotPosition(const wxPoint& screenPos);
+	void UpdatePivotPosition(const wxPoint& screenPos);
+	void EndPivotPosition();
+
+	bool SelectVertex(const wxPoint& screenPos);
+
+	bool StartPickVertex();
+	void UpdatePickVertex(const wxPoint& screenPos);
+	void EndPickVertex();
+	void ClickCollapseVertex();
+
+	bool StartPickEdge();
+	void UpdatePickEdge(const wxPoint& screenPos);
+	void EndPickEdge();
+	void ClickFlipEdge();
+	void ClickSplitEdge();
+
+	// Takes hold of the running physics simulation where the cursor points and
+	// drags it around, without touching the mesh data. Start fails when the
+	// cursor is not over a shape the simulation moves, leaving the click to the
+	// tool that would otherwise have had it.
+	bool StartPhysicsGrab(const wxPoint& screenPos);
+	void UpdatePhysicsGrab(const wxPoint& screenPos);
+	void EndPhysicsGrab();
+
+	// Draws (or removes) the ball the running simulation collides with, at a
+	// position and radius given in NIF units. Placing it is the frame's job -
+	// this only shows where it ended up.
+	void ShowPhysicsProbe(const nifly::Vector3& nifPos, float nifRadius);
+	void HidePhysicsProbe();
+
+	bool StartMoveVertex(const wxPoint& screenPos);
+	void UpdateMoveVertex(const wxPoint& screenPos);
+	void EndMoveVertex();
+	void CancelMoveVertex();
+
+	bool StartEdgeSlide(const wxPoint& screenPos);
+	void UpdateEdgeSlide(const wxPoint& screenPos);
+	void EndEdgeSlide();
+	void CancelEdgeSlide();
+
+	bool RestoreMode(UndoStateProject* usp);
+	void ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender = true);
+	bool UndoStroke();
+	bool RedoStroke();
+
+	void ShowRotationCenter(bool show = true);
+
+	void ShowTransformTool(bool show = true);
+	void UpdateTransformCenter();
+	void UpdateTransformTool();
+
+	void ShowPivot(bool show = true);
+	void UpdatePivot();
+
+	bool GetNodesMode() { return nodesMode; }
+	void ShowNodes(bool show = true);
+	void UpdateNodes();
+	void UpdateNodeColors();
+
+	bool GetBonesMode() { return bonesMode; }
+	void ShowBones(bool show = true);
+	bool IsBonesMode() { return bonesMode; }
+	void UpdateBones();
+
+	void ShowFloor(bool show = true);
+	void UpdateFloor();
+
+	void ShowVertexEdit(bool show = true);
+
+	bool GetEditMode() { return editMode; }
+	void SetEditMode(bool on = true) { editMode = on; }
+
+	bool GetBrushMode() { return brushMode; }
+	void SetBrushMode(bool on = true) { brushMode = on; }
+
+	bool GetVertexEdit() { return vertexEdit; }
+	void SetVertexEdit(bool on = true) {
+		vertexEdit = on;
+		ShowVertexEdit(on);
+		Render();
+	}
+
+	bool GetTransformMode() { return transformMode; }
+	void SetTransformMode(bool on = true) {
+		transformMode = on;
+		ShowTransformTool(on);
+	}
+
+	bool GetPivotMode() { return pivotMode; }
+	void SetPivotMode(bool on = true) {
+		pivotMode = on;
+		ShowPivot(on);
+
+		if (transformMode)
+			ShowTransformTool();
+	}
+
+	bool GetSegmentMode() { return segmentMode; }
+	void SetSegmentMode(bool on = true) { segmentMode = on; }
+
+	bool GetToolOptionXMirror() {
+		if (activeTool == ToolID::WeightBrush)
+			return toolOptionXMirrorWeight;
+		return toolOptionXMirror;
+	}
+	void SetToolOptionXMirror(bool on = true) {
+		if (activeTool == ToolID::WeightBrush)
+			toolOptionXMirrorWeight = on;
+		else
+			toolOptionXMirror = on;
+		gls.SetXMirrorCursor(on);
+	}
+
+	bool GetToolOptionConnectedOnly() { return toolOptionConnectedOnly; }
+	void SetToolOptionConnectedOnly(bool on = true) { toolOptionConnectedOnly = on; }
+
+	bool GetToolOptionMerge() { return toolOptionMerge; }
+	void SetToolOptionMerge(bool on = true) { toolOptionMerge = on; }
+
+	bool GetToolOptionWeld() { return toolOptionWeld; }
+	void SetToolOptionWeld(bool on = true) { toolOptionWeld = on; }
+
+	bool GetToolOptionRestrictSurface() { return toolOptionRestrictSurface; }
+	void SetToolOptionRestrictSurface(bool on = true) { toolOptionRestrictSurface = on; }
+
+	bool GetToolOptionRestrictPlane() { return toolOptionRestrictPlane; }
+	void SetToolOptionRestrictPlane(bool on = true) { toolOptionRestrictPlane = on; }
+
+	bool GetToolOptionRestrictNormal() { return toolOptionRestrictNormal; }
+	void SetToolOptionRestrictNormal(bool on = true) { toolOptionRestrictNormal = on; }
+
+	bool GetToolOptionEdgeSlide() { return toolOptionEdgeSlide; }
+	void SetToolOptionEdgeSlide(bool on = true) { toolOptionEdgeSlide = on; }
+
+	bool GetToolOptionEdgeSlideUVCorrection() { return toolOptionEdgeSlideUVCorrection; }
+	void SetToolOptionEdgeSlideUVCorrection(bool on = true) { toolOptionEdgeSlideUVCorrection = on; }
+
+	void SetShapeGhostMode(const std::string& shapeName, bool on = true) {
+		Mesh* m = gls.GetMesh(shapeName);
+		if (!m)
+			return;
+
+		if (on)
+			m->rendermode = Mesh::RenderMode::LitWire;
+		else
+			m->rendermode = Mesh::RenderMode::Normal;
+	}
+
+	void SetNormalSeamSmoothMode(bool enable) {
+		for (auto& m : gls.GetActiveMeshes()) {
+			m->smoothSeamNormals = enable;
+			m->SmoothNormals();
+		}
+	}
+
+	void SetLockNormalsMode(bool enable) {
+		for (auto& m : gls.GetActiveMeshes())
+			m->lockNormals = enable;
+	}
+
+	void RecalcNormals(const std::string& shapeName, bool force = false) {
+		Mesh* m = gls.GetMesh(shapeName);
+		if (!m)
+			return;
+
+		bool oldLockNormals = m->lockNormals;
+		if (m->lockNormals && force)
+			m->lockNormals = false;
+
+		m->SmoothNormals();
+		m->lockNormals = oldLockNormals;
+	}
+
+	float GetBrushSize() { return brushSize / BrushSizeScale; }
+	void SetBrushSize(float val) {
+		val *= BrushSizeScale;
+		brushSize = val;
+		gls.SetCursorSize(val);
+	}
+	void ResetBrushSize() {
+		brushSize = 0.45f;
+		gls.SetCursorSize(brushSize);
+	}
+
+	float IncBrush(float step = 0.010f) {
+		gls.SetCursorSize(gls.GetCursorSize() + step);
+		brushSize += step;
+		LimitBrushSize();
+		return brushSize;
+	}
+	float DecBrush(float step = 0.010f) {
+		gls.SetCursorSize(gls.GetCursorSize() - step);
+		brushSize -= step;
+		LimitBrushSize();
+		return brushSize;
+	}
+
+	void LimitBrushSize() {
+		if (brushSize < 0.000f) {
+			gls.SetCursorSize(0.000f);
+			brushSize = 0.000f;
+		}
+		else if (brushSize > BrushSizeScale) {
+			gls.SetCursorSize(BrushSizeScale);
+			brushSize = BrushSizeScale;
+		}
+	}
+
+	float IncStr() {
+		if (!activeBrush)
+			return 0.0f;
+
+		float str = activeBrush->getStrength();
+		str += 0.010f;
+		activeBrush->setStrength(str);
+		return str;
+	}
+	float DecStr() {
+		if (!activeBrush)
+			return 0.0f;
+
+		float str = activeBrush->getStrength();
+		str -= 0.010f;
+		activeBrush->setStrength(str);
+		return str;
+	}
+
+	void SetCursorType(GLSurface::CursorType cursorType) { gls.SetCursorType(cursorType); }
+
+	void SetWireframe(bool bEnable = true) { gls.SetWireframe(bEnable); }
+
+	void SetLighting(bool bEnable = true) { gls.SetLighting(bEnable); }
+
+	void SetTextures(bool bEnable = true) { gls.SetTextures(bEnable); }
+
+	void SetTints(bool bEnable = true) { gls.SetTints(bEnable); }
+
+	void SetMaskVisible(bool bVisible = true) { gls.SetMaskVisible(bVisible); }
+
+	void SetWeightVisible(bool bVisible = true) { gls.SetWeightColors(bVisible); }
+
+	void SetColorsVisible(bool bVisible = true) { gls.SetVertexColors(bVisible); }
+
+	void ClearMasks() {
+		for (auto& m : gls.GetMeshes())
+			if (!m->bPrimitive)
+				m->MaskFill(0.0f);
+	}
+
+	void ClearActiveMask() {
+		for (auto& m : gls.GetActiveMeshes())
+			m->MaskFill(0.0f);
+	}
+
+	void ClearColors() {
+		for (auto& m : gls.GetMeshes())
+			if (!m->bPrimitive)
+				m->ColorFill(nifly::Vector3());
+	}
+
+	void ClearActiveColors() {
+		for (auto& m : gls.GetActiveMeshes())
+			m->ColorFill(nifly::Vector3());
+	}
+
+	void GetActiveMask(std::unordered_map<uint16_t, float>& mask) {
+		if (gls.GetActiveMeshes().empty())
+			return;
+
+		Mesh* m = gls.GetActiveMeshes().back();
+
+		for (int i = 0; i < m->nVerts; i++) {
+			if (m->mask[i] != 0.0f)
+				mask[i] = m->mask[i];
+		}
+	}
+
+	void GetActiveUnmasked(std::unordered_map<uint16_t, float>& mask) {
+		if (gls.GetActiveMeshes().empty())
+			return;
+
+		Mesh* m = gls.GetActiveMeshes().back();
+
+		for (int i = 0; i < m->nVerts; i++)
+			if (m->mask[i] == 0.0f)
+				mask[i] = m->mask[i];
+	}
+
+	void GetShapeMask(std::unordered_map<uint16_t, float>& mask, const std::string& shapeName) {
+		Mesh* m = gls.GetMesh(shapeName);
+		if (!m)
+			return;
+
+		for (int i = 0; i < m->nVerts; i++) {
+			if (m->mask[i] != 0.0f)
+				mask[i] = m->mask[i];
+		}
+	}
+
+	void GetShapeUnmasked(std::unordered_map<uint16_t, float>& mask, const std::string& shapeName) {
+		Mesh* m = gls.GetMesh(shapeName);
+		if (!m)
+			return;
+
+		for (int i = 0; i < m->nVerts; i++)
+			if (m->mask[i] == 0.0f)
+				mask[i] = m->mask[i];
+	}
+
+	void SetShapeMask(std::unordered_map<uint16_t, float>& mask, const std::string& shapeName) {
+		Mesh* m = gls.GetMesh(shapeName);
+		if (!m)
+			return;
+
+		for (int i = 0; i < m->nVerts; i++) {
+			if (mask.find(i) != mask.end())
+				m->mask[i] = mask[i];
+			else
+				m->mask[i] = 0.0f;
+		}
+
+		m->QueueUpdate(Mesh::UpdateType::Mask);
+	}
+
+	std::unordered_map<std::string, std::vector<float>> StashMasks();
+	void UnstashMasks(const std::unordered_map<std::string, std::vector<float>>& stash);
+
+	// Applies the mask changes of each active mesh as one undo step
+	void ApplyMaskChanges(const std::function<std::unordered_map<int, float>(Mesh&)>& changesForMesh);
+	void ApplyMaskChanges(const std::vector<Mesh*>& meshes, const std::function<std::unordered_map<int, float>(Mesh&)>& changesForMesh);
+	void MaskLess();
+	void MaskMore();
+	void InvertMask();
+	void ClearMask();
+
+	void InvertMaskTris(std::unordered_map<uint16_t, float>& mask, const std::string& shapeName) {
+		Mesh* m = gls.GetMesh(shapeName);
+		if (!m)
+			return;
+
+		std::unordered_map<uint16_t, float> triMask;
+		for (int t = 0; t < m->nTris; t++) {
+			auto& tri = m->tris[t];
+			if (mask.find(tri.p1) != mask.end() || mask.find(tri.p2) != mask.end() || mask.find(tri.p3) != mask.end()) {
+				triMask.emplace(tri.p1, 1.0f);
+				triMask.emplace(tri.p2, 1.0f);
+				triMask.emplace(tri.p3, 1.0f);
+			}
+		}
+
+		std::unordered_map<uint16_t, float> invertMask;
+		for (int t = 0; t < m->nTris; t++) {
+			auto& tri = m->tris[t];
+			if (triMask.find(tri.p1) == triMask.end())
+				invertMask.emplace(tri.p1, 1.0f);
+			if (triMask.find(tri.p2) == triMask.end())
+				invertMask.emplace(tri.p2, 1.0f);
+			if (triMask.find(tri.p3) == triMask.end())
+				invertMask.emplace(tri.p3, 1.0f);
+		}
+
+		mask = std::move(invertMask);
+	}
+
+	nifly::Vector3 CreateColorRamp(const float value) {
+		float r;
+		float g;
+		float b;
+
+		if (value <= 0.0f) {
+			r = g = b = 1.0;
+		}
+		else if (value <= 0.25) {
+			r = 0.0;
+			b = 1.0;
+			g = value / 0.25;
+		}
+		else if (value <= 0.5) {
+			r = 0.0;
+			g = 1.0;
+			b = 1.0 + (-1.0) * (value - 0.25) / 0.25;
+		}
+		else if (value <= 0.75) {
+			r = (value - 0.5) / 0.25;
+			g = 1.0;
+			b = 0.0;
+		}
+		else {
+			r = 1.0;
+			g = 1.0 + (-1.0) * (value - 0.75) / 0.25;
+			b = 0.0;
+		}
+
+		return nifly::Vector3(r, g, b);
+	}
+
+	void DeleteMesh(const std::string& shape) {
+		Mesh* m = gls.GetMesh(shape);
+		if (m) {
+			BVHUpdateQueue.erase(m);
+			gls.DeleteMesh(m);
+		}
+	}
+
+	void Cleanup() {
+		XMoveMesh = nullptr;
+		YMoveMesh = nullptr;
+		ZMoveMesh = nullptr;
+		XRotateMesh = nullptr;
+		YRotateMesh = nullptr;
+		ZRotateMesh = nullptr;
+		XScaleMesh = nullptr;
+		YScaleMesh = nullptr;
+		ZScaleMesh = nullptr;
+		ScaleUniformMesh = nullptr;
+
+		XPivotMesh = nullptr;
+		YPivotMesh = nullptr;
+		ZPivotMesh = nullptr;
+		PivotCenterMesh = nullptr;
+
+		RotationCenterMesh = nullptr;
+		RotationCenterMeshRingX = nullptr;
+		RotationCenterMeshRingY = nullptr;
+		RotationCenterMeshRingZ = nullptr;
+
+		nodesPoints.clear();
+		nodesLines.clear();
+		bonesPoints.clear();
+		bonesLines.clear();
+		floorMeshes.clear();
+
+		BVHUpdateQueue.clear();
+
+		gls.Cleanup();
+	}
+
+	void SetView(const char type) {
+		gls.SetView(type);
+
+		if (transformMode)
+			ShowTransformTool();
+		else
+			Render();
+	}
+
+	void SetPerspective(const bool enabled) {
+		gls.SetPerspective(enabled);
+		gls.RenderOneFrame();
+	}
+
+	void SetFieldOfView(const int fieldOfView) {
+		gls.SetFieldOfView(fieldOfView);
+		gls.RenderOneFrame();
+	}
+
+	void SetDepthClip(const float zNear, const float zFar) {
+		gls.SetDepthClip(zNear, zFar);
+		gls.RenderOneFrame();
+	}
+
+	void UpdateLights(const int ambient,
+					  const int frontal,
+					  const int directional0,
+					  const int directional1,
+					  const int directional2,
+					  const nifly::Vector3& directional0Dir = nifly::Vector3(),
+					  const nifly::Vector3& directional1Dir = nifly::Vector3(),
+					  const nifly::Vector3& directonal2Dir = nifly::Vector3()) {
+		gls.UpdateLights(ambient, frontal, directional0, directional1, directional2, directional0Dir, directional1Dir, directonal2Dir);
+		gls.RenderOneFrame();
+	}
+
+	// Loads an HDRi from res/hdri as the environment, empty for none. Also changes what shapes with a
+	// dynamic cubemap reflect, but not the meshes or their textures.
+	bool SetHDRiBackground(const std::string& fileName) {
+		const bool loaded = gls.SetHDRiBackground(fileName);
+		gls.RenderOneFrame();
+		return loaded;
+	}
+
+	bool HasHDRiBackground() const { return gls.HasHDRiBackground(); }
+
+	void Render() { gls.RenderOneFrame(); }
+
+	// Hover highlight: overlays a light green copy of the given shape's mesh.
+	// Pass an empty string or call ClearHoverHighlight() to remove it.
+	void SetHoverHighlight(const std::string& shapeName);
+	void ClearHoverHighlight();
+
+	// The displayed bone whose joint or segment is under the screen position,
+	// or empty. Only while bones are shown and no animation plays. Connector
+	// bones, drawn only to link the selection's bones to their ancestors, are
+	// only picked with includeConnectors.
+	std::string PickBone(int x, int y, bool includeConnectors = false);
+	void SetHoverBone(const std::string& bone);
+
+private:
+	void OnShown();
+	void OnPaint(wxPaintEvent& event);
+	void OnSize(wxSizeEvent& event);
+
+	void OnMouseWheel(wxMouseEvent& event);
+	void OnMouseMove(wxMouseEvent& event);
+
+	void OnMiddleDown(wxMouseEvent& event);
+	void OnMiddleUp(wxMouseEvent& event);
+	void OnLeftDown(wxMouseEvent& event);
+	void OnLeftUp(wxMouseEvent& event);
+
+	void OnRightDown(wxMouseEvent& event);
+	void OnRightUp(wxMouseEvent& event);
+	void OnLeaveWindow(wxMouseEvent& event);
+
+	void OnKeys(wxKeyEvent& event);
+	void OnIdle(wxIdleEvent& event);
+
+	void OnCaptureLost(wxMouseCaptureLostEvent& event);
+
+	std::unique_ptr<wxGLContext> context;
+
+	std::string hoverHighlightName;
+	// Bone under the cursor while bones are shown, highlighted in the viewport
+	std::string hoverBone;
+
+	bool rbuttonDown = false;
+	bool lbuttonDown = false;
+	bool mbuttonDown = false;
+	bool isLDragging = false;
+	bool isMDragging = false;
+	bool isRDragging = false;
+	wxPoint rDownPos;
+	bool firstPaint = true;
+
+	int lastX = 0;
+	int lastY = 0;
+	GLSurface::CursorHitResult lastHitResult{};
+	std::string mouseDownMeshName;
+	int mouseDownPoint;
+	int mouseDownMirrorPoint;
+	nifly::Edge mouseDownEdge;
+	nifly::Vector3 mouseDownViewDir;
+	bool mouseHasMovedSinceStart = false;
+	wxPoint mouseDownOffset;
+	nifly::Vector3 mouseDownPointNormal;
+	float snapDistance = 0.0f;
+	MoveVertexOperation moveVertexOperation = MoveVertexOperation::None;
+	int moveVertexTarget;
+	std::string moveVertexWeldTargetMeshName;
+	nifly::Vector3 edgeSlideStartPosition;
+	nifly::Vector2 edgeSlideStartUV;
+	nifly::Edge edgeSlideCurrentEdge;
+	int edgeSlideTarget = -1;
+	bool edgeSlideHasUV = false;
+
+	// Where a physics grab took hold and the plane it reads the cursor
+	// against, both in model space. The simulation pulls the grabbed patch out
+	// from under the cursor immediately, so there is nothing left to hit-test
+	// against - the move brush freezes a plane for the same reason.
+	nifly::Vector3 physicsGrabStart;
+	nifly::Vector3 physicsGrabPlaneNormal;
+	float physicsGrabPlaneDist = 0.0f;
+
+	// Fills "outTargets" with the physics bones holding the patch of "m"
+	// around "meshPos", each weighted by how much of the patch it carries.
+	bool CollectPhysicsGrabTargets(Mesh* m, const nifly::Vector3& meshPos, std::vector<Physics::GrabTarget>& outTargets);
+	void ShowPhysicsGrabMarker(const nifly::Vector3& modelPos);
+	void HidePhysicsGrabMarker();
+
+	std::set<Mesh*> BVHUpdateQueue;
+
+	OutfitStudioFrame* os = nullptr;
+
+	float brushSize = 0.45f;
+
+	bool editMode = false;
+	bool brushMode = false;
+	bool transformMode = false;
+	bool pivotMode = false;
+	bool nodesMode = false;
+	bool bonesMode = false;
+	bool floorMode = false;
+	bool vertexEdit = false;
+	bool segmentMode = false;
+
+	ToolID activeTool = ToolID::Select;
+	ToolID lastTool = ToolID::Select;
+	bool isPainting = false;
+	bool isTransforming = false;
+	bool isMovingPivot = false;
+	bool isSelecting = false;
+	bool isPickingVertex = false;
+	bool isPickingEdge = false;
+	bool isPickingBone = false;
+	bool isMovingVertex = false;
+	bool isSlidingEdge = false;
+	bool isPhysicsGrabbing = false;
+	bool toolOptionXMirror = true;
+	bool toolOptionXMirrorWeight = false;
+	bool toolOptionConnectedOnly = false;
+	bool toolOptionMerge = false;
+	bool toolOptionWeld = false;
+	bool toolOptionRestrictSurface = false;
+	bool toolOptionRestrictPlane = false;
+	bool toolOptionRestrictNormal = false;
+	bool toolOptionEdgeSlide = false;
+	bool toolOptionEdgeSlideUVCorrection = true;
+
+	TweakBrush* activeBrush = nullptr;
+	TweakBrush* savedBrush;
+
+	TB_Inflate inflateBrush;
+	TB_Deflate deflateBrush;
+	TB_Move moveBrush;
+	TB_Smooth smoothBrush;
+	TB_Undiff undiffBrush;
+	TB_Mask maskBrush;
+	TB_Unmask UnMaskBrush;
+	TB_SmoothMask smoothMaskBrush;
+	TB_Weight weightBrush;
+	TB_Unweight unweightBrush;
+	TB_SmoothWeight smoothWeightBrush;
+	TB_Color colorBrush;
+	TB_Uncolor uncolorBrush;
+	TB_Alpha alphaBrush;
+	TB_Unalpha unalphaBrush;
+	TB_XForm translateBrush;
+
+	std::unique_ptr<TweakStroke> activeStroke;
+	std::unique_ptr<BrushStrokeController> brushStroke;
+
+	Mesh* RotationCenterMesh = nullptr;
+	Mesh* RotationCenterMeshRingX = nullptr;
+	Mesh* RotationCenterMeshRingY = nullptr;
+	Mesh* RotationCenterMeshRingZ = nullptr;
+
+	Mesh* XMoveMesh = nullptr;
+	Mesh* YMoveMesh = nullptr;
+	Mesh* ZMoveMesh = nullptr;
+	Mesh* XRotateMesh = nullptr;
+	Mesh* YRotateMesh = nullptr;
+	Mesh* ZRotateMesh = nullptr;
+	Mesh* XScaleMesh = nullptr;
+	Mesh* YScaleMesh = nullptr;
+	Mesh* ZScaleMesh = nullptr;
+	Mesh* ScaleUniformMesh = nullptr;
+	nifly::Vector3 xformCenter; // Transform center for transform brushes (rotate, specifically cares about this)
+	nifly::Vector3 xformCenterInitial;
+	// Snapshots of the active bone/node's transforms at the start of a
+	// bones/nodes-mode transform stroke.  Used to apply the accumulated drag
+	// offset as an absolute change from the initial pose each frame, so that
+	// the bone/node does not double-integrate its own movement.
+	nifly::MatTransform xformInitialLocalToParent;
+	nifly::MatTransform xformInitialParentToGlobal;
+	// Active transform kind while editing a bone/node in bones/nodes mode.
+	// 0 = translate, 1 = rotate.
+	int boneXformType = 0;
+	// Initial pick origin (model space) and rotation-plane normal (model
+	// space) for a bones/nodes-mode rotation stroke.
+	nifly::Vector3 boneXformPickStart;
+	nifly::Vector3 boneXformPlaneNormalModel;
+	nifly::Vector3 boneXformAxisModel;
+	float boneXformPlaneDist = 0.0f;
+	// Pose-mode transform: editing the bone's poseTranVec/poseRotVec only.
+	// No NIF changes, no undo state.
+	bool boneXformPoseMode = false;
+	nifly::Vector3 boneXformPoseInitialTran;
+	nifly::Vector3 boneXformPoseInitialRot;
+	float lastCenterDistance = 0.0f;
+
+	Mesh* XPivotMesh = nullptr;
+	Mesh* YPivotMesh = nullptr;
+	Mesh* ZPivotMesh = nullptr;
+	Mesh* PivotCenterMesh = nullptr;
+	nifly::Vector3 pivotPosition;
+	float lastCenterPivotDistance = 0.0f;
+
+	std::vector<Mesh*> nodesPoints;
+	std::vector<Mesh*> nodesLines;
+	std::vector<Mesh*> bonesPoints;
+	std::vector<Mesh*> bonesLines;
+	// Drawn bones that the selected shapes don't use, shown dimmed only to
+	// connect the bones below them to the hierarchy
+	std::set<std::string> connectorBones;
+	std::vector<Mesh*> floorMeshes;
+
+	wxDECLARE_EVENT_TABLE();
+};
+
+
+class OutfitStudio : public wxApp {
+public:
+	virtual ~OutfitStudio();
+
+	virtual bool OnInit();
+	virtual int OnRun() override;
+	virtual int OnExit() override;
+	virtual void OnInitCmdLine(wxCmdLineParser& parser);
+	virtual bool OnCmdLineParsed(wxCmdLineParser& parser);
+
+	virtual bool OnExceptionInMainLoop();
+	virtual void OnUnhandledException();
+	virtual void OnFatalException();
+
+	void CharHook(wxKeyEvent& event);
+
+	void InitLanguage();
+
+	bool SetDefaultConfig();
+	bool ShowSetup();
+
+	TargetGame targetGame = TargetGame::FO3;
+
+private:
+	OutfitStudioFrame* frame = nullptr;
+
+	Log logger;
+	wxLocale* locale = nullptr;
+	int language = 0;
+
+	wxArrayString cmdFiles;
+	wxString cmdProject;
+	wxString cmdAutomation;
+	int cmdForceSingleInstanceBehavior = -1;  // -1 = not set, 0 = no (force new), 1 = yes (force existing)
+	bool cmdMcp = false;
+	long cmdMcpPort = -1;
+	int automationExitCode = 0;
+
+	int RunAutomationFromCmdLine();
+
+	// DDE uses a service name, TCP uses a port number
+#if defined(__WINDOWS__) && wxUSE_DDE_FOR_IPC
+	const wxString OS_IPC_SERVICE = "OutfitStudioIPC";
+#else
+	const wxString OS_IPC_SERVICE = "54318";
+#endif
+
+	// Single instance checker and IPC server
+	wxSingleInstanceChecker* singleChecker = nullptr;
+	wxServer* ipcServer = nullptr;
+};
+
+struct ProjectHistoryEntry {
+	std::string fileName;
+	std::string projectName;
+};
+
+class OutfitProject;
+class wxBrushSettingsPopupTransient;
+
+class ToolBarButtonHider {
+public:
+	struct ButDat {
+		int id = 0;
+		std::unique_ptr<wxToolBarToolBase> but;
+	};
+	std::vector<ButDat> butdats;
+	wxToolBar* tb = nullptr;
+
+	void Init(wxToolBar* tbi);
+	void Show(int toolId, bool show);
+};
+
+// Connects the project to the Outfit Studio window: progress bar, message boxes and GUI refreshes.
+class OutfitStudioProjectHost : public NonInteractiveHost {
+public:
+	explicit OutfitStudioProjectHost(OutfitStudioFrame* inFrame)
+		: frame(inFrame) {}
+
+	// While disabled, prompts are answered with their defaults like NonInteractiveHost does.
+	void SetInteractive(bool enable) { interactive = enable; }
+	bool IsInteractive() const override { return interactive; }
+
+	void StartProgress(const wxString& msg = "") override;
+	void StartSubProgress(int min, int max) override;
+	void UpdateProgress(int val, const wxString& msg = "") override;
+	void EndProgress(const wxString& msg = "", bool forceEmpty = false) override;
+
+	void ShowMessage(HostMessageLevel level, const wxString& msg, const wxString& title) override;
+	HostAnswer Ask(const wxString& msg, const wxString& title, bool withCancel, HostAnswer defaultAnswer) override;
+	bool ChooseMany(const wxString& msg, const wxString& title, const wxArrayString& choices, wxArrayInt& selections) override;
+	bool ChooseOne(const wxString& msg, const wxString& title, const wxArrayString& choices, int& selection) override;
+	bool GetText(const wxString& msg, const wxString& title, wxString& value) override;
+	Mesh* GetShapeMesh(const std::string& shapeName) override;
+
+	void UpdateShapeMesh(const std::string& shapeName) override;
+	void OnAnimationChanged() override;
+	void OnPartitionsChanged() override;
+	void OnShapeDeleting(nifly::NiShape* shape) override;
+	void DeleteSlidersForMerge(bool keepSliders, bool keepZaps) override;
+
+private:
+	OutfitStudioFrame* frame = nullptr;
+	bool interactive = true;
+};
+
+// How a shape is shown in the view, the same as the states of the shape list items
+enum class ShapeDisplayMode { Visible = 0, Hidden = 1, Ghost = 2 };
+
+// Everything about how the view looks, to change it for a render and restore it afterwards
+struct ViewState {
+	GLSurface::CameraState camera;
+	GLSurface::DisplaySettings display;
+	std::map<std::string, ShapeDisplayMode> shapes;
+};
+
+// While it exists, the project host answers prompts with their defaults. Collects the messages
+// of that time, so a caller can report what happened during an operation.
+class UnattendedScope {
+public:
+	explicit UnattendedScope(OutfitStudioProjectHost& inHost)
+		: host(inHost)
+		, wasInteractive(inHost.IsInteractive())
+		, firstMessage(inHost.GetMessages().size()) {
+		host.SetInteractive(false);
+	}
+
+	~UnattendedScope() { host.SetInteractive(wasInteractive); }
+
+	std::vector<HostMessage> Messages() const {
+		const auto& all = host.GetMessages();
+		return std::vector<HostMessage>(all.begin() + std::min(firstMessage, all.size()), all.end());
+	}
+
+private:
+	OutfitStudioProjectHost& host;
+	bool wasInteractive = true;
+	size_t firstMessage = 0;
+};
+
+class OutfitStudioFrame : public wxFrame {
+public:
+	OutfitStudioFrame(const wxPoint& pos, const wxSize& size);
+	~OutfitStudioFrame();
+
+	// Runs work on this window's thread for callers on other threads, like an external API
+	MainThreadDispatcher& GetDispatcher() { return *dispatcher; }
+
+	// Why the editor can't take an operation from outside right now, or empty if it can.
+	// Main thread only.
+	std::string GetBusyReason();
+
+	// Starts the MCP server that lets AI agents control this window, on the configured port
+	// for -1. Shows what went wrong if it can't start, in a message box when showError is set
+	// and otherwise only in the status bar and log. Main thread only.
+	bool StartMcpServer(int port = -1, bool showError = true);
+	void StopMcpServer();
+
+	bool HasPendingChanges() const { return pendingChanges; }
+
+	// Saves the current skeleton pose to the pose list and the PoseData folder, replacing a pose of the
+	// same name unless it's read-only. Returns the error, or an empty string.
+	std::string SaveCurrentPose(const std::string& poseName);
+	// Saves the current skeleton pose to a .hkx, .json, .yaml or .yml file. HKX needs the Havok skeleton
+	// next to the reference skeleton. Returns the error, or an empty string.
+	std::string SaveCurrentPoseFile(const std::string& fileName);
+
+	void LoadFiles(const wxArrayString& files, const wxString& projectName = "");
+
+	// Import a file after asking for the import options. Returns 1 if the dialog was cancelled.
+	int ImportOBJWithDialog(const std::string& fileName, const std::string& shapeName = "", nifly::NiShape* mergeShape = nullptr);
+#ifdef USE_FBXSDK
+	int ImportFBXWithDialog(const std::string& fileName, const std::string& shapeName = "", nifly::NiShape* mergeShape = nullptr);
+#endif
+
+	// Loads a mesh out of a BSA/BA2 archive as the outfit, or imports it into
+	// the project when "import" is set.
+	// Returns whether the mesh was loaded
+	bool LoadMeshFromArchive(const std::string& relPath, const std::string& archivePath, bool import);
+
+	const std::vector<RefTemplate>& GetRefTemplates() const { return refTemplates; }
+
+	// True while an HKX animation is being played back; all editing is locked
+	// for the duration.
+	bool IsAnimationPlaying() const { return animPlaying; }
+
+	// Advances playback to whatever frame the wall clock says is due. Safe to
+	// call from any event source: the frame comes from elapsed time rather than
+	// a tick count, so the speed stays correct however often it arrives.
+	void PumpAnimationPlayback();
+
+	// Feeds a horizontal camera rotation into the physics preview so cloth
+	// and hair react as if the character turned under a fixed camera. No-op
+	// while physics is not simulating.
+	void InjectPhysicsCameraYaw(float deltaDegrees);
+
+	// The per-frame physics tick while physics runs without animation
+	// playback; while an animation plays, ApplyPose steps the simulation in
+	// lockstep instead. Internally paced, so like PumpAnimationPlayback it is
+	// safe to call from any event source at any rate.
+	void PumpPhysics();
+
+	// Whether the viewport should treat a left drag as a grab of the running
+	// simulation rather than as whatever the active tool does.
+	bool IsPhysicsGrabEnabled() const;
+
+	// The shapes the simulation moves; empty while it is not running.
+	const std::unordered_set<std::string>& GetPhysicsAffectedShapes() const;
+
+	// Fits the BVHs of those shapes to where the simulation has moved them.
+	// The pump leaves them behind on purpose - rebuilding a tree per frame
+	// costs far more than it is worth for trees only picking uses - so
+	// anything that does pick the simulated mesh has to catch them up first.
+	void RefitPhysicsBVH();
+
+	// Grabbing the mesh with the cursor: drags the physics bones the grabbed
+	// patch is skinned to, leaving what the mesh does on the way to the
+	// constraints, collisions and gravity of its physics XML. Purely a
+	// simulation input - none of it reaches the mesh data or the undo history.
+	bool BeginPhysicsGrab(const std::vector<Physics::GrabTarget>& targets);
+	void UpdatePhysicsGrab(const nifly::Vector3& offset);
+	void EndPhysicsGrab();
+
+	wxGLPanel* glView = nullptr;
+	EditUV* editUV = nullptr;
+	ArchiveBrowser* archiveBrowser = nullptr;
+	OutfitStudioProjectHost projectHost{this};
+	std::unique_ptr<MainThreadDispatcher> dispatcher;
+	std::unique_ptr<OutfitStudioMcp> mcp;
+	OutfitProject* project = nullptr;
+	EditorState editor;
+	ShapeItemData* activeItem = nullptr;
+	bool autoFrameSelected = false;
+	std::vector<int> triParts;	// the partition index for each triangle, or -1 for none
+	std::vector<int> triSParts; // the segment partition index for each triangle, or -1 for none
+
+	std::deque<ProjectHistoryEntry> projectHistory;
+
+
+	PoseDataCollection poseDataCollection;
+	wxSliderPanelPool sliderPool;
+
+	wxTreeCtrl* outfitShapes = nullptr;
+	wxTreeCtrl* outfitBones = nullptr;
+	wxPanel* colorSettings = nullptr;
+	wxTreeCtrl* segmentTree = nullptr;
+	wxTreeCtrl* partitionTree = nullptr;
+	wxPanel* lightSettings = nullptr;
+	wxChoice* hdriBackground = nullptr;
+	// Set when the user picks "No background" themselves. A project full of Complex Materials turns
+	// an HDRi on by itself, which would otherwise keep overriding somebody who turned it off.
+	bool hdriBackgroundCleared = false;
+	wxChoice* cXMirrorBone = nullptr;
+	wxChoice* cPoseBone = nullptr;
+	wxSlider* rxPoseSlider = nullptr;
+	wxSlider* ryPoseSlider = nullptr;
+	wxSlider* rzPoseSlider = nullptr;
+	wxSlider* txPoseSlider = nullptr;
+	wxSlider* tyPoseSlider = nullptr;
+	wxSlider* tzPoseSlider = nullptr;
+	wxSlider* scPoseSlider = nullptr;
+	wxTextCtrl* rxPoseText = nullptr;
+	wxTextCtrl* ryPoseText = nullptr;
+	wxTextCtrl* rzPoseText = nullptr;
+	wxTextCtrl* txPoseText = nullptr;
+	wxTextCtrl* tyPoseText = nullptr;
+	wxTextCtrl* tzPoseText = nullptr;
+	wxTextCtrl* scPoseText = nullptr;
+	wxCheckBox* cbPose = nullptr;
+	wxCheckBox* cbPhysics = nullptr;
+	wxCheckBox* cbPhysicsVis = nullptr;
+	wxCheckBox* cbPhysicsGrab = nullptr;
+	wxCheckBox* cbPhysicsProbe = nullptr;
+	wxPanel* physicsProbePanel = nullptr;
+	wxSlider* physicsProbeX = nullptr;
+	wxSlider* physicsProbeY = nullptr;
+	wxSlider* physicsProbeZ = nullptr;
+	wxSlider* physicsProbeSize = nullptr;
+	wxTextCtrl* physicsProbeXText = nullptr;
+	wxTextCtrl* physicsProbeYText = nullptr;
+	wxTextCtrl* physicsProbeZText = nullptr;
+	wxTextCtrl* physicsProbeSizeText = nullptr;
+	wxSlider* physicsWindSlider = nullptr;
+	wxChoice* physicsWindDir = nullptr;
+	wxButton* poseToMesh = nullptr;
+	wxComboBox* cAnimationName = nullptr;
+	wxButton* animFavoriteButton = nullptr;
+	wxButton* animPlayPauseButton = nullptr;
+	wxSlider* animFrameSlider = nullptr;
+	wxStaticText* animFrameText = nullptr;
+	wxChoice* animSpeedChoice = nullptr;
+	wxCheckBox* animInterpolateCheck = nullptr;
+	wxScrolledWindow* sliderScroll = nullptr;
+	wxMenuBar* menuBar = nullptr;
+	wxToolBar* toolBarH = nullptr;
+	wxToolBar* toolBarV = nullptr;
+	ToolBarButtonHider tbvHider;
+	wxStatusBar* statusBar = nullptr;
+
+	wxSearchCtrl* sliderFilter = nullptr;
+	wxSearchCtrl* bonesFilter = nullptr;
+
+	wxStateButton* currentTabButton = nullptr;
+	wxStateButton* meshTabButton = nullptr;
+	wxStateButton* boneTabButton = nullptr;
+	wxStateButton* colorsTabButton = nullptr;
+	wxStateButton* segmentTabButton = nullptr;
+	wxStateButton* partitionTabButton = nullptr;
+	wxStateButton* lightsTabButton = nullptr;
+	wxButton* brushSettings = nullptr;
+	wxCheckBox* cbEdgeSlideCorrectUV = nullptr;
+	wxSlider* fovSlider = nullptr;
+	wxCheckBox* cbDepthClip = nullptr;
+	wxBrushSettingsPopupTransient* brushSettingsPopupTransient = nullptr;
+	wxScrolledWindow* toolScroll = nullptr;
+	wxCollapsiblePane* masksPane = nullptr;
+	wxCollapsiblePane* posePane = nullptr;
+	wxCollapsiblePane* physicsPane = nullptr;
+	wxCollapsiblePane* animationPane = nullptr;
+	wxCollapsiblePane* notesPane = nullptr;
+	wxTextCtrl* projectNotes = nullptr;
+
+	wxTreeItemId shapesRoot;
+	wxTreeItemId outfitRoot;
+	wxTreeItemId bonesRoot;
+	wxTreeItemId segmentRoot;
+	wxTreeItemId partitionRoot;
+
+	std::map<std::string, wxSliderPanel*> sliderPanels;
+
+	void SetPendingChanges(bool pending = true);
+	bool CheckPendingChanges();
+
+	void UpdateUndoTools();
+
+	bool SaveProject();
+	bool SaveProjectAs();
+	// Files the Save Project As dialog would write, and the project that writes them
+	SharedFilesTarget SaveAsSharedFilesTarget(wxDialog& dlg, bool hasBase, bool addOn);
+	bool LoadProject(const std::string& fileName,
+					 const std::string& projectName = "",
+					 bool clearProject = true,
+					 bool newDataLocal = false,
+					 bool appendNewSliders = true,
+					 bool setAsReference = true);
+	// Resolves the slider set to load from the given file, prompting the user if there is
+	// more than one. If preferredName is given and present in the file, it is used without
+	// prompting. Returns an empty string on failure (an error is shown) or if cancelled.
+	std::string ChooseSliderSetName(const std::string& fileName, const std::string& preferredName = "");
+	// The project file and set the New Project wizard has as the base project of an add-on or variant.
+	bool GetNewProjectBase(wxWizard& wiz, std::string& outFile, std::string& outSet);
+	// Asks before renaming a slider or shape takes it from the base project. Pass one of the names.
+	bool ConfirmRenameFromBase(const std::string& sliderName, const std::string& shapeName);
+	void CreateSetSliders();
+
+	void UpdateReferenceTemplates();
+	void ResetProject();
+
+	std::string NewSlider(const std::string& suggestedName = "", bool skipPrompt = false);
+
+	void SetSliderValue(const size_t index, int val);
+	void SetSliderValue(const std::string& name, int val);
+	void ZeroSliders();
+	// Shows the slider values of the project on the slider panels
+	void SyncSliderPanels();
+
+	// Shows the shape as the sliders and pose have it, along with the pose rotations its model space
+	// normals need
+	void UpdateLiveMesh(nifly::NiShape* shape, bool updateBVH, bool updateUVs = false);
+	void ApplySliders(bool recalcBVH = true);
+
+	void ShowSliderEffect(const std::string& sliderName, bool show = true);
+	wxSliderPanel* GetSliderPanel(const std::string& sliderName);
+
+	void SelectShape(const std::string& shapeName);
+	// Selects the shapes by name, the first one becomes the active shape.
+	// Returns false without changing the selection if a shape doesn't exist.
+	bool SelectShapes(const std::vector<std::string>& shapeNames);
+	std::vector<std::string> GetSelectedShapeNames();
+
+	bool GetShapeDisplayMode(const std::string& shapeName, ShapeDisplayMode& outMode);
+	bool SetShapeDisplayMode(const std::string& shapeName, ShapeDisplayMode mode);
+
+	// Point the camera at shapes, at vertices of a shape, or at the area weighted to a bone.
+	// Keep the camera rotation and return false if there is nothing to look at.
+	bool FrameShapes(const std::vector<std::string>& shapeNames);
+	bool FrameVertices(const std::string& shapeName, const std::vector<int>& vertices);
+	bool FrameBone(const std::string& boneName, float minWeight = 0.1f);
+
+	// Shows the shapes' own vertex colors again, e.g. after a heatmap
+	void FillVertexColors();
+
+	ViewState GetViewState();
+	// Also updates the menu and toolbar items of the display toggles
+	void SetViewState(const ViewState& state);
+	std::vector<std::string> GetShapeList();
+
+	void UpdateShapeSource(nifly::NiShape* shape);
+	void UpdateVertexColors();
+
+	void ActiveShapesUpdated(UndoStateProject* usp, bool bIsUndo = false);
+	// Refreshes the parts of the GUI that an operation reported as changed
+	void ApplyRefresh(RefreshFlags flags);
+	// Returns the project to a snapshot and rebuilds the GUI for it. Clears the undo history.
+	void RestoreEditSnapshot(const EditSnapshot& snapshot);
+	void UpdateActiveShape();
+	bool ConfirmSliderDataLocalForEdit(nifly::NiShape* shape, const std::string& sliderName);
+	bool ConfirmSliderDataLocalForEdit(const std::vector<nifly::NiShape*>& shapes, const std::vector<std::string>& sliderNames);
+	void UpdateBoneCounts();
+	void HighlightSliderData();
+	void HighlightBoneNamesWithWeights();
+	void RefreshGUIWeightColors();
+	void PoseToGUI();
+	void GetNormalizeBones(std::vector<std::string>* normBones, std::vector<std::string>* notNormBones);
+	std::vector<std::string> GetSelectedBones();
+	void CalcAutoXMirrorBone();
+	std::string GetXMirrorBone();
+
+	void ShowSegment(const wxTreeItemId& item = nullptr);
+	void UpdateSegmentNames();
+	void ApplySegmentVisibility(Mesh* m);
+	void ResetSegmentVisibility();
+	bool GrowShrinkSegmentPartitionSelection(bool grow);
+	bool PaintSegmentPartitionTriangles(Mesh* hitMesh, int hitTri, const nifly::Vector3& hitPointModel, float radiusModel);
+
+	void ShowPartition(const wxTreeItemId& item = nullptr);
+	void RefreshActivePartitionTree();
+	void RefreshActiveSegmentTree();
+	void UpdatePartitionNames();
+	void ApplyPartitionVisibility(Mesh* m);
+	void ResetPartitionVisibility();
+
+	void SetSubMeshesForPartitions(Mesh* m, const std::vector<int>& tp);
+	void SetNoSubMeshes(Mesh* m);
+	void SetNoSubMeshes();
+
+	void LockShapeSelect();
+	void UnlockShapeSelect();
+	void UpdateAnimationGUI();
+	void UpdateBoneItemState(const wxTreeItemId& item, const std::string& boneName);
+	void UpdateBoneTree();
+	void RefreshGUIFromProj(bool render = true, bool stashMasks = true);
+	void MeshesFromProj(const bool reloadTextures = false);
+	void MeshFromProj(nifly::NiShape* shape, const bool reloadTextures = false);
+
+	void UpdateShapeReference(nifly::NiShape* shape, nifly::NiShape* newShape);
+	std::vector<ShapeItemData*>& GetSelectedItems();
+	void ClearSelected(nifly::NiShape* shape);
+	std::string GetActiveBone();
+	bool IsBoneSelected(const std::string& bone) const { return editor.lastSelectedBones.count(bone) != 0; }
+
+	// Bone list item of a project bone, or an invalid id
+	wxTreeItemId FindBoneItem(const std::string& bone);
+	// Selects a project bone picked in the viewport, as clicking it in the bone
+	// list would. With toggle, it is added to or removed from the selection.
+	// With keepSelection, an already selected bone only becomes the active one.
+	// False when the bone is not in the project.
+	bool SelectBoneFromViewport(const std::string& bone, bool toggle = false, bool keepSelection = false);
+	// Bone context menu for the bone list or, with a window and position, for a
+	// bone right-clicked in the viewport. Bones that aren't in the project (only
+	// shown to connect the hierarchy) get the add menu, adding children to them.
+	void ShowBoneContextMenu(const std::string& bone = std::string(), wxWindow* at = nullptr, const wxPoint& pos = wxDefaultPosition);
+
+	bool CheckEditableState();
+
+	void HideSliderPanel(wxSliderPanel* sliderPanel);
+	void EnterSliderEdit(const std::string& sliderName = "");
+	void ExitSliderEdit();
+	void MenuEnterSliderEdit();
+	void MenuExitSliderEdit();
+	void ScrollToActiveSlider();
+
+	void SelectTool(ToolID tool);
+	void UpdateEdgeSlideToolOptionsUI(ToolID tool);
+	void ReEnableToolOptionsUI();
+	void ReToggleToolOptionsUI();
+
+	void CloseBrushSettings();
+	void PopupBrushSettings(wxWindow* popupAt = nullptr);
+	void UpdateBrushSettings();
+	void DeleteSliders(bool keepSliders = false, bool keepZaps = false);
+	int CopyBoneWeightForShapes(std::vector<nifly::NiShape*> shapes, bool silent = false, const std::vector<std::string>& preselectedBones = {});
+	int ConformShapes(std::vector<nifly::NiShape*> shapes, bool silent = false);
+	void SetBaseShape();
+	void UpdateTitle();
+	// "Add-on of <base>" or "Variant of <base>", empty for a project without a base project
+	wxString BaseProjectLabel() const;
+	void UpdateProjectNode();
+	wxString ProjectNodeTooltip() const;
+
+	void CheckBrushBounds() {
+		TweakBrush* brush = glView->GetActiveBrush();
+		if (!brush)
+			return;
+
+		float size = glView->GetBrushSize();
+		float strength = brush->getStrength();
+		//float focus = brush->getFocus();
+		//float spacing = brush->getSpacing();
+
+		if (size >= 1.0f)
+			menuBar->Enable(XRCID("btnIncreaseSize"), false);
+		else
+			menuBar->Enable(XRCID("btnIncreaseSize"), true);
+
+		if (size <= 0.0f)
+			menuBar->Enable(XRCID("btnDecreaseSize"), false);
+		else
+			menuBar->Enable(XRCID("btnDecreaseSize"), true);
+
+		if (strength >= 1.0f)
+			menuBar->Enable(XRCID("btnIncreaseStr"), false);
+		else
+			menuBar->Enable(XRCID("btnIncreaseStr"), true);
+
+		if (strength <= 0.0f)
+			menuBar->Enable(XRCID("btnDecreaseStr"), false);
+		else
+			menuBar->Enable(XRCID("btnDecreaseStr"), true);
+	}
+
+	wxGauge* progressBar = nullptr;
+	std::vector<std::pair<int, int>> progressStack;
+	int progressVal = 0;
+	// Told the progress (0 to 10000) and message while a progress bar shows, e.g. to report it over MCP
+	std::function<void(int value, const wxString& msg)> progressListener;
+
+	void StartProgress(const wxString& msg = "") {
+		if (progressStack.empty()) {
+			progressVal = 0;
+			progressStack.emplace_back(0, 10000);
+
+			wxRect rect;
+			statusBar->GetFieldRect(1, rect);
+
+			wxBeginBusyCursor();
+			progressBar = new wxGauge(statusBar, wxID_ANY, 10000, rect.GetPosition(), rect.GetSize());
+
+			if (msg.IsEmpty())
+				statusBar->SetStatusText(_("Starting..."));
+			else
+				statusBar->SetStatusText(msg);
+
+			if (progressListener)
+				progressListener(0, msg);
+		}
+	}
+
+	void StartSubProgress(int min, int max) {
+		if (progressStack.empty())
+			return;
+
+		int range = progressStack.back().second - progressStack.back().first;
+		float mindiv = min / 100.0f;
+		float maxdiv = max / 100.0f;
+		int minoff = mindiv * range + 1;
+		int maxoff = maxdiv * range + 1;
+		progressStack.emplace_back(minoff + progressStack.back().first, maxoff + progressStack.back().first);
+	}
+
+	void EndProgress(const wxString& msg = "", bool forceEmpty = false) {
+		if (progressStack.empty())
+			return;
+
+		if (forceEmpty) {
+			progressBar->SetValue(progressStack.front().second);
+			progressStack.clear();
+		}
+		else {
+			progressBar->SetValue(progressStack.back().second);
+			progressStack.pop_back();
+		}
+
+		if (progressStack.empty()) {
+			if (msg.IsEmpty())
+				statusBar->SetStatusText(_("Ready!"));
+			else
+				statusBar->SetStatusText(msg);
+
+			if (progressListener)
+				progressListener(10000, msg);
+
+			delete progressBar;
+			progressBar = nullptr;
+			wxEndBusyCursor();
+		}
+	}
+
+	void UpdateProgress(int val, const wxString& msg = "") {
+		if (progressStack.empty())
+			return;
+
+		int range = progressStack.back().second - progressStack.back().first;
+		float div = val / 100.0f;
+		int offset = range * div + 1;
+
+		progressVal = progressStack.back().first + offset;
+		if (progressVal > 10000)
+			progressVal = 10000;
+
+		statusBar->SetStatusText(msg);
+		progressBar->SetValue(progressVal);
+
+		if (progressListener)
+			progressListener(progressVal, msg);
+	}
+
+private:
+	bool pendingChanges = false;
+
+	bool selectionLocked = false;
+	std::vector<ShapeItemData*> selectedItems;
+	bool recursingUI = false;
+	// The transform tool was on when hiding bones/nodes on the bones tab turned it off
+	bool boneTransformSuspended = false;
+	// Parent for bones added from a viewport context menu opened on a bone that
+	// isn't in the project, used instead of the active bone
+	std::string contextParentBone;
+	wxTreeItemId activeSegment;
+	wxTreeItemId activePartition;
+	std::string lastCheckedSlider;
+
+	std::vector<RefTemplate> refTemplates;
+
+	wxBitmap* bmpEditSlider = nullptr;
+	wxBitmap* bmpEditSliderGreen = nullptr;
+	wxBitmap* bmpSliderSettings = nullptr;
+
+	void createSliderGUI(const std::string& name, wxScrolledWindow* wnd, wxSizer* rootSz);
+
+	void ScrollWindowIntoView(wxScrolledWindow* scrolled, wxWindow* window);
+	void HighlightSlider(const std::string& name);
+
+	void ClearProject();
+	void RenameProject(const std::string& projectName);
+
+	void UpdateMeshFromSet(nifly::NiShape* shape);
+
+	bool ShapeSelectionCheck();
+
+	bool HasUnweightedCheck();
+	void CalcCopySkinTransOption(WeightCopyOptions& options);
+	void CopyWeightsToSelectedShapes(bool selectedBonesOnly);
+	void ReselectBone();
+
+	int CopySegPartForShapes(std::vector<nifly::NiShape*> shapes, bool silent = false);
+
+	bool ShowVertexAsym(Mesh* m, const SymmetricVertices& symverts, const VertexAsymmetries& asyms, VertexAsymmetryTasks& tasks, const std::vector<bool>& selVerts, bool trize);
+
+	void OnExit(wxCommandEvent& event);
+	void OnClose(wxCloseEvent& event);
+
+	bool CopyStreamData(wxInputStream& inputStream, wxOutputStream& outputStream, wxFileOffset size);
+
+	void OnMenuItem(wxCommandEvent& event);
+	void OnPackProjects(wxCommandEvent& event);
+	void OnChooseTargetGame(wxCommandEvent& event);
+	void SettingsFillDataFiles(wxCheckListBox* dataFileList, wxString& dataDir, int targetGame);
+	void OnSettings(wxCommandEvent& event);
+	void OnMcpServer(wxCommandEvent& event);
+	void UpdateMcpMenu();
+	void OnAbout(wxCommandEvent& event);
+	void OnLinkClicked(wxHtmlLinkEvent& link);
+
+	void OnSashPosChanged(wxSplitterEvent& event);
+	void OnMoveWindowStart(wxMoveEvent& event);
+	void OnMoveWindowEnd(wxMoveEvent& event);
+	void OnSetSize(wxSizeEvent& event);
+
+	void AddProjectHistory(const std::string& fileName, const std::string& projectName);
+	void UpdateProjectHistory();
+
+	void OnNewProject(wxCommandEvent& event);
+	void OnLoadProject(wxCommandEvent& event);
+	void OnAddProject(wxCommandEvent& event);
+	void OnLoadReference(wxCommandEvent& event);
+	void OnConvertBodyReference(wxCommandEvent& event);
+	void OnRunAutomation(wxCommandEvent& event);
+	void OnLoadOutfit(wxCommandEvent& event);
+	void OnBrowseArchives(wxCommandEvent& event);
+	void OnUnloadProject(wxCommandEvent& event);
+
+	void OnLoadOutfitFP_File(wxFileDirPickerEvent& event);
+	void OnLoadOutfitFP_Texture(wxFileDirPickerEvent& event);
+
+	void OnSetBaseShape(wxCommandEvent& event);
+	void OnMakeConvRef(wxCommandEvent& event);
+
+	void OnImportNIF(wxCommandEvent& event);
+	void OnExportNIF(wxCommandEvent& event);
+	void OnExportNIFWithRef(wxCommandEvent& event);
+	void OnExportShapeNIF(wxCommandEvent& event);
+
+	std::optional<bool> PromptStarfieldGeometryMode();
+
+	void OnImportOBJ(wxCommandEvent& event);
+	void OnExportOBJ(wxCommandEvent& event);
+	void OnExportShapeOBJ(wxCommandEvent& event);
+
+	void OnImportFBX(wxCommandEvent& event);
+	void OnExportFBX(wxCommandEvent& event);
+	void OnExportShapeFBX(wxCommandEvent& event);
+
+	void OnImportTRIHead(wxCommandEvent& event);
+	void OnExportTRIHead(wxCommandEvent& event);
+	void OnExportShapeTRIHead(wxCommandEvent& event);
+
+	void OnImportPhysicsData(wxCommandEvent& event);
+	void OnExportPhysicsData(wxCommandEvent& event);
+
+	void OnSSSNameCopy(wxCommandEvent& event);
+	void OnSSSGenWeightsTrue(wxCommandEvent& event);
+	void OnSSSGenWeightsFalse(wxCommandEvent& event);
+	void OnSaveSliderSet(wxCommandEvent& event);
+	void OnSaveSliderSetAs(wxCommandEvent& event);
+
+	void OnSlider(wxCommandEvent& event);
+	void OnClickSliderButton(wxCommandEvent& event);
+	void OnEnterHoverSlider(wxMouseEvent& event);
+	void OnLeaveHoverSlider(wxMouseEvent& event);
+	void OnReadoutChange(wxCommandEvent& event);
+	void OnSliderCheckBox(wxCommandEvent& event);
+
+	void OnTabButtonClick(wxCommandEvent& event);
+	void OnBrushColorChanged(wxColourPickerEvent& event);
+	void OnColorClampMaxValueSlider(wxCommandEvent& event);
+	void OnColorClampMaxValueChanged(wxCommandEvent& event);
+	void OnSwapBrush(wxCommandEvent& event);
+	void OnMaskVertexColor(wxCommandEvent& event);
+	void OnFixedWeight(wxCommandEvent& event);
+	void OnCBNormalizeWeights(wxCommandEvent& event);
+	void OnSelectSliders(wxCommandEvent& event);
+
+	void OnSliderFilterChanged(wxCommandEvent&);
+	void DoFilterSliders();
+
+	void OnBonesFilterChanged(wxCommandEvent&);
+
+	void ToggleVisibility(wxTreeItemId firstItem = wxTreeItemId());
+	void OnShapeVisToggle(wxTreeEvent& event);
+	void OnShapeSelect(wxTreeEvent& event);
+	void OnShapeActivated(wxTreeEvent& event);
+	void OnShapeContext(wxTreeEvent& event);
+	void OnShapeDrag(wxTreeEvent& event);
+	void OnShapeDrop(wxTreeEvent& event);
+	void OnShapeTooltip(wxTreeEvent& event);
+	void OnCheckTreeSel(wxTreeEvent& event);
+
+	void OnShapeTreeMotion(wxMouseEvent& event);
+	void OnShapeTreeLeave(wxMouseEvent& event);
+
+	void ToggleBoneState(wxTreeItemId firstItem = wxTreeItemId());
+	void OnBoneStateToggle(wxTreeEvent& event);
+	void OnBoneSelect(wxTreeEvent& event);
+	void OnBoneActivated(wxTreeEvent& event);
+	void OnBoneContext(wxTreeEvent& event);
+	void OnBoneTreeContext(wxCommandEvent& event);
+
+	int CalcMaxSegPartID();
+	void OnSegmentSelect(wxTreeEvent& event);
+	void OnSegmentVisToggle(wxTreeEvent& event);
+	void OnSegmentContext(wxTreeEvent& event);
+	void OnSegmentTreeContext(wxCommandEvent& event);
+	void OnAddSegment(wxCommandEvent& event);
+	void OnAddSubSegment(wxCommandEvent& event);
+	void OnDeleteSegment(wxCommandEvent& event);
+	void OnDeleteSubSegment(wxCommandEvent& event);
+
+	void UpdateActiveSlotID();
+	void OnSegmentSlotChanged(wxCommandEvent& event);
+
+	void OnSegmentTypeChanged(wxCommandEvent& event);
+	void OnSegmentApply(wxCommandEvent& event);
+	void ApplySegments();
+	void OnSegmentReset(wxCommandEvent& event);
+	void ResetSegments();
+	void OnSegmentEditSSF(wxCommandEvent& event);
+
+	void OnPartitionSelect(wxTreeEvent& event);
+	void OnPartitionVisToggle(wxTreeEvent& event);
+	void OnPartitionContext(wxTreeEvent& event);
+	void OnPartitionTreeContext(wxCommandEvent& event);
+	void OnAddPartition(wxCommandEvent& event);
+	void OnDeletePartition(wxCommandEvent& event);
+	void OnPartitionTypeChanged(wxCommandEvent& event);
+	void OnPartitionApply(wxCommandEvent& event);
+	void ApplyPartitions();
+	void OnPartitionReset(wxCommandEvent& event);
+	void ResetPartitions();
+
+	void CreateSegmentTree(nifly::NiShape* shape = nullptr);
+	void CreatePartitionTree(nifly::NiShape* shape = nullptr);
+
+	void OnSelectTool(wxCommandEvent& event);
+
+	void OnSetView(wxCommandEvent& event);
+	void OnTogglePerspective(wxCommandEvent& event);
+	void OnToggleRotationCenter(wxCommandEvent& event);
+	void OnFrameSelected(wxCommandEvent& event);
+	void FrameSelected();
+	void OnShowNodes(wxCommandEvent& event);
+	void OnShowBones(wxCommandEvent& event);
+	void OnShowFloor(wxCommandEvent& event);
+	void OnBrushSettings(wxCommandEvent& event);
+	void OnEdgeSlideCorrectUV(wxCommandEvent& event);
+	void OnFieldOfViewSlider(wxCommandEvent& event);
+	void OnDepthClip(wxCommandEvent& event);
+	void OnUpdateLights(wxCommandEvent& event);
+	void OnResetLights(wxCommandEvent& event);
+	void OnSaveLights(wxCommandEvent& event);
+	void OnHDRiBackground(wxCommandEvent& event);
+
+	// Fills the background choice from the .exr files in res/hdri, so a file the user dropped in
+	// there is listed next to the ones that ship.
+	void PopulateHDRiBackgrounds();
+	// Applies an HDRi by file name, empty for none. Leaves the choice showing what is actually
+	// loaded, which after a failure is no background rather than what was asked for. remember writes
+	// the name to the config, and belongs only to a background the user picked themselves.
+	bool SetHDRiBackground(const std::string& fileName, bool remember);
+	// Turns the last used background on by itself once a project turns out to have a Complex
+	// Material in it - the shading those want is hard to judge with nothing to reflect.
+	void ApplyAutoHDRiBackground();
+
+	void OnLoadPreset(wxCommandEvent& event);
+	void OnSavePreset(wxCommandEvent& event);
+	bool ShowConform(ConformOptions& options, bool silent = false);
+	void OnSliderConform(wxCommandEvent& event);
+	void OnSliderConformAll(wxCommandEvent& event);
+	void OnSliderImportNIF(wxCommandEvent& event);
+	void OnSliderImportBSD(wxCommandEvent& event);
+	void OnSliderImportOBJ(wxCommandEvent& event);
+	void OnSliderImportOSD(wxCommandEvent& event);
+	void OnSliderImportTRI(wxCommandEvent& event);
+	void OnSliderImportMorphsSF(wxCommandEvent& event);
+	void OnSliderImportFBX(wxCommandEvent& event);
+	void OnSliderExportNIF(wxCommandEvent& event);
+	void OnSliderExportBSD(wxCommandEvent& event);
+	void OnSliderExportOBJ(wxCommandEvent& event);
+	void OnSliderExportOSD(wxCommandEvent& event);
+	void OnSliderExportTRI(wxCommandEvent& event);
+	void OnSliderExportMorphsSF(wxCommandEvent& event);
+	void OnSliderExportToOBJs(wxCommandEvent& event);
+
+	void OnNewSlider(wxCommandEvent& event);
+	void OnNewZapSlider(wxCommandEvent& event);
+	void OnNewCombinedSlider(wxCommandEvent& event);
+	void OnSliderClone(wxCommandEvent& event);
+	void OnSliderNegate(wxCommandEvent& event);
+	void OnSliderRigidify(wxCommandEvent& event);
+	void OnMaskAffected(wxCommandEvent& event);
+	void OnClearSlider(wxCommandEvent& event);
+	void OnDeleteSlider(wxCommandEvent& event);
+
+	void ShowSliderProperties(const std::string& sliderName);
+	void OnSliderProperties(wxCommandEvent& event);
+	void OnSliderDataLocations(wxCommandEvent& event);
+	void OnSliderFixClipping(wxCommandEvent& event);
+
+	bool ShowClippingFixStrength(float& outStrength);
+	void FixClippingForShape(const std::vector<nifly::Vector3>& bodyVerts,
+							const std::vector<nifly::Triangle>& bodyTris,
+							nifly::NiShape* shape,
+							const std::vector<nifly::Vector3>& outfitVerts,
+							const ClippingFixOptions& options,
+							UndoStateProject* usp,
+							const std::vector<float>& fixWeights = {});
+
+	void OnInvertUV(wxCommandEvent& event);
+	void OnMirrorShape(wxCommandEvent& event);
+
+	void OnEnterClose(wxKeyEvent& event);
+
+	void OnMoveShape(wxCommandEvent& event);
+	void OnScaleShape(wxCommandEvent& event);
+	void OnRotateShape(wxCommandEvent& event);
+	void OnInflateShape(wxCommandEvent& event);
+	void OnFixClippingShape(wxCommandEvent& event);
+
+	void OnRenameShape(wxCommandEvent& event);
+	void OnSetReference(wxCommandEvent& event);
+	void OnDeleteVerts(wxCommandEvent& event);
+	void OnSeparateVerts(wxCommandEvent& event);
+	MergeCheckErrors CheckCopyGeo(wxDialog& dlg);
+	void OnCopyGeo(wxCommandEvent& event);
+	void OnDupeShape(wxCommandEvent& event);
+	void OnDeleteShape(wxCommandEvent& event);
+	void OnRefineMesh(wxCommandEvent& event);
+	void OnSetBoneSkin(wxCommandEvent& event);
+	void OnSetBoneNode(wxCommandEvent& event);
+	void OnAddBone(wxCommandEvent& event);
+	void OnAddCustomBone(wxCommandEvent& event);
+	void OnDeleteBone(wxCommandEvent& event);
+	void OnDeleteBoneFromSelected(wxCommandEvent& event);
+	void FillParentBoneChoice(wxDialog& dlg, const std::string& selBone = "");
+	void GetBoneDlgData(wxDialog& dlg, nifly::MatTransform& xform, std::string& parentBone, int& addCount);
+	void OnEditBone(wxCommandEvent& event);
+	// Adds a bone that was added to the project to the bone list and the mirror and pose bone choices
+	wxTreeItemId AddBoneItemToGUI(const std::string& bone);
+	// Names of the bones selected in the bone list, in list order
+	std::vector<std::string> GetSelectedBoneNames();
+	void DuplicateSelectedBones(bool mirror);
+	void OnDuplicateBones(wxCommandEvent& event);
+	void OnDuplicateBonesMirrored(wxCommandEvent& event);
+	void OnMirrorBonesX(wxCommandEvent& event);
+	void OnCopyBoneWeight(wxCommandEvent& event);
+	void OnCopySelectedWeight(wxCommandEvent& event);
+	void OnTransferSelectedWeight(wxCommandEvent& event);
+	void OnMaskWeighted(wxCommandEvent& event);
+	void OnCheckBadBones(wxCommandEvent& event);
+	void OnMaskBoneWeighted(wxCommandEvent& event);
+	void OnCopySegPart(wxCommandEvent& event);
+	void OnMaskSymVert(wxCommandEvent& event);
+	void OnSymVert(wxCommandEvent& event);
+	void OnMaskSymTri(wxCommandEvent& event);
+	void OnResetTransforms(wxCommandEvent& event);
+	void OnDeleteUnreferencedNodes(wxCommandEvent& event);
+	void OnRemoveSkinning(wxCommandEvent& event);
+	void OnShapeProperties(wxCommandEvent& event);
+
+	void OnMaskLess(wxCommandEvent& event);
+	void OnMaskMore(wxCommandEvent& event);
+
+	void OnNPWizChangeSliderSetFile(wxFileDirPickerEvent& event);
+	void OnNPWizChangeSetNameChoice(wxCommandEvent& event);
+
+	void OnXMirror(wxCommandEvent& event) {
+		glView->SetToolOptionXMirror(event.IsChecked());
+		if (event.IsChecked() && glView->GetActiveTool() == ToolID::MoveVertex) {
+			glView->SetToolOptionWeld(false);
+			glView->SetToolOptionMerge(false);
+		}
+		ReToggleToolOptionsUI();
+	}
+
+	void OnConnectedOnly(wxCommandEvent& event) {
+		glView->SetToolOptionConnectedOnly(event.IsChecked());
+		ReToggleToolOptionsUI();
+	}
+
+	void OnToolOptionMerge(wxCommandEvent& event) {
+		glView->SetToolOptionMerge(event.IsChecked());
+		if (event.IsChecked()) {
+			glView->SetToolOptionRestrictSurface(true);
+			glView->SetToolOptionXMirror(false);
+		}
+		ReToggleToolOptionsUI();
+	}
+
+	void OnToolOptionWeld(wxCommandEvent& event) {
+		glView->SetToolOptionWeld(event.IsChecked());
+		if (event.IsChecked()) {
+			glView->SetToolOptionRestrictSurface(true);
+			glView->SetToolOptionXMirror(false);
+		}
+		ReToggleToolOptionsUI();
+	}
+
+	void OnToolOptionRestrictSurface(wxCommandEvent& event) {
+		glView->SetToolOptionRestrictSurface(event.IsChecked());
+		if (event.IsChecked()) {
+			glView->SetToolOptionRestrictPlane(false);
+			glView->SetToolOptionEdgeSlide(false);
+		}
+		ReToggleToolOptionsUI();
+	}
+
+	void OnToolOptionRestrictPlane(wxCommandEvent& event) {
+		glView->SetToolOptionRestrictPlane(event.IsChecked());
+		if (event.IsChecked()) {
+			glView->SetToolOptionRestrictSurface(false);
+			glView->SetToolOptionRestrictNormal(false);
+			glView->SetToolOptionEdgeSlide(false);
+		}
+		ReToggleToolOptionsUI();
+	}
+
+	void OnToolOptionRestrictNormal(wxCommandEvent& event) {
+		glView->SetToolOptionRestrictNormal(event.IsChecked());
+		if (event.IsChecked()) {
+			glView->SetToolOptionRestrictPlane(false);
+			glView->SetToolOptionEdgeSlide(false);
+		}
+		ReToggleToolOptionsUI();
+	}
+
+	void OnToolOptionEdgeSlide(wxCommandEvent& event) {
+		glView->SetToolOptionEdgeSlide(event.IsChecked());
+		if (event.IsChecked()) {
+			glView->SetToolOptionRestrictSurface(false);
+			glView->SetToolOptionRestrictPlane(false);
+			glView->SetToolOptionRestrictNormal(false);
+		}
+		ReEnableToolOptionsUI();
+		ReToggleToolOptionsUI();
+	}
+
+	void OnUndo(wxCommandEvent& WXUNUSED(event)) {
+		if (glView->GetSegmentMode())
+			return;
+
+		glView->UndoStroke();
+		UpdateUndoTools();
+		SetPendingChanges();
+	}
+
+	void OnRedo(wxCommandEvent& WXUNUSED(event)) {
+		if (glView->GetSegmentMode())
+			return;
+
+		glView->RedoStroke();
+		UpdateUndoTools();
+		SetPendingChanges();
+	}
+
+	void OnRecalcNormals(wxCommandEvent& WXUNUSED(event));
+	void OnDisableNormalsCalc(wxCommandEvent& WXUNUSED(event));
+	void OnSmoothNormalSeams(wxCommandEvent& event);
+	void OnSmoothSeamsAngle(wxCommandEvent& event);
+	void OnLockNormals(wxCommandEvent& event);
+
+	void OnEditUV(wxCommandEvent& event);
+
+	void OnToggleVisibility(wxCommandEvent& WXUNUSED(event)) { ToggleVisibility(); }
+
+	// The display toggles are in both the view menu and the vertical toolbar, keep the two in step
+	void CheckDisplayToggle(int id, bool enabled) {
+		menuBar->Check(id, enabled);
+		toolBarV->ToggleTool(id, enabled);
+	}
+
+	void OnShowWireframe(wxCommandEvent& event) {
+		CheckDisplayToggle(event.GetId(), event.IsChecked());
+		glView->SetWireframe(event.IsChecked());
+		glView->Render();
+	}
+
+	void OnEnableLighting(wxCommandEvent& event) {
+		CheckDisplayToggle(event.GetId(), event.IsChecked());
+		glView->SetLighting(event.IsChecked());
+		glView->Render();
+	}
+
+	void OnEnableTextures(wxCommandEvent& event) {
+		CheckDisplayToggle(event.GetId(), event.IsChecked());
+		glView->SetTextures(event.IsChecked());
+		glView->Render();
+	}
+
+	void OnEnableTints(wxCommandEvent& event) {
+		CheckDisplayToggle(event.GetId(), event.IsChecked());
+		glView->SetTints(event.IsChecked());
+		glView->Render();
+	}
+
+	void OnEnableVertexColors(wxCommandEvent& e) {
+		// The colors tab always shows them, the choice applies when leaving it
+		CheckDisplayToggle(e.GetId(), e.IsChecked());
+		if (colorSettings->IsShown())
+			return;
+
+		glView->SetColorsVisible(e.IsChecked());
+		if (e.IsChecked())
+			FillVertexColors();
+		else
+			glView->ClearColors();
+
+		glView->Render();
+	}
+
+	void OnIncBrush(wxCommandEvent& WXUNUSED(event)) {
+		if (glView->GetActiveBrush() && glView->GetBrushSize() < 1.0f) {
+			float v = glView->IncBrush() / BrushSizeScale;
+			if (statusBar)
+				statusBar->SetStatusText(wxString::Format("Rad: %f", v), 2);
+
+			CheckBrushBounds();
+			UpdateBrushSettings();
+		}
+	}
+	void OnDecBrush(wxCommandEvent& WXUNUSED(event)) {
+		if (glView->GetActiveBrush() && glView->GetBrushSize() > 0.0f) {
+			float v = glView->DecBrush() / BrushSizeScale;
+			if (statusBar)
+				statusBar->SetStatusText(wxString::Format("Rad: %f", v), 2);
+
+			CheckBrushBounds();
+			UpdateBrushSettings();
+		}
+	}
+	void OnIncStr(wxCommandEvent& WXUNUSED(event)) {
+		if (glView->GetActiveBrush() && glView->GetActiveBrush()->getStrength() < 1.0f) {
+			float v = glView->IncStr();
+			if (statusBar)
+				statusBar->SetStatusText(wxString::Format("Str: %f", v), 2);
+
+			CheckBrushBounds();
+			UpdateBrushSettings();
+		}
+	}
+	void OnDecStr(wxCommandEvent& WXUNUSED(event)) {
+		if (glView->GetActiveBrush() && glView->GetActiveBrush()->getStrength() > 0.0f) {
+			float v = glView->DecStr();
+			if (statusBar)
+				statusBar->SetStatusText(wxString::Format("Str: %f", v), 2);
+
+			CheckBrushBounds();
+			UpdateBrushSettings();
+		}
+	}
+
+	void OnClearMask(wxCommandEvent& WXUNUSED(event)) {
+		if (!activeItem)
+			return;
+
+		glView->gls.DeleteOverlay("refineErrorEdges");
+		glView->ClearMask();
+
+		if (glView->GetTransformMode())
+			glView->ShowTransformTool();
+		else
+			glView->Render();
+	}
+
+	void OnInvertMask(wxCommandEvent& WXUNUSED(event)) {
+		if (!activeItem)
+			return;
+
+		glView->InvertMask();
+
+		if (glView->GetTransformMode())
+			glView->ShowTransformTool();
+		else
+			glView->Render();
+	}
+
+	void OnDiscord(wxCommandEvent& WXUNUSED(event)) {
+		wxString url = "https://discordapp.com/invite/2qg2Rzw";
+		wxLaunchDefaultBrowser(url);
+	}
+
+	void OnGitHub(wxCommandEvent& WXUNUSED(event)) {
+		wxString url = "https://github.com/ousnius/BodySlide-and-Outfit-Studio";
+		wxLaunchDefaultBrowser(url);
+	}
+
+	void OnPayPal(wxCommandEvent& WXUNUSED(event)) {
+		wxString url = "https://www.paypal.me/ousnius";
+		wxLaunchDefaultBrowser(url);
+	}
+
+	void OnSelectMask(wxCommandEvent& event);
+	void OnSaveMask(wxCommandEvent& event);
+	void OnDeleteMask(wxCommandEvent& event);
+	void OnExportMask(wxCommandEvent& event);
+	void OnImportMask(wxCommandEvent& event);
+	void OnCopyMask(wxCommandEvent& event);
+	void OnPaneCollapse(wxCollapsiblePaneEvent& event);
+	void OnBottomPanelResize(wxSizeEvent& event);
+	// Re-lays out the bottom panel, capping the scrolled tool area so the
+	// slider list below it keeps its room no matter how many panes are open.
+	void UpdateToolScrollLayout();
+	void ApplyPose();
+
+public:
+	// Called after a bone/node transform is applied, to re-enable the
+	// transform tool on the bones tab and refresh the bone tree icons so
+	// that any newly-introduced bad-bones state is visible.
+	void UpdateBoneTransformToolEnabled();
+	void RefreshBoneTreeBadBoneIcons();
+
+private:
+	AnimBone* GetPoseBonePtr();
+	void OnPoseBoneChanged(wxCommandEvent& event);
+	void OnPoseValChanged(int cind, float val);
+	void OnAnyPoseSlider(wxScrollEvent& e, wxTextCtrl* t, int cind);
+	void OnRXPoseSlider(wxScrollEvent& event);
+	void OnRYPoseSlider(wxScrollEvent& event);
+	void OnRZPoseSlider(wxScrollEvent& event);
+	void OnTXPoseSlider(wxScrollEvent& event);
+	void OnTYPoseSlider(wxScrollEvent& event);
+	void OnTZPoseSlider(wxScrollEvent& event);
+	void OnScPoseSlider(wxScrollEvent& event);
+	void OnAnyPoseTextChanged(wxTextCtrl* t, wxSlider* s, int cind);
+	void OnRXPoseTextChanged(wxCommandEvent& event);
+	void OnRYPoseTextChanged(wxCommandEvent& event);
+	void OnRZPoseTextChanged(wxCommandEvent& event);
+	void OnTXPoseTextChanged(wxCommandEvent& event);
+	void OnTYPoseTextChanged(wxCommandEvent& event);
+	void OnTZPoseTextChanged(wxCommandEvent& event);
+	void OnScPoseTextChanged(wxCommandEvent& event);
+	void OnResetBonePose(wxCommandEvent& event);
+	void OnResetAllPose(wxCommandEvent& event);
+	void OnPoseToMesh(wxCommandEvent& event);
+	void ResetAllPoseBones();
+	void ActivatePose(bool checked);
+	void OnPoseCheckBox(wxCommandEvent& event);
+	void OnSelectPose(wxCommandEvent& event);
+	void OnSavePose(wxCommandEvent& event);
+	void OnDeletePose(wxCommandEvent& event);
+	void OnSaveHkxPose(wxCommandEvent& event);
+	void OnLoadHkxPose(wxCommandEvent& event);
+
+	// Updates enabled state of the Save/Delete pose buttons based on
+	// whether the currently selected pose is read-only (e.g. SAM YAML).
+	void UpdatePoseButtonStates();
+
+	// HKX animation playback. Every frame of a loaded animation is stored as a
+	// regular PoseData and applied through the same code path as poses, so a
+	// paused animation behaves exactly like an applied pose.
+	AnimationData* GetSelectedAnimation();
+	double GetAnimPlaybackSpeed();
+	bool IsAnimationInterpolated() const;
+	// Refresh rate of the display the window is on, capped at 120 and falling
+	// back to 60 when the display does not report one.
+	int GetAnimTargetFps();
+	// Microseconds until the next frame should be drawn, 0 when it is due.
+	wxLongLong GetAnimFrameDueInMicro();
+	// Applies the pose at the given frame position, blending the two frames
+	// around a fractional one when interpolation is on.
+	void ApplyAnimationFrame(double framePos, bool updatePoseGUI = true);
+	// Restarts the playback clock at the current frame. Needed whenever the
+	// position or the speed changes while playing, since the frame is derived
+	// from the time elapsed since the clock was last started.
+	void RestartAnimationClock();
+	void StartAnimationPlayback();
+	void PauseAnimationPlayback();
+	// Empties the animation list down to the favorites, which are listed but
+	// only read once selected
+	void ResetAnimationList();
+	// Refills the animation drop-down from the animation entries, keeping the
+	// selection
+	void PopulateAnimationList();
+	void UpdateAnimationPlayerUI();
+	// Enables/disables everything that could edit meshes, bones or the project
+	// while an animation is playing. The player controls stay usable.
+	void SetAnimationPlaybackLock(bool locked);
+	// Resolves the .hkx file next to the configured reference skeleton, showing
+	// an error dialog with the given caption on failure.
+	bool GetReferenceSkeletonHkxPath(std::string& outPath, const wxString& caption);
+	void OnSelectAnimation(wxCommandEvent& event);
+	void OnLoadHkxAnimation(wxCommandEvent& event);
+	void OnAnimationFavorite(wxCommandEvent& event);
+	void OnAnimPlayPause(wxCommandEvent& event);
+	void OnAnimFrameSlider(wxScrollEvent& event);
+	void OnAnimSpeedChanged(wxCommandEvent& event);
+	void OnAnimInterpolateChanged(wxCommandEvent& event);
+	void OnAnimPlaybackTimer(wxTimerEvent& event);
+	// Bound only while an animation plays; this is what drives the frame rate,
+	// the timer being a fallback.
+	void OnAnimIdle(wxIdleEvent& event);
+	// Bound while an animation plays; swallows every menu, toolbar and
+	// accelerator command so nothing can edit the project.
+	void OnBlockedCommandDuringPlayback(wxCommandEvent& event);
+
+	wxTimer animPlaybackTimer;
+	bool animPlaying = false;
+	// Frame position, fractional while interpolating.
+	double animCurrentFrame = 0.0;
+	// Runs while playing; together with animClockBaseFrame it tells which frame
+	// is due, independent of how often ticks actually arrive.
+	wxStopWatch animPlaybackWatch;
+	double animClockBaseFrame = 0.0;
+	// Frame pacing: the animPlaybackWatch reading at which the last frame was
+	// drawn, and the rate being aimed for, resolved once per playback.
+	wxLongLong animLastDrawMicro = 0;
+	int animTargetFps = 60;
+	// Scratch pose for interpolated frames, kept around so that playback does
+	// not reallocate the bone list every tick.
+	PoseData animBlendPose;
+
+	// Physics preview (HDT-SMP): simulation runs while the physics checkbox
+	// is set and either pose mode is active or an animation is playing.
+	// Single authority over building/tearing down the simulation; call after
+	// anything that changes one of those conditions or the loaded meshes.
+	void UpdatePhysicsState();
+	// Hands the shapes as the sliders morph them to the running simulation.
+	void UpdatePhysicsShapes();
+	// Shows the physics controls only while the loaded meshes reference a
+	// physics XML, since there is nothing to simulate otherwise. Stops a running
+	// simulation when the last of them goes away.
+	void UpdatePhysicsControlsVisibility();
+	// Hard teardown for project unload/close: stops the pump and drops all
+	// simulation state without touching the (possibly dying) project meshes.
+	void ShutdownPhysics();
+	void StartPhysicsPump();
+	void StopPhysicsPump();
+	void OnPhysicsCheckBox(wxCommandEvent& event);
+	void OnPhysicsVisCheckBox(wxCommandEvent& event);
+	void OnPhysicsGrabCheckBox(wxCommandEvent& event);
+	// Puts the grab checkbox in the state a (not) running simulation allows
+	void UpdatePhysicsGrabControl(bool enabled);
+	void OnPhysicsProbeCheckBox(wxCommandEvent& event);
+	// Each ball slider writes its value into the field beside it, and each field
+	// puts the handle back where the value is; either way the field is what is read.
+	void OnPhysicsProbeSlider(wxScrollEvent& event, wxTextCtrl* text);
+	void OnPhysicsProbeXSlider(wxScrollEvent& event);
+	void OnPhysicsProbeYSlider(wxScrollEvent& event);
+	void OnPhysicsProbeZSlider(wxScrollEvent& event);
+	void OnPhysicsProbeSizeSlider(wxScrollEvent& event);
+	void OnPhysicsProbeText(wxTextCtrl* text, wxSlider* slider);
+	void OnPhysicsProbeXText(wxCommandEvent& event);
+	void OnPhysicsProbeYText(wxCommandEvent& event);
+	void OnPhysicsProbeZText(wxCommandEvent& event);
+	void OnPhysicsProbeSizeText(wxCommandEvent& event);
+	// The same for the collision ball checkbox
+	void UpdatePhysicsProbeControl(bool enabled);
+	// Shows or hides the ball, its controls and its collider to match the box
+	void UpdatePhysicsProbeState();
+	// Pushes the ball's position and size into the simulation and the viewport
+	void ApplyPhysicsProbe();
+	void OnPhysicsWindSlider(wxScrollEvent& event);
+	void OnPhysicsWindDir(wxCommandEvent& event);
+	// Pushes the wind controls into the simulation; the controller is built
+	// fresh every time physics starts, so it has no idea of either value.
+	void ApplyPhysicsWind();
+	void OnPhysicsTimer(wxTimerEvent& event);
+	void OnPhysicsIdle(wxIdleEvent& event);
+
+	std::unique_ptr<Physics::Controller> physics;
+	// Whether any loaded mesh references a physics XML. The physics pane only
+	// exists on the bones tab, so showing it takes both this and the tab.
+	bool physicsAvailable = false;
+	wxTimer physicsTimer;
+	// Simulation built and active (either pump mode or animation lockstep).
+	bool physicsRunning = false;
+	// Own idle+timer pump bound (pose mode without animation playback).
+	bool physicsPumpActive = false;
+	Physics::PumpClock physicsClock;
+
+	wxDECLARE_EVENT_TABLE();
+};
+
+class DnDFile : public wxFileDropTarget {
+public:
+	DnDFile(OutfitStudioFrame* pOwner = nullptr) { owner = pOwner; }
+
+	virtual bool OnDropFiles(wxCoord x, wxCoord y, const wxArrayString& fileNames);
+
+private:
+	OutfitStudioFrame* owner = nullptr;
+};
+
+class DnDSliderFile : public wxFileDropTarget {
+public:
+	DnDSliderFile(OutfitStudioFrame* pOwner = nullptr) { owner = pOwner; }
+
+	virtual bool OnDropFiles(wxCoord x, wxCoord y, const wxArrayString& fileNames);
+	virtual wxDragResult OnDragOver(wxCoord x, wxCoord y, wxDragResult defResult);
+
+private:
+	OutfitStudioFrame* owner = nullptr;
+	wxDragResult lastResult = wxDragNone;
+	std::string targetSlider;
+};

@@ -1,5 +1,5 @@
-#include "../src/utils/ConfigurationManager.h"
-#include "../src/utils/ProjectUtil.h"
+#include "utils/ConfigurationManager.h"
+#include "utils/ProjectUtil.h"
 
 #include <catch2/catch_test_macros.hpp>
 

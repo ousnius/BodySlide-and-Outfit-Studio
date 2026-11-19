@@ -5,7 +5,7 @@ See the included LICENSE file
 
 #pragma once
 
-#include "../utils/StringStuff.h"
+#include "utils/StringStuff.h"
 
 #include <cstddef>
 #include <map>

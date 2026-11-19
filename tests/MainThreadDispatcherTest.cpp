@@ -1,4 +1,4 @@
-#include "../src/utils/MainThreadDispatcher.h"
+#include "utils/MainThreadDispatcher.h"
 
 #include <catch2/catch_test_macros.hpp>
 

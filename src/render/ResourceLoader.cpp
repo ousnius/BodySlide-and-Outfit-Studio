@@ -4,7 +4,7 @@ See the included LICENSE file
 */
 
 #include "GLMaterial.h"
-#include "../utils/ConfigurationManager.h"
+#include "utils/ConfigurationManager.h"
 
 #include "FSEngine/FSEngine.h"
 #include "FSEngine/FSManager.h"

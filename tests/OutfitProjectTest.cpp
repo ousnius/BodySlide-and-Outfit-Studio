@@ -1,10 +1,10 @@
-#include "../src/components/AddOnSliders.h"
-#include "../src/components/MaskOps.h"
-#include "../src/components/SliderSetIndex.h"
-#include "../src/program/BrushStrokeController.h"
-#include "../src/program/OutfitProject.h"
-#include "../src/program/ProjectOperations.h"
-#include "../src/utils/ConfigurationManager.h"
+#include "components/AddOnSliders.h"
+#include "components/MaskOps.h"
+#include "components/SliderSetIndex.h"
+#include "project/BrushStrokeController.h"
+#include "project/OutfitProject.h"
+#include "project/ProjectOperations.h"
+#include "utils/ConfigurationManager.h"
 
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>

@@ -302,12 +302,12 @@
     <ClCompile Include="src\files\MaterialFile.cpp" />
     <ClCompile Include="src\files\ObjFile.cpp" />
     <ClCompile Include="src\files\TriFile.cpp" />
-    <ClCompile Include="src\program\OutfitProject.cpp" />
-    <ClCompile Include="src\program\ProjectHost.cpp" />
+    <ClCompile Include="src\project\OutfitProject.cpp" />
+    <ClCompile Include="src\project\ProjectHost.cpp" />
     <ClCompile Include="src\mcp\McpProtocol.cpp" />
     <ClCompile Include="src\mcp\McpServer.cpp" />
-    <ClCompile Include="src\program\ProjectOperations.cpp" />
-    <ClCompile Include="src\program\BrushStrokeController.cpp" />
+    <ClCompile Include="src\project\ProjectOperations.cpp" />
+    <ClCompile Include="src\project\BrushStrokeController.cpp" />
     <ClCompile Include="src\components\TweakBrush.cpp" />
     <ClCompile Include="src\components\PoseData.cpp" />
     <ClCompile Include="src\components\PoseDataJson.cpp" />

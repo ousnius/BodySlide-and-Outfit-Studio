@@ -96,7 +96,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\cpp-httplib;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;src;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\cpp-httplib;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -126,7 +126,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\2020.3.7\include;..\bullet3\install\include\bullet;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\cpp-httplib;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\2020.3.7\include;..\bullet3\install\include\bullet;src;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\cpp-httplib;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;USE_FBXSDK;USE_BULLET;BT_USE_SSE_IN_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -157,7 +157,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\cpp-httplib;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;src;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\cpp-httplib;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>
@@ -194,7 +194,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\2020.3.7\include;..\bullet3\install\include\bullet;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\cpp-httplib;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\2020.3.7\include;..\bullet3\install\include\bullet;src;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\cpp-httplib;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;USE_FBXSDK;USE_BULLET;BT_USE_SSE_IN_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>
@@ -821,7 +821,7 @@
     <ClInclude Include="src\components\PoseFit.h" />
     <ClInclude Include="src\components\SurfaceFit.h" />
     <ClInclude Include="src\components\TextureConvert.h" />
-    <ClInclude Include="src\program\GameImport.h" />
+    <ClInclude Include="src\project\GameImport.h" />
     <ClInclude Include="src\components\ClothData.h" />
     <ClInclude Include="src\components\DiffData.h" />
     <ClInclude Include="src\components\Mesh.h" />
@@ -885,27 +885,27 @@
     <ClInclude Include="src\physics\hdt\hdtStiffSpringConstraint.h" />
     <ClInclude Include="src\physics\hdt\hdtStringUtils.h" />
     <ClInclude Include="src\physics\hdt\hdtVertex.h" />
-    <ClInclude Include="src\program\ConvertBodyReferenceDialog.h" />
-    <ClInclude Include="src\program\AutomationDialog.h" />
-    <ClInclude Include="src\program\AutomationRunner.h" />
+    <ClInclude Include="src\ui\outfitstudio\ConvertBodyReferenceDialog.h" />
+    <ClInclude Include="src\ui\outfitstudio\AutomationDialog.h" />
+    <ClInclude Include="src\project\AutomationRunner.h" />
     <ClInclude Include="src\components\Automation.h" />
     <ClInclude Include="src\components\AutomationJson.h" />
-    <ClInclude Include="src\program\EditUV.h" />
-    <ClInclude Include="src\program\FBXImportDialog.h" />
-    <ClInclude Include="src\program\GroupManager.h" />
-    <ClInclude Include="src\program\ObjImportDialog.h" />
-    <ClInclude Include="src\program\OutfitProject.h" />
-    <ClInclude Include="src\program\ProjectHost.h" />
-    <ClInclude Include="src\program\ProjectOperations.h" />
-    <ClInclude Include="src\program\BrushStrokeController.h" />
-    <ClInclude Include="src\program\EditorState.h" />
-    <ClInclude Include="src\program\BadBonesDialog.h" />
-    <ClInclude Include="src\program\OutfitStudio.h" />
-    <ClInclude Include="src\program\PresetSaveDialog.h" />
-    <ClInclude Include="src\program\ShapeProperties.h" />
-    <ClInclude Include="src\program\SliderDataDialog.h" />
-    <ClInclude Include="src\program\SliderDataImportDialog.h" />
-    <ClInclude Include="src\program\AddProjectDialog.h" />
+    <ClInclude Include="src\ui\outfitstudio\EditUV.h" />
+    <ClInclude Include="src\ui\outfitstudio\FBXImportDialog.h" />
+    <ClInclude Include="src\ui\GroupManager.h" />
+    <ClInclude Include="src\ui\outfitstudio\ObjImportDialog.h" />
+    <ClInclude Include="src\project\OutfitProject.h" />
+    <ClInclude Include="src\project\ProjectHost.h" />
+    <ClInclude Include="src\project\ProjectOperations.h" />
+    <ClInclude Include="src\project\BrushStrokeController.h" />
+    <ClInclude Include="src\project\EditorState.h" />
+    <ClInclude Include="src\ui\outfitstudio\BadBonesDialog.h" />
+    <ClInclude Include="src\outfitstudio\OutfitStudio.h" />
+    <ClInclude Include="src\ui\PresetSaveDialog.h" />
+    <ClInclude Include="src\ui\outfitstudio\ShapeProperties.h" />
+    <ClInclude Include="src\ui\outfitstudio\SliderDataDialog.h" />
+    <ClInclude Include="src\ui\outfitstudio\SliderDataImportDialog.h" />
+    <ClInclude Include="src\ui\outfitstudio\AddProjectDialog.h" />
     <ClInclude Include="src\mcp\McpArgs.h" />
     <ClInclude Include="src\mcp\McpProtocol.h" />
     <ClInclude Include="src\mcp\McpServer.h" />
@@ -920,17 +920,17 @@
     <ClInclude Include="src\render\GLOffscreenBuffer.h" />
     <ClInclude Include="src\render\GLShader.h" />
     <ClInclude Include="src\render\GLSurface.h" />
-    <ClInclude Include="src\ui\wxBrushSettingsPopup.h" />
-    <ClInclude Include="src\ui\ArchiveBrowser.h" />
-    <ClInclude Include="src\ui\WeightCopyDialog.h" />
+    <ClInclude Include="src\ui\outfitstudio\wxBrushSettingsPopup.h" />
+    <ClInclude Include="src\ui\outfitstudio\ArchiveBrowser.h" />
+    <ClInclude Include="src\ui\outfitstudio\WeightCopyDialog.h" />
     <ClInclude Include="src\ui\wxSliderPanel.h" />
     <ClInclude Include="src\ui\wxStateButton.h" />
     <ClInclude Include="src\utils\AABBTree.h" />
     <ClInclude Include="src\utils\ConfigurationManager.h" />
-    <ClInclude Include="src\utils\ConfigDialogUtil.h" />
+    <ClInclude Include="src\ui\ConfigDialogUtil.h" />
     <ClInclude Include="src\utils\Log.h" />
     <ClInclude Include="src\utils\PlatformUtil.h" />
-    <ClInclude Include="src\utils\SettingsDialogShared.h" />
+    <ClInclude Include="src\ui\SettingsDialogShared.h" />
     <ClInclude Include="src\utils\ProjectUtil.h" />
     <ClInclude Include="src\utils\GameUtil.h" />
     <ClInclude Include="src\utils\StackTrace.h" />
@@ -982,7 +982,7 @@
     <ClCompile Include="src\components\PoseFit.cpp" />
     <ClCompile Include="src\components\SurfaceFit.cpp" />
     <ClCompile Include="src\components\TextureConvert.cpp" />
-    <ClCompile Include="src\program\GameImport.cpp" />
+    <ClCompile Include="src\project\GameImport.cpp" />
     <ClCompile Include="src\mcp\McpToolsFitting.cpp" />
     <ClCompile Include="src\mcp\McpToolsTextures.cpp" />
     <ClCompile Include="src\components\DiffData.cpp" />
@@ -1040,26 +1040,26 @@
     <ClCompile Include="src\physics\hdt\hdtSkinnedMeshWorld.cpp" />
     <ClCompile Include="src\physics\hdt\hdtStiffSpringConstraint.cpp" />
     <ClCompile Include="src\physics\hdt\hdtVertex.cpp" />
-    <ClCompile Include="src\program\ConvertBodyReferenceDialog.cpp" />
-    <ClCompile Include="src\program\AutomationDialog.cpp" />
-    <ClCompile Include="src\program\AutomationRunner.cpp" />
+    <ClCompile Include="src\ui\outfitstudio\ConvertBodyReferenceDialog.cpp" />
+    <ClCompile Include="src\ui\outfitstudio\AutomationDialog.cpp" />
+    <ClCompile Include="src\project\AutomationRunner.cpp" />
     <ClCompile Include="src\components\Automation.cpp" />
     <ClCompile Include="src\components\AutomationJson.cpp" />
-    <ClCompile Include="src\program\EditUV.cpp" />
-    <ClCompile Include="src\program\FBXImportDialog.cpp" />
-    <ClCompile Include="src\program\GroupManager.cpp" />
-    <ClCompile Include="src\program\ObjImportDialog.cpp" />
-    <ClCompile Include="src\program\OutfitProject.cpp" />
-    <ClCompile Include="src\program\ProjectHost.cpp" />
-    <ClCompile Include="src\program\ProjectOperations.cpp" />
-    <ClCompile Include="src\program\BrushStrokeController.cpp" />
-    <ClCompile Include="src\program\BadBonesDialog.cpp" />
-    <ClCompile Include="src\program\OutfitStudio.cpp" />
-    <ClCompile Include="src\program\PresetSaveDialog.cpp" />
-    <ClCompile Include="src\program\ShapeProperties.cpp" />
-    <ClCompile Include="src\program\SliderDataDialog.cpp" />
-    <ClCompile Include="src\program\SliderDataImportDialog.cpp" />
-    <ClCompile Include="src\program\AddProjectDialog.cpp" />
+    <ClCompile Include="src\ui\outfitstudio\EditUV.cpp" />
+    <ClCompile Include="src\ui\outfitstudio\FBXImportDialog.cpp" />
+    <ClCompile Include="src\ui\GroupManager.cpp" />
+    <ClCompile Include="src\ui\outfitstudio\ObjImportDialog.cpp" />
+    <ClCompile Include="src\project\OutfitProject.cpp" />
+    <ClCompile Include="src\project\ProjectHost.cpp" />
+    <ClCompile Include="src\project\ProjectOperations.cpp" />
+    <ClCompile Include="src\project\BrushStrokeController.cpp" />
+    <ClCompile Include="src\ui\outfitstudio\BadBonesDialog.cpp" />
+    <ClCompile Include="src\outfitstudio\OutfitStudio.cpp" />
+    <ClCompile Include="src\ui\PresetSaveDialog.cpp" />
+    <ClCompile Include="src\ui\outfitstudio\ShapeProperties.cpp" />
+    <ClCompile Include="src\ui\outfitstudio\SliderDataDialog.cpp" />
+    <ClCompile Include="src\ui\outfitstudio\SliderDataImportDialog.cpp" />
+    <ClCompile Include="src\ui\outfitstudio\AddProjectDialog.cpp" />
     <ClCompile Include="src\mcp\McpProtocol.cpp" />
     <ClCompile Include="src\mcp\McpServer.cpp" />
     <ClCompile Include="src\mcp\McpSnapshots.cpp" />
@@ -1088,17 +1088,17 @@
     <ClCompile Include="src\render\MeshBuffers.cpp" />
     <ClCompile Include="src\render\GLShader.cpp" />
     <ClCompile Include="src\render\GLSurface.cpp" />
-    <ClCompile Include="src\ui\wxBrushSettingsPopup.cpp" />
-    <ClCompile Include="src\ui\ArchiveBrowser.cpp" />
+    <ClCompile Include="src\ui\outfitstudio\wxBrushSettingsPopup.cpp" />
+    <ClCompile Include="src\ui\outfitstudio\ArchiveBrowser.cpp" />
     <ClCompile Include="src\components\ArchiveIndex.cpp" />
-    <ClCompile Include="src\ui\WeightCopyDialog.cpp" />
+    <ClCompile Include="src\ui\outfitstudio\WeightCopyDialog.cpp" />
     <ClCompile Include="src\ui\wxSliderPanel.cpp" />
     <ClCompile Include="src\ui\wxStateButton.cpp" />
     <ClCompile Include="src\utils\AABBTree.cpp" />
     <ClCompile Include="src\utils\ConfigurationManager.cpp" />
     <ClCompile Include="src\utils\Log.cpp" />
     <ClCompile Include="src\utils\PlatformUtil.cpp" />
-    <ClCompile Include="src\utils\SettingsDialogShared.cpp" />
+    <ClCompile Include="src\ui\SettingsDialogShared.cpp" />
     <ClCompile Include="src\utils\ProjectUtil.cpp" />
     <ClCompile Include="src\utils\GameUtil.cpp" />
     <ClCompile Include="src\utils\StackTrace.cpp" />

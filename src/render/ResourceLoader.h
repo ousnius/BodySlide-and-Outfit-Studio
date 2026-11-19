@@ -15,7 +15,7 @@ See the included LICENSE file
 #include <unordered_set>
 #include <vector>
 
-#include "../utils/StringStuff.h"
+#include "utils/StringStuff.h"
 
 #include <Object3d.hpp>
 #include <SOIL2/SOIL2.h>

@@ -4,8 +4,8 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
-#include "../program/OutfitStudio.h"
-#include "../program/PartitionTypeChoices.h"
+#include "outfitstudio/OutfitStudio.h"
+#include "ui/outfitstudio/PartitionTypeChoices.h"
 
 #include <algorithm>
 #include <cfloat>

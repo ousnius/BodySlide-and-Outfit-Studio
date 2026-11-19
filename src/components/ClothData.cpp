@@ -4,7 +4,7 @@ See the included LICENSE file
 */
 
 #include "ClothData.h"
-#include "../../lib/LZ4F/xxhash.h"
+#include "LZ4F/xxhash.h"
 
 #include <algorithm>
 #include <cctype>

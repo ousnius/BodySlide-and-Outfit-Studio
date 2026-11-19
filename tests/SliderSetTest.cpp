@@ -1,8 +1,8 @@
-#include "../src/components/SliderManager.h"
-#include "../src/components/SliderSet.h"
-#include "../src/components/SliderSetIndex.h"
-#include "../src/components/SliderSetInheritance.h"
-#include "../src/utils/StringStuff.h"
+#include "components/SliderManager.h"
+#include "components/SliderSet.h"
+#include "components/SliderSetIndex.h"
+#include "components/SliderSetInheritance.h"
+#include "utils/StringStuff.h"
 
 #include <catch2/catch_test_macros.hpp>
 

@@ -6,7 +6,7 @@ See the included LICENSE file
 // The GL side of Mesh, kept apart so the mesh data can be used without GL, e.g. in tests
 
 #include "MeshBuffers.h"
-#include "../components/Mesh.h"
+#include "components/Mesh.h"
 
 using namespace nifly;
 

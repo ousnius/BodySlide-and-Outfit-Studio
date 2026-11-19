@@ -4,7 +4,7 @@ See the included LICENSE file
 */
 
 #include "SFMorphFile.h"
-#include "../utils/PlatformUtil.h"
+#include "utils/PlatformUtil.h"
 
 #include "NifFile.hpp"
 #include "half.hpp"

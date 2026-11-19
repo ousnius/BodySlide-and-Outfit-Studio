@@ -4,10 +4,10 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
-#include "../components/AutomationJson.h"
-#include "../program/AutomationRunner.h"
-#include "../program/OutfitStudio.h"
-#include "../utils/ProjectUtil.h"
+#include "components/AutomationJson.h"
+#include "project/AutomationRunner.h"
+#include "outfitstudio/OutfitStudio.h"
+#include "utils/ProjectUtil.h"
 
 #include <wx/dir.h>
 #include <wx/filename.h>

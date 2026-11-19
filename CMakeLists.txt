@@ -363,8 +363,8 @@ set(BSOS_COMMON_SOURCES
 	src/files/MaterialFile.cpp
 	src/render/ResourceLoader.cpp
 	src/files/TriFile.cpp
-	src/program/GroupManager.cpp
-	src/program/PresetSaveDialog.cpp
+	src/ui/GroupManager.cpp
+	src/ui/PresetSaveDialog.cpp
 	src/render/GLExtensions.cpp
 	src/render/GLHDRiEnvironment.cpp
 	src/render/GLMaterial.cpp
@@ -377,7 +377,7 @@ set(BSOS_COMMON_SOURCES
 	src/utils/ConfigurationManager.cpp
 	src/utils/Log.cpp
 	src/utils/PlatformUtil.cpp
-	src/utils/SettingsDialogShared.cpp
+	src/ui/SettingsDialogShared.cpp
 	src/utils/ProjectUtil.cpp
 	src/utils/GameUtil.cpp
 	src/utils/StackTrace.cpp
@@ -408,27 +408,27 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/files/SFMaterialResolver.cpp
 	src/files/SFResourceHash.cpp
 	src/files/SFMorphFile.cpp
-	src/ui/wxBrushSettingsPopup.cpp
-	src/ui/ArchiveBrowser.cpp
-	src/ui/WeightCopyDialog.cpp
+	src/ui/outfitstudio/wxBrushSettingsPopup.cpp
+	src/ui/outfitstudio/ArchiveBrowser.cpp
+	src/ui/outfitstudio/WeightCopyDialog.cpp
 	src/ui/wxSliderPanel.cpp
-	src/program/EditUV.cpp
-	src/program/FBXImportDialog.cpp
-	src/program/ObjImportDialog.cpp
-	src/program/OutfitProject.cpp
-	src/program/OutfitStudio.cpp
-	src/program/ProjectHost.cpp
-	src/program/ProjectOperations.cpp
-	src/program/GameImport.cpp
-	src/program/BrushStrokeController.cpp
-	src/program/BadBonesDialog.cpp
-	src/program/ShapeProperties.cpp
-	src/program/ConvertBodyReferenceDialog.cpp
-	src/program/AutomationDialog.cpp
-	src/program/AutomationRunner.cpp
-	src/program/SliderDataDialog.cpp
-	src/program/SliderDataImportDialog.cpp
-	src/program/AddProjectDialog.cpp
+	src/ui/outfitstudio/EditUV.cpp
+	src/ui/outfitstudio/FBXImportDialog.cpp
+	src/ui/outfitstudio/ObjImportDialog.cpp
+	src/project/OutfitProject.cpp
+	src/outfitstudio/OutfitStudio.cpp
+	src/project/ProjectHost.cpp
+	src/project/ProjectOperations.cpp
+	src/project/GameImport.cpp
+	src/project/BrushStrokeController.cpp
+	src/ui/outfitstudio/BadBonesDialog.cpp
+	src/ui/outfitstudio/ShapeProperties.cpp
+	src/ui/outfitstudio/ConvertBodyReferenceDialog.cpp
+	src/ui/outfitstudio/AutomationDialog.cpp
+	src/project/AutomationRunner.cpp
+	src/ui/outfitstudio/SliderDataDialog.cpp
+	src/ui/outfitstudio/SliderDataImportDialog.cpp
+	src/ui/outfitstudio/AddProjectDialog.cpp
 	src/mcp/McpProtocol.cpp
 	src/mcp/McpServer.cpp
 	src/mcp/McpSnapshots.cpp
@@ -466,12 +466,12 @@ set(BSOS_BODYSLIDE_SOURCES
 	src/files/SFResourceHash.cpp
 	src/files/SFMorphFile.cpp
 	src/files/wxDDSImage.cpp
-	src/program/BodySlideApp.cpp
-	src/program/NormalsGenDialog.cpp
-	src/program/PreviewWindow.cpp
-	src/ui/PreviewPanel.cpp
+	src/bodyslide/BodySlideApp.cpp
+	src/ui/bodyslide/NormalsGenDialog.cpp
+	src/bodyslide/PreviewWindow.cpp
+	src/ui/bodyslide/PreviewPanel.cpp
 	src/ui/wxFavoriteChoice.cpp
-	src/ui/wxNormalsGenDlg.cpp
+	src/ui/bodyslide/wxNormalsGenDlg.cpp
 )
 
 if(WIN32)
@@ -579,12 +579,12 @@ if(BSOS_BUILD_TESTS)
 		src/files/ObjFile.cpp
 		src/files/PhysicsXmlFile.cpp
 		src/files/TriFile.cpp
-		src/program/OutfitProject.cpp
-		src/program/ProjectHost.cpp
+		src/project/OutfitProject.cpp
+		src/project/ProjectHost.cpp
 		src/mcp/McpProtocol.cpp
 		src/mcp/McpServer.cpp
-		src/program/ProjectOperations.cpp
-		src/program/BrushStrokeController.cpp
+		src/project/ProjectOperations.cpp
+		src/project/BrushStrokeController.cpp
 		src/components/TweakBrush.cpp
 		src/components/PoseData.cpp
 		src/components/PoseDataJson.cpp

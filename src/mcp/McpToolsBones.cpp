@@ -4,9 +4,9 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
-#include "../components/Anim.h"
-#include "../components/PoseMath.h"
-#include "../program/OutfitStudio.h"
+#include "components/Anim.h"
+#include "components/PoseMath.h"
+#include "outfitstudio/OutfitStudio.h"
 
 #include <algorithm>
 #include <cmath>

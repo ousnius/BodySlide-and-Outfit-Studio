@@ -9,8 +9,8 @@ See the included LICENSE file
 
 #include "NiflyBullet.h"
 
-#include "../components/Mesh.h"
-#include "../render/GLSurface.h"
+#include "components/Mesh.h"
+#include "render/GLSurface.h"
 
 #include <BulletCollision/CollisionShapes/btBoxShape.h>
 #include <BulletCollision/CollisionShapes/btCapsuleShape.h>

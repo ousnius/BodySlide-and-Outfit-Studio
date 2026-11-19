@@ -1,0 +1,498 @@
+/*
+BodySlide and Outfit Studio
+See the included LICENSE file
+*/
+
+#include "SliderDataDialog.h"
+
+#include "outfitstudio/OutfitStudio.h"
+#include "utils/StringStuff.h"
+
+#include <wx/button.h>
+#include <wx/choice.h>
+#include <wx/listctrl.h>
+#include <wx/msgdlg.h>
+#include <wx/sizer.h>
+#include <wx/stattext.h>
+#include <wx/textctrl.h>
+#include <wx/tokenzr.h>
+
+wxString SliderDataList::SourceLabel(const SliderDataLocation& location) {
+	if (location.inherited)
+		return _("Inherited");
+	if (location.overridden)
+		return _("Overridden");
+	if (location.local)
+		return _("Local");
+	if (location.linked)
+		return _("Linked");
+
+	return _("External");
+}
+
+bool SliderDataList::AllOverridden(const std::vector<SliderDataLocation>& rows, const std::vector<size_t>& rowIndices) {
+	if (rowIndices.empty())
+		return false;
+
+	for (auto rowIndex : rowIndices)
+		if (rowIndex >= rows.size() || !rows[rowIndex].overridden)
+			return false;
+
+	return true;
+}
+
+bool SliderDataList::AnyInherited(const std::vector<SliderDataLocation>& rows, const std::vector<size_t>& rowIndices) {
+	for (auto rowIndex : rowIndices)
+		if (rowIndex < rows.size() && rows[rowIndex].inherited)
+			return true;
+
+	return false;
+}
+
+bool SliderDataList::RevertToBase(wxWindow* parent, OutfitProject* project, const std::vector<SliderDataLocation>& rows, const std::vector<size_t>& rowIndices) {
+	if (rowIndices.empty())
+		return false;
+
+	if (wxMessageBox(_("Replace this project's slider data with the base project's? The changes this project made to it are lost when it's saved."),
+					 _("Revert to Base"),
+					 wxYES_NO | wxICON_WARNING,
+					 parent)
+		!= wxYES)
+		return false;
+
+	bool changed = false;
+	for (auto rowIndex : rowIndices) {
+		if (rowIndex >= rows.size() || !rows[rowIndex].overridden)
+			continue;
+
+		std::string errorMessage;
+		if (!project->RevertSliderDataToBase(rows[rowIndex].key, &errorMessage)) {
+			wxMessageBox(wxString::FromUTF8(errorMessage), _("Slider Data"), wxOK | wxICON_WARNING, parent);
+			return changed;
+		}
+
+		changed = true;
+	}
+
+	return changed;
+}
+
+wxString SliderDataList::JoinDataFolders(const std::vector<std::string>& dataFolders) {
+	if (dataFolders.empty())
+		return wxString();
+
+	return wxString::FromUTF8(JoinStrings(dataFolders, ";"));
+}
+
+void SliderDataList::Configure(wxListCtrl* list, bool includeSlider) {
+	list->ClearAll();
+	int column = 0;
+	if (includeSlider)
+		list->InsertColumn(column++, _("Slider"), wxLIST_FORMAT_LEFT, 150);
+
+	list->InsertColumn(column++, _("Shape"), wxLIST_FORMAT_LEFT, includeSlider ? 145 : 130);
+	list->InsertColumn(column++, _("Target"), wxLIST_FORMAT_LEFT, includeSlider ? 145 : 130);
+	list->InsertColumn(column++, _("Data"), wxLIST_FORMAT_LEFT, includeSlider ? 220 : 190);
+	list->InsertColumn(column++, _("Source"), wxLIST_FORMAT_LEFT, 85);
+	list->InsertColumn(column++, _("Data Folder(s)"), wxLIST_FORMAT_LEFT, includeSlider ? 245 : 210);
+	list->InsertColumn(column++, _("File"), wxLIST_FORMAT_LEFT, includeSlider ? 245 : 210);
+	list->InsertColumn(column++, _("Status"), wxLIST_FORMAT_LEFT, 85);
+
+	// Explain the source of the slider data under the mouse
+	int sourceColumn = includeSlider ? 4 : 3;
+	list->Bind(wxEVT_MOTION, [list, sourceColumn](wxMouseEvent& event) {
+		event.Skip();
+
+		int flags = 0;
+		long subItem = -1;
+		long item = list->HitTest(event.GetPosition(), flags, &subItem);
+
+		// Not all platforms report the column, then the whole row shows it
+		wxString tip;
+		if (item != wxNOT_FOUND && (subItem == -1 || subItem == sourceColumn)) {
+			wxString source = list->GetItemText(item, sourceColumn);
+			if (source == _("Local"))
+				tip = _("Stored in this project's own data file.");
+			else if (source == _("Linked"))
+				tip = _("Stored in another project's data file in the same data folder.");
+			else if (source == _("External"))
+				tip = _("Stored in the shape's data folders, separate from this project.");
+			else if (source == _("Inherited"))
+				tip = _("Comes from the base project, which owns it. Editing it makes it this project's own.");
+			else if (source == _("Overridden"))
+				tip = _("Stored in this project's own data file, in place of the base project's data.");
+		}
+
+		if (list->GetToolTipText() != tip) {
+			if (tip.IsEmpty())
+				list->UnsetToolTip();
+			else
+				list->SetToolTip(tip);
+		}
+	});
+}
+
+void SliderDataList::Populate(wxListCtrl* list, const std::vector<SliderDataLocation>& rows, const std::vector<size_t>* visibleRows, bool includeSlider) {
+	list->Freeze();
+	list->DeleteAllItems();
+
+	const auto appendRow = [&](size_t rowIndex) {
+		if (rowIndex >= rows.size())
+			return;
+
+		const auto& row = rows[rowIndex];
+		long item = list->InsertItem(list->GetItemCount(), includeSlider ? wxString::FromUTF8(row.key.sliderName) : wxString::FromUTF8(row.shapeName));
+		int column = 1;
+		if (includeSlider)
+			list->SetItem(item, column++, wxString::FromUTF8(row.shapeName));
+
+		list->SetItem(item, column++, wxString::FromUTF8(row.key.targetName));
+		list->SetItem(item, column++, wxString::FromUTF8(row.key.dataName));
+		list->SetItem(item, column++, SourceLabel(row));
+		list->SetItem(item, column++, JoinDataFolders(row.dataFolders));
+		list->SetItem(item, column++, wxString::FromUTF8(row.fileName));
+		list->SetItem(item, column++, row.fileName.empty() ? _("No file") : row.resolved ? _("Found") : _("Missing"));
+		list->SetItemData(item, static_cast<long>(rowIndex));
+	};
+
+	if (visibleRows) {
+		for (auto rowIndex : *visibleRows)
+			appendRow(rowIndex);
+	}
+	else {
+		for (size_t rowIndex = 0; rowIndex < rows.size(); rowIndex++)
+			appendRow(rowIndex);
+	}
+
+	list->Thaw();
+}
+
+size_t SliderDataList::GetSelectedRows(wxListCtrl* list, const std::vector<SliderDataLocation>& rows, std::vector<size_t>& outRowIndices) {
+	outRowIndices.clear();
+	long item = -1;
+	while ((item = list->GetNextItem(item, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED)) != -1) {
+		size_t rowIndex = static_cast<size_t>(list->GetItemData(item));
+		if (rowIndex < rows.size())
+			outRowIndices.push_back(rowIndex);
+	}
+
+	return outRowIndices.size();
+}
+
+bool SliderDataList::AllHaveSource(const std::vector<SliderDataLocation>& rows, const std::vector<size_t>& rowIndices, bool local) {
+	if (rowIndices.empty())
+		return false;
+
+	for (auto rowIndex : rowIndices) {
+		if (rowIndex >= rows.size() || rows[rowIndex].local != local)
+			return false;
+	}
+
+	return true;
+}
+
+void SliderDataList::BindSelectAll(wxWindow* window, wxListCtrl* list, const std::function<void()>& updateButtons) {
+	window->Bind(wxEVT_CHAR_HOOK, [list, updateButtons](wxKeyEvent& event) {
+		int keyCode = event.GetKeyCode();
+		bool selectAll = event.ControlDown() && !event.AltDown() && (keyCode == 'A' || keyCode == 'a' || keyCode == 1);
+		if (!selectAll) {
+			event.Skip();
+			return;
+		}
+
+		wxWindow* focus = wxWindow::FindFocus();
+		if (focus && focus->IsKindOf(wxCLASSINFO(wxTextCtrl))) {
+			event.Skip();
+			return;
+		}
+
+		list->Freeze();
+		for (long item = 0; item < list->GetItemCount(); item++)
+			list->SetItemState(item, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
+		list->Thaw();
+		updateButtons();
+	});
+}
+
+bool SliderDataList::MakeLocal(wxWindow* parent, OutfitProject* project, const std::vector<SliderDataLocation>& rows, const std::vector<size_t>& rowIndices) {
+	bool changed = false;
+	for (auto rowIndex : rowIndices) {
+		if (rowIndex >= rows.size())
+			continue;
+
+		auto& location = rows[rowIndex];
+		if (location.local)
+			continue;
+
+		std::string errorMessage;
+		if (!project->SetSliderDataLocal(location.key, &errorMessage)) {
+			wxMessageBox(wxString::FromUTF8(errorMessage), _("Slider Data"), wxOK | wxICON_WARNING, parent);
+			return changed;
+		}
+
+		changed = true;
+	}
+
+	return changed;
+}
+
+bool SliderDataList::EditFolders(wxWindow* parent, OutfitProject* project, const std::vector<SliderDataLocation>& rows, const std::vector<size_t>& rowIndices) {
+	if (rowIndices.empty())
+		return false;
+
+	bool makeExternal = rows[rowIndices.front()].local;
+	if (!AllHaveSource(rows, rowIndices, makeExternal)) {
+		wxMessageBox(_("Select either local or external slider data entries, not both."), _("Slider Data"), wxOK | wxICON_WARNING, parent);
+		return false;
+	}
+
+	wxDialog dlg(parent, wxID_ANY, makeExternal ? _("Make Slider Data External") : _("Edit Shape Data Folders"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
+	auto* mainSizer = new wxBoxSizer(wxVERTICAL);
+
+	wxString message = makeExternal ?
+		_("Enter one or more shape data folders separated by semicolons. These folders will be used to find the selected slider data.") :
+		_("Enter one or more shape data folders separated by semicolons. These folders will be shared by all external slider data for each selected shape.");
+	auto* messageText = new wxStaticText(&dlg, wxID_ANY, message);
+	messageText->Wrap(480);
+	mainSizer->Add(messageText, 0, wxALL | wxEXPAND, 10);
+
+	wxString commonFolders;
+	if (!makeExternal) {
+		commonFolders = JoinDataFolders(rows[rowIndices.front()].dataFolders);
+		for (size_t selectedIndex = 1; selectedIndex < rowIndices.size(); selectedIndex++) {
+			if (JoinDataFolders(rows[rowIndices[selectedIndex]].dataFolders) != commonFolders) {
+				commonFolders.clear();
+				break;
+			}
+		}
+	}
+
+	auto* folderLabel = new wxStaticText(&dlg, wxID_ANY, _("Data Folder(s):"));
+	auto* folderText = new wxTextCtrl(&dlg, wxID_ANY, commonFolders);
+	mainSizer->Add(folderLabel, 0, wxLEFT | wxRIGHT | wxBOTTOM, 10);
+	mainSizer->Add(folderText, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, 10);
+
+	wxString commonOSDFile;
+	bool hasOSD = false;
+	bool hasOSDValue = false;
+	for (auto rowIndex : rowIndices) {
+		auto& location = rows[rowIndex];
+		if (location.isBSD)
+			continue;
+
+		hasOSD = true;
+		wxString osdFile = wxString::FromUTF8(location.dataFileName);
+		if (!hasOSDValue) {
+			commonOSDFile = osdFile;
+			hasOSDValue = true;
+		}
+		else if (osdFile != commonOSDFile) {
+			commonOSDFile.clear();
+			break;
+		}
+	}
+
+	auto* osdLabel = new wxStaticText(&dlg, wxID_ANY, _("OSD File:"));
+	auto* osdText = new wxTextCtrl(&dlg, wxID_ANY, commonOSDFile);
+	if (!hasOSD) {
+		osdLabel->Enable(false);
+		osdText->Enable(false);
+	}
+	mainSizer->Add(osdLabel, 0, wxLEFT | wxRIGHT | wxBOTTOM, 10);
+	mainSizer->Add(osdText, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, 10);
+
+	mainSizer->Add(dlg.CreateSeparatedButtonSizer(wxOK | wxCANCEL), 0, wxALL | wxEXPAND, 10);
+	dlg.SetSizerAndFit(mainSizer);
+	dlg.SetMinSize(wxSize(520, -1));
+	dlg.CenterOnParent();
+	folderText->SetFocus();
+	folderText->SetSelection(-1, -1);
+
+	if (dlg.ShowModal() != wxID_OK)
+		return false;
+
+	std::vector<std::string> dataFolders;
+	wxStringTokenizer tokenizer(folderText->GetValue(), ";");
+	while (tokenizer.HasMoreTokens()) {
+		wxString token = tokenizer.GetNextToken();
+		token.Trim(true);
+		token.Trim(false);
+		if (!token.IsEmpty())
+			dataFolders.push_back(ToOSSlashes(std::string(token.ToUTF8().data())));
+	}
+
+	wxString osdValue = osdText->GetValue();
+	osdValue.Trim(true);
+	osdValue.Trim(false);
+	std::string osdFileName = osdValue.IsEmpty() ? std::string() : ToOSSlashes(std::string(osdValue.ToUTF8().data()));
+	std::vector<SliderDataKey> dataKeys;
+	dataKeys.reserve(rowIndices.size());
+	for (auto rowIndex : rowIndices) {
+		if (rowIndex < rows.size())
+			dataKeys.push_back(rows[rowIndex].key);
+	}
+
+	std::string errorMessage;
+	if (!project->SetSliderDataExternal(dataKeys, dataFolders, osdFileName, &errorMessage)) {
+		wxMessageBox(wxString::FromUTF8(errorMessage), _("Slider Data"), wxOK | wxICON_WARNING, parent);
+		return false;
+	}
+
+	return true;
+}
+
+SliderDataLocationsDialog::SliderDataLocationsDialog(OutfitStudioFrame* owner, OutfitProject* project)
+	: wxDialog(owner, wxID_ANY, _("Slider Data"), wxDefaultPosition, wxSize(1200, 600), wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
+	, owner(owner)
+	, project(project) {
+	SetMinSize(wxSize(980, 440));
+
+	auto* mainSizer = new wxBoxSizer(wxVERTICAL);
+	auto* filterSizer = new wxBoxSizer(wxHORIZONTAL);
+
+	auto* filterLabel = new wxStaticText(this, wxID_ANY, _("Filter:"));
+	filterText = new wxTextCtrl(this, wxID_ANY);
+	auto* sourceLabel = new wxStaticText(this, wxID_ANY, _("Source:"));
+	sourceChoice = new wxChoice(this, wxID_ANY);
+	sourceChoice->Append(_("All"));
+	sourceChoice->Append(_("Local"));
+	sourceChoice->Append(_("External"));
+	sourceChoice->Append(_("Inherited"));
+	sourceChoice->SetSelection(0);
+	auto* statusLabel = new wxStaticText(this, wxID_ANY, _("Status:"));
+	statusChoice = new wxChoice(this, wxID_ANY);
+	statusChoice->Append(_("All"));
+	statusChoice->Append(_("Found"));
+	statusChoice->Append(_("Missing"));
+	statusChoice->SetSelection(0);
+
+	filterSizer->Add(filterLabel, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+	filterSizer->Add(filterText, 1, wxRIGHT | wxEXPAND, 10);
+	filterSizer->Add(sourceLabel, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+	filterSizer->Add(sourceChoice, 0, wxRIGHT, 10);
+	filterSizer->Add(statusLabel, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+	filterSizer->Add(statusChoice, 0);
+	mainSizer->Add(filterSizer, 0, wxALL | wxEXPAND, 8);
+
+	sliderDataList = new wxListCtrl(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT | wxLC_HRULES | wxLC_VRULES);
+	SliderDataList::Configure(sliderDataList, true);
+	mainSizer->Add(sliderDataList, 1, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, 8);
+
+	auto* buttonSizer = new wxBoxSizer(wxHORIZONTAL);
+	btnMakeLocal = new wxButton(this, wxID_ANY, _("Make Local"));
+	btnMakeExternal = new wxButton(this, wxID_ANY, _("Make External"));
+	btnEditFolders = new wxButton(this, wxID_ANY, _("Edit Folders..."));
+	btnRevertToBase = new wxButton(this, wxID_ANY, _("Revert to Base"));
+	btnRevertToBase->SetToolTip(_("Replaces this project's slider data with the base project's again."));
+	btnRevertToBase->Show(project && project->activeSet.HasBaseProject());
+	auto* btnClose = new wxButton(this, wxID_CLOSE, _("Close"));
+	buttonSizer->Add(btnMakeLocal, 0, wxRIGHT, 5);
+	buttonSizer->Add(btnMakeExternal, 0, wxRIGHT, 5);
+	buttonSizer->Add(btnEditFolders, 0, wxRIGHT, 5);
+	buttonSizer->Add(btnRevertToBase, 0, wxRIGHT, 5);
+	buttonSizer->AddStretchSpacer(1);
+	buttonSizer->Add(btnClose, 0);
+	mainSizer->Add(buttonSizer, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, 8);
+
+	SetSizer(mainSizer);
+
+	filterText->Bind(wxEVT_TEXT, [this](wxCommandEvent&) { ApplyFilters(); });
+	sourceChoice->Bind(wxEVT_CHOICE, [this](wxCommandEvent&) { ApplyFilters(); });
+	statusChoice->Bind(wxEVT_CHOICE, [this](wxCommandEvent&) { ApplyFilters(); });
+	sliderDataList->Bind(wxEVT_LIST_ITEM_SELECTED, [this](wxListEvent&) { UpdateButtons(); });
+	sliderDataList->Bind(wxEVT_LIST_ITEM_DESELECTED, [this](wxListEvent&) { UpdateButtons(); });
+	SliderDataList::BindSelectAll(this, sliderDataList, [this]() { UpdateButtons(); });
+	btnMakeLocal->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+		std::vector<size_t> selectedRows;
+		SliderDataList::GetSelectedRows(sliderDataList, rows, selectedRows);
+		if (SliderDataList::MakeLocal(this, this->project, rows, selectedRows))
+			MarkChangedAndRefresh();
+	});
+	btnMakeExternal->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+		std::vector<size_t> selectedRows;
+		SliderDataList::GetSelectedRows(sliderDataList, rows, selectedRows);
+		if (SliderDataList::EditFolders(this, this->project, rows, selectedRows))
+			MarkChangedAndRefresh();
+	});
+	btnEditFolders->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+		std::vector<size_t> selectedRows;
+		SliderDataList::GetSelectedRows(sliderDataList, rows, selectedRows);
+		if (SliderDataList::EditFolders(this, this->project, rows, selectedRows))
+			MarkChangedAndRefresh();
+	});
+	btnRevertToBase->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+		std::vector<size_t> selectedRows;
+		SliderDataList::GetSelectedRows(sliderDataList, rows, selectedRows);
+		if (SliderDataList::RevertToBase(this, this->project, rows, selectedRows)) {
+			if (this->owner)
+				this->owner->ApplySliders();
+			MarkChangedAndRefresh();
+		}
+	});
+	btnClose->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { EndModal(wxID_CLOSE); });
+
+	RefreshRows();
+	CenterOnParent();
+}
+
+void SliderDataLocationsDialog::UpdateButtons() {
+	std::vector<size_t> selectedRows;
+	size_t selectionCount = SliderDataList::GetSelectedRows(sliderDataList, rows, selectedRows);
+	bool allLocal = SliderDataList::AllHaveSource(rows, selectedRows, true);
+	bool allExternal = SliderDataList::AllHaveSource(rows, selectedRows, false);
+	bool anyInherited = SliderDataList::AnyInherited(rows, selectedRows);
+	btnMakeLocal->Enable(selectionCount > 0 && allExternal);
+	btnMakeExternal->Enable(selectionCount > 0 && allLocal);
+	btnEditFolders->Enable(selectionCount > 0 && allExternal && !anyInherited);
+	btnRevertToBase->Enable(SliderDataList::AllOverridden(rows, selectedRows));
+}
+
+void SliderDataLocationsDialog::ApplyFilters() {
+	visibleRows.clear();
+	wxString filter = filterText->GetValue().Lower();
+	int sourceFilter = sourceChoice->GetSelection();
+	int statusFilter = statusChoice->GetSelection();
+
+	for (size_t rowIndex = 0; rowIndex < rows.size(); rowIndex++) {
+		const auto& row = rows[rowIndex];
+		if (sourceFilter == 1 && !row.local)
+			continue;
+		if (sourceFilter == 2 && (row.local || row.inherited))
+			continue;
+		if (sourceFilter == 3 && !row.inherited)
+			continue;
+		if (statusFilter == 1 && !row.resolved)
+			continue;
+		if (statusFilter == 2 && row.resolved)
+			continue;
+
+		if (!filter.IsEmpty()) {
+			wxString haystack = wxString::FromUTF8(row.key.sliderName + " " + row.shapeName + " " + row.key.targetName + " " + row.key.dataName + " " + row.fileName);
+			haystack += " ";
+			haystack += SliderDataList::JoinDataFolders(row.dataFolders);
+			if (!haystack.Lower().Contains(filter))
+				continue;
+		}
+
+		visibleRows.push_back(rowIndex);
+	}
+
+	SliderDataList::Populate(sliderDataList, rows, &visibleRows, true);
+	UpdateButtons();
+}
+
+void SliderDataLocationsDialog::RefreshRows() {
+	if (project)
+		project->GetSliderDataLocations(rows);
+	else
+		rows.clear();
+
+	ApplyFilters();
+}
+
+void SliderDataLocationsDialog::MarkChangedAndRefresh() {
+	if (owner)
+		owner->SetPendingChanges();
+
+	RefreshRows();
+}

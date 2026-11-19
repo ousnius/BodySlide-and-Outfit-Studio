@@ -4,11 +4,11 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
-#include "../components/ClippingFixer.h"
-#include "../components/MaskOps.h"
-#include "../components/StarfieldSpace.h"
-#include "../program/OutfitStudio.h"
-#include "../utils/ConfigurationManager.h"
+#include "components/ClippingFixer.h"
+#include "components/MaskOps.h"
+#include "components/StarfieldSpace.h"
+#include "outfitstudio/OutfitStudio.h"
+#include "utils/ConfigurationManager.h"
 
 #include <algorithm>
 #include <cfloat>

@@ -1,4 +1,4 @@
-#include "../src/components/ArchiveIndex.h"
+#include "components/ArchiveIndex.h"
 
 #include <catch2/catch_test_macros.hpp>
 

@@ -1,4 +1,4 @@
-#include "../src/files/HkxFile.h"
+#include "files/HkxFile.h"
 
 #include <catch2/catch_test_macros.hpp>
 

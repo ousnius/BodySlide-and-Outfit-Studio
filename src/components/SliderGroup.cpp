@@ -4,7 +4,7 @@ See the included LICENSE file
 */
 
 #include "SliderGroup.h"
-#include "../utils/PlatformUtil.h"
+#include "utils/PlatformUtil.h"
 
 #include <wx/dir.h>
 

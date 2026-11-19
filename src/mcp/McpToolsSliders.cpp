@@ -5,14 +5,14 @@ See the included LICENSE file
 
 #include "OutfitStudioMcp.h"
 #include "McpSnapshots.h"
-#include "../program/AutomationRunner.h"
-#include "../components/ClippingFixer.h"
-#include "../components/PoseMath.h"
-#include "../components/SliderPresets.h"
-#include "../components/StarfieldSpace.h"
-#include "../utils/ConfigurationManager.h"
-#include "../utils/ProjectUtil.h"
-#include "../program/OutfitStudio.h"
+#include "project/AutomationRunner.h"
+#include "components/ClippingFixer.h"
+#include "components/PoseMath.h"
+#include "components/SliderPresets.h"
+#include "components/StarfieldSpace.h"
+#include "utils/ConfigurationManager.h"
+#include "utils/ProjectUtil.h"
+#include "outfitstudio/OutfitStudio.h"
 
 #include <wx/filename.h>
 

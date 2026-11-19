@@ -6,9 +6,9 @@ See the included LICENSE file
 #pragma once
 
 #include "Anim.h"
-#include "../utils/AABBTree.h"
-#include "../files/MaterialFile.h"
-#include "../files/SFLayeredMaterial.h"
+#include "utils/AABBTree.h"
+#include "files/MaterialFile.h"
+#include "files/SFLayeredMaterial.h"
 #include "NifFile.hpp"
 
 #include <cstdint>

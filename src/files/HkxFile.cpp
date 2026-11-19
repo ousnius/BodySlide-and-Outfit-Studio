@@ -13,7 +13,7 @@ and PredatorCZ/HavokLib (both GPLv3).
 
 #include "HkxFile.h"
 
-#include "../utils/PlatformUtil.h"
+#include "utils/PlatformUtil.h"
 
 #include <algorithm>
 #include <array>

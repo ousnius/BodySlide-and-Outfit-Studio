@@ -7,7 +7,7 @@ See the included LICENSE file
 
 #include "SliderData.h"
 
-#include "../utils/StringStuff.h"
+#include "utils/StringStuff.h"
 
 #include <cstddef>
 #include <string>

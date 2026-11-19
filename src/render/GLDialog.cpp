@@ -4,7 +4,7 @@ See the included LICENSE file
 */
 
 #include "GLDialog.h"
-#include "../utils/ConfigurationManager.h"
+#include "utils/ConfigurationManager.h"
 
 using namespace nifly;
 

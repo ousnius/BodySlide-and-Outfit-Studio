@@ -1,5 +1,5 @@
-#include "../src/mcp/McpProtocol.h"
-#include "../src/mcp/McpServer.h"
+#include "mcp/McpProtocol.h"
+#include "mcp/McpServer.h"
 
 #include <catch2/catch_test_macros.hpp>
 

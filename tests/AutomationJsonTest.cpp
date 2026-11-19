@@ -1,4 +1,4 @@
-#include "../src/components/AutomationJson.h"
+#include "components/AutomationJson.h"
 
 #include <catch2/catch_test_macros.hpp>
 

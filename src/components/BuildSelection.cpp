@@ -4,7 +4,7 @@ See the included LICENSE file
 */
 
 #include "BuildSelection.h"
-#include "../utils/PlatformUtil.h"
+#include "utils/PlatformUtil.h"
 
 #include <algorithm>
 #include <cmath>

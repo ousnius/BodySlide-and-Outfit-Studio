@@ -4,8 +4,8 @@ See the included LICENSE file
 */
 
 #include "SliderPresets.h"
-#include "../utils/PlatformUtil.h"
-#include "../utils/StringStuff.h"
+#include "utils/PlatformUtil.h"
+#include "utils/StringStuff.h"
 
 #include <tinyxml2.h>
 
