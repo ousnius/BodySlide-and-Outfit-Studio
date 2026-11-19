@@ -270,6 +270,10 @@ OutfitProject& OutfitStudioMcp::Project() {
 	return *project;
 }
 
+AnimSkeleton& OutfitStudioMcp::Skeleton() {
+	return session.Skeleton();
+}
+
 ProjectOperations OutfitStudioMcp::Ops() {
 	return ProjectOperations(Project(), session.Editor());
 }

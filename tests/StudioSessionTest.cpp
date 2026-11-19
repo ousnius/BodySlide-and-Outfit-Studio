@@ -118,6 +118,7 @@ public:
 	EditorState& Editor() override { return editor; }
 	SwitchableHost& Host() override { return host; }
 	PoseDataCollection& Poses() override { return poses; }
+	AnimSkeleton& Skeleton() override { return project.GetSkeleton(); }
 	const std::vector<RefTemplate>& GetRefTemplates() override { return refTemplates; }
 	void UpdateReferenceTemplates() override {}
 

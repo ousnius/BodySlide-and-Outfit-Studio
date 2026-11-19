@@ -268,7 +268,7 @@ McpToolResult BrushStroke(OutfitStudioMcp& mcp, const json& args) {
 
 	if (isWeight) {
 		std::string bone = McpArgs::String(args, "bone");
-		if (!AnimSkeleton::getInstance().GetBonePtr(bone))
+		if (!mcp.Skeleton().GetBonePtr(bone))
 			throw McpToolError("There is no bone '" + bone + "' in the skeleton.");
 
 		session->Editor().activeBone = bone;
@@ -428,7 +428,7 @@ McpToolResult SetWeights(OutfitStudioMcp& mcp, const json& args) {
 	const std::string shapeName = shape->name.get();
 
 	std::string bone = McpArgs::String(args, "bone");
-	if (!AnimSkeleton::getInstance().GetBonePtr(bone))
+	if (!mcp.Skeleton().GetBonePtr(bone))
 		throw McpToolError("There is no bone '" + bone + "' in the skeleton.");
 
 	const json* list = McpArgs::Find(args, "weights");

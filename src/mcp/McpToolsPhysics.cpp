@@ -38,12 +38,12 @@ Vector3 VectorArg(const json& args, const char* name, const Vector3& fallback) {
 }
 
 // Custom bones whose name starts with prefix and a space
-std::vector<std::string> PrefixBones(const std::string& prefix) {
+std::vector<std::string> PrefixBones(AnimSkeleton& skeleton, const std::string& prefix) {
 	std::vector<std::string> names;
-	AnimSkeleton::getInstance().GetBoneNames(names);
+	skeleton.GetBoneNames(names);
 	std::vector<std::string> found;
 	for (auto& name : names) {
-		AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(name);
+		AnimBone* bone = skeleton.GetBonePtr(name);
 		if (bone && !bone->isStandardBone && name.size() > prefix.size() && name.compare(0, prefix.size() + 1, prefix + " ") == 0)
 			found.push_back(name);
 	}
@@ -93,7 +93,7 @@ McpToolResult MakePhysicsChains(OutfitStudioMcp& mcp, const json& args) {
 	OutfitProject& project = mcp.Project();
 	IStudioSession* session = &mcp.Session();
 	AnimInfo* anim = project.GetWorkAnim();
-	AnimSkeleton& skeleton = AnimSkeleton::getInstance();
+	AnimSkeleton& skeleton = mcp.Skeleton();
 
 	// The shapes rigged together: their vertices are one mesh for finding the chains (a hair and a separate part with
 	// the rest of its strands), the weights go back to each
@@ -296,7 +296,7 @@ McpToolResult MakePhysicsChains(OutfitStudioMcp& mcp, const json& args) {
 	}
 
 	// Bones of an earlier run with this prefix go first, with their weights
-	std::vector<std::string> oldBones = PrefixBones(prefix);
+	std::vector<std::string> oldBones = PrefixBones(mcp.Skeleton(), prefix);
 	if (!oldBones.empty()) {
 		if (!McpArgs::Bool(args, "replace", false))
 			throw McpToolError("There are bones named '" + prefix + " ...' already. Pass replace: true to make them again.");
@@ -538,14 +538,13 @@ McpToolResult MakePhysicsChains(OutfitStudioMcp& mcp, const json& args) {
 
 // The chains of the project's custom bones with names starting with prefix: from each bone whose parent isn't one of them
 // down to the end, following the only child
-std::vector<std::vector<std::string>> ChainsFromPrefix(AnimInfo* anim, const std::string& prefix) {
-	AnimSkeleton& skeleton = AnimSkeleton::getInstance();
+std::vector<std::vector<std::string>> ChainsFromPrefix(AnimSkeleton& skeleton, AnimInfo* anim, const std::string& prefix) {
 	// Only bones a shape of the project has: the skeleton keeps custom bones of files loaded before
 	std::set<std::string> used;
 	for (auto& sb : anim->shapeBones)
 		used.insert(sb.second.begin(), sb.second.end());
 	std::vector<std::string> bones;
-	for (auto& b : PrefixBones(prefix))
+	for (auto& b : PrefixBones(skeleton, prefix))
 		if (used.count(b))
 			bones.push_back(b);
 	std::set<std::string> set(bones.begin(), bones.end());
@@ -621,7 +620,7 @@ McpToolResult WritePhysicsXml(OutfitStudioMcp& mcp, const json& args) {
 		}
 	}
 	for (auto& prefix : McpArgs::Strings(args, "prefixes")) {
-		for (auto& bones : ChainsFromPrefix(anim, prefix)) {
+		for (auto& bones : ChainsFromPrefix(mcp.Skeleton(), anim, prefix)) {
 			if (bones.size() < 2)
 				continue;
 			ChainSpec spec;
@@ -734,7 +733,7 @@ McpToolResult WritePhysicsXml(OutfitStudioMcp& mcp, const json& args) {
 	// straight down, where Z is the twist around the strand and X and Y swing it. Unturned, a ponytail sticking out
 	// backwards would swing sideways with the twist limits.
 	const bool alignFrames = McpArgs::Bool(args, "alignFrames", false);
-	AnimSkeleton& skeleton = AnimSkeleton::getInstance();
+	AnimSkeleton& skeleton = mcp.Skeleton();
 	auto bonePos = [&](const std::string& name, bool& ok) {
 		AnimBone* bone = skeleton.GetBonePtr(name);
 		ok = bone != nullptr;
@@ -855,7 +854,7 @@ McpToolResult WritePhysicsXml(OutfitStudioMcp& mcp, const json& args) {
 
 McpToolResult SimulatePhysics(OutfitStudioMcp& mcp, const json& args) {
 	OutfitProject& project = mcp.Project();
-	AnimSkeleton& skeleton = AnimSkeleton::getInstance();
+	AnimSkeleton& skeleton = mcp.Skeleton();
 
 	const std::string xmlOverride = McpArgs::String(args, "xml", "");
 	std::string xmlPath = xmlOverride.empty() ? "" : McpFilePath(xmlOverride);

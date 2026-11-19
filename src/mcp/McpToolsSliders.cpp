@@ -151,8 +151,7 @@ double Degrees(float radians) {
 	return std::round(radians / DEG2RAD * 10.0f) / 10.0;
 }
 
-std::vector<AnimBone*> SkeletonBones() {
-	AnimSkeleton& skeleton = AnimSkeleton::getInstance();
+std::vector<AnimBone*> SkeletonBones(AnimSkeleton& skeleton) {
 	std::vector<std::string> names;
 	skeleton.GetBoneNames(names);
 
@@ -163,8 +162,8 @@ std::vector<AnimBone*> SkeletonBones() {
 	return bones;
 }
 
-AnimBone* SkeletonBone(const std::string& name) {
-	AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(name);
+AnimBone* SkeletonBone(AnimSkeleton& skeleton, const std::string& name) {
+	AnimBone* bone = skeleton.GetBonePtr(name);
 	if (!bone)
 		throw McpToolError("There is no bone '" + name + "' in the skeleton. list_skeleton_bones lists them.");
 	return bone;
@@ -267,7 +266,7 @@ json Balance(OutfitStudioMcp& mcp) {
 
 	const float units = McpBoneUnits(mcp);
 	std::vector<Vector3> feet;
-	for (AnimBone* bone : PoseMath::MainBones(SkeletonBones()))
+	for (AnimBone* bone : PoseMath::MainBones(SkeletonBones(mcp.Skeleton())))
 		if (PoseMath::GetBoneRole(bone->boneName).role.rfind("foot", 0) == 0)
 			feet.push_back(bone->xformPoseToGlobal.translation * units);
 
@@ -364,7 +363,7 @@ McpToolResult GetPose(OutfitStudioMcp& mcp, bool posed, const json& args = json:
 		const float units = McpBoneUnits(mcp);
 		json transforms = json::object();
 		for (auto& name : names)
-			transforms[name] = BoneTransform(SkeletonBone(name), context, units);
+			transforms[name] = BoneTransform(SkeletonBone(mcp.Skeleton(), name), context, units);
 		result.data["transforms"] = transforms;
 	}
 
@@ -456,7 +455,7 @@ float McpBoneUnits(OutfitStudioMcp& mcp) {
 
 PoseMath::TwistContext McpTwistContext(OutfitStudioMcp& mcp) {
 	PoseMath::TwistContext context;
-	context.bones = SkeletonBones();
+	context.bones = SkeletonBones(mcp.Skeleton());
 
 	OutfitProject& project = mcp.Project();
 	AnimInfo* anim = project.GetWorkAnim();
@@ -1447,7 +1446,7 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 		};
 		std::vector<Plant> plants;
 		for (auto& name : McpArgs::Strings(args, "plant")) {
-			AnimBone* bone = SkeletonBone(name);
+			AnimBone* bone = SkeletonBone(mcp.Skeleton(), name);
 			AnimBone* upper = nullptr;
 			AnimBone* lower = nullptr;
 			if (!PoseMath::LimbChain(bone, upper, lower))
@@ -1517,13 +1516,13 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 		const float units = McpBoneUnits(mcp);
 		if (const json* list = objectArg("shift"))
 			for (auto& item : list->items())
-				changes.push_back({SkeletonBone(item.key()), Kind::Shift, ToBoneUnits(VectorFromJson(item.value(), "shift of " + item.key()), units)});
+				changes.push_back({SkeletonBone(mcp.Skeleton(), item.key()), Kind::Shift, ToBoneUnits(VectorFromJson(item.value(), "shift of " + item.key()), units)});
 		if (const json* list = objectArg("worldRotation"))
 			for (auto& item : list->items())
-				changes.push_back({SkeletonBone(item.key()), Kind::Turn, VectorFromJson(item.value(), "worldRotation of " + item.key()) * DEG2RAD});
+				changes.push_back({SkeletonBone(mcp.Skeleton(), item.key()), Kind::Turn, VectorFromJson(item.value(), "worldRotation of " + item.key()) * DEG2RAD});
 		if (const json* list = objectArg("aim")) {
 			for (auto& item : list->items()) {
-				Change change{SkeletonBone(item.key()), Kind::Aim};
+				Change change{SkeletonBone(mcp.Skeleton(), item.key()), Kind::Aim};
 				if (item.value().is_object()) {
 					if (!item.value().contains("direction"))
 						throw McpToolError("aim of " + item.key() + " needs a direction.");
@@ -1545,14 +1544,14 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 				if (!item.value().is_object())
 					throw McpToolError("tilt of " + item.key() + " has to be {right, front, up}.");
 				Vector3 degrees(McpArgs::Float(item.value(), "right", 0.0f), McpArgs::Float(item.value(), "front", 0.0f), McpArgs::Float(item.value(), "up", 0.0f));
-				changes.push_back({SkeletonBone(item.key()), Kind::Tilt, degrees * DEG2RAD});
+				changes.push_back({SkeletonBone(mcp.Skeleton(), item.key()), Kind::Tilt, degrees * DEG2RAD});
 			}
 		}
 		if (const json* list = objectArg("twist")) {
 			for (auto& item : list->items()) {
 				if (!item.value().is_number())
 					throw McpToolError("twist of " + item.key() + " has to be a number of degrees.");
-				Change change{SkeletonBone(item.key()), Kind::Twist};
+				Change change{SkeletonBone(mcp.Skeleton(), item.key()), Kind::Twist};
 				change.twist = item.value().get<float>() * DEG2RAD;
 				changes.push_back(change);
 			}
@@ -1605,7 +1604,7 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 			};
 			std::vector<Reach> reaches;
 			for (auto& item : list->items()) {
-				AnimBone* bone = SkeletonBone(item.key());
+				AnimBone* bone = SkeletonBone(mcp.Skeleton(), item.key());
 				AnimBone* upper = nullptr;
 				AnimBone* lower = nullptr;
 				if (!PoseMath::LimbChain(bone, upper, lower))
@@ -1620,9 +1619,9 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 				const json& target = reach.spec["target"];
 				Vector3 position;
 				if (target.is_string())
-					position = SkeletonBone(target.get<std::string>())->xformPoseToGlobal.translation;
+					position = SkeletonBone(mcp.Skeleton(), target.get<std::string>())->xformPoseToGlobal.translation;
 				else if (target.is_object()) {
-					position = SkeletonBone(McpArgs::String(target, "bone"))->xformPoseToGlobal.translation;
+					position = SkeletonBone(mcp.Skeleton(), McpArgs::String(target, "bone"))->xformPoseToGlobal.translation;
 					if (target.contains("offset"))
 						position += ToBoneUnits(VectorFromJson(target["offset"], "reach offset of " + reach.bone->boneName), units);
 				}

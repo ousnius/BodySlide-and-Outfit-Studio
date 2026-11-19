@@ -205,7 +205,7 @@ size_t ApplyWeights(OutfitStudioMcp& mcp, NiShape* shape, const std::map<std::st
 }
 
 // The name of the bone on the other side of the body, or the name itself when there is none
-std::string MirrorBoneName(const std::string& name) {
+std::string MirrorBoneName(AnimSkeleton& skeleton, const std::string& name) {
 	static const std::vector<std::pair<std::string, std::string>> pairs = {
 		{" L ", " R "}, {"[L", "[R"}, {"Left", "Right"}, {"left", "right"}, {"_L", "_R"}, {".L", ".R"}, {"L_", "R_"},
 	};
@@ -230,7 +230,7 @@ std::string MirrorBoneName(const std::string& name) {
 			mirrored += name[i++];
 	}
 
-	if (mirrored != name && AnimSkeleton::getInstance().GetBonePtr(mirrored))
+	if (mirrored != name && skeleton.GetBonePtr(mirrored))
 		return mirrored;
 	return name;
 }
@@ -839,7 +839,7 @@ McpToolResult MirrorWeights(OutfitStudioMcp& mcp, const json& args) {
 				float w = WeightOf(anim, shapeName, bone, t.p1) * sp.u + WeightOf(anim, shapeName, bone, t.p2) * sp.v + WeightOf(anim, shapeName, bone, t.p3) * sp.w;
 				if (w <= 0.0f)
 					continue;
-				goal[MirrorBoneName(bone)] += w;
+				goal[MirrorBoneName(mcp.Skeleton(), bone)] += w;
 				sum += w;
 			}
 			if (sum <= 0.0f) {
@@ -926,7 +926,7 @@ public:
 			std::vector<MatTransform> list(bones.size());
 			std::vector<bool> valid(bones.size(), false);
 			for (size_t b = 0; b < bones.size(); b++) {
-				AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(bones[b]);
+				AnimBone* bone = mcp.Skeleton().GetBonePtr(bones[b]);
 				MatTransform skinToBone;
 				if (!bone || !anim->GetXFormSkinToBone(shapeName, bones[b], skinToBone))
 					continue;
@@ -1179,7 +1179,7 @@ McpToolResult ReassignWeights(OutfitStudioMcp& mcp, const json& args) {
 			targets[bone] = to;
 			continue;
 		}
-		AnimBone* animBone = AnimSkeleton::getInstance().GetBonePtr(bone);
+		AnimBone* animBone = mcp.Skeleton().GetBonePtr(bone);
 		if (!animBone || !animBone->parent)
 			throw McpToolError("The skeleton has no parent for '" + bone + "'.");
 		targets[bone] = animBone->parent->boneName;

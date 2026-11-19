@@ -67,15 +67,15 @@ json BonePoseInfo(const AnimBone& bone, bool main, const PoseMath::TwistContext&
 	return info;
 }
 
-McpToolResult BoneResult(const std::string& name) {
+McpToolResult BoneResult(AnimSkeleton& skeleton, const std::string& name) {
 	McpToolResult result;
-	AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(name);
+	AnimBone* bone = skeleton.GetBonePtr(name);
 	result.data["bone"] = bone ? BoneJson(*bone) : json(nullptr);
 	return result;
 }
 
 // Custom bones are added and edited with a transform to the parent bone
-json CustomBoneStep(const char* type, const json& args) {
+json CustomBoneStep(AnimSkeleton& skeleton, const char* type, const json& args) {
 	std::string name = McpArgs::String(args, "name");
 	if (name.empty())
 		McpArgs::Wrong("name", "a bone name");
@@ -88,7 +88,7 @@ json CustomBoneStep(const char* type, const json& args) {
 		if (McpArgs::Has(args, "translation"))
 			McpArgs::Wrong("globalPosition", "either globalPosition or translation, not both");
 		translation = VectorArg(args, "globalPosition");
-		if (AnimBone* parent = parentName.empty() ? nullptr : AnimSkeleton::getInstance().GetBonePtr(parentName))
+		if (AnimBone* parent = parentName.empty() ? nullptr : skeleton.GetBonePtr(parentName))
 			translation = parent->xformToGlobal.InverseTransform().ApplyTransform(translation);
 	}
 	return {
@@ -138,7 +138,7 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 		const bool mainOnly = McpArgs::Bool(args, "mainOnly", false);
 		const bool withPoseInfo = McpArgs::Bool(args, "withPoseInfo", false);
 
-		AnimSkeleton& skel = AnimSkeleton::getInstance();
+		AnimSkeleton& skel = mcp.Skeleton();
 		std::vector<std::string> names;
 		skel.GetBoneNames(names);
 
@@ -187,7 +187,7 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 		if (bones.empty())
 			McpArgs::Wrong("bones", "a list of bone names");
 		for (auto& bone : bones)
-			if (!AnimSkeleton::getInstance().GetBonePtr(bone))
+			if (!mcp.Skeleton().GetBonePtr(bone))
 				throw McpToolError("The skeleton has no bone '" + bone + "'. list_skeleton_bones lists them.");
 		McpRunStep(mcp, {{"type", "AddBone"}, {"BoneNames", bones}});
 		session->UpdateAnimationGUI();
@@ -195,7 +195,7 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 		McpToolResult result;
 		json list = json::array();
 		for (auto& bone : bones)
-			list.push_back(BoneJson(*AnimSkeleton::getInstance().GetBonePtr(bone)));
+			list.push_back(BoneJson(*mcp.Skeleton().GetBonePtr(bone)));
 		result.data["bones"] = list;
 		return result;
 	};
@@ -215,14 +215,14 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 		{"name"});
 	addCustom.handler = [&mcp, session](const json& args) {
 		std::string name = McpArgs::String(args, "name");
-		if (AnimSkeleton::getInstance().GetBonePtr(name))
+		if (mcp.Skeleton().GetBonePtr(name))
 			throw McpToolError("There already is a bone '" + name + "'. Use edit_bone to change a custom bone.");
 		std::string parent = McpArgs::String(args, "parent", "");
-		if (!parent.empty() && !AnimSkeleton::getInstance().GetBonePtr(parent))
+		if (!parent.empty() && !mcp.Skeleton().GetBonePtr(parent))
 			throw McpToolError("There is no parent bone '" + parent + "'.");
-		McpRunStep(mcp, CustomBoneStep("AddCustomBone", args));
+		McpRunStep(mcp, CustomBoneStep(mcp.Skeleton(), "AddCustomBone", args));
 		session->UpdateAnimationGUI();
-		return BoneResult(name);
+		return BoneResult(mcp.Skeleton(), name);
 	};
 	mcp.AddTool(std::move(addCustom));
 
@@ -240,14 +240,14 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 		{"name"});
 	editBone.handler = [&mcp, session](const json& args) {
 		std::string name = McpArgs::String(args, "name");
-		AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(name);
+		AnimBone* bone = mcp.Skeleton().GetBonePtr(name);
 		if (!bone)
 			throw McpToolError("There is no bone '" + name + "'.");
 		if (bone->isStandardBone)
 			throw McpToolError("'" + name + "' is a bone of the reference skeleton, only custom bones can be edited.");
-		McpRunStep(mcp, CustomBoneStep("EditBone", args));
+		McpRunStep(mcp, CustomBoneStep(mcp.Skeleton(), "EditBone", args));
 		session->UpdateAnimationGUI();
-		return BoneResult(name);
+		return BoneResult(mcp.Skeleton(), name);
 	};
 	mcp.AddTool(std::move(editBone));
 
@@ -283,7 +283,7 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 
 		// The names are checked here, so a taken one comes back as an error the caller can act on
 		for (auto& bone : bones)
-			if (!AnimSkeleton::getInstance().GetBonePtr(bone))
+			if (!mcp.Skeleton().GetBonePtr(bone))
 				throw McpToolError("There is no bone '" + bone + "'.");
 		const std::vector<std::string> newNames = OutfitProject::DuplicateBoneNames(bones, find, replace, suffix);
 		const auto conflicts = OutfitProject::DuplicateBoneConflicts(bones, newNames);
@@ -297,7 +297,7 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 		const std::string parent = McpArgs::String(args, "parent", "");
 		if (!parent.empty() && std::find(newNames.begin(), newNames.end(), parent) != newNames.end())
 			throw McpToolError("The copies can't hang from one of themselves, '" + parent + "'.");
-		if (!parent.empty() && !AnimSkeleton::getInstance().GetBonePtr(parent))
+		if (!parent.empty() && !mcp.Skeleton().GetBonePtr(parent))
 			throw McpToolError("There is no parent bone '" + parent + "'.");
 
 		McpRunStep(mcp,
@@ -313,7 +313,7 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 		McpToolResult result;
 		json list = json::array();
 		for (auto& newName : newNames)
-			if (AnimBone* copy = AnimSkeleton::getInstance().GetBonePtr(newName))
+			if (AnimBone* copy = mcp.Skeleton().GetBonePtr(newName))
 				list.push_back(BoneJson(*copy));
 		result.data["names"] = mapping;
 		result.data["bones"] = list;
@@ -333,7 +333,7 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 		if (bones.empty())
 			McpArgs::Wrong("bones", "a list of bone names");
 		for (auto& bone : bones) {
-			AnimBone* bPtr = AnimSkeleton::getInstance().GetBonePtr(bone);
+			AnimBone* bPtr = mcp.Skeleton().GetBonePtr(bone);
 			if (!bPtr)
 				throw McpToolError("There is no bone '" + bone + "'.");
 			if (bPtr->isStandardBone)
@@ -346,7 +346,7 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 		McpToolResult result;
 		json list = json::array();
 		for (auto& bone : bones)
-			list.push_back(BoneJson(*AnimSkeleton::getInstance().GetBonePtr(bone)));
+			list.push_back(BoneJson(*mcp.Skeleton().GetBonePtr(bone)));
 		result.data["bones"] = list;
 		return result;
 	};

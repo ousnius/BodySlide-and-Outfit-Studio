@@ -25,6 +25,7 @@ struct PenetrationStats;
 }
 
 class IStudioSession;
+class AnimSkeleton;
 class OutfitProject;
 class ProjectOperations;
 class McpSnapshotStore;
@@ -87,6 +88,8 @@ public:
 
 	// Helpers for tool handlers, main thread only. They throw an McpToolError when something's missing.
 	OutfitProject& Project();
+	// The skeleton of the project, also while none is open
+	AnimSkeleton& Skeleton();
 	ProjectOperations Ops();
 	nifly::NiShape* Shape(const std::string& name);
 	// The shapes named in args[name], or the selected outfit shapes if there are none

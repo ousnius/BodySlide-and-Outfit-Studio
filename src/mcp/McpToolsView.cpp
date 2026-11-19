@@ -191,7 +191,7 @@ Vector3 CameraTarget(OutfitStudioMcp& mcp, const json& target) {
 		return VectorFromJson(target, "orbit target");
 
 	const std::string name = target.get<std::string>();
-	if (AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(name))
+	if (AnimBone* bone = mcp.Skeleton().GetBonePtr(name))
 		return (mcp.Project().bPose ? bone->xformPoseToGlobal : bone->xformToGlobal).translation * McpBoneUnits(mcp);
 
 	NiShape* shape = mcp.Project().GetWorkNif()->FindBlockByName<NiShape>(name);
@@ -270,7 +270,7 @@ struct SkeletonOverlay {
 	bool only = false;
 };
 
-std::optional<SkeletonOverlay> SkeletonArg(const json& args) {
+std::optional<SkeletonOverlay> SkeletonArg(AnimSkeleton& skeleton, const json& args) {
 	const json* value = McpArgs::Find(args, "skeleton");
 	if (!value || (value->is_boolean() && !value->get<bool>()))
 		return std::nullopt;
@@ -293,7 +293,6 @@ std::optional<SkeletonOverlay> SkeletonArg(const json& args) {
 	else if (!value->is_boolean())
 		McpArgs::Wrong("skeleton", "true or {bones, labels, only}");
 
-	AnimSkeleton& skeleton = AnimSkeleton::getInstance();
 	if (mode == "list") {
 		for (auto& name : names) {
 			AnimBone* bone = skeleton.GetBonePtr(name);
@@ -565,7 +564,7 @@ McpToolResult RenderView(OutfitStudioMcp& mcp, const json& args) {
 	if (const json* orbit = McpArgs::Find(args, "orbit"))
 		ApplyOrbit(mcp, state.camera, *orbit);
 
-	std::optional<SkeletonOverlay> skeleton = SkeletonArg(args);
+	std::optional<SkeletonOverlay> skeleton = SkeletonArg(mcp.Skeleton(), args);
 	if (skeleton && skeleton->only)
 		for (auto& shape : state.shapes)
 			shape.second = ShapeDisplayMode::Hidden;

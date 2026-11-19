@@ -43,6 +43,10 @@ PoseDataCollection& OutfitStudioSession::Poses() {
 	return frame.poseDataCollection;
 }
 
+AnimSkeleton& OutfitStudioSession::Skeleton() {
+	return frame.project ? frame.project->GetSkeleton() : AnimSkeleton::getInstance();
+}
+
 const std::vector<RefTemplate>& OutfitStudioSession::GetRefTemplates() {
 	return frame.GetRefTemplates();
 }

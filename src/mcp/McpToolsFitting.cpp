@@ -58,7 +58,7 @@ PoseFit::Template MakeTemplate(OutfitProject& project, NiShape* shape, float uni
 
 	size_t weighted = 0;
 	for (auto& boneName : skin->second.boneNames) {
-		AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(boneName.first);
+		AnimBone* bone = project.GetSkeleton().GetBonePtr(boneName.first);
 		auto weights = skin->second.boneWeights.find(boneName.second);
 		if (!bone || weights == skin->second.boneWeights.end())
 			continue;
@@ -171,8 +171,7 @@ std::optional<float> BorderGap(const std::vector<Vector3>& verts,
 	return gaps[gaps.size() / 2];
 }
 
-std::vector<AnimBone*> SkeletonBoneList() {
-	AnimSkeleton& skeleton = AnimSkeleton::getInstance();
+std::vector<AnimBone*> SkeletonBoneList(AnimSkeleton& skeleton) {
 	std::vector<std::string> names;
 	skeleton.GetBoneNames(names);
 	std::vector<AnimBone*> bones;
@@ -182,8 +181,8 @@ std::vector<AnimBone*> SkeletonBoneList() {
 	return bones;
 }
 
-AnimBone* BoneByName(const std::string& name) {
-	AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(name);
+AnimBone* BoneByName(AnimSkeleton& skeleton, const std::string& name) {
+	AnimBone* bone = skeleton.GetBonePtr(name);
 	if (!bone)
 		throw McpToolError("There is no bone '" + name + "' in the skeleton. list_skeleton_bones lists them.");
 	return bone;
@@ -195,7 +194,7 @@ bool IsFinger(const AnimBone* bone) {
 
 // The bones to fit by default: the main bones that move template skin, the fingers with fingers: true, and the bone
 // above them all (COM in Skyrim), so the body as a whole can move
-std::vector<AnimBone*> DefaultFitBones(const std::vector<PoseFit::Template>& templates, bool fingers) {
+std::vector<AnimBone*> DefaultFitBones(AnimSkeleton& skeleton, const std::vector<PoseFit::Template>& templates, bool fingers) {
 	std::set<const AnimBone*> skinned;
 	for (auto& t : templates)
 		for (auto& vertex : t.influences)
@@ -214,7 +213,7 @@ std::vector<AnimBone*> DefaultFitBones(const std::vector<PoseFit::Template>& tem
 		return false;
 	};
 
-	std::vector<AnimBone*> all = SkeletonBoneList();
+	std::vector<AnimBone*> all = SkeletonBoneList(skeleton);
 	std::vector<AnimBone*> bones;
 	for (AnimBone* bone : PoseMath::MainBones(all))
 		if (movesSkin(bone))
@@ -285,10 +284,10 @@ McpToolResult FitPoseToShapes(OutfitStudioMcp& mcp, const json& args) {
 	PoseFit::Options options;
 	if (McpArgs::Has(args, "bones")) {
 		for (auto& name : McpArgs::Strings(args, "bones"))
-			options.bones.push_back(BoneByName(name));
+			options.bones.push_back(BoneByName(mcp.Skeleton(), name));
 	}
 	else
-		options.bones = DefaultFitBones(templates, McpArgs::Bool(args, "fingers", false));
+		options.bones = DefaultFitBones(mcp.Skeleton(), templates, McpArgs::Bool(args, "fingers", false));
 	if (options.bones.empty())
 		throw McpToolError("No bones to fit: the templates move no main bones of the skeleton.");
 
@@ -463,7 +462,7 @@ McpToolResult UnposeShapes(OutfitStudioMcp& mcp, const json& args) {
 
 	std::vector<AnimBone*> excluded;
 	for (auto& name : McpArgs::Strings(args, "excludeBones"))
-		excluded.push_back(BoneByName(name));
+		excluded.push_back(BoneByName(mcp.Skeleton(), name));
 
 	const float searchRadius = McpArgs::Float(args, "searchRadius", 50.0f) / units;
 	const int smoothIterations = std::clamp(McpArgs::Int(args, "smoothIterations", 4), 0, 100);

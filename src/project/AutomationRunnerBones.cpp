@@ -98,7 +98,7 @@ int AutomationRunner::ExecuteStepEditBone(const AutomationStep& step) {
 		return 1;
 	}
 
-	AnimBone* bPtr = AnimSkeleton::getInstance().GetBonePtr(step.editBoneName);
+	AnimBone* bPtr = session->Skeleton().GetBonePtr(step.editBoneName);
 	if (!bPtr) {
 		wxLogError("Automation: EditBone - bone '%s' not found.", step.editBoneName);
 		return 1;
@@ -197,9 +197,9 @@ int AutomationRunner::ExecuteStepApplyPose(const AutomationStep& step) {
 
 	// Set bone poses from PoseData
 	std::vector<std::string> boneNames;
-	AnimSkeleton::getInstance().GetActiveBoneNames(boneNames);
+	session->Skeleton().GetActiveBoneNames(boneNames);
 	for (const auto& boneName : boneNames) {
-		AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
+		AnimBone* bone = session->Skeleton().GetBonePtr(boneName);
 		if (!bone)
 			continue;
 
@@ -227,7 +227,7 @@ int AutomationRunner::ExecuteStepApplyPose(const AutomationStep& step) {
 
 	// Reset bone poses after applying
 	for (const auto& boneName : boneNames) {
-		AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
+		AnimBone* bone = session->Skeleton().GetBonePtr(boneName);
 		if (!bone)
 			continue;
 		bone->poseRotVec = nifly::Vector3(0.0f, 0.0f, 0.0f);
@@ -260,7 +260,7 @@ int AutomationRunner::ExecuteStepAddBone(const AutomationStep& step) {
 
 	int addedCount = 0;
 	for (const auto& boneName : step.addBoneRefNames) {
-		if (!AnimSkeleton::getInstance().GetBonePtr(boneName)) {
+		if (!session->Skeleton().GetBonePtr(boneName)) {
 			wxLogWarning("Automation: AddBone - '%s' is not in the loaded skeleton, skipping.", boneName);
 			continue;
 		}

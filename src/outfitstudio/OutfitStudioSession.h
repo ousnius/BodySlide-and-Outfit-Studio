@@ -19,6 +19,7 @@ public:
 	EditorState& Editor() override;
 	SwitchableHost& Host() override;
 	PoseDataCollection& Poses() override;
+	AnimSkeleton& Skeleton() override;
 	const std::vector<RefTemplate>& GetRefTemplates() override;
 	void UpdateReferenceTemplates() override;
 

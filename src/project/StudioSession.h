@@ -11,6 +11,7 @@ See the included LICENSE file
 #include <unordered_map>
 #include <vector>
 
+class AnimSkeleton;
 class GLSurface;
 class MainThreadDispatcher;
 class Mesh;
@@ -46,6 +47,8 @@ public:
 	// Answers the project's prompts, also while they are switched off for an unattended call
 	virtual SwitchableHost& Host() = 0;
 	virtual PoseDataCollection& Poses() = 0;
+	// The skeleton the bones of the project come from, also while no project is open
+	virtual AnimSkeleton& Skeleton() = 0;
 	virtual const std::vector<RefTemplate>& GetRefTemplates() = 0;
 	virtual void UpdateReferenceTemplates() = 0;
 
