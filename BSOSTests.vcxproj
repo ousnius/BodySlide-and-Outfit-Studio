@@ -120,7 +120,7 @@
       <ExternalWarningLevel>Level1</ExternalWarningLevel>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Catch2Maind.lib;Catch2d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Catch2Maind.lib;Catch2d.lib;glu32.lib;opengl32.lib;dbghelp.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(WxLibraryDirectory)$(Catch2DebugLibraryDirectories)$(VcpkgCatch2DebugLibraryDirectories)%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
@@ -131,8 +131,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(Catch2IncludeDirectories)..\wxWidgets\include\msvc;..\wxWidgets\include;src;lib;lib\gli;lib\fkYAML\include;lib\nifly\include;lib\nifly\external;lib\nlohmannjson\include;lib\TinyXML-2;lib\cpp-httplib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN64;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;BSOS_TEST_DATA_DIR="tests/data";WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(Catch2IncludeDirectories)..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\2020.3.7\include;..\bullet3\install\include\bullet;src;lib;lib\gli;lib\fkYAML\include;lib\nifly\include;lib\nifly\external;lib\nlohmannjson\include;lib\TinyXML-2;lib\cpp-httplib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN64;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;BSOS_TEST_DATA_DIR="tests/data";WIN32_LEAN_AND_MEAN;NOMINMAX;USE_FBXSDK;USE_BULLET;BT_USE_SSE_IN_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -144,10 +144,11 @@
       <ExternalWarningLevel>Level1</ExternalWarningLevel>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Catch2Maind.lib;Catch2d.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(WxLibraryDirectory)$(Catch2DebugLibraryDirectories)$(VcpkgCatch2DebugLibraryDirectories)%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Catch2Maind.lib;Catch2d.lib;glu32.lib;opengl32.lib;dbghelp.lib;winmm.lib;libfbxsdk-mt.lib;libxml2-mt.lib;zlib-mt.lib;BulletDynamics_Debug.lib;BulletCollision_Debug.lib;LinearMath_Debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(WxLibraryDirectory)..\FBX SDK\2020.3.7\lib\x64\debug;..\bullet3\install\lib;$(Catch2DebugLibraryDirectories)$(VcpkgCatch2DebugLibraryDirectories)%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
+      <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <IgnoreSpecificDefaultLibraries>libcmt.lib</IgnoreSpecificDefaultLibraries>
     </Link>
@@ -168,7 +169,7 @@
       <ExternalWarningLevel>Level1</ExternalWarningLevel>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Catch2Main.lib;Catch2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Catch2Main.lib;Catch2.lib;glu32.lib;opengl32.lib;dbghelp.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(WxLibraryDirectory)$(Catch2ReleaseLibraryDirectories)$(VcpkgCatch2ReleaseLibraryDirectories)%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
@@ -181,8 +182,8 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(Catch2IncludeDirectories)..\wxWidgets\include\msvc;..\wxWidgets\include;src;lib;lib\gli;lib\fkYAML\include;lib\nifly\include;lib\nifly\external;lib\nlohmannjson\include;lib\TinyXML-2;lib\cpp-httplib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN64;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;BSOS_TEST_DATA_DIR="tests/data";WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(Catch2IncludeDirectories)..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\2020.3.7\include;..\bullet3\install\include\bullet;src;lib;lib\gli;lib\fkYAML\include;lib\nifly\include;lib\nifly\external;lib\nlohmannjson\include;lib\TinyXML-2;lib\cpp-httplib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN64;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;BSOS_TEST_DATA_DIR="tests/data";WIN32_LEAN_AND_MEAN;NOMINMAX;USE_FBXSDK;USE_BULLET;BT_USE_SSE_IN_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>Level4</WarningLevel>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -193,10 +194,11 @@
       <ExternalWarningLevel>Level1</ExternalWarningLevel>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Catch2Main.lib;Catch2.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(WxLibraryDirectory)$(Catch2ReleaseLibraryDirectories)$(VcpkgCatch2ReleaseLibraryDirectories)%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Catch2Main.lib;Catch2.lib;glu32.lib;opengl32.lib;dbghelp.lib;winmm.lib;libfbxsdk-mt.lib;libxml2-mt.lib;zlib-mt.lib;BulletDynamics.lib;BulletCollision.lib;LinearMath.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(WxLibraryDirectory)..\FBX SDK\2020.3.7\lib\x64\release;..\bullet3\install\lib;$(Catch2ReleaseLibraryDirectories)$(VcpkgCatch2ReleaseLibraryDirectories)%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
+      <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
@@ -235,6 +237,79 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="tests\SFMaterialDatabaseTest.cpp" />
+    <ClCompile Include="lib\LZ4F\lz4file.c" />
+    <ClCompile Include="lib\SOIL2\SOIL2.c" />
+    <ClCompile Include="lib\SOIL2\image_DXT.c" />
+    <ClCompile Include="lib\SOIL2\image_array.c" />
+    <ClCompile Include="lib\SOIL2\image_helper.c" />
+    <ClCompile Include="lib\SOIL2\wfETC.c" />
+    <ClCompile Include="lib\gli\glm\detail\glm.cpp" />
+    <ClCompile Include="src\components\PoseDataHkx.cpp" />
+    <ClCompile Include="src\components\RefTemplates.cpp" />
+    <ClCompile Include="src\components\SliderCategories.cpp" />
+    <ClCompile Include="src\components\SliderGroup.cpp" />
+    <ClCompile Include="src\files\EXRImage.cpp" />
+    <ClCompile Include="src\files\FBXWrangler.cpp" />
+    <ClCompile Include="src\files\MaskFile.cpp" />
+    <ClCompile Include="src\files\wxDDSImage.cpp" />
+    <ClCompile Include="src\mcp\McpSnapshots.cpp" />
+    <ClCompile Include="src\mcp\McpToolsAnalysis.cpp" />
+    <ClCompile Include="src\mcp\McpToolsArchives.cpp" />
+    <ClCompile Include="src\mcp\McpToolsAutomation.cpp" />
+    <ClCompile Include="src\mcp\McpToolsBones.cpp" />
+    <ClCompile Include="src\mcp\McpToolsEdit.cpp" />
+    <ClCompile Include="src\mcp\McpToolsFitting.cpp" />
+    <ClCompile Include="src\mcp\McpToolsGames.cpp" />
+    <ClCompile Include="src\mcp\McpToolsGuides.cpp" />
+    <ClCompile Include="src\mcp\McpToolsMeasure.cpp" />
+    <ClCompile Include="src\mcp\McpToolsPhysics.cpp" />
+    <ClCompile Include="src\mcp\McpToolsProject.cpp" />
+    <ClCompile Include="src\mcp\McpToolsQuality.cpp" />
+    <ClCompile Include="src\mcp\McpToolsShapes.cpp" />
+    <ClCompile Include="src\mcp\McpToolsSliderFiles.cpp" />
+    <ClCompile Include="src\mcp\McpToolsSliders.cpp" />
+    <ClCompile Include="src\mcp\McpToolsTextures.cpp" />
+    <ClCompile Include="src\mcp\McpToolsView.cpp" />
+    <ClCompile Include="src\mcp\OutfitStudioMcp.cpp" />
+    <ClCompile Include="src\physics\Controller.cpp" />
+    <ClCompile Include="src\physics\DebugDraw.cpp" />
+    <ClCompile Include="src\physics\SystemBuilder.cpp" />
+    <ClCompile Include="src\physics\hdt\XmlReader.cpp" />
+    <ClCompile Include="src\physics\hdt\hdtBoneScaleConstraint.cpp" />
+    <ClCompile Include="src\physics\hdt\hdtCollider.cpp" />
+    <ClCompile Include="src\physics\hdt\hdtConeTwistConstraint.cpp" />
+    <ClCompile Include="src\physics\hdt\hdtDispatcher.cpp" />
+    <ClCompile Include="src\physics\hdt\hdtGeneric6DofConstraint.cpp" />
+    <ClCompile Include="src\physics\hdt\hdtSkinnedMeshAlgorithm.cpp" />
+    <ClCompile Include="src\physics\hdt\hdtSkinnedMeshBody.cpp" />
+    <ClCompile Include="src\physics\hdt\hdtSkinnedMeshBone.cpp" />
+    <ClCompile Include="src\physics\hdt\hdtSkinnedMeshShape.cpp" />
+    <ClCompile Include="src\physics\hdt\hdtSkinnedMeshSystem.cpp" />
+    <ClCompile Include="src\physics\hdt\hdtSkinnedMeshWorld.cpp" />
+    <ClCompile Include="src\physics\hdt\hdtStiffSpringConstraint.cpp" />
+    <ClCompile Include="src\physics\hdt\hdtVertex.cpp" />
+    <ClCompile Include="src\project\AutomationRunner.cpp" />
+    <ClCompile Include="src\project\AutomationRunnerBones.cpp" />
+    <ClCompile Include="src\project\AutomationRunnerMasks.cpp" />
+    <ClCompile Include="src\project\AutomationRunnerProject.cpp" />
+    <ClCompile Include="src\project\AutomationRunnerProperties.cpp" />
+    <ClCompile Include="src\project\AutomationRunnerShapes.cpp" />
+    <ClCompile Include="src\project\AutomationRunnerSliders.cpp" />
+    <ClCompile Include="src\project\GameImport.cpp" />
+    <ClCompile Include="src\render\GLCanvas.cpp" />
+    <ClCompile Include="src\render\GLDialog.cpp" />
+    <ClCompile Include="src\render\GLExtensions.cpp" />
+    <ClCompile Include="src\render\GLHDRiEnvironment.cpp" />
+    <ClCompile Include="src\render\GLMaterial.cpp" />
+    <ClCompile Include="src\render\GLOffscreenBuffer.cpp" />
+    <ClCompile Include="src\render\GLShader.cpp" />
+    <ClCompile Include="src\render\GLSurface.cpp" />
+    <ClCompile Include="src\render\MeshBuffers.cpp" />
+    <ClCompile Include="src\render\ResourceLoader.cpp" />
+    <ClCompile Include="src\utils\Log.cpp" />
+    <ClCompile Include="src\utils\StackTrace.cpp" />
+    <ClCompile Include="src\utils\WxBuildConfigCheck.cpp" />
+    <ClCompile Include="tests\StudioSessionTest.cpp" />
     <ClCompile Include="tests\AnimTest.cpp" />
     <ClCompile Include="tests\ClothDataTest.cpp" />
     <ClCompile Include="tests\SFLayeredMaterialTest.cpp" />

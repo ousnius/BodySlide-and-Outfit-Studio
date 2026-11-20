@@ -19,6 +19,12 @@
     <Filter Include="Libraries">
       <UniqueIdentifier>{a8c4e2d1-6f3b-4e9a-b7c5-1d2e3f4a5b61}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Rendering">
+      <UniqueIdentifier>{729e4476-e4a9-4184-93ce-d3f920c673f7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Physics">
+      <UniqueIdentifier>{0471c9b0-299f-4aea-bd0c-9ce43fac432f}</UniqueIdentifier>
+    </Filter>
     <Filter Include="MCP">
       <UniqueIdentifier>{1167e2be-804d-40e9-8edc-0c0c42c78cc5}</UniqueIdentifier>
     </Filter>
@@ -113,6 +119,225 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="lib\LZ4F\lz4file.c">
+      <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\SOIL2\SOIL2.c">
+      <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\SOIL2\image_DXT.c">
+      <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\SOIL2\image_array.c">
+      <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\SOIL2\image_helper.c">
+      <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\SOIL2\wfETC.c">
+      <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\gli\glm\detail\glm.cpp">
+      <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\PoseDataHkx.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\RefTemplates.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\SliderCategories.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\SliderGroup.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\files\EXRImage.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\files\FBXWrangler.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\files\MaskFile.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\files\wxDDSImage.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpSnapshots.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsAnalysis.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsArchives.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsAutomation.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsBones.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsEdit.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsFitting.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsGames.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsGuides.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsMeasure.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsPhysics.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsProject.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsQuality.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsShapes.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsSliderFiles.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsSliders.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsTextures.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsView.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\OutfitStudioMcp.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\Controller.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\DebugDraw.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\SystemBuilder.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\hdt\XmlReader.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\hdt\hdtBoneScaleConstraint.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\hdt\hdtCollider.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\hdt\hdtConeTwistConstraint.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\hdt\hdtDispatcher.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\hdt\hdtGeneric6DofConstraint.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\hdt\hdtSkinnedMeshAlgorithm.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\hdt\hdtSkinnedMeshBody.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\hdt\hdtSkinnedMeshBone.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\hdt\hdtSkinnedMeshShape.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\hdt\hdtSkinnedMeshSystem.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\hdt\hdtSkinnedMeshWorld.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\hdt\hdtStiffSpringConstraint.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\hdt\hdtVertex.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\project\AutomationRunner.cpp">
+      <Filter>Project</Filter>
+    </ClCompile>
+    <ClCompile Include="src\project\AutomationRunnerBones.cpp">
+      <Filter>Project</Filter>
+    </ClCompile>
+    <ClCompile Include="src\project\AutomationRunnerMasks.cpp">
+      <Filter>Project</Filter>
+    </ClCompile>
+    <ClCompile Include="src\project\AutomationRunnerProject.cpp">
+      <Filter>Project</Filter>
+    </ClCompile>
+    <ClCompile Include="src\project\AutomationRunnerProperties.cpp">
+      <Filter>Project</Filter>
+    </ClCompile>
+    <ClCompile Include="src\project\AutomationRunnerShapes.cpp">
+      <Filter>Project</Filter>
+    </ClCompile>
+    <ClCompile Include="src\project\AutomationRunnerSliders.cpp">
+      <Filter>Project</Filter>
+    </ClCompile>
+    <ClCompile Include="src\project\GameImport.cpp">
+      <Filter>Project</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\GLCanvas.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\GLDialog.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\GLExtensions.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\GLHDRiEnvironment.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\GLMaterial.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\GLOffscreenBuffer.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\GLShader.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\GLSurface.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\MeshBuffers.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\ResourceLoader.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\Log.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\StackTrace.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\WxBuildConfigCheck.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\StudioSessionTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
     <ClCompile Include="tests\SFMaterialDatabaseTest.cpp">
       <Filter>Tests</Filter>
     </ClCompile>

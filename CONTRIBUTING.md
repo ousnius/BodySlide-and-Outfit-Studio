@@ -44,7 +44,7 @@ Large classes are split into one file per feature, named after the class. For ex
 The file lists of CMake and of the Visual Studio projects are kept by hand. A new or moved file goes into each list that builds it:
 
 - `CMakeLists.txt`: the library or application source list of its folder, and the `BSOSTests` list for a test
-- `OutfitStudio.vcxproj` and `BodySlide.vcxproj` for the applications that use it, and `BSOSTests.vcxproj` if the tests use it. `BSOSTests.vcxproj` leaves out `StudioSessionTest.cpp`, which needs the MCP tools and with them the OpenGL and physics code. The CMake tests have it.
+- `OutfitStudio.vcxproj` and `BodySlide.vcxproj` for the applications that use it, and `BSOSTests.vcxproj` if the tests use it. `BSOSTests.vcxproj` builds the same libraries as the CMake `BSOSTests` target.
 - the matching `.vcxproj.filters` files, so the file shows up in its folder in Visual Studio
 
 Git stores the source files with LF line endings. On Windows, check them out with `core.autocrlf` set to `true`, so they have CRLF line endings on disk.
