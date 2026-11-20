@@ -1,6 +1,7 @@
 #pragma once
 
-// Body part types of Skyrim partitions, with their numbers, for lists to choose from
+// Body part types of dismember partitions, with their numbers, for lists to choose from: the BP_ ones of Fallout 3
+// and New Vegas, and the SBP_ ones of Skyrim
 namespace PartitionTypes {
 
 inline constexpr const char* Labels[] = {
