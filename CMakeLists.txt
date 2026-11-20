@@ -331,9 +331,9 @@ function(bsos_link_config_libraries target debug_library release_library)
 endfunction()
 
 # The libraries below are layered: each one may only use the ones it links.
-#   bsos_vendor   third-party code in lib/
+#   bsos_vendor   third-party code in lib/, except SOIL2
 #   bsos_core     src/utils, src/files and src/components: no GL, no windows
-#   bsos_render   src/render, OpenGL drawing
+#   bsos_render   src/render, OpenGL drawing, and the SOIL2 texture loader, which calls OpenGL
 #   bsos_physics  src/physics, the Bullet based physics preview, drawn through bsos_render
 #   bsos_ui       src/ui, dialogs and widgets both applications use
 #   bsos_fbx      the FBX SDK wrapper, only for Outfit Studio
@@ -365,11 +365,6 @@ add_library(bsos_vendor STATIC
 	lib/nifly/src/Particles.cpp
 	lib/nifly/src/Shaders.cpp
 	lib/nifly/src/Skin.cpp
-	lib/SOIL2/wfETC.c
-	lib/SOIL2/image_DXT.c
-	lib/SOIL2/image_array.c
-	lib/SOIL2/image_helper.c
-	lib/SOIL2/SOIL2.c
 	lib/TinyXML-2/tinyxml2.cpp
 )
 target_link_libraries(bsos_vendor PUBLIC bsos_options)
@@ -447,6 +442,11 @@ if(BSOS_HAVE_OPENEXR)
 endif()
 
 add_library(bsos_render STATIC
+	lib/SOIL2/wfETC.c
+	lib/SOIL2/image_DXT.c
+	lib/SOIL2/image_array.c
+	lib/SOIL2/image_helper.c
+	lib/SOIL2/SOIL2.c
 	src/render/GLCanvas.cpp
 	src/render/GLDialog.cpp
 	src/render/GLExtensions.cpp
