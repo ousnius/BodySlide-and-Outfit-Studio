@@ -8,6 +8,8 @@ See the included LICENSE file
 #include "WeightNorm.h"
 
 #include <algorithm>
+#include <array>
+#include <map>
 
 using namespace nifly;
 
@@ -118,6 +120,9 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 
 void TweakStroke::endStroke() {
 	const int nMesh = refMeshes.size();
+	for (int mi = 0; mi < nMesh && mi < static_cast<int>(usp.usss.size()); ++mi)
+		refBrush->strokeEnd(refMeshes[mi], usp.usss[mi]);
+
 	if (refBrush->Type() == TweakBrush::BrushType::Move) {
 		for (int mi = 0; mi < nMesh; ++mi) {
 			Mesh* m = refMeshes[mi];
@@ -1361,7 +1366,6 @@ void TB_Unweight::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* point
 
 	for (int pi = 0; pi < nPoints; pi++) {
 		int i = points[pi];
-		bool adjFlag[2] = {true, false};
 		float orDist = meshorigin.DistanceTo(m->verts[i]);
 		float morDist = mOrigin.DistanceTo(m->verts[i]);
 		float falloff = getFalloff(orDist, meshradius);
@@ -1371,31 +1375,50 @@ void TB_Unweight::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* point
 		if (bMirror && morDist < orDist)
 			b0falloff = mFalloff;
 
-		adjFlag[0] = b0falloff > 0.0;
-
 		float maskF = 1.0f - m->mask[i];
 
+		// Only removes weight; the other bones don't take it up until the stroke ends
 		uss.boneWeights[0].weights[i].endVal += strength * maskF * b0falloff;
-
-		if (!bNormalizeWeights)
-			ClampWeight(uss.boneWeights[0].weights[i].endVal);
+		ClampWeight(uss.boneWeights[0].weights[i].endVal);
 
 		if (bXMirrorBone) {
 			float b1falloff = mFalloff;
 			if (bMirror && orDist < morDist)
 				b1falloff = falloff;
 
-			adjFlag[1] = b1falloff > 0.0;
 			uss.boneWeights[1].weights[i].endVal += strength * maskF * b1falloff;
-
-			if (!bNormalizeWeights)
-				ClampWeight(uss.boneWeights[1].weights[i].endVal);
+			ClampWeight(uss.boneWeights[1].weights[i].endVal);
 		}
 
-		if (bNormalizeWeights)
-			nzer.AdjustWeights(i, adjFlag);
-
 		m->weight[i] = uss.boneWeights[0].weights[i].endVal;
+	}
+
+	m->QueueUpdate(Mesh::UpdateType::Weight);
+}
+
+void TB_Unweight::strokeEnd(Mesh* m, UndoStateShape& uss) {
+	if (!bNormalizeWeights || uss.boneWeights.empty())
+		return;
+
+	const uint32_t nMBones = bXMirrorBone ? 2 : 1;
+	BoneWeightAutoNormalizer nzer;
+	nzer.SetUp(&uss, animInfo, m->shapeName, boneNames, lockedBoneNames, nMBones, bSpreadWeight);
+	nzer.SetFillModified(true);
+
+	// The vertices the stroke took weight from, and from which of the edited bones
+	std::map<int, std::array<bool, 2>> changed;
+	for (uint32_t bi = 0; bi < nMBones && bi < uss.boneWeights.size(); ++bi)
+		for (auto& w : uss.boneWeights[bi].weights)
+			if (w.second.endVal != w.second.startVal)
+				changed[w.first][bi] = true;
+
+	// The edited bones keep what the stroke left them, the other bones take up the rest
+	for (auto& c : changed) {
+		nzer.GrabOneVertexStartingWeights(c.first);
+		nzer.AdjustWeights(c.first, c.second.data());
+
+		if (c.first < m->nVerts)
+			m->weight[c.first] = uss.boneWeights[0].weights[c.first].endVal;
 	}
 
 	m->QueueUpdate(Mesh::UpdateType::Weight);

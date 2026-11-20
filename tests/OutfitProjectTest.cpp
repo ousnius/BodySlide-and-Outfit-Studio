@@ -717,6 +717,41 @@ TEST_CASE("Painting a normalized bone on vertices without weights gives them all
 	CHECK(f.Weight(f.skirt, "BoneRight", center) == 0.0f);
 }
 
+TEST_CASE("Erasing weight only normalizes when the stroke ends", "[OutfitProject]") {
+	ProjectFixture f;
+	Mesh* m = f.host.GetShapeMesh("Body");
+	REQUIRE(m);
+	f.editor.activeBone = "BoneLeft";
+
+	const bool normalize = GENERATE(false, true);
+	TB_Unweight brush;
+	f.ops.GetWeightBrushBones("").ApplyTo(brush, f.project.GetWorkAnim());
+	brush.bNormalizeWeights = normalize;
+	brush.setRadius(0.25f);
+	brush.setStrength(-0.1f);
+
+	// The middle of the body grid has half of each bone
+	const uint16_t center = 5 * 11 + 5;
+	BrushStrokeController controller(f.project, f.editor);
+	controller.PrepareWeightStroke({f.body});
+	controller.Begin({m}, &brush, BrushStrokeController::PickAtVertex(m, center));
+	controller.Update(BrushStrokeController::PickAtVertex(m, center + 1));
+	controller.Update(BrushStrokeController::PickAtVertex(m, center));
+
+	// While erasing, the other bone doesn't take up the weight
+	const float erased = f.Weight(f.body, "BoneLeft", center);
+	CHECK(erased < 0.45f);
+	CHECK(f.Weight(f.body, "BoneRight", center) == Catch::Approx(0.5f));
+
+	f.ApplyRefresh(controller.End());
+
+	CHECK(f.Weight(f.body, "BoneLeft", center) == Catch::Approx(erased));
+	if (normalize)
+		CHECK(f.Weight(f.body, "BoneRight", center) == Catch::Approx(1.0f - erased));
+	else
+		CHECK(f.Weight(f.body, "BoneRight", center) == Catch::Approx(0.5f));
+}
+
 TEST_CASE("Normalizing weights keeps the largest ones up to the bones per vertex and makes them add up to 1", "[OutfitProject]") {
 	ProjectFixture f;
 	Mesh* m = f.host.GetShapeMesh("Skirt");
