@@ -1289,7 +1289,7 @@ void ProjectOperations::RestoreMasks(const EditSnapshot& snapshot) {
 }
 
 RefreshFlags ProjectOperations::SetPreviewPose(const PoseData& pose) {
-	pose.ApplyToSkeleton();
+	pose.ApplyToSkeleton(project.GetSkeleton());
 	project.bPose = true;
 	return RefreshFlags::Pose | RefreshFlags::Meshes;
 }
@@ -1620,8 +1620,8 @@ OpResult ProjectOperations::CompareToProject(const std::string& file,
 											 ProjectComparison& outComparison) {
 	outComparison = ProjectComparison();
 
-	// Unattended and without touching the shared skeleton, so the open project isn't affected
-	OutfitProject other(nullptr, false);
+	// Unattended and without loading the skeleton both projects share, so the open project isn't affected
+	OutfitProject other(project.GetSkeleton(), nullptr, false);
 
 	// A project from another BodySlide folder has its ShapeData next to its SliderSets
 	std::string shapeDataPath;
@@ -1765,8 +1765,8 @@ OpResult ProjectOperations::CaptureZapsFromProject(const std::string& file,
 												   const std::string& shapeName,
 												   const std::vector<std::string>& sliderNames,
 												   ZapSource& outSource) {
-	// Unattended and without touching the shared skeleton, so the open project isn't affected
-	OutfitProject other(nullptr, false);
+	// Unattended and without loading the skeleton both projects share, so the open project isn't affected
+	OutfitProject other(project.GetSkeleton(), nullptr, false);
 
 	std::string shapeDataPath;
 	wxFileName fileName(wxString::FromUTF8(file));

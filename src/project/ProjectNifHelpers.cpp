@@ -9,8 +9,8 @@ See the included LICENSE file
 
 using namespace nifly;
 
-bool IsSkeletonBone(const std::string& bone) {
-	return AnimSkeleton::getInstance().GetBonePtr(bone, false) != nullptr;
+std::function<bool(const std::string&)> IsSkeletonBone(AnimSkeleton& skeleton) {
+	return [&skeleton](const std::string& bone) { return skeleton.GetBonePtr(bone, false) != nullptr; };
 }
 
 static const std::string physicsExtraDataName = "hdt skinned mesh physics object";

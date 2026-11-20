@@ -378,7 +378,7 @@ McpToolResult GetPose(OutfitStudioMcp& mcp, bool posed, const json& args = json:
 	}
 
 	PoseData current;
-	PoseDataCollection::CaptureCurrentPose("current", false, current);
+	PoseDataCollection::CaptureCurrentPose(mcp.Skeleton(), "current", false, current);
 
 	json bones = json::object();
 	for (auto& bone : current.boneData) {
@@ -1432,7 +1432,7 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 
 		if (hasBase) {
 			ops.ResetPose();
-			base.ApplyToSkeleton();
+			base.ApplyToSkeleton(mcp.Skeleton());
 		}
 		else if (!McpArgs::Bool(args, "keepCurrent", false) || !project.bPose)
 			ops.ResetPose();
@@ -1468,7 +1468,7 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 
 		// The start pose relative to the unposed skeleton, with the bones changed on top
 		PoseData data;
-		PoseDataCollection::CaptureCurrentPose("MCP", false, data);
+		PoseDataCollection::CaptureCurrentPose(mcp.Skeleton(), "MCP", false, data);
 
 		if (const json* bones = McpArgs::Find(args, "bones")) {
 			if (!bones->is_object())
@@ -1493,7 +1493,7 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 			}
 		}
 
-		data.ApplyToSkeleton();
+		data.ApplyToSkeleton(mcp.Skeleton());
 
 		// Changes in global terms, parents first so a child changes from where its parent put it
 		enum class Kind { Shift, Turn, Aim, Tilt, Twist };
@@ -1660,7 +1660,7 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 		}
 
 		PoseData posed;
-		PoseDataCollection::CaptureCurrentPose("MCP", false, posed);
+		PoseDataCollection::CaptureCurrentPose(mcp.Skeleton(), "MCP", false, posed);
 		session->ApplyRefresh(ops.SetPreviewPose(posed));
 
 		McpToolResult result = GetPose(mcp, true);

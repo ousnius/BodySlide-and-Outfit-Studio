@@ -297,7 +297,7 @@ std::vector<std::string> OutfitProject::DuplicateBoneNames(const std::vector<std
 
 std::vector<OutfitProject::DuplicateBoneConflict> OutfitProject::DuplicateBoneConflicts(const std::vector<std::string>& boneNames,
 																						 const std::vector<std::string>& newNames) {
-	AnimSkeleton& skel = AnimSkeleton::getInstance();
+	AnimSkeleton& skel = GetSkeleton();
 	const std::set<std::string> originals(boneNames.begin(), boneNames.end());
 
 	std::vector<DuplicateBoneConflict> conflicts;
@@ -350,7 +350,7 @@ std::string OutfitProject::NextFreeDuplicateSuffix(const std::vector<std::string
 }
 
 std::set<std::string> OutfitProject::DuplicateChainParents(const std::vector<std::string>& boneNames) {
-	AnimSkeleton& skel = AnimSkeleton::getInstance();
+	AnimSkeleton& skel = GetSkeleton();
 
 	std::set<AnimBone*> bones;
 	for (auto& name : boneNames)

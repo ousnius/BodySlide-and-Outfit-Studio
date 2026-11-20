@@ -130,6 +130,10 @@ public:
 
 class OutfitStudioFrame : public wxFrame {
 public:
+	// The skeleton the projects of the window are bound to. Declared first, so that it goes after everything that
+	// holds on to its bones.
+	AnimSkeleton skeleton;
+
 	OutfitStudioFrame(const wxPoint& pos, const wxSize& size);
 	~OutfitStudioFrame();
 

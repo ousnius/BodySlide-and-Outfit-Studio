@@ -14,7 +14,7 @@
 using namespace nifly;
 
 TEST_CASE("Starfield export writes weights independently of the editing skeleton", "[anim][export][starfield]") {
-	AnimSkeleton::getInstance().Clear();
+	AnimSkeleton skeleton;
 	NifFile nif;
 	nif.Create(NiVersion::getSF());
 	auto shapeBlock = std::make_unique<BSGeometry>();
@@ -47,7 +47,7 @@ TEST_CASE("Starfield export writes weights independently of the editing skeleton
 	skin->boneRefs.AddBlockRef(NIF_NPOS);
 	shape->SkinInstanceRef()->index = nif.GetHeader().AddBlock(std::move(skin));
 
-	AnimInfo anim;
+	AnimInfo anim(skeleton);
 	REQUIRE(anim.LoadFromNif(&nif));
 	NifFile output(nif);
 	auto outputShape = output.FindBlockByName<BSGeometry>("Cloth");
@@ -131,11 +131,10 @@ TEST_CASE("Starfield export writes weights independently of the editing skeleton
 			CHECK(transform.translation.z == 9.0f);
 		}
 	}
-	AnimSkeleton::getInstance().Clear();
 }
 
 TEST_CASE("Starfield export saves the bones per vertex the shape needs or is locked to", "[anim][export][starfield]") {
-	AnimSkeleton::getInstance().Clear();
+	AnimSkeleton skeleton;
 	NifFile nif;
 	nif.Create(NiVersion::getSF());
 	auto shapeBlock = std::make_unique<BSGeometry>();
@@ -169,7 +168,7 @@ TEST_CASE("Starfield export saves the bones per vertex the shape needs or is loc
 		skin->boneRefs.AddBlockRef(NIF_NPOS);
 	shape->SkinInstanceRef()->index = nif.GetHeader().AddBlock(std::move(skin));
 
-	AnimInfo anim;
+	AnimInfo anim(skeleton);
 	REQUIRE(anim.LoadFromNif(&nif));
 	REQUIRE(anim.GetMostBonesPerVertex("Cloth") == 1);
 
@@ -250,7 +249,7 @@ TEST_CASE("Starfield export saves the bones per vertex the shape needs or is loc
 }
 
 TEST_CASE("Starfield import keeps SkinAttach bones when a node shares a bone's name", "[anim][import][starfield]") {
-	AnimSkeleton::getInstance().Clear();
+	AnimSkeleton skeleton;
 	NifFile source;
 	source.Create(NiVersion::getSF());
 	// Physics helper node that has the same name as the first skin bone
@@ -305,7 +304,7 @@ TEST_CASE("Starfield import keeps SkinAttach bones when a node shares a bone's n
 	work.GetShapeBoneList(cloned, clonedNames);
 	CHECK(clonedNames == names);
 
-	AnimInfo anim;
+	AnimInfo anim(skeleton);
 	REQUIRE(anim.LoadFromNif(&work, cloned, true));
 	for (uint16_t i = 0; i < names.size(); ++i) {
 		INFO(names[i]);
@@ -313,10 +312,10 @@ TEST_CASE("Starfield import keeps SkinAttach bones when a node shares a bone's n
 		anim.GetWeights("Cloth", names[i], weights);
 		CHECK(weights == std::unordered_map<uint16_t, float>{{i, 1.0f}});
 	}
-	AnimSkeleton::getInstance().Clear();
 }
 
 TEST_CASE("Non-Starfield export still warns about missing skeleton bones", "[anim][export]") {
+	AnimSkeleton skeleton;
 	NifFile nif;
 	nif.Create(NiVersion::getFO4());
 	const std::vector<Vector3> verts{{0, 0, 0}, {1, 0, 0}, {0, 1, 0}};
@@ -326,15 +325,14 @@ TEST_CASE("Non-Starfield export still warns about missing skeleton bones", "[ani
 	auto bone = nif.AddNode("Cloth_A", MatTransform());
 	std::vector<int> ids{static_cast<int>(nif.GetBlockID(bone))};
 	nif.SetShapeBoneIDList(shape, ids);
-	AnimInfo anim;
+	AnimInfo anim(skeleton);
 	REQUIRE(anim.LoadFromNif(&nif));
-	AnimSkeleton::getInstance().Clear();
+	skeleton.Clear();
 	REQUIRE_FALSE(anim.WriteToNif(&nif));
 }
 
 TEST_CASE("Cloned shapes keep their weights after bones changed since loading", "[anim][clone]") {
-	auto& skeleton = AnimSkeleton::getInstance();
-	skeleton.Clear();
+	AnimSkeleton skeleton;
 	const std::vector<std::string> bones{"Pauldron", "Pelvis", "Thigh"};
 	for (auto& bn : bones)
 		skeleton.AddStandardBone(bn).boneName = bn;
@@ -361,7 +359,7 @@ TEST_CASE("Cloned shapes keep their weights after bones changed since loading", 
 	std::vector<int> pauldronIds{ids[0]};
 	nif.SetShapeBoneIDList(pauldrons, pauldronIds);
 
-	AnimInfo anim;
+	AnimInfo anim(skeleton);
 	REQUIRE(anim.LoadFromNif(&nif));
 	std::unordered_map<uint16_t, float> pelvis{{0, 1.0f}};
 	std::unordered_map<uint16_t, float> thigh{{1, 1.0f}};
@@ -425,11 +423,10 @@ TEST_CASE("Cloned shapes keep their weights after bones changed since loading", 
 			CHECK(exportedWeights("Pauldron").empty());
 	}
 
-	skeleton.Clear();
 }
 
 TEST_CASE("Cloned Starfield shapes keep their weights after bones changed since loading", "[anim][clone][starfield]") {
-	AnimSkeleton::getInstance().Clear();
+	AnimSkeleton skeleton;
 	NifFile nif;
 	nif.Create(NiVersion::getSF());
 
@@ -463,7 +460,7 @@ TEST_CASE("Cloned Starfield shapes keep their weights after bones changed since 
 		skin->boneRefs.AddBlockRef(NIF_NPOS);
 	armor->SkinInstanceRef()->index = nif.GetHeader().AddBlock(std::move(skin));
 
-	AnimInfo anim;
+	AnimInfo anim(skeleton);
 	REQUIRE(anim.LoadFromNif(&nif));
 	REQUIRE(anim.shapeBones["Armor"] == bones);
 	std::unordered_map<uint16_t, float> none;
@@ -517,12 +514,10 @@ TEST_CASE("Cloned Starfield shapes keep their weights after bones changed since 
 			CHECK(exportedWeights("Calf") == calf);
 	}
 
-	AnimSkeleton::getInstance().Clear();
 }
 
 TEST_CASE("Setting a shape's skin keeps the bone references and nodes in step", "[anim][clone]") {
-	auto& skeleton = AnimSkeleton::getInstance();
-	skeleton.Clear();
+	AnimSkeleton skeleton;
 	const std::vector<std::string> bones{"Pauldron", "Pelvis", "Thigh"};
 	for (auto& bn : bones)
 		skeleton.AddStandardBone(bn).boneName = bn;
@@ -545,7 +540,7 @@ TEST_CASE("Setting a shape's skin keeps the bone references and nodes in step", 
 	std::vector<int> bootIds{ids[2]};
 	nif.SetShapeBoneIDList(boots, bootIds);
 
-	AnimInfo anim;
+	AnimInfo anim(skeleton);
 	REQUIRE(anim.LoadFromNif(&nif));
 
 	AnimSkin skin;
@@ -562,7 +557,6 @@ TEST_CASE("Setting a shape's skin keeps the bone references and nodes in step", 
 	CHECK(nif.FindBlockByName<NiNode>("Pelvis"));
 	CHECK(nif.FindBlockByName<NiNode>("Thigh"));
 
-	skeleton.Clear();
 }
 
 namespace {
@@ -632,13 +626,12 @@ void AddClothTestShape(NifFile& nif, const std::string& name, const MatTransform
 } // namespace
 
 TEST_CASE("Changing Starfield skin coordinates preserves missing cloth bone binds", "[anim][starfield][cloth-copy]") {
-	auto& skeleton = AnimSkeleton::getInstance();
-	skeleton.Clear();
+	AnimSkeleton skeleton;
 	skeleton.AddStandardBone("COM").boneName = "COM";
 	NifFile nif;
 	nif.Create(NiVersion::getSF());
 	AddClothTestShape(nif, "Reference", clothSourceSpace, true);
-	AnimInfo anim;
+	AnimInfo anim(skeleton);
 	REQUIRE(anim.LoadFromNif(&nif));
 	REQUIRE_FALSE(skeleton.GetBonePtr("Cloth_A"));
 	REQUIRE_FALSE(skeleton.GetBonePtr("Cloth_B"));
@@ -650,18 +643,16 @@ TEST_CASE("Changing Starfield skin coordinates preserves missing cloth bone bind
 		const auto globalToBone = bone == std::string("COM") ? MatTransform() : bone == std::string("Cloth_A") ? clothGlobalToBoneA : clothGlobalToBoneB;
 		CHECK(actual.IsNearlyEqualTo(globalToBone.ComposeTransforms(clothTargetSpace.InverseTransform())));
 	}
-	skeleton.Clear();
 }
 
 TEST_CASE("Copied cloth binds survive deferred application without changing existing binds", "[anim][starfield][cloth-copy]") {
-	auto& skeleton = AnimSkeleton::getInstance();
-	skeleton.Clear();
+	AnimSkeleton skeleton;
 	skeleton.AddStandardBone("COM").boneName = "COM";
 	NifFile nif;
 	nif.Create(NiVersion::getSF());
 	AddClothTestShape(nif, "Reference", clothSourceSpace, true);
 	AddClothTestShape(nif, "Target", clothTargetSpace, false);
-	AnimInfo anim;
+	AnimInfo anim(skeleton);
 	REQUIRE(anim.LoadFromNif(&nif));
 	const auto expected = clothGlobalToBoneA.ComposeTransforms(clothTargetSpace.InverseTransform());
 
@@ -711,18 +702,16 @@ TEST_CASE("Copied cloth binds survive deferred application without changing exis
 		CHECK_FALSE(anim.GetMissingBoneTransformForCopy("Reference", "Target", "Cloth_A"));
 		anim.SetRefNif(&nif);
 	}
-	skeleton.Clear();
 }
 
 TEST_CASE("Starfield bones added without a bind take it from another shape", "[anim][starfield][cloth-copy]") {
-	auto& skeleton = AnimSkeleton::getInstance();
-	skeleton.Clear();
+	AnimSkeleton skeleton;
 	skeleton.AddStandardBone("COM").boneName = "COM";
 	NifFile nif;
 	nif.Create(NiVersion::getSF());
 	AddClothTestShape(nif, "Reference", clothSourceSpace, true);
 	AddClothTestShape(nif, "Target", clothTargetSpace, false);
-	AnimInfo anim;
+	AnimInfo anim(skeleton);
 	REQUIRE(anim.LoadFromNif(&nif));
 	REQUIRE(anim.WriteToNif(&nif));
 
@@ -751,7 +740,6 @@ TEST_CASE("Starfield bones added without a bind take it from another shape", "[a
 			CHECK(anim.WriteToNif(&nif));
 		}
 	}
-	skeleton.Clear();
 }
 
 // These two hidden cases are driven by Run-ClothWeightCopy.ps1. The application,

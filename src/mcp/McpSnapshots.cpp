@@ -149,7 +149,7 @@ McpProjectDigest McpDigest(const EditSnapshot& snapshot) {
 		return McpProjectDigest();
 
 	// A project of its own, so the open one and its window stay as they are
-	OutfitProject project(nullptr, false);
+	OutfitProject project(snapshot.project->workAnim.GetSkeleton(), nullptr, false);
 	project.RestoreSnapshot(*snapshot.project);
 	return Digest(project, [&snapshot](const std::string& name) -> size_t {
 		auto mask = snapshot.masks.find(name);

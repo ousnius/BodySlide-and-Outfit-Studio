@@ -433,7 +433,7 @@ void OutfitStudioFrame::ShowBoneContextMenu(const std::string& bone, wxWindow* a
 
 	if (inProject) {
 		if (!editor.activeBone.empty() && activeItem && project->GetWorkAnim()->BoneHasInconsistentTransforms(activeItem->GetShape()->name.get(), editor.activeBone)) {
-			if (AnimSkeleton::getInstance().GetBonePtr(editor.activeBone)->isStandardBone)
+			if (skeleton.GetBonePtr(editor.activeBone)->isStandardBone)
 				menu->Enable(XRCID("setBoneNode"), false);
 		}
 		else
@@ -442,7 +442,7 @@ void OutfitStudioFrame::ShowBoneContextMenu(const std::string& bone, wxWindow* a
 		const std::vector<std::string> selBones = GetSelectedBoneNames();
 		bool anyCustom = false;
 		for (auto& b : selBones) {
-			AnimBone* bPtr = AnimSkeleton::getInstance().GetBonePtr(b);
+			AnimBone* bPtr = skeleton.GetBonePtr(b);
 			if (bPtr && !bPtr->isStandardBone)
 				anyCustom = true;
 		}
@@ -562,7 +562,7 @@ void OutfitStudioFrame::OnAddBone(wxCommandEvent& WXUNUSED(event)) {
 		}
 	};
 
-	AnimBone* rb = AnimSkeleton::getInstance().GetRootBonePtr();
+	AnimBone* rb = skeleton.GetRootBonePtr();
 	wxTreeItemId rt = boneTree->AddRoot(rb->boneName);
 	fAddBoneChildren(rt, rb);
 
@@ -747,7 +747,7 @@ void OutfitStudioFrame::OnAddCustomBone(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnEditBone(wxCommandEvent& WXUNUSED(event)) {
-	AnimBone* bPtr = AnimSkeleton::getInstance().GetBonePtr(editor.activeBone);
+	AnimBone* bPtr = skeleton.GetBonePtr(editor.activeBone);
 	if (!bPtr)
 		return;
 
@@ -862,7 +862,7 @@ void OutfitStudioFrame::DuplicateSelectedBones(bool mirror) {
 	// parent, or none to keep the originals' parents when they differ.
 	wxChoice* cDupParent = XRCCTRL(dlg, "cDupParent", wxChoice);
 	std::vector<std::optional<std::string>> parentChoices;
-	const std::set<std::string> chainParents = OutfitProject::DuplicateChainParents(bones);
+	const std::set<std::string> chainParents = project->DuplicateChainParents(bones);
 	const bool oneParent = chainParents.size() == 1;
 	if (!oneParent) {
 		cDupParent->Append(_("(original parents)"));
@@ -910,7 +910,7 @@ void OutfitStudioFrame::DuplicateSelectedBones(bool mirror) {
 																					 textFind->GetValue().ToStdString(),
 																					 textReplace->GetValue().ToStdString(),
 																					 textSuffix->GetValue().ToStdString());
-		const std::vector<OutfitProject::DuplicateBoneConflict> conflicts = OutfitProject::DuplicateBoneConflicts(bones, newNames);
+		const std::vector<OutfitProject::DuplicateBoneConflict> conflicts = project->DuplicateBoneConflicts(bones, newNames);
 
 		wxArrayString lines;
 		wxString firstConflict;

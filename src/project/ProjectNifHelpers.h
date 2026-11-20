@@ -7,13 +7,16 @@ See the included LICENSE file
 
 #include "NifFile.hpp"
 
+#include <functional>
 #include <string>
 #include <vector>
 
+class AnimSkeleton;
+
 // NIF helpers the parts of OutfitProject share
 
-// Cloth is told apart by the bones an outfit adds to the reference skeleton
-bool IsSkeletonBone(const std::string& bone);
+// Cloth is told apart by the bones an outfit adds to the reference skeleton. Tells the bones of the skeleton.
+std::function<bool(const std::string&)> IsSkeletonBone(AnimSkeleton& skeleton);
 
 // HDT-SMP links a model to its physics XML with a NiStringExtraData named "hdt skinned mesh physics object".
 // The game only reads it from the model's root node.

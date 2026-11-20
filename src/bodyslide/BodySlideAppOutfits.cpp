@@ -138,7 +138,7 @@ void BodySlideApp::AddProjectAddOns(SliderSet& set, bool conform, ProjectAddOns&
 		nif = &ownNif;
 	}
 
-	AnimInfo anim;
+	AnimInfo anim(skeleton);
 	if (conform)
 		LoadConformAnim(anim, *nif);
 
@@ -166,7 +166,7 @@ std::shared_ptr<ConformBody> BodySlideApp::GetConformBody(const ConformBodyRef& 
 
 	wxLogMessage("Loading body '%s' for its add-on sliders...", ref.setName);
 
-	auto body = std::make_shared<ConformBody>();
+	auto body = std::make_shared<ConformBody>(skeleton);
 	const std::string baseDataPath = ProjectUtil::GetProjectPath() + PathSepStr + "ShapeData";
 	auto loadNif = [](const std::string& fileName, NifFile& loadInto) { return LoadNifFile(fileName, loadInto); };
 	if (!body->Load(ref, projectCatalog, baseDataPath, loadNif, warnings, conform))

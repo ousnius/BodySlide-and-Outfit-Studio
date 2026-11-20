@@ -665,7 +665,7 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	xrc->AttachUnknownControl("bonesFilter", bonesFilter, this);
 	bonesFilter->GetParent()->Hide();
 
-	project = new OutfitProject(&projectHost); // Create empty project
+	project = new OutfitProject(skeleton, &projectHost); // Create empty project
 	CreateSetSliders();
 
 	selectedItems.clear();

@@ -247,10 +247,8 @@ const GameSkeleton GameSkeletons[] = {
 	 "Bip01 Spine2", "Bip01 Head"},
 };
 
-AnimBone* LoadGameSkeleton(const GameSkeleton& game, PoseMath::TwistContext& context) {
+AnimBone* LoadGameSkeleton(AnimSkeleton& skeleton, const GameSkeleton& game, PoseMath::TwistContext& context) {
 	Config.SetValue("Anim/SkeletonRootName", game.root);
-	AnimSkeleton& skeleton = AnimSkeleton::getInstance();
-	skeleton.Clear();
 	REQUIRE(skeleton.LoadFromNif(std::string(BSOS_TEST_DATA_DIR) + "/../../res/" + game.file) == 0);
 
 	std::vector<std::string> names;
@@ -260,8 +258,8 @@ AnimBone* LoadGameSkeleton(const GameSkeleton& game, PoseMath::TwistContext& con
 	return skeleton.GetRootBonePtr();
 }
 
-AnimBone* Bone(const char* name) {
-	AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(name);
+AnimBone* Bone(AnimSkeleton& skeleton, const char* name) {
+	AnimBone* bone = skeleton.GetBonePtr(name);
 	INFO(name);
 	REQUIRE(bone);
 	return bone;
@@ -270,18 +268,19 @@ AnimBone* Bone(const char* name) {
 } // namespace
 
 TEST_CASE("Posing works on the skeletons of every game", "[posemath]") {
-	// Other tests expect the skeleton root setting and the skeleton as they were
+	// Other tests expect the skeleton root setting as it was
 	const std::string previousRoot = Config["Anim/SkeletonRootName"];
 
 	for (auto& game : GameSkeletons) {
 		INFO(game.file);
+		AnimSkeleton skeleton;
 		PoseMath::TwistContext context;
-		LoadGameSkeleton(game, context);
+		LoadGameSkeleton(skeleton, game, context);
 
 		// Main bones: the joints, and no helper, scale, twist or finger bones
 		auto main = PoseMath::MainBones(context.bones);
 		for (const char* name : {game.hand, game.forearm, game.upperArm, game.foot, game.calf, game.thigh, game.pelvis, game.chest, game.head})
-			CHECK(std::find(main.begin(), main.end(), Bone(name)) != main.end());
+			CHECK(std::find(main.begin(), main.end(), Bone(skeleton, name)) != main.end());
 		for (AnimBone* bone : main) {
 			INFO(bone->boneName);
 			std::string lower = bone->boneName;
@@ -293,30 +292,30 @@ TEST_CASE("Posing works on the skeletons of every game", "[posemath]") {
 		// Limbs from the end bone, through Fallout 4's forearm chain and Oblivion's scale nodes
 		AnimBone* upper = nullptr;
 		AnimBone* lower = nullptr;
-		REQUIRE(PoseMath::LimbChain(Bone(game.hand), upper, lower));
-		CHECK(upper == Bone(game.upperArm));
-		CHECK(lower == Bone(game.forearm));
-		REQUIRE(PoseMath::LimbChain(Bone(game.foot), upper, lower));
-		CHECK(upper == Bone(game.thigh));
-		CHECK(lower == Bone(game.calf));
+		REQUIRE(PoseMath::LimbChain(Bone(skeleton, game.hand), upper, lower));
+		CHECK(upper == Bone(skeleton, game.upperArm));
+		CHECK(lower == Bone(skeleton, game.forearm));
+		REQUIRE(PoseMath::LimbChain(Bone(skeleton, game.foot), upper, lower));
+		CHECK(upper == Bone(skeleton, game.thigh));
+		CHECK(lower == Bone(skeleton, game.calf));
 
 		// The pelvis points down between the hips, the chest up to the neck, the left upper arm to her left
 		Vector3 axis;
-		REQUIRE(PoseMath::BoneAxis(Bone(game.pelvis), axis));
+		REQUIRE(PoseMath::BoneAxis(Bone(skeleton, game.pelvis), axis));
 		CHECK(axis.z < -0.8f);
-		REQUIRE(PoseMath::BoneAxis(Bone(game.chest), axis));
+		REQUIRE(PoseMath::BoneAxis(Bone(skeleton, game.chest), axis));
 		CHECK(axis.z > 0.8f);
-		REQUIRE(PoseMath::BoneAxis(Bone(game.upperArm), axis));
+		REQUIRE(PoseMath::BoneAxis(Bone(skeleton, game.upperArm), axis));
 		CHECK(axis.x < -0.3f);
 
 		// The hand's twist spreads over the forearm
-		CHECK_FALSE(PoseMath::SegmentTwistBones(Bone(game.hand), context).empty());
+		CHECK_FALSE(PoseMath::SegmentTwistBones(Bone(skeleton, game.hand), context).empty());
 
 		// The hand reaches up in front of the face, with the elbow bending the right way and no twist left on it
-		AnimBone* hand = Bone(game.hand);
-		AnimBone* shoulder = Bone(game.upperArm);
-		const float length = (Bone(game.forearm)->xformToGlobal.translation - shoulder->xformToGlobal.translation).length()
-							 + (hand->xformToGlobal.translation - Bone(game.forearm)->xformToGlobal.translation).length();
+		AnimBone* hand = Bone(skeleton, game.hand);
+		AnimBone* shoulder = Bone(skeleton, game.upperArm);
+		const float length = (Bone(skeleton, game.forearm)->xformToGlobal.translation - shoulder->xformToGlobal.translation).length()
+							 + (hand->xformToGlobal.translation - Bone(skeleton, game.forearm)->xformToGlobal.translation).length();
 		Vector3 direction(0.3f, 0.6f, 0.75f);
 		direction.Normalize();
 		const Vector3 target = shoulder->xformPoseToGlobal.translation + direction * (0.8f * length);
@@ -325,8 +324,8 @@ TEST_CASE("Posing works on the skeletons of every game", "[posemath]") {
 		CHECK(result.solved);
 		CHECK(result.reachable);
 		CHECK(result.missed < 1e-3f * length);
-		CHECK_FALSE(PoseMath::BendsBackwards(Bone(game.forearm)));
-		CHECK(PoseMath::LocalTwist(Bone(game.forearm)) == Catch::Approx(0.0f).margin(1e-3));
+		CHECK_FALSE(PoseMath::BendsBackwards(Bone(skeleton, game.forearm)));
+		CHECK(PoseMath::LocalTwist(Bone(skeleton, game.forearm)) == Catch::Approx(0.0f).margin(1e-3));
 
 		// Spread over the twist bones, the twist of the hand reads back whole
 		PoseMath::SetTwistSpread(hand, 50.0f * DEG2RAD, context);
@@ -334,5 +333,4 @@ TEST_CASE("Posing works on the skeletons of every game", "[posemath]") {
 		CHECK(PoseMath::TwistSpreadError(hand, context) < 1e-2f);
 	}
 	Config.SetValue("Anim/SkeletonRootName", previousRoot);
-	AnimSkeleton::getInstance().Clear();
 }

@@ -141,7 +141,7 @@ int OutfitProject::ImportNIF(std::istream& fileStream, const std::string& fileNa
 		}
 	}
 
-	clothData.Capture(nif, fileName, nif.GetShapes(), IsSkeletonBone);
+	clothData.Capture(nif, fileName, nif.GetShapes(), IsSkeletonBone(GetSkeleton()));
 
 	// Record physics XML links of all shapes before they are merged in
 	CaptureRootPhysicsData(nif);
@@ -274,7 +274,7 @@ void OutfitProject::ChooseClothData(NifFile& nif) {
 	// A NIF holds a single cloth block. Every loaded block is offered, with the cloth that fits the exported shapes
 	// preselected. That includes the reference's cloth once an outfit has been given its physics bones, even when the
 	// reference isn't exported. Unattended runs and a cancelled prompt get the preselection.
-	auto choices = clothData.GetExportChoices(nif, IsSkeletonBone);
+	auto choices = clothData.GetExportChoices(nif, IsSkeletonBone(GetSkeleton()));
 
 	std::string source;
 	if (choices.preselected)

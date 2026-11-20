@@ -175,7 +175,8 @@ public:
 	std::vector<Slider> sliders;
 	std::vector<std::string> addOnNames; // Stacked add-ons that have sliders
 
-	ConformBody() = default;
+	explicit ConformBody(AnimSkeleton& skeleton)
+		: anim(skeleton) {}
 	ConformBody(const ConformBody&) = delete;
 	ConformBody& operator=(const ConformBody&) = delete;
 

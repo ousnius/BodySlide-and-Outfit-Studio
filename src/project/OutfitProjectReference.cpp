@@ -98,7 +98,7 @@ int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::stri
 		deletedShapes.push_back(shapeName);
 	}
 
-	clothData.Capture(refNif, fileName, {refShape}, IsSkeletonBone);
+	clothData.Capture(refNif, fileName, {refShape}, IsSkeletonBone(GetSkeleton()));
 
 	// Record physics XML links of the reference before it is merged in
 	CaptureRootPhysicsData(refNif);
@@ -230,7 +230,7 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 		deletedShapes.push_back(shape);
 	}
 
-	clothData.Capture(refNif, refFile, {refShape}, IsSkeletonBone);
+	clothData.Capture(refNif, refFile, {refShape}, IsSkeletonBone(GetSkeleton()));
 
 	// Record physics XML links of the reference before it is merged in
 	CaptureRootPhysicsData(refNif);
@@ -348,7 +348,7 @@ std::vector<std::string> OutfitProject::LoadReferenceAddOns() {
 
 			// Add-ons made for another project of the body are conformed to the reference
 			if (!otherBaseAddOns.empty()) {
-				AnimInfo refAnim;
+				AnimInfo refAnim(GetSkeleton());
 				LoadConformAnim(refAnim, refNif);
 				auto loadNif = [](const std::string& fileName, NifFile& loadInto) {
 					std::fstream nifFile;

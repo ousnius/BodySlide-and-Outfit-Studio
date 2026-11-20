@@ -1971,7 +1971,7 @@ McpPoseScope::McpPoseScope(OutfitStudioMcp& inMcp)
 	: mcp(inMcp)
 	, saved(std::make_unique<PoseData>()) {
 	wasPosed = mcp.Project().bPose;
-	PoseDataCollection::CaptureCurrentPose("MCP", false, *saved);
+	PoseDataCollection::CaptureCurrentPose(mcp.Skeleton(), "MCP", false, *saved);
 }
 
 McpPoseScope::~McpPoseScope() {
@@ -1984,7 +1984,7 @@ void McpPoseScope::Restore() {
 		return;
 
 	ProjectOperations(*session->GetProject(), session->Editor()).ResetPose();
-	saved->ApplyToSkeleton();
+	saved->ApplyToSkeleton(mcp.Skeleton());
 	session->GetProject()->bPose = wasPosed;
 }
 
@@ -2001,7 +2001,7 @@ void McpPoseScope::Set(const std::string& pose) {
 		throw McpToolError("There is no pose '" + pose + "'. list_poses lists them.");
 
 	mcp.Ops().ResetPose();
-	it->ApplyToSkeleton();
+	it->ApplyToSkeleton(mcp.Skeleton());
 	project.bPose = true;
 }
 

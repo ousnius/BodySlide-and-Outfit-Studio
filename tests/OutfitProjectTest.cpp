@@ -133,8 +133,9 @@ public:
 struct ProjectFixture {
 	TargetGameScope targetGame{SKYRIMSE};
 	TempFolder folder;
+	AnimSkeleton skeleton;
 	MeshHost host;
-	OutfitProject project{&host, false};
+	OutfitProject project{skeleton, &host, false};
 	EditorState editor;
 	ProjectOperations ops{project, editor};
 	NiShape* body = nullptr;
@@ -338,7 +339,7 @@ TEST_CASE("Undoing a shape delete brings back the weights edited since loading",
 	const auto bones = f.project.GetWorkAnim()->shapeBones["Skirt"];
 	REQUIRE(bones == std::vector<std::string>{"BoneRight"});
 
-	auto& skeleton = AnimSkeleton::getInstance();
+	auto& skeleton = f.skeleton;
 	const int rightRefs = skeleton.GetBoneRefCount("BoneRight");
 	const int leftRefs = skeleton.GetBoneRefCount("BoneLeft");
 
@@ -370,8 +371,9 @@ TEST_CASE("Separated and restored shapes export the weights edited since loading
 
 	TargetGameScope targetGame{game};
 	TempFolder folder;
+	AnimSkeleton skeleton;
 	MeshHost host;
-	OutfitProject project{&host, false};
+	OutfitProject project{skeleton, &host, false};
 	host.project = &project;
 
 	// An armor with the pauldron bone that its separated pauldrons still use
@@ -872,7 +874,7 @@ namespace {
 // A variant or add-on of the saved fixture project "A", which has "Grow" data for the body and the skirt
 struct DerivedProjectFixture : SavedProjectFixture {
 	NonInteractiveHost derivedHost;
-	OutfitProject derived{&derivedHost, false};
+	OutfitProject derived{skeleton, &derivedHost, false};
 
 	explicit DerivedProjectFixture(bool addOn) {
 		TargetDataDiffs grow;
@@ -1037,7 +1039,7 @@ TEST_CASE("A copy of a project with the same NIF file becomes an add-on of it", 
 	std::string baseFile = (f.projectFolder.path / "SliderSets" / "A.osp").u8string();
 
 	NonInteractiveHost copyHost;
-	OutfitProject copy{&copyHost, false};
+	OutfitProject copy{f.skeleton, &copyHost, false};
 	REQUIRE(copy.LoadFromSliderSet(baseFile, "A") == 0);
 	REQUIRE(copy.ReloadReferenceShape() == 0);
 	copy.AddEmptySlider("Extra");
@@ -1106,8 +1108,8 @@ TEST_CASE("BodySlide conforms add-on sliders like Outfit Studio does", "[OutfitP
 	NifFile skirtNif;
 	REQUIRE(bodyNif.Load(f.folder.path / "Body.nif") == 0);
 	REQUIRE(skirtNif.Load(f.folder.path / "Skirt.nif") == 0);
-	AnimInfo bodyAnim;
-	AnimInfo skirtAnim;
+	AnimInfo bodyAnim(f.skeleton);
+	AnimInfo skirtAnim(f.skeleton);
 	LoadConformAnim(bodyAnim, bodyNif);
 	LoadConformAnim(skirtAnim, skirtNif);
 
@@ -1252,7 +1254,7 @@ TEST_CASE("The reference keeps its data folders when it's unset and set again", 
 
 	// The body loaded as reference has its data in the body's folder
 	NonInteractiveHost host;
-	OutfitProject outfit{&host, false};
+	OutfitProject outfit{f.skeleton, &host, false};
 	REQUIRE(outfit.LoadFromSliderSet(outfitFile, "B") == 0);
 	REQUIRE(outfit.LoadReference((f.projectFolder.path / "SliderSets" / "A.osp").u8string(), "A", "Body", false, false, true) == 0);
 	NiShape* body = outfit.GetBaseShape();
@@ -1317,7 +1319,7 @@ TEST_CASE("The reference keeps its data folders when it's unset and set again", 
 
 	// The saved outfit loads with the body's data
 	NonInteractiveHost loadedHost;
-	OutfitProject loaded{&loadedHost, false};
+	OutfitProject loaded{f.skeleton, &loadedHost, false};
 	REQUIRE(loaded.LoadFromSliderSet(outfitFile, "B") == 0);
 	REQUIRE(loaded.ReloadReferenceShape() == 0);
 	REQUIRE(loaded.GetBaseShape());
@@ -1518,7 +1520,7 @@ void AddBoneChain(OutfitProject& project, const std::string& prefix, int count) 
 
 TEST_CASE("Duplicated bone chains keep their hierarchy and numbering", "[OutfitProject][bones]") {
 	ProjectFixture f;
-	AnimSkeleton& skel = AnimSkeleton::getInstance();
+	AnimSkeleton& skel = f.skeleton;
 	AddBoneChain(f.project, "DupDress", 5);
 
 	const std::vector<std::string> chain = {"DupDress3", "DupDress1", "DupDress2", "DupDress5", "DupDress4"};
@@ -1567,13 +1569,13 @@ TEST_CASE("Duplicated bone chains keep their hierarchy and numbering", "[OutfitP
 	CHECK(skel.GetBoneRefCount("DupDress1.9") == 0);
 
 	// The chain hangs from what the top of the selection hangs from
-	CHECK(OutfitProject::DuplicateChainParents(chain) == std::set<std::string>{"DupDress0"});
-	CHECK(OutfitProject::DuplicateChainParents({"DupDress1", "DupDress3"}) == std::set<std::string>{"DupDress0", "DupDress2"});
+	CHECK(f.project.DuplicateChainParents(chain) == std::set<std::string>{"DupDress0"});
+	CHECK(f.project.DuplicateChainParents({"DupDress1", "DupDress3"}) == std::set<std::string>{"DupDress0", "DupDress2"});
 }
 
 TEST_CASE("Duplicated bone chains can hang from another parent", "[OutfitProject][bones]") {
 	ProjectFixture f;
-	AnimSkeleton& skel = AnimSkeleton::getInstance();
+	AnimSkeleton& skel = f.skeleton;
 	AddBoneChain(f.project, "ParChain", 3);
 
 	// The other side's root, mirrored
@@ -1616,7 +1618,7 @@ TEST_CASE("Duplicated bone chains can hang from another parent", "[OutfitProject
 
 TEST_CASE("Duplicates don't reuse bones of their own hierarchy", "[OutfitProject][bones]") {
 	ProjectFixture f;
-	AnimSkeleton& skel = AnimSkeleton::getInstance();
+	AnimSkeleton& skel = f.skeleton;
 
 	// A node left in the skeleton without weights, which the project bone hangs from
 	nifly::MatTransform up;
@@ -1627,7 +1629,7 @@ TEST_CASE("Duplicates don't reuse bones of their own hierarchy", "[OutfitProject
 
 	std::vector<std::string> newNames;
 	std::string error;
-	CHECK(OutfitProject::DuplicateBoneConflicts({"LoopHair"}, {"LoopHair.1"}).front() == OutfitProject::DuplicateBoneConflict::ParentBone);
+	CHECK(f.project.DuplicateBoneConflicts({"LoopHair"}, {"LoopHair.1"}).front() == OutfitProject::DuplicateBoneConflict::ParentBone);
 	CHECK_FALSE(f.project.DuplicateBones({"LoopHair"}, "", "", ".1", std::nullopt, newNames, error));
 	CHECK(skel.GetBonePtr("LoopHair")->parent == skel.GetBonePtr("LoopHair.1"));
 	CHECK(skel.GetBonePtr("LoopHair.1")->parent == nullptr);
@@ -1641,7 +1643,7 @@ TEST_CASE("Duplicates don't reuse bones of their own hierarchy", "[OutfitProject
 
 	// A bone can't be its own copy, even when it isn't in the project
 	skel.AddCustomBone("LoopLeftover");
-	CHECK(OutfitProject::DuplicateBoneConflicts({"LoopLeftover"}, {"LoopLeftover"}).front() == OutfitProject::DuplicateBoneConflict::Original);
+	CHECK(f.project.DuplicateBoneConflicts({"LoopLeftover"}, {"LoopLeftover"}).front() == OutfitProject::DuplicateBoneConflict::Original);
 	CHECK_FALSE(f.project.DuplicateBones({"LoopLeftover"}, "", "", "", std::nullopt, newNames, error));
 }
 
@@ -1653,7 +1655,7 @@ TEST_CASE("Duplicate bone names replace text and add a suffix", "[OutfitProject]
 
 TEST_CASE("Mirrored bones go to the other side and the mesh stays", "[OutfitProject][bones]") {
 	ProjectFixture f;
-	AnimSkeleton& skel = AnimSkeleton::getInstance();
+	AnimSkeleton& skel = f.skeleton;
 	AddBoneChain(f.project, "MirChain", 3);
 
 	std::unordered_map<uint16_t, float> weights{{0, 1.0f}, {5, 0.5f}};

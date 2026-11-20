@@ -286,7 +286,7 @@ void AddBoneTools(OutfitStudioMcp& mcp) {
 			if (!mcp.Skeleton().GetBonePtr(bone))
 				throw McpToolError("There is no bone '" + bone + "'.");
 		const std::vector<std::string> newNames = OutfitProject::DuplicateBoneNames(bones, find, replace, suffix);
-		const auto conflicts = OutfitProject::DuplicateBoneConflicts(bones, newNames);
+		const auto conflicts = project->DuplicateBoneConflicts(bones, newNames);
 		json mapping = json::object();
 		for (size_t i = 0; i < bones.size(); ++i) {
 			if (conflicts[i] != OutfitProject::DuplicateBoneConflict::None)

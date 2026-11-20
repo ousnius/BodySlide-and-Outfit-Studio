@@ -31,7 +31,7 @@ using XmlStreamResolver = std::function<std::unique_ptr<std::istream>(const std:
 // Bone name -> replacement pose-to-global transform produced by the
 // simulation, consumed by the skinning code instead of
 // AnimBone::xformPoseToGlobal for bones driven by physics. Spelled out again
-// instead of including Anim.h, which would pull the application skeleton into
+// instead of including Anim.h, which would pull the skeleton classes into
 // every user of this header; Controller.cpp asserts that this stays the
 // same type as AnimPoseOverrideMap.
 using PoseOverrideMap = std::unordered_map<std::string, nifly::MatTransform>;

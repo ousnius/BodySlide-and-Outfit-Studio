@@ -102,8 +102,9 @@ public:
 // A session without a window or a view: what the MCP tools and the automation runner need to run headless
 class TestSession : public IStudioSession {
 public:
+	AnimSkeleton skeleton;
 	MeshHost host;
-	OutfitProject project{&host, false};
+	OutfitProject project{skeleton, &host, false};
 	EditorState editor;
 	PoseDataCollection poses;
 	std::vector<RefTemplate> refTemplates;
@@ -118,7 +119,7 @@ public:
 	EditorState& Editor() override { return editor; }
 	SwitchableHost& Host() override { return host; }
 	PoseDataCollection& Poses() override { return poses; }
-	AnimSkeleton& Skeleton() override { return project.GetSkeleton(); }
+	AnimSkeleton& Skeleton() override { return skeleton; }
 	const std::vector<RefTemplate>& GetRefTemplates() override { return refTemplates; }
 	void UpdateReferenceTemplates() override {}
 

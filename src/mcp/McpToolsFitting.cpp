@@ -306,7 +306,7 @@ McpToolResult FitPoseToShapes(OutfitStudioMcp& mcp, const json& args) {
 	PoseFit::Result fit = PoseFit::Fit(templates, surfaceVerts, surfaceTris, options);
 
 	PoseData posed;
-	PoseDataCollection::CaptureCurrentPose("MCP", false, posed);
+	PoseDataCollection::CaptureCurrentPose(mcp.Skeleton(), "MCP", false, posed);
 	session->ApplyRefresh(ops.SetPreviewPose(posed));
 
 	McpToolResult result;

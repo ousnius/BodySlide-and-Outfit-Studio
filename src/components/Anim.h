@@ -19,6 +19,8 @@ See the included LICENSE file
 #include <utility>
 #include <vector>
 
+class AnimSkeleton;
+
 struct VertexBoneWeights {
 	std::vector<uint8_t> boneIds;
 	std::vector<float> weights;
@@ -58,7 +60,8 @@ public:
 
 	int refCount = 0; // reference count of this bone
 
-	AnimBone& LoadFromNif(nifly::NifFile* skeletonNif, uint32_t srcBlock, AnimBone* parent = nullptr);
+	// Loads the bone and its children from a skeleton NIF into the skeleton
+	AnimBone& LoadFromNif(AnimSkeleton& skeleton, nifly::NifFile* skeletonNif, uint32_t srcBlock, AnimBone* parent = nullptr);
 	// AddToNif adds this bone to the given nif, as well as its parent
 	// if missing, recursively.  The new bone's NiNode is returned.
 	nifly::NiNode* AddToNif(nifly::NifFile* nif) const;
@@ -102,7 +105,8 @@ public:
 	std::unordered_map<std::string, int> boneNames;
 	nifly::MatTransform xformGlobalToSkin;
 
-	void LoadFromNif(nifly::NifFile* loadFromFile, nifly::NiShape* shape);
+	// The skeleton gives the global transform of the skin when the shape has none
+	void LoadFromNif(nifly::NifFile* loadFromFile, nifly::NiShape* shape, AnimSkeleton& skeleton);
 
 	void RemoveBone(const std::string& boneName) {
 		auto bone = boneNames.find(boneName);
@@ -142,8 +146,6 @@ public:
 	std::vector<std::vector<int>> vertBones;	 // Vert order list of bones per vertex.
 };
 
-class AnimSkeleton;
-
 /* Represents animation weighting to a common skeleton across multiple shapes, sourced from nif files*/
 class AnimInfo {
 private:
@@ -155,9 +157,14 @@ private:
 	std::optional<nifly::MatTransform> BindFromShape(const std::string& sourceShape, const std::string& targetShape, const std::string& boneName) const;
 	std::optional<nifly::MatTransform> FindBindOnOtherShape(const std::string& targetShape, const std::string& boneName) const;
 
+	AnimSkeleton* skeleton = nullptr;
+
 public:
-	// The skeleton the shapes are bound to. There is one for the whole application so far.
-	AnimSkeleton& GetSkeleton() const;
+	// The shapes are bound to the bones of the skeleton, which has to outlive the AnimInfo
+	explicit AnimInfo(AnimSkeleton& inSkeleton)
+		: skeleton(&inSkeleton) {}
+
+	AnimSkeleton& GetSkeleton() const { return *skeleton; }
 
 	std::map<std::string, std::vector<std::string>> shapeBones;
 	std::unordered_map<std::string, AnimSkin> shapeSkinning; // Shape to skin association.
@@ -237,13 +244,11 @@ class AnimSkeleton {
 	int unknownCount = 0;
 	bool allowCustomTransforms = true;
 
-	AnimSkeleton() {}
-
 public:
-	static AnimSkeleton& getInstance() {
-		static AnimSkeleton instance;
-		return instance;
-	}
+	AnimSkeleton() = default;
+	// Bones point at their parents and children in the skeleton
+	AnimSkeleton(const AnimSkeleton&) = delete;
+	AnimSkeleton& operator=(const AnimSkeleton&) = delete;
 
 	nifly::NifFile refSkeletonNif;
 
@@ -279,9 +284,9 @@ nifly::MatTransform MirrorTransformX(const nifly::MatTransform& xform);
 std::vector<AnimBone*> SortBonesParentsFirst(std::vector<AnimBone*> bones);
 
 // Loads the skeleton configured as "Anim/DefaultSkeletonReference" into the
-// AnimSkeleton singleton, resolving a relative path against the application
-// directory. Returns 0 on success.
-int LoadDefaultSkeletonReference(wxString* errorMessage = nullptr);
+// skeleton, resolving a relative path against the application directory.
+// Returns 0 on success.
+int LoadDefaultSkeletonReference(AnimSkeleton& skeleton, wxString* errorMessage = nullptr);
 
 // Bone name -> replacement pose-to-global transform, e.g. produced by the
 // physics preview simulation.

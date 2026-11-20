@@ -379,12 +379,12 @@ PreviewBone* SystemBuilder::findBoneFromIndex(const IDStr& name) const {
 }
 
 // Replacement for upstream's findObjectByName: resolves a bone name to an
-// AnimBone of the application skeleton. Falls back to loading the node from
+// AnimBone of the skeleton of the input's AnimInfo. Falls back to loading the node from
 // the NIF as a custom bone; the initial lookup retries with the NIF node's
 // exact spelling because AnimSkeleton is case-sensitive while SMP names
 // (BSFixedString upstream, IDStr here) are not.
 AnimBone* SystemBuilder::findAnimBone(const IDStr& name) {
-	auto& skel = AnimSkeleton::getInstance();
+	auto& skel = m_anim->GetSkeleton();
 
 	AnimBone* bone = skel.GetBonePtr(name.str(), true);
 	if (bone)

@@ -438,6 +438,7 @@ TEST_CASE("The body of an outfit is found by its reference info or its data fold
 }
 
 TEST_CASE("Add-on sliders of the body are conformed to outfits that don't have them", "[AddOnSliders]") {
+	AnimSkeleton skeleton;
 	ProjectFolder folder;
 	auto bodyFolder = folder.DataFolder("Body");
 	auto dressFolder = folder.DataFolder("Dress");
@@ -471,7 +472,7 @@ TEST_CASE("Add-on sliders of the body are conformed to outfits that don't have t
 	ConformBodyRef ref = FindConformBody(dress, catalog, folder.Path());
 	REQUIRE(ref.Found());
 
-	ConformBody conformBody;
+	ConformBody conformBody(skeleton);
 	std::vector<std::string> warnings;
 	REQUIRE(conformBody.Load(ref, catalog, folder.ShapeDataPath(), LoadNif, warnings));
 	CHECK(conformBody.addOnNames == std::vector<std::string>{"Body Extra"});
@@ -479,7 +480,7 @@ TEST_CASE("Add-on sliders of the body are conformed to outfits that don't have t
 
 	NifFile nif;
 	REQUIRE(LoadNif(dressNif, nif));
-	AnimInfo anim;
+	AnimInfo anim(skeleton);
 	LoadConformAnim(anim, nif);
 
 	auto conformed = ConformAddOnSliders(dress, nif, anim, conformBody);
@@ -503,6 +504,7 @@ TEST_CASE("Add-on sliders of the body are conformed to outfits that don't have t
 }
 
 TEST_CASE("Add-on sliders kept off outfits only go onto the body's shapes in them", "[AddOnSliders]") {
+	AnimSkeleton skeleton;
 	ProjectFolder folder;
 	auto bodyFolder = folder.DataFolder("Body");
 	auto dressFolder = folder.DataFolder("Dress");
@@ -550,13 +552,13 @@ TEST_CASE("Add-on sliders kept off outfits only go onto the body's shapes in the
 		std::string dressNif = WriteGridNif(dressFolder, "Dress.nif", "Dress", 6, 0.5f);
 		SliderSet dress = makeOutfit("Dress", {"Dress"});
 
-		ConformBody conformBody;
+		ConformBody conformBody(skeleton);
 		loadBody(dress, conformBody, true);
 		REQUIRE(conformBody.sliders.size() == 2);
 
 		NifFile nif;
 		REQUIRE(LoadNif(dressNif, nif));
-		AnimInfo anim;
+		AnimInfo anim(skeleton);
 		LoadConformAnim(anim, nif);
 
 		CHECK(ConformAddOnSliders(dress, nif, anim, conformBody) == std::vector<std::string>{"Body Extra"});
@@ -571,10 +573,10 @@ TEST_CASE("Add-on sliders kept off outfits only go onto the body's shapes in the
 		REQUIRE(LoadNif(suitNif, nif));
 
 		SECTION("with conforming") {
-			ConformBody conformBody;
+			ConformBody conformBody(skeleton);
 			loadBody(suit, conformBody, true);
 
-			AnimInfo anim;
+			AnimInfo anim(skeleton);
 			LoadConformAnim(anim, nif);
 
 			CHECK(ConformAddOnSliders(suit, nif, anim, conformBody) == std::vector<std::string>{"Body Extra"});
@@ -583,12 +585,12 @@ TEST_CASE("Add-on sliders kept off outfits only go onto the body's shapes in the
 		}
 
 		SECTION("without conforming") {
-			ConformBody conformBody;
+			ConformBody conformBody(skeleton);
 			loadBody(suit, conformBody, false);
 			REQUIRE(conformBody.sliders.size() == 1);
 
 			// Nothing is conformed, so the skinning isn't needed
-			CHECK(ConformAddOnSliders(suit, nif, AnimInfo(), conformBody).empty());
+			CHECK(ConformAddOnSliders(suit, nif, AnimInfo(skeleton), conformBody).empty());
 			CHECK(SliderNames(suit) == std::vector<std::string>{"Body Only"});
 		}
 
@@ -649,6 +651,7 @@ TEST_CASE("Add-ons save and load all their base projects", "[AddOnSliders]") {
 }
 
 TEST_CASE("Add-ons fit exact copies of their base project in other files", "[AddOnSliders]") {
+	AnimSkeleton skeleton;
 	ProjectFolder folder;
 	auto bodyFolder = folder.DataFolder("Body");
 	folder.DataFolder("Dress");
@@ -691,14 +694,14 @@ TEST_CASE("Add-ons fit exact copies of their base project in other files", "[Add
 	CHECK(ref.setName == "Body");
 	CHECK(ref.fromReferenceInfo);
 
-	ConformBody conformBody;
+	ConformBody conformBody(skeleton);
 	std::vector<std::string> warnings;
 	REQUIRE(conformBody.Load(ref, catalog, folder.ShapeDataPath(), LoadNif, warnings));
 	CHECK(conformBody.addOnNames == std::vector<std::string>{"Body Extra"});
 
 	NifFile nif;
 	REQUIRE(LoadNif(dressNif, nif));
-	AnimInfo anim;
+	AnimInfo anim(skeleton);
 	LoadConformAnim(anim, nif);
 	CHECK(ConformAddOnSliders(dress, nif, anim, conformBody) == std::vector<std::string>{"Body Extra"});
 	CHECK(dress.SliderExists("Extra"));
@@ -710,6 +713,7 @@ TEST_CASE("Add-ons fit exact copies of their base project in other files", "[Add
 }
 
 TEST_CASE("Add-ons fit other projects of the body that they list as base projects", "[AddOnSliders]") {
+	AnimSkeleton skeleton;
 	ProjectFolder folder;
 	auto bodyFolder = folder.DataFolder("Body");
 	auto refFolder = folder.DataFolder("BodyRef");
@@ -769,7 +773,7 @@ TEST_CASE("Add-ons fit other projects of the body that they list as base project
 
 	NifFile refNif;
 	REQUIRE(LoadNif(refNifFile, refNif));
-	AnimInfo refAnim;
+	AnimInfo refAnim(skeleton);
 	LoadConformAnim(refAnim, refNif);
 	FitBaseAddOnsToVariant(refSet, refNif, &refAnim, stack.baseAddOns, catalog, folder.ShapeDataPath(), LoadNif, true, warnings);
 
@@ -796,14 +800,14 @@ TEST_CASE("Add-ons fit other projects of the body that they list as base project
 	REQUIRE(ref.Found());
 	CHECK(ref.setName == "Body Ref");
 
-	ConformBody conformBody;
+	ConformBody conformBody(skeleton);
 	REQUIRE(conformBody.Load(ref, catalog, folder.ShapeDataPath(), LoadNif, warnings));
 	REQUIRE(conformBody.sliders.size() == 1);
 	CHECK(conformBody.sliders[0].slider.name == "Extra");
 
 	NifFile nif;
 	REQUIRE(LoadNif(dressNif, nif));
-	AnimInfo anim;
+	AnimInfo anim(skeleton);
 	LoadConformAnim(anim, nif);
 	CHECK(ConformAddOnSliders(dress, nif, anim, conformBody) == std::vector<std::string>{"Body Extra"});
 

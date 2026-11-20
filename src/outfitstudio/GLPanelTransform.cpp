@@ -137,7 +137,7 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 		// Pose mode: edit poseTranVec/poseRotVec only (no NIF writes, no
 		// undo).  Only AnimBones have pose data; plain NIF nodes do not.
 		boneXformPoseMode = false;
-		AnimBone* poseBPtr = AnimSkeleton::getInstance().GetBonePtr(activeBone);
+		AnimBone* poseBPtr = os->skeleton.GetBonePtr(activeBone);
 		if (os->project->bPose && poseBPtr) {
 			boneXformPoseMode = true;
 			xformInitialLocalToParent = poseBPtr->xformToParent;
@@ -154,7 +154,7 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 			xformInitialLocalToParent = MatTransform();
 			xformInitialParentToGlobal = MatTransform();
 
-			const AnimBone* bPtr = AnimSkeleton::getInstance().GetBonePtr(activeBone);
+			const AnimBone* bPtr = os->skeleton.GetBonePtr(activeBone);
 			if (bPtr) {
 				xformInitialLocalToParent = bPtr->xformToParent;
 				if (bPtr->parent)
@@ -228,7 +228,7 @@ void wxGLPanel::UpdateTransform(const wxPoint& screenPos) {
 	gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, boneXformPlaneNormalModel, boneXformPlaneDist);
 
 	if (boneXformPoseMode) {
-		AnimBone* bPtr = AnimSkeleton::getInstance().GetBonePtr(activeBone);
+		AnimBone* bPtr = os->skeleton.GetBonePtr(activeBone);
 		if (!bPtr) {
 			ShowTransformTool();
 			return;
@@ -324,7 +324,7 @@ void wxGLPanel::UpdateTransform(const wxPoint& screenPos) {
 	// follows the bone through skinning, the active pose updates live, and
 	// the "check for bad bones" residual correctly flags the new mismatch.
 	auto* nif = os->project->GetWorkNif();
-	AnimBone* bPtr = AnimSkeleton::getInstance().GetBonePtr(activeBone);
+	AnimBone* bPtr = os->skeleton.GetBonePtr(activeBone);
 	if (bPtr)
 		bPtr->SetTransformBoneToParent(newToParent);
 	if (nif)

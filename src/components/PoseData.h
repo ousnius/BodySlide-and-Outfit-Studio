@@ -11,6 +11,7 @@ See the included LICENSE file
 #include "Object3d.hpp"
 
 class AnimBone;
+class AnimSkeleton;
 
 #include <cstdint>
 #include <deque>
@@ -70,7 +71,7 @@ public:
 	// poseScale (converting from absolute local-to-parent when absoluteLocal
 	// is set). Bones without a matching entry are reset to the identity pose.
 	// Calls UpdatePoseTransform on every bone.
-	void ApplyToSkeleton() const;
+	void ApplyToSkeleton(AnimSkeleton& skeleton) const;
 
 	// Writes the pose that lies at t between a and b into outPose (0 yields a,
 	// 1 yields b). Translation and scale are mixed linearly, rotation along the
@@ -124,7 +125,7 @@ public:
 	// Captures the current live skeleton pose into outPose.
 	// When absoluteLocal is true, transforms are stored in local-to-parent
 	// space; otherwise Outfit-Studio relative deltas are stored.
-	static void CaptureCurrentPose(const std::string& poseName, bool absoluteLocal, PoseData& outPose);
+	static void CaptureCurrentPose(AnimSkeleton& skeleton, const std::string& poseName, bool absoluteLocal, PoseData& outPose);
 
 	// Loads all SAM pose YAML files from the specified folder (recursively).
 	// The pose name is derived from the file name (without extension) and is
