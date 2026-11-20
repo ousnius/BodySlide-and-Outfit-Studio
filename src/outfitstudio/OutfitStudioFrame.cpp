@@ -138,6 +138,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_CHECKBOX(XRCID("cbFixedWeight"), OutfitStudioFrame::OnFixedWeight)
 	EVT_CHECKBOX(XRCID("cbNormalizeWeights"), OutfitStudioFrame::OnCBNormalizeWeights)
 	EVT_CHECKBOX(XRCID("cbAccumulateSmooth"), OutfitStudioFrame::OnCBAccumulateSmooth)
+	EVT_BUTTON(XRCID("btnNormalizeWeights"), OutfitStudioFrame::OnNormalizeWeights)
 
 	EVT_MENU(XRCID("saveBaseShape"), OutfitStudioFrame::OnSetBaseShape)
 	EVT_MENU(XRCID("makeConvRef"), OutfitStudioFrame::OnMakeConvRef)

@@ -178,6 +178,33 @@ void BoneWeightAutoNormalizer::AdjustWeights(int vInd, bool* adjFlag) {
 			bw[vInd].endVal += remainW;
 		}
 	}
+
+	// Give what's still missing to the modified bones, scaled by their weights
+	if (bFillModified && totMW > WEIGHT_EPSILON) {
+		float totW = 0.0;
+		for (size_t bi = 0; bi < nBones; ++bi) {
+			auto wi = uss->boneWeights[bi].weights.find(vInd);
+			if (wi != uss->boneWeights[bi].weights.end())
+				totW += wi->second.endVal;
+		}
+
+		float missingW = availW - totW;
+		if (missingW > WEIGHT_EPSILON) {
+			float fillFac = (totMW + missingW) / totMW;
+			for (uint32_t bi = 0; bi < nMBones; ++bi) {
+				if (adjFlag && !adjFlag[bi])
+					continue;
+
+				auto wi = uss->boneWeights[bi].weights.find(vInd);
+				if (wi == uss->boneWeights[bi].weights.end())
+					continue;
+
+				wi->second.endVal *= fillFac;
+				if (wi->second.endVal - 1.0 > -WEIGHT_EPSILON)
+					wi->second.endVal = 1.0;
+			}
+		}
+	}
 }
 
 float BoneWeightAutoNormalizer::SetWeight(int vInd, float w) {

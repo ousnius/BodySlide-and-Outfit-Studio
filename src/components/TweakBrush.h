@@ -396,7 +396,7 @@ public:
 	bool bSpreadWeight;
 	// bXMirrorBone:  if true, boneNames[1] is the x-mirror bone
 	bool bXMirrorBone;
-	bool bNormalizeWeights = true; // Matches the default of the Normalize Weights checkbox
+	bool bNormalizeWeights = false;
 
 	TB_Weight();
 	virtual ~TB_Weight();

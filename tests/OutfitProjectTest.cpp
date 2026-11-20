@@ -684,6 +684,85 @@ TEST_CASE("Accumulated weight smoothing goes further than one stroke's target", 
 	CHECK(accumulated.Total(nextColumn) == Catch::Approx(1.0f).margin(1e-3));
 }
 
+TEST_CASE("Painting a normalized bone on vertices without weights gives them all of it", "[OutfitProject]") {
+	ProjectFixture f;
+	Mesh* m = f.host.GetShapeMesh("Skirt");
+	REQUIRE(m);
+	f.editor.activeBone = "BoneLeft";
+
+	const bool normalize = GENERATE(false, true);
+	TB_Weight brush;
+	f.ops.GetWeightBrushBones("").ApplyTo(brush, f.project.GetWorkAnim());
+	brush.bNormalizeWeights = normalize;
+	brush.setRadius(0.3f);
+
+	// One dab in the middle of the skirt, which has no weights yet
+	const int center = 24;
+	BrushStrokeController controller(f.project, f.editor);
+	controller.PrepareWeightStroke({f.skirt});
+	controller.Begin({m}, &brush, BrushStrokeController::PickAtVertex(m, center));
+	f.ApplyRefresh(controller.End());
+
+	float painted = f.Weight(f.skirt, "BoneLeft", center);
+	if (normalize) {
+		// The bone is the only one with weight there, so it has all of it
+		CHECK(painted == Catch::Approx(1.0f));
+		CHECK(f.Weight(f.skirt, "BoneLeft", center + 1) == Catch::Approx(1.0f));
+	}
+	else {
+		CHECK(painted > 0.0f);
+		CHECK(painted < 0.1f);
+	}
+	CHECK(f.Weight(f.skirt, "BoneLeft", 0) == 0.0f);
+	CHECK(f.Weight(f.skirt, "BoneRight", center) == 0.0f);
+}
+
+TEST_CASE("Normalizing weights keeps the largest ones up to the bones per vertex and makes them add up to 1", "[OutfitProject]") {
+	ProjectFixture f;
+	Mesh* m = f.host.GetShapeMesh("Skirt");
+	REQUIRE(m);
+
+	// Vertex 0 has five bones adding up to 1.1, vertex 1 one bone at 0.5, vertex 2 the same but masked
+	const std::vector<std::string> bones = {"Bone1", "Bone2", "Bone3", "Bone4", "Bone5"};
+	const std::vector<float> weights = {0.4f, 0.3f, 0.2f, 0.12f, 0.08f};
+	auto anim = f.project.GetWorkAnim();
+	for (size_t b = 0; b < bones.size(); b++) {
+		f.project.AddCustomBoneRef(bones[b], "", nifly::MatTransform());
+		std::unordered_map<uint16_t, float> w{{0, weights[b]}};
+		if (b == 0) {
+			w[1] = 0.5f;
+			w[2] = 0.5f;
+		}
+		anim->SetWeights("Skirt", bones[b], w);
+	}
+
+	std::vector<float> mask(m->nVerts, 0.0f);
+	mask[2] = 1.0f;
+	REQUIRE(MaskOps::SetMask(*m, mask));
+
+	UndoStateProject usp;
+	size_t changed = 0;
+	REQUIRE(f.ops.NormalizeWeights({f.skirt}, usp, &changed).ok);
+	CHECK(changed == 2);
+
+	// Skyrim keeps 4 bones per vertex: the smallest weight goes, the rest are scaled from 1.02 to 1
+	CHECK(f.Weight(f.skirt, "Bone5", 0) == 0.0f);
+	float total = 0.0f;
+	for (size_t b = 0; b < 4; b++) {
+		CHECK(f.Weight(f.skirt, bones[b], 0) == Catch::Approx(weights[b] / 1.02f));
+		total += f.Weight(f.skirt, bones[b], 0);
+	}
+	CHECK(total == Catch::Approx(1.0f));
+	CHECK(f.Weight(f.skirt, "Bone1", 1) == Catch::Approx(1.0f));
+	CHECK(f.Weight(f.skirt, "Bone1", 2) == Catch::Approx(0.5f));
+
+	// It's one undo step
+	f.ops.ApplyShapeEdits(usp, true);
+	CHECK(f.Weight(f.skirt, "Bone5", 0) == Catch::Approx(0.08f));
+	CHECK(f.Weight(f.skirt, "Bone1", 0) == Catch::Approx(0.4f));
+	CHECK(f.Weight(f.skirt, "Bone1", 1) == Catch::Approx(0.5f));
+}
+
 TEST_CASE("Fixing clipping leaves masked vertices alone", "[OutfitProject]") {
 	// The skirt lies below the body grid, so it clips everywhere
 	ProjectFixture f(-0.3f);

@@ -1279,6 +1279,7 @@ TB_Weight::~TB_Weight() {}
 void TB_Weight::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
 	BoneWeightAutoNormalizer nzer;
 	nzer.SetUp(&uss, animInfo, m->shapeName, boneNames, lockedBoneNames, bXMirrorBone ? 2 : 1, bSpreadWeight);
+	nzer.SetFillModified(true);
 	nzer.GrabStartingWeights(points, nPoints);
 
 	float meshradius = m->TransformDistModelToMesh(radius);
@@ -1539,6 +1540,7 @@ void TB_SmoothWeight::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* p
 
 	BoneWeightAutoNormalizer nzer;
 	nzer.SetUp(&uss, animInfo, m->shapeName, boneNames, lockedBoneNames, bXMirrorBone ? 2 : 1, bSpreadWeight);
+	nzer.SetFillModified(true);
 	nzer.GrabStartingWeights(points, nPoints);
 
 	float meshradius = m->TransformDistModelToMesh(radius);
