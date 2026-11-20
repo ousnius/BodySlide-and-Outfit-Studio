@@ -396,7 +396,7 @@ public:
 	bool bSpreadWeight;
 	// bXMirrorBone:  if true, boneNames[1] is the x-mirror bone
 	bool bXMirrorBone;
-	bool bNormalizeWeights = false;
+	bool bNormalizeWeights = true; // Matches the default of the Normalize Weights checkbox
 
 	TB_Weight();
 	virtual ~TB_Weight();
@@ -449,6 +449,9 @@ public:
 	// bXMirrorBone:  if true, boneNames[1] is the x-mirror bone
 	bool bXMirrorBone;
 	bool bNormalizeWeights = false;
+	// bAccumulate: smooth the current weights with each dab instead of the weights from the start
+	// of the stroke, so going over an area again keeps smoothing it further.
+	bool bAccumulate = false;
 	uint8_t method; // 0 for laplacian, 1 for HC-Smooth.
 	float hcAlpha;	// Blending constants.
 	float hcBeta;

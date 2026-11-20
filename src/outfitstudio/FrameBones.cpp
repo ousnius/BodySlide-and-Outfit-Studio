@@ -323,6 +323,10 @@ void OutfitStudioFrame::OnCBNormalizeWeights(wxCommandEvent& event) {
 		weightBrush->bNormalizeWeights = checked;
 }
 
+void OutfitStudioFrame::OnCBAccumulateSmooth(wxCommandEvent& event) {
+	glView->SetToolOptionAccumulateSmoothWeight(event.IsChecked());
+}
+
 void OutfitStudioFrame::ToggleBoneState(wxTreeItemId item) {
 	if (!item.IsOk())
 		return;
