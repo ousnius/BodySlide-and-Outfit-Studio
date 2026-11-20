@@ -48,3 +48,9 @@ The file lists of CMake and of the Visual Studio projects are kept by hand. A ne
 - the matching `.vcxproj.filters` files, so the file shows up in its folder in Visual Studio
 
 Git stores the source files with LF line endings. On Windows, check them out with `core.autocrlf` set to `true`, so they have CRLF line endings on disk.
+
+## Build settings
+
+CMake precompiles the standard library, wxWidgets and nifly headers that most files include. Every file gets them, even one that doesn't include them itself. On Windows `wx/wx.h` includes `windows.h`, so don't name anything `near` or `far`, and expect its other macros everywhere. `-DBSOS_PRECOMPILED_HEADERS=OFF` builds without them, which shows whether a file includes everything it uses.
+
+The Windows CI job builds its dependencies with a pinned vcpkg release (`VCPKG_COMMIT` in `.github/workflows/cmake-release.yml`). Change that commit to get newer dependencies. The next run builds them once and caches them again.
