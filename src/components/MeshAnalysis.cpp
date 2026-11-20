@@ -384,7 +384,7 @@ std::vector<bool> CoveredVertices(const std::vector<Vector3>& verts, const std::
 	std::vector<uint8_t> hits(verts.size(), 0);
 
 	ParallelFor(verts.size(), 256, [&](size_t startIndex, size_t endIndex) {
-		std::vector<IntersectResult> near;
+		std::vector<IntersectResult> nearTris;
 		for (size_t i = startIndex; i < endIndex; i++) {
 			Vector3 dir = normals[i];
 			if (dir.IsZero(true))
@@ -392,12 +392,12 @@ std::vector<bool> CoveredVertices(const std::vector<Vector3>& verts, const std::
 			dir.Normalize();
 
 			Vector3 origin = verts[i];
-			near.clear();
-			if (!tree.IntersectSphere(origin, radius, &near))
+			nearTris.clear();
+			if (!tree.IntersectSphere(origin, radius, &nearTris))
 				continue;
 
 			// The triangles near the vertex that the line along its normal goes through, from either side
-			for (auto& hit : near) {
+			for (auto& hit : nearTris) {
 				const Triangle& t = surfaceTris[hit.HitFacet];
 				if (t.p1 >= surfaceVerts.size() || t.p2 >= surfaceVerts.size() || t.p3 >= surfaceVerts.size())
 					continue;

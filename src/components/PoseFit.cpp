@@ -274,7 +274,7 @@ float CrotchHeight(const std::vector<const std::vector<Vector3>*>& vertsOf, cons
 
 	const int slices = 200;
 	const float sliceHeight = height / slices;
-	const float near = height * 0.12f;	// how far from the middle the legs are looked for
+	const float legRange = height * 0.12f;	// how far from the middle the legs are looked for
 	const float gap = height * 0.006f;	// the free space between the legs
 	std::vector<char> left(slices, 0), right(slices, 0), middle(slices, 0);
 	for (size_t m = 0; m < vertsOf.size(); m++) {
@@ -299,7 +299,7 @@ float CrotchHeight(const std::vector<const std::vector<Vector3>*>& vertsOf, cons
 					a = std::min(a, x);
 					b = std::max(b, x);
 				}
-				if (a > b || b < -near || a > near)
+				if (a > b || b < -legRange || a > legRange)
 					continue;
 				if (a < gap && b > -gap)
 					middle[s] = 1;

@@ -783,3 +783,55 @@ endif()
 
 set_target_properties(OutfitStudio PROPERTIES OUTPUT_NAME "OutfitStudio")
 set_target_properties(BodySlide PROPERTIES OUTPUT_NAME "BodySlide")
+
+# Precompiled headers: the standard library, wxWidgets and nifly headers most files include, compiled once per
+# library and program instead of once per file. Only C++ files use them; GL headers are left out because GLEW has
+# to come before gl.h.
+option(BSOS_PRECOMPILED_HEADERS "Precompile the common standard library, wxWidgets and nifly headers" ON)
+set(BSOS_PRECOMPILED_HEADER_FILES
+	<algorithm>
+	<array>
+	<atomic>
+	<cfloat>
+	<cmath>
+	<cstddef>
+	<cstdint>
+	<cstdlib>
+	<cstring>
+	<filesystem>
+	<fstream>
+	<functional>
+	<iterator>
+	<limits>
+	<map>
+	<memory>
+	<regex>
+	<set>
+	<sstream>
+	<string>
+	<unordered_map>
+	<unordered_set>
+	<utility>
+	<vector>
+	<wx/wx.h>
+	<wx/dir.h>
+	<wx/filename.h>
+	<wx/log.h>
+	<wx/tokenzr.h>
+	<wx/xrc/xmlres.h>
+	<NifFile.hpp>
+)
+if(BSOS_PRECOMPILED_HEADERS)
+	set(bsos_pch_targets bsos_core bsos_render bsos_physics bsos_ui bsos_fbx bsos_project bsos_mcp OutfitStudio BodySlide)
+	if(BSOS_BUILD_TESTS)
+		list(APPEND bsos_pch_targets BSOSTests)
+	endif()
+	foreach(target IN LISTS bsos_pch_targets)
+		get_target_property(target_sources ${target} SOURCES)
+		list(FILTER target_sources INCLUDE REGEX "\\.c$")
+		if(target_sources)
+			set_source_files_properties(${target_sources} PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
+		endif()
+		target_precompile_headers(${target} PRIVATE ${BSOS_PRECOMPILED_HEADER_FILES})
+	endforeach()
+endif()
