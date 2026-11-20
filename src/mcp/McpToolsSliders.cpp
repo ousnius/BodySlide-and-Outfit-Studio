@@ -4,7 +4,6 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
-#include "outfitstudio/PosePanel.h"
 #include "McpHelpers.h"
 #include "McpSnapshots.h"
 #include "project/AutomationRunner.h"
@@ -12,10 +11,10 @@ See the included LICENSE file
 #include "components/PoseMath.h"
 #include "components/SliderPresets.h"
 #include "components/StarfieldSpace.h"
+#include "project/ProjectOperations.h"
 #include "utils/ConfigurationManager.h"
 #include "utils/ProjectUtil.h"
-#include "outfitstudio/OutfitStudioFrame.h"
-#include "outfitstudio/GLPanel.h"
+#include "project/StudioSession.h"
 #include "components/UndoHistory.h"
 
 #include <wx/filename.h>
@@ -152,8 +151,7 @@ double Degrees(float radians) {
 	return std::round(radians / DEG2RAD * 10.0f) / 10.0;
 }
 
-std::vector<AnimBone*> SkeletonBones() {
-	AnimSkeleton& skeleton = AnimSkeleton::getInstance();
+std::vector<AnimBone*> SkeletonBones(AnimSkeleton& skeleton) {
 	std::vector<std::string> names;
 	skeleton.GetBoneNames(names);
 
@@ -164,8 +162,8 @@ std::vector<AnimBone*> SkeletonBones() {
 	return bones;
 }
 
-AnimBone* SkeletonBone(const std::string& name) {
-	AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(name);
+AnimBone* SkeletonBone(AnimSkeleton& skeleton, const std::string& name) {
+	AnimBone* bone = skeleton.GetBonePtr(name);
 	if (!bone)
 		throw McpToolError("There is no bone '" + name + "' in the skeleton. list_skeleton_bones lists them.");
 	return bone;
@@ -268,7 +266,7 @@ json Balance(OutfitStudioMcp& mcp) {
 
 	const float units = McpBoneUnits(mcp);
 	std::vector<Vector3> feet;
-	for (AnimBone* bone : PoseMath::MainBones(SkeletonBones()))
+	for (AnimBone* bone : PoseMath::MainBones(SkeletonBones(mcp.Skeleton())))
 		if (PoseMath::GetBoneRole(bone->boneName).role.rfind("foot", 0) == 0)
 			feet.push_back(bone->xformPoseToGlobal.translation * units);
 
@@ -365,7 +363,7 @@ McpToolResult GetPose(OutfitStudioMcp& mcp, bool posed, const json& args = json:
 		const float units = McpBoneUnits(mcp);
 		json transforms = json::object();
 		for (auto& name : names)
-			transforms[name] = BoneTransform(SkeletonBone(name), context, units);
+			transforms[name] = BoneTransform(SkeletonBone(mcp.Skeleton(), name), context, units);
 		result.data["transforms"] = transforms;
 	}
 
@@ -380,7 +378,7 @@ McpToolResult GetPose(OutfitStudioMcp& mcp, bool posed, const json& args = json:
 	}
 
 	PoseData current;
-	PoseDataCollection::CaptureCurrentPose("current", false, current);
+	PoseDataCollection::CaptureCurrentPose(mcp.Skeleton(), "current", false, current);
 
 	json bones = json::object();
 	for (auto& bone : current.boneData) {
@@ -457,7 +455,7 @@ float McpBoneUnits(OutfitStudioMcp& mcp) {
 
 PoseMath::TwistContext McpTwistContext(OutfitStudioMcp& mcp) {
 	PoseMath::TwistContext context;
-	context.bones = SkeletonBones();
+	context.bones = SkeletonBones(mcp.Skeleton());
 
 	OutfitProject& project = mcp.Project();
 	AnimInfo* anim = project.GetWorkAnim();
@@ -561,7 +559,7 @@ std::vector<std::pair<std::string, std::map<std::string, float>>> McpPresetCases
 }
 
 void AddSliderTools(OutfitStudioMcp& mcp) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 
 	McpTool list;
 	list.name = "list_sliders";
@@ -606,8 +604,8 @@ void AddSliderTools(OutfitStudioMcp& mcp) {
 	McpTool zero;
 	zero.name = "zero_sliders";
 	zero.description = "Sets all sliders to 0, apart from clamp sliders.";
-	zero.handler = [&mcp, frame](const json&) {
-		frame->ApplyRefresh(mcp.Ops().ZeroSliders());
+	zero.handler = [&mcp, session](const json&) {
+		session->ApplyRefresh(mcp.Ops().ZeroSliders());
 		return McpToolResult();
 	};
 	mcp.AddTool(std::move(zero));
@@ -814,26 +812,26 @@ void AddSliderTools(OutfitStudioMcp& mcp) {
 		"Enters slider edit mode for a slider, so brush strokes change its morph instead of the base shape, or leaves "
 		"it without a slider.";
 	edit.inputSchema = McpSchema({{"slider", McpProp("string", "Slider to edit, leave out to stop editing")}});
-	edit.handler = [&mcp, frame](const json& args) {
+	edit.handler = [&mcp, session](const json& args) {
 		if (McpArgs::Has(args, "slider")) {
 			std::string slider = McpArgs::String(args, "slider");
 			CheckSlider(mcp.Project(), slider);
-			if (frame->editor.bEditSlider)
-				frame->ExitSliderEdit();
-			frame->EnterSliderEdit(slider);
+			if (session->Editor().bEditSlider)
+				session->ExitSliderEdit();
+			session->EnterSliderEdit(slider);
 		}
-		else if (frame->editor.bEditSlider)
-			frame->ExitSliderEdit();
+		else if (session->Editor().bEditSlider)
+			session->ExitSliderEdit();
 
 		McpToolResult result;
-		result.data["editingSlider"] = frame->editor.bEditSlider ? json(frame->editor.activeSlider) : json(nullptr);
+		result.data["editingSlider"] = session->Editor().bEditSlider ? json(session->Editor().activeSlider) : json(nullptr);
 		return result;
 	};
 	mcp.AddTool(std::move(edit));
 }
 
 void AddConversionTools(OutfitStudioMcp& mcp) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 
 	McpTool conform;
 	conform.name = "conform_sliders";
@@ -954,7 +952,7 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 		{"keepRigidParts",
 		 McpProp("boolean", "Connected parts weighted at least 0.99 to one copied bone on every vertex (buckles, plates, props) keep their weights. Default true.")},
 	});
-	weights.handler = [&mcp, frame](const json& args) {
+	weights.handler = [&mcp, session](const json& args) {
 		OutfitProject& project = mcp.Project();
 		AnimInfo* anim = project.GetWorkAnim();
 		NiShape* reference = project.GetBaseShape();
@@ -1028,7 +1026,7 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 		};
 
 		// Recorded like the window does, so it can be undone
-		UndoHistory& history = frame->editor.undoHistory;
+		UndoHistory& history = session->Editor().undoHistory;
 		UndoStateProject* usp = history.PushState();
 		std::map<std::string, BoneWeightCopyReport> reports;
 		OpResult result = mcp.Ops().CopyBoneWeights(shapes, options, *usp, &reports);
@@ -1140,9 +1138,9 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 			}
 		}
 
-		frame->UpdateUndoTools();
+		session->UpdateUndoTools();
 		mcp.Apply(result);
-		frame->RefreshGUIWeightColors();
+		session->RefreshGUIWeightColors();
 
 		McpToolResult tool;
 		for (auto* shape : shapes) {
@@ -1306,9 +1304,9 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 	listPoses.name = "list_poses";
 	listPoses.description = "Lists the poses set_preview_pose can show.";
 	listPoses.readOnly = true;
-	listPoses.handler = [frame](const json&) {
+	listPoses.handler = [session](const json&) {
 		json names = json::array();
-		for (auto& pose : frame->poseDataCollection.poseData)
+		for (auto& pose : session->Poses().poseData)
 			names.push_back(pose.name);
 
 		McpToolResult result;
@@ -1399,7 +1397,7 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 								"orientation: after everything else, their limbs are solved with reach. Use with shift or pelvis "
 								"turns, so the hips move and the legs follow.")},
 	});
-	pose.handler = [&mcp, frame](const json& args) {
+	pose.handler = [&mcp, session](const json& args) {
 		OutfitProject& project = mcp.Project();
 		ProjectOperations ops = mcp.Ops();
 
@@ -1407,7 +1405,7 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 		bool hasBase = false;
 		if (McpArgs::Has(args, "pose")) {
 			std::string name = McpArgs::String(args, "pose");
-			auto& poses = frame->poseDataCollection.poseData;
+			auto& poses = session->Poses().poseData;
 			auto it = std::find_if(poses.begin(), poses.end(), [&](const PoseData& p) { return p.name == name; });
 			if (it == poses.end())
 				throw McpToolError("There is no pose '" + name + "'. list_poses lists them.");
@@ -1434,7 +1432,7 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 
 		if (hasBase) {
 			ops.ResetPose();
-			base.ApplyToSkeleton();
+			base.ApplyToSkeleton(mcp.Skeleton());
 		}
 		else if (!McpArgs::Bool(args, "keepCurrent", false) || !project.bPose)
 			ops.ResetPose();
@@ -1448,7 +1446,7 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 		};
 		std::vector<Plant> plants;
 		for (auto& name : McpArgs::Strings(args, "plant")) {
-			AnimBone* bone = SkeletonBone(name);
+			AnimBone* bone = SkeletonBone(mcp.Skeleton(), name);
 			AnimBone* upper = nullptr;
 			AnimBone* lower = nullptr;
 			if (!PoseMath::LimbChain(bone, upper, lower))
@@ -1470,7 +1468,7 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 
 		// The start pose relative to the unposed skeleton, with the bones changed on top
 		PoseData data;
-		PoseDataCollection::CaptureCurrentPose("MCP", false, data);
+		PoseDataCollection::CaptureCurrentPose(mcp.Skeleton(), "MCP", false, data);
 
 		if (const json* bones = McpArgs::Find(args, "bones")) {
 			if (!bones->is_object())
@@ -1495,7 +1493,7 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 			}
 		}
 
-		data.ApplyToSkeleton();
+		data.ApplyToSkeleton(mcp.Skeleton());
 
 		// Changes in global terms, parents first so a child changes from where its parent put it
 		enum class Kind { Shift, Turn, Aim, Tilt, Twist };
@@ -1518,13 +1516,13 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 		const float units = McpBoneUnits(mcp);
 		if (const json* list = objectArg("shift"))
 			for (auto& item : list->items())
-				changes.push_back({SkeletonBone(item.key()), Kind::Shift, ToBoneUnits(VectorFromJson(item.value(), "shift of " + item.key()), units)});
+				changes.push_back({SkeletonBone(mcp.Skeleton(), item.key()), Kind::Shift, ToBoneUnits(VectorFromJson(item.value(), "shift of " + item.key()), units)});
 		if (const json* list = objectArg("worldRotation"))
 			for (auto& item : list->items())
-				changes.push_back({SkeletonBone(item.key()), Kind::Turn, VectorFromJson(item.value(), "worldRotation of " + item.key()) * DEG2RAD});
+				changes.push_back({SkeletonBone(mcp.Skeleton(), item.key()), Kind::Turn, VectorFromJson(item.value(), "worldRotation of " + item.key()) * DEG2RAD});
 		if (const json* list = objectArg("aim")) {
 			for (auto& item : list->items()) {
-				Change change{SkeletonBone(item.key()), Kind::Aim};
+				Change change{SkeletonBone(mcp.Skeleton(), item.key()), Kind::Aim};
 				if (item.value().is_object()) {
 					if (!item.value().contains("direction"))
 						throw McpToolError("aim of " + item.key() + " needs a direction.");
@@ -1546,14 +1544,14 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 				if (!item.value().is_object())
 					throw McpToolError("tilt of " + item.key() + " has to be {right, front, up}.");
 				Vector3 degrees(McpArgs::Float(item.value(), "right", 0.0f), McpArgs::Float(item.value(), "front", 0.0f), McpArgs::Float(item.value(), "up", 0.0f));
-				changes.push_back({SkeletonBone(item.key()), Kind::Tilt, degrees * DEG2RAD});
+				changes.push_back({SkeletonBone(mcp.Skeleton(), item.key()), Kind::Tilt, degrees * DEG2RAD});
 			}
 		}
 		if (const json* list = objectArg("twist")) {
 			for (auto& item : list->items()) {
 				if (!item.value().is_number())
 					throw McpToolError("twist of " + item.key() + " has to be a number of degrees.");
-				Change change{SkeletonBone(item.key()), Kind::Twist};
+				Change change{SkeletonBone(mcp.Skeleton(), item.key()), Kind::Twist};
 				change.twist = item.value().get<float>() * DEG2RAD;
 				changes.push_back(change);
 			}
@@ -1606,7 +1604,7 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 			};
 			std::vector<Reach> reaches;
 			for (auto& item : list->items()) {
-				AnimBone* bone = SkeletonBone(item.key());
+				AnimBone* bone = SkeletonBone(mcp.Skeleton(), item.key());
 				AnimBone* upper = nullptr;
 				AnimBone* lower = nullptr;
 				if (!PoseMath::LimbChain(bone, upper, lower))
@@ -1621,9 +1619,9 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 				const json& target = reach.spec["target"];
 				Vector3 position;
 				if (target.is_string())
-					position = SkeletonBone(target.get<std::string>())->xformPoseToGlobal.translation;
+					position = SkeletonBone(mcp.Skeleton(), target.get<std::string>())->xformPoseToGlobal.translation;
 				else if (target.is_object()) {
-					position = SkeletonBone(McpArgs::String(target, "bone"))->xformPoseToGlobal.translation;
+					position = SkeletonBone(mcp.Skeleton(), McpArgs::String(target, "bone"))->xformPoseToGlobal.translation;
 					if (target.contains("offset"))
 						position += ToBoneUnits(VectorFromJson(target["offset"], "reach offset of " + reach.bone->boneName), units);
 				}
@@ -1662,8 +1660,8 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 		}
 
 		PoseData posed;
-		PoseDataCollection::CaptureCurrentPose("MCP", false, posed);
-		frame->ApplyRefresh(ops.SetPreviewPose(posed));
+		PoseDataCollection::CaptureCurrentPose(mcp.Skeleton(), "MCP", false, posed);
+		session->ApplyRefresh(ops.SetPreviewPose(posed));
 
 		McpToolResult result = GetPose(mcp, true);
 		if (!reachResults.empty())
@@ -1713,7 +1711,7 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 		{"file", McpProp("string", "Pose file to write (absolute or relative to the BodySlide folder)")},
 		{"overwrite", McpProp("boolean", "Replace a pose or file that exists. Default false.")},
 	});
-	savePose.handler = [&mcp, frame](const json& args) {
+	savePose.handler = [&mcp, session](const json& args) {
 		if (!mcp.Project().bPose)
 			throw McpToolError("No preview pose is shown. Set one with set_preview_pose first.");
 
@@ -1729,12 +1727,12 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 			if (name.empty())
 				throw McpToolError("The pose name is empty.");
 
-			auto& poses = frame->poseDataCollection.poseData;
+			auto& poses = session->Poses().poseData;
 			auto existing = std::find_if(poses.begin(), poses.end(), [&](const PoseData& p) { return p.name == name; });
 			if (existing != poses.end() && !overwrite)
 				throw McpToolError("There already is a pose '" + name + "'. Pass overwrite: true to replace it.");
 
-			std::string error = frame->posePanel->SaveCurrentPose(name);
+			std::string error = session->SaveCurrentPose(name);
 			if (!error.empty())
 				throw McpToolError(error);
 			result.data["name"] = name;
@@ -1745,7 +1743,7 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 			if (wxFileName::FileExists(wxString::FromUTF8(file)) && !overwrite)
 				throw McpToolError("The file '" + file + "' exists. Pass overwrite: true to replace it.");
 
-			std::string error = frame->posePanel->SaveCurrentPoseFile(file);
+			std::string error = session->SaveCurrentPoseFile(file);
 			if (!error.empty())
 				throw McpToolError(error);
 			result.data["file"] = file;
@@ -1758,41 +1756,41 @@ void AddConversionTools(OutfitStudioMcp& mcp) {
 	McpTool clearPose;
 	clearPose.name = "clear_preview_pose";
 	clearPose.description = "Shows the shapes unposed again.";
-	clearPose.handler = [&mcp, frame](const json&) {
+	clearPose.handler = [&mcp, session](const json&) {
 		ProjectOperations ops = mcp.Ops();
 		ops.ResetPose();
-		frame->ApplyRefresh(ops.ClearPreviewPose());
+		session->ApplyRefresh(ops.ClearPreviewPose());
 		return McpToolResult();
 	};
 	mcp.AddTool(std::move(clearPose));
 }
 
 void AddHistoryTools(OutfitStudioMcp& mcp) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 
-	auto undoRedo = [frame](bool undo) {
-		if (!frame->glView)
+	auto undoRedo = [session](bool undo) {
+		if (!session->View())
 			throw McpToolError("The view isn't available.");
-		if (frame->glView->GetSegmentMode())
+		if (session->GetSegmentMode())
 			throw McpToolError("Undo isn't available while editing segments.");
 
 		// The window's first undo of a step in another mode (slider edit, slider value) only switches to that
 		// mode, so the user sees what the next press undoes. An agent wants the step undone in one call.
-		UndoHistory& history = frame->editor.undoHistory;
+		UndoHistory& history = session->Editor().undoHistory;
 		auto step = [&]() { return undo ? history.GetCurState() : history.GetNextState(); };
 		UndoStateProject* target = step();
 
-		bool done = undo ? frame->glView->UndoStroke() : frame->glView->RedoStroke();
+		bool done = undo ? session->UndoStroke() : session->RedoStroke();
 		if (done && target && step() == target)
-			done = undo ? frame->glView->UndoStroke() : frame->glView->RedoStroke();
+			done = undo ? session->UndoStroke() : session->RedoStroke();
 
-		frame->UpdateUndoTools();
+		session->UpdateUndoTools();
 		if (!done)
 			throw McpToolError(undo ? "There is nothing to undo." : "There is nothing to redo.");
-		frame->SetPendingChanges();
+		session->SetPendingChanges();
 
 		McpToolResult result;
-		result.data["editingSlider"] = frame->editor.bEditSlider ? json(frame->editor.activeSlider) : json(nullptr);
+		result.data["editingSlider"] = session->Editor().bEditSlider ? json(session->Editor().activeSlider) : json(nullptr);
 		return result;
 	};
 
@@ -1833,7 +1831,7 @@ void AddHistoryTools(OutfitStudioMcp& mcp) {
 		"Brings the project back to a snapshot, a named one or an automatic one (auto-N). The undo history is cleared, "
 		"the snapshot is kept, and an automatic snapshot of the state before is taken.";
 	restore.inputSchema = McpSchema({{"name", McpProp("string", "Name of the snapshot")}}, {"name"});
-	restore.handler = [&mcp, frame](const json& args) {
+	restore.handler = [&mcp, session](const json& args) {
 		std::string name = McpArgs::String(args, "name");
 		McpSnapshotStore& store = mcp.Snapshots();
 		store.Track(&mcp.Project());
@@ -1843,8 +1841,8 @@ void AddHistoryTools(OutfitStudioMcp& mcp) {
 		// The state before, to go back to; restoring clears the undo history
 		std::string before = store.SaveAutomatic(mcp, "snapshot_restore", name);
 
-		frame->RestoreEditSnapshot(*store.Find(name)->snapshot);
-		frame->SetPendingChanges();
+		session->RestoreEditSnapshot(*store.Find(name)->snapshot);
+		session->SetPendingChanges();
 
 		McpToolResult result;
 		result.data["autoSnapshot"] = before;
@@ -1856,9 +1854,9 @@ void AddHistoryTools(OutfitStudioMcp& mcp) {
 	listSnapshots.name = "snapshot_list";
 	listSnapshots.description = "Lists the snapshots, and the automatic ones with the tool each was taken before.";
 	listSnapshots.readOnly = true;
-	listSnapshots.handler = [&mcp, frame](const json&) {
+	listSnapshots.handler = [&mcp, session](const json&) {
 		McpSnapshotStore& store = mcp.Snapshots();
-		store.Track(frame->project);
+		store.Track(session->GetProject());
 		McpToolResult result;
 		result.data["snapshots"] = store.Names();
 		result.data["automatic"] = store.Automatic();

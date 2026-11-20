@@ -39,7 +39,7 @@ namespace Physics {
 class PreviewSystem;
 
 // Port of hdtSMP64's SkyrimBone: a physics bone bound to an AnimBone of the
-// application skeleton instead of a NiNode of the game scene graph.
+// skeleton of the AnimInfo instead of a NiNode of the game scene graph.
 class PreviewBone : public hdt::SkinnedMeshBone {
 public:
 	PreviewBone(const hdt::IDStr& name, AnimBone* animBone, PreviewSystem* system, btRigidBody::btRigidBodyConstructionInfo& ci);

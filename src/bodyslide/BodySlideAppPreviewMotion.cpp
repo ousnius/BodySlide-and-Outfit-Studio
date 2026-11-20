@@ -57,7 +57,7 @@ void BodySlideApp::EnablePreviewPhysics(bool enable) {
 	if (!IsPreviewRenderable() || projects.empty())
 		return;
 
-	// The simulation reads its kinematic input from the application skeleton
+	// The simulation reads its kinematic input from the skeleton
 	if (!EnsurePreviewSkinning())
 		return;
 
@@ -112,13 +112,13 @@ void BodySlideApp::EnablePreviewPhysics(bool enable) {
 }
 
 bool BodySlideApp::EnsurePreviewSkeleton() {
-	if (previewSkeletonPath == Config["Anim/DefaultSkeletonReference"] && AnimSkeleton::getInstance().GetActiveBoneCount() > 0)
+	if (previewSkeletonPath == Config["Anim/DefaultSkeletonReference"] && skeleton.GetActiveBoneCount() > 0)
 		return true;
 
 	// BodySlide has no use for the skeleton outside of the preview, so it's
 	// only loaded once something there needs it
 	wxString skeletonError;
-	if (LoadDefaultSkeletonReference(&skeletonError) != 0) {
+	if (LoadDefaultSkeletonReference(skeleton, &skeletonError) != 0) {
 		wxMessageBox(skeletonError);
 		wxLogError("The preview needs the reference skeleton, which could not be loaded.");
 		return false;
@@ -138,14 +138,14 @@ bool BodySlideApp::EnsurePreviewSkinning() {
 	if (!previewAnimsBuilt) {
 		previewAnims.clear();
 		for (auto& pp : projects) {
-			auto anim = std::make_unique<AnimInfo>();
+			auto anim = std::make_unique<AnimInfo>(skeleton);
 			anim->LoadFromNif(&pp->modNif);
 			previewAnims.push_back(std::move(anim));
 		}
 
 		previewReferenceAnim.reset();
 		if (referenceNif) {
-			previewReferenceAnim = std::make_unique<AnimInfo>();
+			previewReferenceAnim = std::make_unique<AnimInfo>(skeleton);
 			previewReferenceAnim->LoadFromNif(referenceNif.get());
 		}
 
@@ -155,7 +155,7 @@ bool BodySlideApp::EnsurePreviewSkinning() {
 	if (!previewLooseAnimsBuilt) {
 		previewLooseAnims.clear();
 		for (auto& nif : previewLooseNifs) {
-			auto anim = std::make_unique<AnimInfo>();
+			auto anim = std::make_unique<AnimInfo>(skeleton);
 			anim->LoadFromNif(nif.get());
 			previewLooseAnims.push_back(std::move(anim));
 		}
@@ -250,22 +250,22 @@ void BodySlideApp::ApplyPreviewSkeletonPose() {
 			// Playback loops, so the last frame blends back into the first one
 			const size_t nextFrame = (frame + 1) % numFrames;
 			PoseData::Interpolate(anim->framePoses[frame], anim->framePoses[nextFrame], blend, previewAnimBlendPose);
-			previewAnimBlendPose.ApplyToSkeleton();
+			previewAnimBlendPose.ApplyToSkeleton(skeleton);
 		}
 		else {
-			anim->framePoses[frame].ApplyToSkeleton();
+			anim->framePoses[frame].ApplyToSkeleton(skeleton);
 		}
 		return;
 	}
 
 	const int poseDataIndex = previewPoseIndex - PreviewPoseFirst;
 	if (poseDataIndex >= 0 && static_cast<size_t>(poseDataIndex) < previewPoses.poseData.size()) {
-		previewPoses.poseData[poseDataIndex].ApplyToSkeleton();
+		previewPoses.poseData[poseDataIndex].ApplyToSkeleton(skeleton);
 		return;
 	}
 
 	// An empty pose puts every bone back where the skeleton has it
-	PoseData().ApplyToSkeleton();
+	PoseData().ApplyToSkeleton(skeleton);
 }
 
 std::vector<Matrix3>* BodySlideApp::PoseRotationsFor(const std::string& shapeName, std::vector<Matrix3>* outPoseRotations) {

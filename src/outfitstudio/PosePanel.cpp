@@ -128,7 +128,7 @@ AnimBone* PosePanel::GetPoseBonePtr() {
 	if (selind == wxNOT_FOUND)
 		return nullptr;
 	std::string poseBone = cPoseBone->GetString(selind).ToStdString();
-	return AnimSkeleton::getInstance().GetBonePtr(poseBone);
+	return frame.skeleton.GetBonePtr(poseBone);
 }
 
 void PosePanel::PoseToGUI() {
@@ -268,10 +268,10 @@ void PosePanel::OnPoseToMesh(wxCommandEvent& WXUNUSED(event)) {
 		frame.project->ApplyPoseTransformsToAllShapeGeometry(*usp);
 
 		std::vector<std::string> bones;
-		AnimSkeleton::getInstance().GetBoneNames(bones);
+		frame.skeleton.GetBoneNames(bones);
 
 		for (const std::string& boneName : bones) {
-			AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
+			AnimBone* bone = frame.skeleton.GetBonePtr(boneName);
 			if (!bone)
 				continue;
 
@@ -325,7 +325,7 @@ void PosePanel::OnSelectPose(wxCommandEvent& WXUNUSED(event)) {
 			return;
 		}
 
-		poseData->ApplyToSkeleton();
+		poseData->ApplyToSkeleton(frame.skeleton);
 
 		PoseToGUI();
 		ActivatePose(true);
@@ -456,10 +456,10 @@ std::string PosePanel::SaveCurrentPose(const std::string& poseName) {
 	poseData->absoluteLocal = false;
 
 	std::vector<std::string> bones;
-	AnimSkeleton::getInstance().GetBoneNames(bones);
+	frame.skeleton.GetBoneNames(bones);
 
 	for (const auto& boneName : bones) {
-		AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
+		AnimBone* bone = frame.skeleton.GetBonePtr(boneName);
 		if (!bone)
 			continue;
 
@@ -520,7 +520,7 @@ std::string PosePanel::SaveCurrentPoseFile(const std::string& fileName) {
 		return _("Please save the pose with a .hkx, .json, .yaml or .yml extension.").ToUTF8().data();
 
 	PoseData pd;
-	PoseDataCollection::CaptureCurrentPose(wxFileName(wxString::FromUTF8(fileName)).GetName().ToUTF8().data(), format != PoseFileFormat::Yaml, pd);
+	PoseDataCollection::CaptureCurrentPose(frame.skeleton, wxFileName(wxString::FromUTF8(fileName)).GetName().ToUTF8().data(), format != PoseFileFormat::Yaml, pd);
 	if (pd.boneData.empty())
 		return _("No skeleton bones are available to export a pose.").ToUTF8().data();
 

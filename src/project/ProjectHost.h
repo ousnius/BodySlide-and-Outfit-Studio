@@ -5,6 +5,7 @@ See the included LICENSE file
 
 #pragma once
 
+#include <algorithm>
 #include <string>
 #include <vector>
 #include <wx/arrstr.h>
@@ -85,4 +86,39 @@ public:
 
 private:
 	std::vector<HostMessage> messages;
+};
+
+// A host that asks the user, except while an UnattendedScope has switched its prompts off.
+// While they are off, prompts are answered with their defaults like NonInteractiveHost does.
+class SwitchableHost : public NonInteractiveHost {
+public:
+	void SetInteractive(bool enable) { interactive = enable; }
+	bool IsInteractive() const override { return interactive; }
+
+protected:
+	bool interactive = true;
+};
+
+// While it exists, the project host answers prompts with their defaults. Collects the messages
+// of that time, so a caller can report what happened during an operation.
+class UnattendedScope {
+public:
+	explicit UnattendedScope(SwitchableHost& inHost)
+		: host(inHost)
+		, wasInteractive(inHost.IsInteractive())
+		, firstMessage(inHost.GetMessages().size()) {
+		host.SetInteractive(false);
+	}
+
+	~UnattendedScope() { host.SetInteractive(wasInteractive); }
+
+	std::vector<HostMessage> Messages() const {
+		const auto& all = host.GetMessages();
+		return std::vector<HostMessage>(all.begin() + std::min(firstMessage, all.size()), all.end());
+	}
+
+private:
+	SwitchableHost& host;
+	bool wasInteractive = true;
+	size_t firstMessage = 0;
 };

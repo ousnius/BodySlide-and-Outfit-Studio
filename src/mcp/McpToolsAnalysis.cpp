@@ -6,9 +6,9 @@ See the included LICENSE file
 #include "OutfitStudioMcp.h"
 #include "components/MaskOps.h"
 #include "project/AutomationRunner.h"
-#include "outfitstudio/OutfitStudioFrame.h"
-#include "outfitstudio/GLPanel.h"
-#include "outfitstudio/ViewState.h"
+#include "project/ProjectOperations.h"
+#include "project/StudioSession.h"
+#include "render/ViewState.h"
 
 #include <wx/filename.h>
 
@@ -388,7 +388,7 @@ McpToolResult QualitySweep(OutfitStudioMcp& mcp, const json& args) {
 McpToolResult AutoFixClipping(OutfitStudioMcp& mcp, const json& args) {
 	OutfitProject& project = mcp.Project();
 	ProjectOperations ops = mcp.Ops();
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 
 	NiShape* baseShape = project.GetBaseShape();
 	if (!baseShape)
@@ -674,14 +674,14 @@ McpToolResult AutoFixClipping(OutfitStudioMcp& mcp, const json& args) {
 		if (!m)
 			continue;
 		auto& saved = savedMasks[shape->name.get()];
-		frame->glView->ApplyMaskChanges({m}, [&](Mesh& mesh) {
+		session->ApplyMaskChanges({m}, [&](Mesh& mesh) {
 			std::unordered_map<int, float> changes = MaskOps::ClearChanges(mesh);
 			for (auto& v : saved)
 				changes[v.first] = v.second;
 			return changes;
 		});
 	}
-	frame->glView->Render();
+	session->Render();
 
 	McpToolResult result;
 	result.data["checked"] = cases.size() * shapes.size();
@@ -753,15 +753,15 @@ McpToolResult CompareToProject(OutfitStudioMcp& mcp, const json& args) {
 }
 
 McpToolResult ShowHeatmap(OutfitStudioMcp& mcp, const json& args) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	OutfitProject& project = mcp.Project();
 	std::string kind = McpArgs::String(args, "kind");
 
 	if (kind == "off") {
-		frame->FillVertexColors();
-		ViewState state = frame->GetViewState();
+		session->FillVertexColors();
+		ViewState state = session->GetViewState();
 		state.display.vertexColors = McpArgs::Bool(args, "vertexColors", false);
-		frame->SetViewState(state);
+		session->SetViewState(state);
 		return McpToolResult();
 	}
 
@@ -835,14 +835,14 @@ McpToolResult ShowHeatmap(OutfitStudioMcp& mcp, const json& args) {
 
 	mcp.Apply(mcp.Ops().ShowHeatmap(shape, values, minValue, maxValue));
 
-	ViewState state = frame->GetViewState();
+	ViewState state = session->GetViewState();
 	state.display.vertexColors = true;
 	// The mask display hides vertex colors
 	if (state.display.mask) {
 		state.display.mask = false;
 		result.data["maskDisplayTurnedOff"] = true;
 	}
-	frame->SetViewState(state);
+	session->SetViewState(state);
 
 	result.data["min"] = minValue;
 	result.data["max"] = maxValue;

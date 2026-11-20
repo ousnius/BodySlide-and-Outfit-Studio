@@ -9,8 +9,8 @@ See the included LICENSE file
 #include "files/MaterialFile.h"
 #include "files/GameDataStream.h"
 #include "project/GameImport.h"
-#include "outfitstudio/OutfitStudioFrame.h"
-#include "outfitstudio/GLPanel.h"
+#include "project/ProjectOperations.h"
+#include "project/StudioSession.h"
 #include "utils/ConfigurationManager.h"
 
 #include <wx/filename.h>
@@ -679,19 +679,19 @@ McpToolResult WriteMaterial(OutfitStudioMcp& mcp, const json& args) {
 		// Only assigning changes the project, so the snapshot isn't taken for every call
 		result.data["autoSnapshot"] = mcp.Snapshots().SaveAutomatic(mcp, "write_material");
 
-		OutfitStudioFrame* frame = mcp.GetFrame();
+		IStudioSession* session = &mcp.Session();
 		for (NiShape* shape : assign) {
 			nif.GetShader(shape)->name.get() = materialPath;
 			project.SetTextures(shape);
-			frame->MeshFromProj(shape, true);
+			session->MeshFromProj(shape, true);
 			assigned.push_back(shape->name.get());
 
 			MaterialFile loaded;
 			if (!project.GetShapeMaterialFile(shape, loaded))
 				notes.push_back("The window shows '" + shape->name.get() + "' with its material once the file is in the game's Data folder (" + Config["GameDataPath"] + ") or an extra data folder (asset_folders).");
 		}
-		frame->SetPendingChanges();
-		frame->glView->Render();
+		session->SetPendingChanges();
+		session->Render();
 	}
 
 	result.data["file"] = file;
@@ -727,11 +727,11 @@ McpToolResult ImportFromGame(OutfitStudioMcp& mcp, const json& args) {
 	if (!imported.ok)
 		throw McpToolError(imported.error);
 
-	OutfitStudioFrame* frame = mcp.GetFrame();
-	frame->RefreshGUIFromProj();
-	frame->CreateSetSliders();
-	frame->ApplySliders();
-	frame->SetPendingChanges();
+	IStudioSession* session = &mcp.Session();
+	session->RefreshGUIFromProj();
+	session->CreateSetSliders();
+	session->ApplySliders();
+	session->SetPendingChanges();
 
 	// Each note once, with the shapes it's about, and the textures the game's Data folder doesn't have
 	json notes = json::array();

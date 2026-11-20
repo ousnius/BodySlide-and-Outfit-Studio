@@ -292,7 +292,7 @@ void wxGLPanel::ApplyUndoMirror(UndoStateProject* usp) {
 void wxGLPanel::ApplyUndoNodeTransform(UndoStateProject* usp, bool bUndo) {
 	const MatTransform& target = bUndo ? usp->nodeStartXformToParent : usp->nodeEndXformToParent;
 
-	if (AnimBone* bPtr = AnimSkeleton::getInstance().GetBonePtr(usp->boneName))
+	if (AnimBone* bPtr = os->skeleton.GetBonePtr(usp->boneName))
 		bPtr->SetTransformBoneToParent(target);
 
 	auto* nif = os->project->GetWorkNif();

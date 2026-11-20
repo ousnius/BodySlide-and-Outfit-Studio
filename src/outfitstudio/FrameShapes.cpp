@@ -11,7 +11,7 @@ See the included LICENSE file
 #include "OutfitStudioApp.h"
 #include "GLPanel.h"
 #include "ShapeTreeItems.h"
-#include "ViewState.h"
+#include "render/ViewState.h"
 #include "utils/ConfigurationManager.h"
 #include "components/UndoHistory.h"
 

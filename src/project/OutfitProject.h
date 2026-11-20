@@ -312,8 +312,11 @@ public:
 
 	// Without a host, the project runs unattended and answers prompts with their defaults.
 	// Copy of the editable project data, to return to after trying out a change.
-	// Not included: the shared skeleton, cloth and physics extra data, and the file names the project was saved as.
+	// Not included: the skeleton, cloth and physics extra data, and the file names the project was saved as.
 	struct Snapshot {
+		explicit Snapshot(AnimSkeleton& skeleton)
+			: workAnim(skeleton) {}
+
 		nifly::NifFile workNif;
 		AnimInfo workAnim;
 		DiffDataSets baseDiffData;
@@ -337,8 +340,9 @@ public:
 	// Shape pointers into the work NIF are invalid afterwards
 	void RestoreSnapshot(const Snapshot& snapshot);
 
-	// Without loadSkeleton the shared skeleton stays as it is, for a project loaded next to the open one.
-	explicit OutfitProject(IProjectHost* inHost = nullptr, bool loadSkeleton = true);
+	// The project's bones come from the skeleton, which has to outlive it. loadSkeleton loads the default skeleton
+	// into it; without, the skeleton stays as it is, for a project loaded next to the open one.
+	explicit OutfitProject(AnimSkeleton& skeleton, IProjectHost* inHost = nullptr, bool loadSkeleton = true);
 	~OutfitProject();
 
 	IProjectHost& GetHost() { return *host; }
@@ -631,14 +635,14 @@ public:
 													   const std::string& suffix);
 	// The conflict of each new name of the bones: standard bones, the bones themselves, bones of the project and bones
 	// other bones hang from are taken, and no two copies can share a name
-	static std::vector<DuplicateBoneConflict> DuplicateBoneConflicts(const std::vector<std::string>& boneNames, const std::vector<std::string>& newNames);
+	std::vector<DuplicateBoneConflict> DuplicateBoneConflicts(const std::vector<std::string>& boneNames, const std::vector<std::string>& newNames);
 	// English description of a conflict, for logs and MCP errors
 	static std::string DuplicateBoneConflictText(DuplicateBoneConflict conflict, const std::string& newName);
 	// No suffix if replacing gives every bone a free name, otherwise the lowest ".N" suffix that does
 	std::string NextFreeDuplicateSuffix(const std::vector<std::string>& boneNames, const std::string& find, const std::string& replace);
 	// The parents the copies of these bones hang from: the parents of the bones whose parent isn't duplicated with
 	// them, empty for none
-	static std::set<std::string> DuplicateChainParents(const std::vector<std::string>& boneNames);
+	std::set<std::string> DuplicateChainParents(const std::vector<std::string>& boneNames);
 	// Adds a custom bone copy of each bone with the same transforms. A copy's parent is the copy of the original's
 	// parent when that is duplicated too, otherwise 'newParent' ("" for none) or by default the original's parent.
 	// With another parent, a copy keeps its place in the skeleton. Copies have no weights.

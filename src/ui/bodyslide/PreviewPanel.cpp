@@ -574,7 +574,7 @@ void PreviewPanel::SetSFSkinTransform(NifFile* nif, const std::string& shapeName
 		return;
 
 	AnimSkin skin;
-	skin.LoadFromNif(nif, shape);
+	skin.LoadFromNif(nif, shape, app->GetSkeleton());
 
 	MatTransform globalToSkin = skin.xformGlobalToSkin;
 	globalToSkin.translation *= sfHavokScale;

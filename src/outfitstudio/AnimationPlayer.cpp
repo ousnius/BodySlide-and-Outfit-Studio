@@ -112,10 +112,10 @@ void AnimationPlayer::ApplyFrame(double framePos, bool updatePoseGUI) {
 		// Playback loops, so the last frame blends back into the first one.
 		const size_t nextFrame = (frameIndex + 1) % numFrames;
 		PoseData::Interpolate(anim->framePoses[frameIndex], anim->framePoses[nextFrame], blend, blendPose);
-		blendPose.ApplyToSkeleton();
+		blendPose.ApplyToSkeleton(frame.skeleton);
 	}
 	else {
-		anim->framePoses[frameIndex].ApplyToSkeleton();
+		anim->framePoses[frameIndex].ApplyToSkeleton(frame.skeleton);
 	}
 
 	// Updating the pose sliders is skipped during playback; they are synced

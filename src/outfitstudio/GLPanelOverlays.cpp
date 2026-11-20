@@ -249,7 +249,7 @@ void wxGLPanel::UpdateBones() {
 		return anyBoneInSelection;
 	};
 
-	AnimBone* rb = AnimSkeleton::getInstance().GetRootBonePtr();
+	AnimBone* rb = os->skeleton.GetRootBonePtr();
 	if (rb)
 		addChildBones(rb);
 

@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "FrameHelpers.h"
 #include "GLPanel.h"
 #include "ShapeTreeItems.h"
-#include "ViewState.h"
+#include "render/ViewState.h"
 #include "utils/ConfigurationManager.h"
 #include "ui/wxStateButton.h"
 #include "ui/outfitstudio/WeightCopyDialog.h"
@@ -665,7 +665,7 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	xrc->AttachUnknownControl("bonesFilter", bonesFilter, this);
 	bonesFilter->GetParent()->Hide();
 
-	project = new OutfitProject(&projectHost); // Create empty project
+	project = new OutfitProject(skeleton, &projectHost); // Create empty project
 	CreateSetSliders();
 
 	selectedItems.clear();
@@ -804,7 +804,7 @@ void OutfitStudioFrame::OnMenuItem(wxCommandEvent& event) {
 
 bool OutfitStudioFrame::StartMcpServer(int port, bool showError) {
 	if (!mcp)
-		mcp = std::make_unique<OutfitStudioMcp>(this);
+		mcp = std::make_unique<OutfitStudioMcp>(session);
 
 	if (!mcp->IsRunning()) {
 		if (port <= 0)

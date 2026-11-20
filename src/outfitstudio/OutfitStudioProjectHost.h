@@ -7,20 +7,15 @@ See the included LICENSE file
 
 #include "project/ProjectHost.h"
 
-#include <algorithm>
 #include <vector>
 
 class OutfitStudioFrame;
 
 // Connects the project to the Outfit Studio window: progress bar, message boxes and GUI refreshes.
-class OutfitStudioProjectHost : public NonInteractiveHost {
+class OutfitStudioProjectHost : public SwitchableHost {
 public:
 	explicit OutfitStudioProjectHost(OutfitStudioFrame* inFrame)
 		: frame(inFrame) {}
-
-	// While disabled, prompts are answered with their defaults like NonInteractiveHost does.
-	void SetInteractive(bool enable) { interactive = enable; }
-	bool IsInteractive() const override { return interactive; }
 
 	void StartProgress(const wxString& msg = "") override;
 	void StartSubProgress(int min, int max) override;
@@ -42,29 +37,4 @@ public:
 
 private:
 	OutfitStudioFrame* frame = nullptr;
-	bool interactive = true;
-};
-
-// While it exists, the project host answers prompts with their defaults. Collects the messages
-// of that time, so a caller can report what happened during an operation.
-class UnattendedScope {
-public:
-	explicit UnattendedScope(OutfitStudioProjectHost& inHost)
-		: host(inHost)
-		, wasInteractive(inHost.IsInteractive())
-		, firstMessage(inHost.GetMessages().size()) {
-		host.SetInteractive(false);
-	}
-
-	~UnattendedScope() { host.SetInteractive(wasInteractive); }
-
-	std::vector<HostMessage> Messages() const {
-		const auto& all = host.GetMessages();
-		return std::vector<HostMessage>(all.begin() + std::min(firstMessage, all.size()), all.end());
-	}
-
-private:
-	OutfitStudioProjectHost& host;
-	bool wasInteractive = true;
-	size_t firstMessage = 0;
 };

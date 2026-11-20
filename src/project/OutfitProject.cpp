@@ -58,7 +58,8 @@ public:
 
 } // namespace
 
-OutfitProject::OutfitProject(IProjectHost* inHost, bool loadSkeleton) {
+OutfitProject::OutfitProject(AnimSkeleton& skeleton, IProjectHost* inHost, bool loadSkeleton)
+	: workAnim(skeleton) {
 	static std::atomic<uint64_t> lastInstanceId{0};
 	instanceId = ++lastInstanceId;
 
@@ -72,7 +73,7 @@ OutfitProject::OutfitProject(IProjectHost* inHost, bool loadSkeleton) {
 
 	if (loadSkeleton) {
 		wxString skeletonError;
-		if (LoadDefaultSkeletonReference(&skeletonError) != 0)
+		if (LoadDefaultSkeletonReference(skeleton, &skeletonError) != 0)
 			host->ShowMessage(HostMessageLevel::Error, skeletonError, _("Error"));
 	}
 
@@ -82,7 +83,7 @@ OutfitProject::OutfitProject(IProjectHost* inHost, bool loadSkeleton) {
 }
 
 std::unique_ptr<OutfitProject::Snapshot> OutfitProject::CaptureSnapshot() {
-	auto snapshot = std::make_unique<Snapshot>();
+	auto snapshot = std::make_unique<Snapshot>(GetSkeleton());
 	snapshot->workNif = workNif;
 	snapshot->workAnim = workAnim;
 	snapshot->baseDiffData = baseDiffData;

@@ -7,8 +7,10 @@ See the included LICENSE file
 #include "McpHelpers.h"
 #include "components/AddOnSliders.h"
 #include "components/AutomationJson.h"
+#include "components/RefTemplates.h"
 #include "project/AutomationRunner.h"
-#include "outfitstudio/OutfitStudioFrame.h"
+#include "project/ProjectOperations.h"
+#include "project/StudioSession.h"
 #include "utils/TargetGame.h"
 #include "utils/ConfigurationManager.h"
 #include "utils/GameUtil.h"
@@ -105,14 +107,14 @@ std::vector<std::pair<std::string, std::string>> OtherBaseProjectsArg(const json
 }
 
 // Unsaved changes are only thrown away when the agent says so
-void CheckPendingChanges(OutfitStudioFrame* frame, const json& args) {
-	if (!frame->HasPendingChanges())
+void CheckPendingChanges(IStudioSession* session, const json& args) {
+	if (!session->HasPendingChanges())
 		return;
 
 	if (!McpArgs::Bool(args, "discardChanges", false))
 		throw McpToolError("The project has unsaved changes. Save it with save_project first, or pass discardChanges: true to drop them.");
 
-	frame->SetPendingChanges(false);
+	session->SetPendingChanges(false);
 }
 
 // The objects of an OBJ file with their material and its texture maps from the .mtl files it names
@@ -176,8 +178,8 @@ json ObjObjects(const std::string& path) {
 
 const json DiscardChangesProp = McpProp("boolean", "Drop unsaved changes of the open project. Default false, which refuses when there are any.");
 
-McpToolResult GetStatus(OutfitStudioFrame* frame) {
-	OutfitProject* project = frame->project;
+McpToolResult GetStatus(IStudioSession* session) {
+	OutfitProject* project = session->GetProject();
 
 	int targetGame = Config.GetIntValue("TargetGame");
 	McpToolResult result;
@@ -202,7 +204,7 @@ McpToolResult GetStatus(OutfitStudioFrame* frame) {
 		{"shapeDataFile", ToUTF8(project->mBaseFile)},
 		{"outputDataPath", ToUTF8(project->mGamePath)},
 		{"outputFileName", ToUTF8(project->mGameFile)},
-		{"pendingChanges", frame->HasPendingChanges()},
+		{"pendingChanges", session->HasPendingChanges()},
 	};
 
 	data["reference"] = baseShape ? json{
@@ -242,9 +244,9 @@ McpToolResult GetStatus(OutfitStudioFrame* frame) {
 			shapes.push_back(name);
 
 	data["outfitShapes"] = shapes;
-	data["selectedShapes"] = frame->GetSelectedShapeNames();
+	data["selectedShapes"] = session->GetSelectedShapeNames();
 	data["sliderCount"] = project->SliderCount();
-	data["editingSlider"] = frame->editor.bEditSlider ? json(frame->editor.activeSlider) : json(nullptr);
+	data["editingSlider"] = session->Editor().bEditSlider ? json(session->Editor().activeSlider) : json(nullptr);
 	return result;
 }
 
@@ -289,8 +291,8 @@ json BodySlideLogProblems(const std::string& logPath) {
 }
 
 McpToolResult BuildOutfits(OutfitStudioMcp& mcp, const json& args) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
-	OutfitProject* project = frame->project;
+	IStudioSession* session = &mcp.Session();
+	OutfitProject* project = session->GetProject();
 
 	wxFileName bodySlide(wxString::FromUTF8(Config["AppDir"]), "BodySlide");
 #ifdef _WIN32
@@ -441,7 +443,7 @@ McpToolResult BuildOutfits(OutfitStudioMcp& mcp, const json& args) {
 		result.data["warnings"] = problems["warnings"];
 	if (files.empty())
 		result.data["note"] = "Nothing was built. errors says why, e.g. an outfit name that doesn't exist.";
-	if (project && frame->HasPendingChanges())
+	if (project && session->HasPendingChanges())
 		result.data["unsavedChanges"] = "The open project has unsaved changes, which BodySlide doesn't see: it builds the saved slider set.";
 	return result;
 }
@@ -449,7 +451,7 @@ McpToolResult BuildOutfits(OutfitStudioMcp& mcp, const json& args) {
 } // namespace
 
 void AddProjectTools(OutfitStudioMcp& mcp) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 
 	McpTool status;
 	status.name = "get_status";
@@ -460,7 +462,7 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 		"unsaved changes. baseProject names the project an add-on or variant is based on (null for others). Call it "
 		"first, and again after anything that failed or timed out.";
 	status.readOnly = true;
-	status.handler = [frame](const json&) { return GetStatus(frame); };
+	status.handler = [session](const json&) { return GetStatus(session); };
 	mcp.AddTool(std::move(status));
 
 	McpTool listSets;
@@ -532,11 +534,11 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 	listTemplates.name = "list_reference_templates";
 	listTemplates.description = "Lists the reference templates, which name a body shape to convert outfits to, e.g. \"CBBE 3BA\". load_reference takes them by name.";
 	listTemplates.readOnly = true;
-	listTemplates.handler = [frame](const json&) {
-		frame->UpdateReferenceTemplates();
+	listTemplates.handler = [session](const json&) {
+		session->UpdateReferenceTemplates();
 
 		json list = json::array();
-		for (auto& tmpl : frame->GetRefTemplates())
+		for (auto& tmpl : session->GetRefTemplates())
 			list.push_back({{"name", tmpl.GetName()}, {"file", tmpl.GetSource()}, {"set", tmpl.GetSetName()}, {"shape", tmpl.GetShape()}});
 
 		McpToolResult result;
@@ -549,11 +551,11 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 	newProject.name = "new_project";
 	newProject.description = "Closes the open project and starts an empty one. Load a reference and import or add outfit shapes after.";
 	newProject.inputSchema = McpSchema({{"discardChanges", DiscardChangesProp}});
-	newProject.handler = [&mcp, frame](const json& args) {
-		CheckPendingChanges(frame, args);
+	newProject.handler = [&mcp, session](const json& args) {
+		CheckPendingChanges(session, args);
 		McpRunStep(mcp, {{"type", "ClearProject"}});
-		frame->SetPendingChanges(false);
-		return GetStatus(frame);
+		session->SetPendingChanges(false);
+		return GetStatus(session);
 	};
 	mcp.AddTool(std::move(newProject));
 
@@ -569,7 +571,7 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 			{"discardChanges", DiscardChangesProp},
 		},
 		{"file"});
-	loadProject.handler = [frame](const json& args) {
+	loadProject.handler = [session](const json& args) {
 		std::string path = SliderSetFilePath(McpArgs::String(args, "file"));
 		std::string set = McpArgs::String(args, "set", "");
 
@@ -589,11 +591,11 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 		if (!set.empty() && std::find(sets.begin(), sets.end(), set) == sets.end())
 			throw McpToolError("The file has no set '" + set + "'. It has: " + json(sets).dump());
 
-		CheckPendingChanges(frame, args);
-		if (!frame->LoadProject(path, set))
+		CheckPendingChanges(session, args);
+		if (!session->LoadProject(path, set))
 			throw McpToolError("Loading the project failed, see 'messages' and 'log'.");
 
-		return GetStatus(frame);
+		return GetStatus(session);
 	};
 	mcp.AddTool(std::move(loadProject));
 
@@ -619,7 +621,7 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 			{"discardChanges", DiscardChangesProp},
 		},
 		{"file", "kind"});
-	createDerived.handler = [&mcp, frame](const json& args) {
+	createDerived.handler = [&mcp, session](const json& args) {
 		std::string path = SliderSetFilePath(McpArgs::String(args, "file"));
 		std::string set = McpArgs::String(args, "set", "");
 		std::string kind = McpArgs::String(args, "kind");
@@ -647,8 +649,8 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 			otherBases = OtherBaseProjectsArg(args);
 		}
 
-		CheckPendingChanges(frame, args);
-		if (!frame->LoadProject(path, set))
+		CheckPendingChanges(session, args);
+		if (!session->LoadProject(path, set))
 			throw McpToolError("Loading the base project failed, see 'messages' and 'log'.");
 
 		mcp.Project().MakeDerivedProject(path, set, addOn, displayName);
@@ -656,10 +658,10 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 		std::string baseError;
 		if (!otherBases.empty() && !mcp.Project().SetOtherBaseProjects(otherBases, &baseError))
 			throw McpToolError(baseError);
-		frame->SetPendingChanges(true);
-		frame->UpdateTitle();
+		session->SetPendingChanges(true);
+		session->UpdateTitle();
 
-		return GetStatus(frame);
+		return GetStatus(session);
 	};
 	mcp.AddTool(std::move(createDerived));
 
@@ -689,7 +691,7 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 				 "bodysuit), by closest surface point. Default true.")},
 		{"zapDistance", McpProp("number", "transferZaps: how far to look for the old reference's surface. Default 10.")},
 	});
-	loadReference.handler = [&mcp, frame](const json& args) {
+	loadReference.handler = [&mcp, session](const json& args) {
 		json step = {
 			{"type", "LoadReference"},
 			{"LoadAll", false},
@@ -701,8 +703,8 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 
 		if (McpArgs::Has(args, "template")) {
 			std::string name = McpArgs::String(args, "template");
-			frame->UpdateReferenceTemplates();
-			const auto& templates = frame->GetRefTemplates();
+			session->UpdateReferenceTemplates();
+			const auto& templates = session->GetRefTemplates();
 			auto tmpl = std::find_if(templates.begin(), templates.end(), [&](const RefTemplate& t) { return t.GetName() == name; });
 			if (tmpl == templates.end())
 				throw McpToolError("There is no reference template '" + name + "'. list_reference_templates lists them.");
@@ -741,7 +743,7 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 				transferred.push_back({{"slider", t.slider}, {"from", zaps.shapeName}, {"sourceZapped", t.sourceZapped}, {"zapped", t.zapped}});
 		}
 
-		McpToolResult result = GetStatus(frame);
+		McpToolResult result = GetStatus(session);
 		if (!transferred.empty())
 			result.data["zapsTransferred"] = transferred;
 		return result;
@@ -758,13 +760,13 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 			{"appendNewSliders", McpProp("boolean", "Also add sliders the project doesn't have yet. Default true.")},
 		},
 		{"file", "set"});
-	addProject.handler = [&mcp, frame](const json& args) {
+	addProject.handler = [&mcp, session](const json& args) {
 		McpRunStep(mcp,
 				{{"type", "AddProject"},
 				 {"SourceFile", SliderSetFilePath(McpArgs::String(args, "file"))},
 				 {"Set", McpArgs::String(args, "set")},
 				 {"AppendNewSliders", McpArgs::Bool(args, "appendNewSliders", true)}});
-		return GetStatus(frame);
+		return GetStatus(session);
 	};
 	mcp.AddTool(std::move(addProject));
 
@@ -792,7 +794,7 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 			{"skipObjects", McpStringList("OBJ: don't import these objects")},
 		},
 		{"path"});
-	importFile.handler = [&mcp, frame](const json& args) {
+	importFile.handler = [&mcp, session](const json& args) {
 		std::string path = McpFilePath(McpArgs::String(args, "path"));
 		const bool fromFolder = McpArgs::Bool(args, "fromFolder", false);
 		if (fromFolder ? !wxFileName::DirExists(wxString::FromUTF8(path)) : !wxFileName::FileExists(wxString::FromUTF8(path)))
@@ -828,7 +830,7 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 
 		McpRunStep(mcp, {{"type", "ImportFile"}, {"FilePath", path}, {"FromFolder", fromFolder}, {"TRISliders", McpArgs::Bool(args, "triSliders", true)}}, &objOptions);
 
-		McpToolResult result = GetStatus(frame);
+		McpToolResult result = GetStatus(session);
 		if (isObj) {
 			for (auto& object : objects)
 				object["imported"] = objOptions.ImportAll || objOptions.ImportShapes.count(object["name"].get<std::string>()) > 0;
@@ -869,7 +871,7 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 				 "file of its own (shapeDataFile, by default named like the add-on's .osd file). Default false, which refuses.")},
 		{"otherBaseProjects", OtherBaseProjectsProp()},
 	});
-	saveProject.handler = [&mcp, frame](const json& args) {
+	saveProject.handler = [&mcp, session](const json& args) {
 		OutfitProject& project = mcp.Project();
 		if (!project.GetWorkNif()->IsValid())
 			throw McpToolError("There are no shapes to save.");
@@ -921,7 +923,7 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 			std::string nifFile = project.ConvertAddOnToVariant(options.displayName);
 			if (!McpArgs::Has(args, "shapeDataFile"))
 				options.shapeDataFile = nifFile;
-			frame->UpdateTitle();
+			session->UpdateTitle();
 		}
 
 		// Normals come from the meshes like when saving in the window
@@ -933,9 +935,9 @@ void AddProjectTools(OutfitStudioMcp& mcp) {
 		project.UpdateNifNormals(project.GetWorkNif(), meshes);
 
 		mcp.Apply(mcp.Ops().SaveProject(options));
-		frame->SetPendingChanges(false);
+		session->SetPendingChanges(false);
 
-		McpToolResult result = GetStatus(frame);
+		McpToolResult result = GetStatus(session);
 		std::vector<std::string> unweighted;
 		if (project.HasUnweighted(&unweighted))
 			result.data["unweightedShapes"] = unweighted;

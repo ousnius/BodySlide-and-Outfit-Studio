@@ -4,12 +4,12 @@ See the included LICENSE file
 */
 
 #include "OutfitStudioMcp.h"
-#include "outfitstudio/SegmentPartitionEditor.h"
 #include "McpHelpers.h"
-#include "outfitstudio/OutfitStudioFrame.h"
-#include "outfitstudio/GLPanel.h"
+#include "components/PartitionTypes.h"
+#include "project/ProjectOperations.h"
+#include "project/StudioSession.h"
 #include "components/UndoHistory.h"
-#include "ui/outfitstudio/PartitionTypeChoices.h"
+#include "render/GLSurface.h"
 
 #include <algorithm>
 #include <cfloat>
@@ -284,7 +284,7 @@ McpToolResult GetShapeGeometry(OutfitStudioMcp& mcp, const json& args) {
 
 // Positions, UVs, vertex colors and alpha of single vertices, each kind as one undo state
 McpToolResult SetVertexData(OutfitStudioMcp& mcp, const json& args) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	OutfitProject& project = mcp.Project();
 	NiShape* shape = mcp.Shape(McpArgs::String(args, "shape"));
 	Mesh* m = ShapeMesh(mcp, shape);
@@ -304,7 +304,7 @@ McpToolResult SetVertexData(OutfitStudioMcp& mcp, const json& args) {
 
 	if (!positions.empty())
 		mcp.CheckPositionEdit();
-	if (!uvs.empty() && frame->editor.bEditSlider)
+	if (!uvs.empty() && session->Editor().bEditSlider)
 		throw McpToolError("UVs can't be changed while a slider is in edit mode. Leave it with set_slider_edit first.");
 	if (!colors.empty() || !alpha.empty()) {
 		auto shapeColors = project.GetWorkNif()->GetColorsForShape(shape);
@@ -313,7 +313,7 @@ McpToolResult SetVertexData(OutfitStudioMcp& mcp, const json& args) {
 	}
 
 	const bool relative = McpArgs::Bool(args, "relative", false);
-	UndoHistory* history = frame->glView->GetUndoHistory();
+	UndoHistory* history = &session->Editor().undoHistory;
 	json changed;
 
 	if (!positions.empty() || !uvs.empty()) {
@@ -345,13 +345,13 @@ McpToolResult SetVertexData(OutfitStudioMcp& mcp, const json& args) {
 		}
 		usp->usss.push_back(std::move(uss));
 
-		if (frame->editor.bEditSlider) {
-			usp->sliderName = frame->editor.activeSlider;
-			float sliderscale = project.SliderValue(frame->editor.activeSlider);
+		if (session->Editor().bEditSlider) {
+			usp->sliderName = session->Editor().activeSlider;
+			float sliderscale = project.SliderValue(session->Editor().activeSlider);
 			usp->sliderscale = sliderscale == 0.0f ? 1.0f : sliderscale;
 		}
 
-		frame->glView->ApplyUndoState(usp, false);
+		session->ApplyUndoState(usp, false);
 		changed["positions"] = positions.size();
 		changed["uvs"] = uvs.size();
 		changed["slider"] = usp->sliderName.empty() ? json(nullptr) : json(usp->sliderName);
@@ -372,9 +372,9 @@ McpToolResult SetVertexData(OutfitStudioMcp& mcp, const json& args) {
 			uss.pointEndState[c.first] = Vector3(std::clamp(target.x, 0.0f, 1.0f), std::clamp(target.y, 0.0f, 1.0f), std::clamp(target.z, 0.0f, 1.0f));
 		}
 		usp->usss.push_back(std::move(uss));
-		frame->glView->ApplyUndoState(usp, false);
+		session->ApplyUndoState(usp, false);
 		// Painting colors writes them to the shape when the stroke ends, the undo state alone doesn't
-		frame->ActiveShapesUpdated(usp);
+		session->ActiveShapesUpdated(usp);
 		changed["colors"] = colors.size();
 	}
 
@@ -390,12 +390,12 @@ McpToolResult SetVertexData(OutfitStudioMcp& mcp, const json& args) {
 			uss.pointEndState[a.first].x = std::clamp(target, 0.0f, 1.0f);
 		}
 		usp->usss.push_back(std::move(uss));
-		frame->glView->ApplyUndoState(usp, false);
+		session->ApplyUndoState(usp, false);
 		changed["alpha"] = alpha.size();
 	}
 
-	frame->UpdateUndoTools();
-	frame->SetPendingChanges();
+	session->UpdateUndoTools();
+	session->SetPendingChanges();
 
 	McpToolResult result;
 	result.data["changed"] = changed;
@@ -404,11 +404,11 @@ McpToolResult SetVertexData(OutfitStudioMcp& mcp, const json& args) {
 
 // The vertex edit tools of the window: collapse a vertex, flip or split an edge
 McpToolResult EditTopology(OutfitStudioMcp& mcp, const json& args) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	OutfitProject& project = mcp.Project();
 	NiShape* shape = mcp.Shape(McpArgs::String(args, "shape"));
 	Mesh* m = ShapeMesh(mcp, shape);
-	if (frame->editor.bEditSlider)
+	if (session->Editor().bEditSlider)
 		throw McpToolError("The mesh can't be changed while a slider is in edit mode. Leave it with set_slider_edit first.");
 	if (!m->bGotWeldVerts)
 		m->CalcWeldVerts();
@@ -464,12 +464,12 @@ McpToolResult EditTopology(OutfitStudioMcp& mcp, const json& args) {
 	else
 		throw McpToolError("op has to be \"collapse_vertex\", \"flip_edge\" or \"split_edge\".");
 
-	UndoStateProject* usp = frame->glView->GetUndoHistory()->PushState();
+	UndoStateProject* usp = session->Editor().undoHistory.PushState();
 	usp->undoType = UndoType::Mesh;
 	usp->usss.push_back(std::move(uss));
-	frame->glView->ApplyUndoState(usp, false);
-	frame->UpdateUndoTools();
-	frame->SetPendingChanges();
+	session->ApplyUndoState(usp, false);
+	session->UpdateUndoTools();
+	session->SetPendingChanges();
 
 	McpToolResult result;
 	result.data["vertices"] = shape->GetNumVertices();
@@ -534,10 +534,10 @@ json RefineSelectionToJson(const AdaptiveRefineShape& found) {
 
 // Splits edges only where shapes lack detail, one undo state per pass
 McpToolResult RefineAdaptive(OutfitStudioMcp& mcp, const json& args) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	OutfitProject& project = mcp.Project();
 	auto shapes = mcp.Shapes(args, "shapes");
-	if (frame->editor.bEditSlider)
+	if (session->Editor().bEditSlider)
 		throw McpToolError("The mesh can't be changed while a slider is in edit mode. Leave it with set_slider_edit first.");
 
 	AdaptiveRefineOptions options;
@@ -566,10 +566,11 @@ McpToolResult RefineAdaptive(OutfitStudioMcp& mcp, const json& args) {
 		options.bodyTriangles = mcp.SurfaceTriangles(options.body);
 	}
 
-	for (NiShape* shape : shapes)
-		frame->glView->gls.DeleteOverlay(RefinePreviewOverlay + shape->name.get());
+	if (GLSurface* view = session->View())
+		for (NiShape* shape : shapes)
+			view->DeleteOverlay(RefinePreviewOverlay + shape->name.get());
 
-	UndoHistory& history = frame->editor.undoHistory;
+	UndoHistory& history = session->Editor().undoHistory;
 	json passList = json::array();
 	std::vector<AdaptiveRefineShape> lastFound;
 	for (int pass = 0; pass < passes; pass++) {
@@ -608,9 +609,9 @@ McpToolResult RefineAdaptive(OutfitStudioMcp& mcp, const json& args) {
 			oldCounts[shape->name.get()] = shape->GetNumVertices();
 
 		UndoStateProject* usp = history.PushState(std::move(prepared));
-		frame->glView->ApplyUndoState(usp, false);
-		frame->UpdateUndoTools();
-		frame->SetPendingChanges();
+		session->ApplyUndoState(usp, false);
+		session->UpdateUndoTools();
+		session->SetPendingChanges();
 
 		for (NiShape* shape : shapes)
 			GrowExclusions(mcp, shape, oldCounts[shape->name.get()]);
@@ -618,11 +619,12 @@ McpToolResult RefineAdaptive(OutfitStudioMcp& mcp, const json& args) {
 
 	if (preview) {
 		for (auto& f : lastFound) {
-			Mesh* m = frame->glView->GetMesh(f.shapeName);
-			if (m && !f.edges.empty())
-				frame->glView->gls.AddVisEdges(m, f.edges, RefinePreviewOverlay + f.shapeName, Vector3(1.0f, 0.5f, 0.0f));
+			Mesh* m = session->GetMesh(f.shapeName);
+			GLSurface* view = session->View();
+			if (m && view && !f.edges.empty())
+				view->AddVisEdges(m, f.edges, RefinePreviewOverlay + f.shapeName, Vector3(1.0f, 0.5f, 0.0f));
 		}
-		frame->glView->Render();
+		session->Render();
 	}
 
 	McpToolResult result = ShapeList(mcp);
@@ -730,7 +732,7 @@ json AlphaProperty(NifFile* nif, NiShape* shape) {
 
 std::string PartitionName(int slot) {
 	std::string prefix = std::to_string(slot) + " ";
-	for (const char* label : PartitionTypeChoices::Labels)
+	for (const char* label : PartitionTypes::Labels)
 		if (std::string(label).rfind(prefix, 0) == 0)
 			return std::string(label).substr(prefix.size());
 	return "Unknown";
@@ -994,7 +996,7 @@ McpToolResult GetPartitions(OutfitStudioMcp& mcp, const json& args) {
 }
 
 McpToolResult SetPartitions(OutfitStudioMcp& mcp, const json& args) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	NifFile* nif = mcp.Project().GetWorkNif();
 	NiShape* shape = mcp.Shape(McpArgs::String(args, "shape"));
 	if (!shape->IsSkinned())
@@ -1046,13 +1048,13 @@ McpToolResult SetPartitions(OutfitStudioMcp& mcp, const json& args) {
 		throw McpToolError(std::to_string(unassigned) + " triangles have no partition. Assign them, e.g. with all: true.");
 
 	nif->SetShapePartitions(shape, partitions, triParts);
-	frame->segPartEditor->RefreshActivePartitionTree();
-	frame->SetPendingChanges();
+	session->RefreshPartitionTree();
+	session->SetPendingChanges();
 	return GetPartitions(mcp, {{"shape", shape->name.get()}});
 }
 
 McpToolResult SetSegments(OutfitStudioMcp& mcp, const json& args) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	NiShape* shape = mcp.Shape(McpArgs::String(args, "shape"));
 
 	NifSegmentationInfo segments;
@@ -1149,9 +1151,9 @@ McpToolResult SetSegments(OutfitStudioMcp& mcp, const json& args) {
 		segments.ssfFile = McpArgs::String(args, "ssfFile");
 
 	NifFile::SetShapeSegments(shape, segments, triParts);
-	frame->MeshFromProj(shape);
-	frame->segPartEditor->RefreshActiveSegmentTree();
-	frame->SetPendingChanges();
+	session->MeshFromProj(shape);
+	session->RefreshSegmentTree();
+	session->SetPendingChanges();
 	return GetPartitions(mcp, {{"shape", shape->name.get()}});
 }
 
@@ -1220,14 +1222,14 @@ McpToolResult SetShapeFlags(OutfitStudioMcp& mcp, const json& args) {
 		shape->flags = (flags | on) & ~off;
 		result.data["shapes"][shape->name.get()] = ShapeFlags(nif, shape);
 	}
-	mcp.GetFrame()->SetPendingChanges();
+	mcp.Session().SetPendingChanges();
 	return result;
 }
 
 // The alpha property of shapes like the Transparency pane of the Shape Properties dialog: added when missing, its
 // flags and threshold set, or removed
 McpToolResult SetAlphaProperty(OutfitStudioMcp& mcp, const json& args) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	OutfitProject& project = mcp.Project();
 	NifFile* nif = project.GetWorkNif();
 	const bool remove = McpArgs::Bool(args, "remove", false);
@@ -1313,8 +1315,8 @@ McpToolResult SetAlphaProperty(OutfitStudioMcp& mcp, const json& args) {
 		result.data["shapes"][shape->name.get()] = AlphaProperty(nif, shape);
 	}
 
-	frame->SetPendingChanges();
-	frame->glView->Render();
+	session->SetPendingChanges();
+	session->Render();
 	if (!notes.empty())
 		result.data["notes"] = notes;
 	return result;
@@ -1323,7 +1325,7 @@ McpToolResult SetAlphaProperty(OutfitStudioMcp& mcp, const json& args) {
 // Adds the target game's default shader to shapes without one, or removes the shader with its texture set and alpha
 // property, like the buttons of the Shape Properties dialog
 McpToolResult ShapeShader(OutfitStudioMcp& mcp, const json& args) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	OutfitProject& project = mcp.Project();
 	NifFile* nif = project.GetWorkNif();
 	const std::string op = McpArgs::String(args, "op");
@@ -1346,8 +1348,8 @@ McpToolResult ShapeShader(OutfitStudioMcp& mcp, const json& args) {
 	}
 
 	if (!changed.empty()) {
-		frame->SetPendingChanges();
-		frame->glView->Render();
+		session->SetPendingChanges();
+		session->Render();
 	}
 
 	McpToolResult result;
@@ -1400,7 +1402,7 @@ void ReleaseBlock(NifFile* nif, NiRef& ref) {
 // Copies the shader with its texture set, only the texture paths, or the alpha property onto shapes, from shapes of
 // a NIF file (a backup or the saved shape data of a set before it was rebuilt) or of the project
 McpToolResult CopyShader(OutfitStudioMcp& mcp, const json& args) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	OutfitProject& project = mcp.Project();
 	NifFile* nif = project.GetWorkNif();
 
@@ -1499,8 +1501,8 @@ McpToolResult CopyShader(OutfitStudioMcp& mcp, const json& args) {
 		};
 	}
 
-	frame->SetPendingChanges();
-	frame->glView->Render();
+	session->SetPendingChanges();
+	session->Render();
 	if (!notes.empty())
 		result.data["notes"] = notes;
 	return result;
@@ -1586,10 +1588,10 @@ void AddShapeTools(OutfitStudioMcp& mcp) {
 			if (nif->GetShapeNames() != order)
 				throw McpToolError("The NIF didn't take the new shape order.");
 
-			OutfitStudioFrame* frame = mcp.GetFrame();
-			frame->RefreshGUIFromProj();
-			frame->ApplySliders();
-			frame->SetPendingChanges();
+			IStudioSession* session = &mcp.Session();
+			session->RefreshGUIFromProj();
+			session->ApplySliders();
+			session->SetPendingChanges();
 		}
 		return ShapeList(mcp);
 	};
@@ -1808,15 +1810,15 @@ void AddShapeTools(OutfitStudioMcp& mcp) {
 		{"useMask", McpProp("boolean", "Leave masked vertices alone. Default true.")},
 	});
 	symmetrize.handler = [&mcp](const json& args) {
-		OutfitStudioFrame* frame = mcp.GetFrame();
+		IStudioSession* session = &mcp.Session();
 		OutfitProject& project = mcp.Project();
 		auto shapes = mcp.Shapes(args, "shapes");
 		const bool useMask = McpArgs::Bool(args, "useMask", true);
 
 		std::vector<std::string> normBones, notNormBones;
-		frame->GetNormalizeBones(&normBones, &notNormBones);
+		session->GetNormalizeBones(&normBones, &notNormBones);
 
-		UndoStateProject* usp = frame->glView->GetUndoHistory()->PushState();
+		UndoStateProject* usp = session->Editor().undoHistory.PushState();
 		usp->undoType = UndoType::Mesh;
 
 		json before = json::object();
@@ -1847,9 +1849,9 @@ void AddShapeTools(OutfitStudioMcp& mcp) {
 			before[shape->name.get()] = SymmetryReport(s, 10);
 		}
 
-		frame->glView->ApplyUndoState(usp, false);
-		frame->UpdateUndoTools();
-		frame->SetPendingChanges();
+		session->ApplyUndoState(usp, false);
+		session->UpdateUndoTools();
+		session->SetPendingChanges();
 
 		McpToolResult result;
 		result.data["before"] = before;
@@ -2079,8 +2081,8 @@ void AddShapeTools(OutfitStudioMcp& mcp) {
 				project.SetTextures(shape);
 			}
 			if (!changing.empty()) {
-				mcp.GetFrame()->SetPendingChanges(true);
-				mcp.GetFrame()->glView->Render();
+				mcp.Session().SetPendingChanges(true);
+				mcp.Session().Render();
 			}
 		}
 

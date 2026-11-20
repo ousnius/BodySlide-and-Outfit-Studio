@@ -115,6 +115,9 @@ public:
 	};
 
 private:
+	// The skeleton the preview poses and simulates, and conforming binds the shapes to. Declared before everything
+	// bound to it.
+	AnimSkeleton skeleton;
 	ProjectCatalog projectCatalog;
 	bool conformAddOnSliders = false; // Conform the add-on sliders of the body to outfits that don't have them
 	ProjectAddOns activeAddOns;
@@ -192,7 +195,7 @@ private:
 	std::vector<std::unique_ptr<nifly::NifFile>> previewLooseNifs;
 	std::vector<std::unique_ptr<AnimInfo>> previewLooseAnims;
 	bool previewLooseAnimsBuilt = false;
-	// The reference skeleton the application skeleton was loaded from
+	// The reference skeleton the skeleton was loaded from
 	std::string previewSkeletonPath;
 	// Morphed (but not yet skinned) preview vertices per shape, so a physics or
 	// animation tick can re-skin without running every slider again.
@@ -244,7 +247,7 @@ private:
 	// Whether the previewed meshes have to be skinned at all
 	bool IsPreviewSkinned() const;
 	AnimationData* GetPreviewAnimationData();
-	// Puts the application skeleton into the selected pose or animation frame
+	// Puts the skeleton into the selected pose or animation frame
 	void ApplyPreviewSkeletonPose();
 	// Moves the skeleton to a different pose or frame in one go and shows it
 	void JumpPreviewSkeleton();
@@ -283,6 +286,7 @@ public:
 	// Loads the reference skeleton of the current game into the application
 	// skeleton if it isn't already.
 	bool EnsurePreviewSkeleton();
+	AnimSkeleton& GetSkeleton() { return skeleton; }
 	virtual bool OnInit();
 	virtual void OnInitCmdLine(wxCmdLineParser& parser);
 	virtual bool OnCmdLineParsed(wxCmdLineParser& parser);

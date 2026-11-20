@@ -279,7 +279,6 @@ set(BSOS_COMMON_INCLUDE_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}/lib/fkYAML/include
 	${CMAKE_CURRENT_SOURCE_DIR}/lib/nlohmannjson/include
 	${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/include
-	${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/external
 	${CMAKE_CURRENT_SOURCE_DIR}/lib/TinyXML-2
 	${CMAKE_CURRENT_SOURCE_DIR}/lib/cpp-httplib
 	${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -298,6 +297,9 @@ endif()
 # Settings every target shares: include folders, definitions, warnings and wxWidgets.
 add_library(bsos_options INTERFACE)
 target_include_directories(bsos_options INTERFACE ${BSOS_COMMON_INCLUDE_DIRS})
+# Third-party headers nifly bundles (half.hpp, Miniball.hpp), whose warnings aren't ours: newer MSVC flags the
+# discarded std::frexp result of half.hpp in every file that includes it
+target_include_directories(bsos_options SYSTEM INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/external)
 if(NOT TARGET OpenGL::GL AND OPENGL_INCLUDE_DIR)
 	target_include_directories(bsos_options SYSTEM INTERFACE ${OPENGL_INCLUDE_DIR})
 endif()
@@ -331,14 +333,14 @@ function(bsos_link_config_libraries target debug_library release_library)
 endfunction()
 
 # The libraries below are layered: each one may only use the ones it links.
-#   bsos_vendor   third-party code in lib/
+#   bsos_vendor   third-party code in lib/, except SOIL2
 #   bsos_core     src/utils, src/files and src/components: no GL, no windows
-#   bsos_render   src/render, OpenGL drawing
+#   bsos_render   src/render, OpenGL drawing, and the SOIL2 texture loader, which calls OpenGL
 #   bsos_physics  src/physics, the Bullet based physics preview, drawn through bsos_render
 #   bsos_ui       src/ui, dialogs and widgets both applications use
 #   bsos_fbx      the FBX SDK wrapper, only for Outfit Studio
-#   bsos_project  src/project, the Outfit Studio project and its operations without the window
-#   bsos_mcp      the MCP protocol and HTTP server without the tools
+#   bsos_project  src/project, the Outfit Studio project, its operations and automation without the window
+#   bsos_mcp      src/mcp, the MCP server and its tools, which work on an IStudioSession
 # Each source file is compiled once and shared by the applications and the tests.
 
 add_library(bsos_vendor STATIC
@@ -365,11 +367,6 @@ add_library(bsos_vendor STATIC
 	lib/nifly/src/Particles.cpp
 	lib/nifly/src/Shaders.cpp
 	lib/nifly/src/Skin.cpp
-	lib/SOIL2/wfETC.c
-	lib/SOIL2/image_DXT.c
-	lib/SOIL2/image_array.c
-	lib/SOIL2/image_helper.c
-	lib/SOIL2/SOIL2.c
 	lib/TinyXML-2/tinyxml2.cpp
 )
 target_link_libraries(bsos_vendor PUBLIC bsos_options)
@@ -447,6 +444,11 @@ if(BSOS_HAVE_OPENEXR)
 endif()
 
 add_library(bsos_render STATIC
+	lib/SOIL2/wfETC.c
+	lib/SOIL2/image_DXT.c
+	lib/SOIL2/image_array.c
+	lib/SOIL2/image_helper.c
+	lib/SOIL2/SOIL2.c
 	src/render/GLCanvas.cpp
 	src/render/GLDialog.cpp
 	src/render/GLExtensions.cpp
@@ -503,6 +505,13 @@ add_library(bsos_fbx STATIC
 target_link_libraries(bsos_fbx PUBLIC bsos_core)
 
 add_library(bsos_project STATIC
+	src/project/AutomationRunner.cpp
+	src/project/AutomationRunnerBones.cpp
+	src/project/AutomationRunnerMasks.cpp
+	src/project/AutomationRunnerProject.cpp
+	src/project/AutomationRunnerProperties.cpp
+	src/project/AutomationRunnerShapes.cpp
+	src/project/AutomationRunnerSliders.cpp
 	src/project/BrushStrokeController.cpp
 	src/project/GameImport.cpp
 	src/project/ProjectPacker.cpp
@@ -525,11 +534,31 @@ target_link_libraries(bsos_project PUBLIC bsos_core bsos_fbx)
 add_library(bsos_mcp STATIC
 	src/mcp/McpProtocol.cpp
 	src/mcp/McpServer.cpp
+	src/mcp/McpSnapshots.cpp
+	src/mcp/McpToolsAnalysis.cpp
+	src/mcp/McpToolsArchives.cpp
+	src/mcp/McpToolsAutomation.cpp
+	src/mcp/McpToolsBones.cpp
+	src/mcp/McpToolsEdit.cpp
+	src/mcp/McpToolsFitting.cpp
+	src/mcp/McpToolsGames.cpp
+	src/mcp/McpToolsGuides.cpp
+	src/mcp/McpToolsMeasure.cpp
+	src/mcp/McpToolsPhysics.cpp
+	src/mcp/McpToolsProject.cpp
+	src/mcp/McpToolsQuality.cpp
+	src/mcp/McpToolsShapes.cpp
+	src/mcp/McpToolsSliderFiles.cpp
+	src/mcp/McpToolsSliders.cpp
+	src/mcp/McpToolsTextures.cpp
+	src/mcp/McpToolsView.cpp
+	src/mcp/OutfitStudioMcp.cpp
 )
-target_link_libraries(bsos_mcp PUBLIC bsos_core)
+target_link_libraries(bsos_mcp PUBLIC bsos_project bsos_render bsos_physics)
 
 set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/outfitstudio/DropTargets.cpp
+	src/outfitstudio/OutfitStudioSession.cpp
 	src/outfitstudio/AnimationPlayer.cpp
 	src/outfitstudio/FrameBones.cpp
 	src/outfitstudio/FrameConform.cpp
@@ -557,32 +586,6 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/outfitstudio/OutfitStudioApp.cpp
 	src/outfitstudio/OutfitStudioFrame.cpp
 	src/outfitstudio/OutfitStudioProjectHost.cpp
-	src/mcp/McpSnapshots.cpp
-	src/mcp/McpToolsAnalysis.cpp
-	src/mcp/McpToolsArchives.cpp
-	src/mcp/McpToolsAutomation.cpp
-	src/mcp/McpToolsBones.cpp
-	src/mcp/McpToolsEdit.cpp
-	src/mcp/McpToolsFitting.cpp
-	src/mcp/McpToolsGames.cpp
-	src/mcp/McpToolsGuides.cpp
-	src/mcp/McpToolsMeasure.cpp
-	src/mcp/McpToolsPhysics.cpp
-	src/mcp/McpToolsProject.cpp
-	src/mcp/McpToolsQuality.cpp
-	src/mcp/McpToolsShapes.cpp
-	src/mcp/McpToolsSliderFiles.cpp
-	src/mcp/McpToolsSliders.cpp
-	src/mcp/McpToolsTextures.cpp
-	src/mcp/McpToolsView.cpp
-	src/mcp/OutfitStudioMcp.cpp
-	src/project/AutomationRunner.cpp
-	src/project/AutomationRunnerMasks.cpp
-	src/project/AutomationRunnerProperties.cpp
-	src/project/AutomationRunnerShapes.cpp
-	src/project/AutomationRunnerBones.cpp
-	src/project/AutomationRunnerSliders.cpp
-	src/project/AutomationRunnerProject.cpp
 	src/ui/outfitstudio/AddProjectDialog.cpp
 	src/ui/outfitstudio/ArchiveBrowser.cpp
 	src/ui/outfitstudio/AutomationDialog.cpp
@@ -678,6 +681,7 @@ if(BSOS_BUILD_TESTS)
 		tests/SliderSetTest.cpp
 		tests/StarfieldDataTest.cpp
 		tests/StarfieldSpaceTest.cpp
+		tests/StudioSessionTest.cpp
 		tests/SurfaceFitTest.cpp
 		tests/TextureConvertTest.cpp
 	)

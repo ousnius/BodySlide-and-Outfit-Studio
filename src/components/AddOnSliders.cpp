@@ -12,6 +12,7 @@ See the included LICENSE file
 #include <algorithm>
 #include <filesystem>
 #include <mutex>
+#include <optional>
 #include <set>
 #include <wx/dir.h>
 #include <wx/intl.h>
@@ -699,7 +700,7 @@ SetStackResult StackSetAddOns(SliderSet& set, const ProjectCatalog& catalog, std
 }
 
 void LoadConformAnim(AnimInfo& anim, nifly::NifFile& nif) {
-	// Loading skinning adds bones to the shared skeleton
+	// Loading skinning adds bones to the skeleton, which the bodies and outfits BodySlide conforms share
 	static std::mutex skeletonMutex;
 	std::lock_guard<std::mutex> lock(skeletonMutex);
 	anim.LoadFromNif(&nif);
@@ -926,7 +927,7 @@ void FitBaseAddOnsToVariant(SliderSet& set,
 		SliderSet baseSet;
 		DiffDataSets baseDiffs;
 		NifFile baseNif;
-		AnimInfo baseAnim;
+		std::optional<AnimInfo> baseAnim;
 		bool canConform = conform && anim && baseEntry;
 		if (canConform) {
 			SliderSetFile baseFile(baseEntry->fileName);
@@ -938,7 +939,7 @@ void FitBaseAddOnsToVariant(SliderSet& set,
 			}
 
 			if (canConform)
-				LoadConformAnim(baseAnim, baseNif);
+				LoadConformAnim(baseAnim.emplace(anim->GetSkeleton()), baseNif);
 		}
 
 		// The shape of the base project that a shape is conformed from: the one of the name for a variant. For another
@@ -1008,7 +1009,7 @@ void FitBaseAddOnsToVariant(SliderSet& set,
 				continue;
 			}
 
-			auto results = ConformShapesData(baseNif, refShape, baseAnim, baseDiffs, nif, *anim, {shapeName}, sliderData, options);
+			auto results = ConformShapesData(baseNif, refShape, *baseAnim, baseDiffs, nif, *anim, {shapeName}, sliderData, options);
 			auto shapeResults = results.find(shapeName);
 			if (shapeResults == results.end())
 				continue;

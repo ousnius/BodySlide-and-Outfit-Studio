@@ -752,7 +752,7 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName,
 
 		physicsPreview->Shutdown();
 		delete project;
-		project = new OutfitProject(&projectHost);
+		project = new OutfitProject(skeleton, &projectHost);
 	}
 
 	wxLogMessage("Loading outfit data...");
@@ -1123,7 +1123,7 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 
 	physicsPreview->Shutdown();
 	delete project;
-	project = new OutfitProject(&projectHost);
+	project = new OutfitProject(skeleton, &projectHost);
 
 	UpdateProgress(10, _("Loading reference..."));
 
@@ -1627,7 +1627,7 @@ void OutfitStudioFrame::OnUnloadProject(wxCommandEvent& WXUNUSED(event)) {
 
 	physicsPreview->Shutdown();
 	delete project;
-	project = new OutfitProject(&projectHost);
+	project = new OutfitProject(skeleton, &projectHost);
 
 	CreateSetSliders();
 	RefreshGUIFromProj(false);

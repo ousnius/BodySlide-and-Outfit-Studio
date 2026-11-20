@@ -210,9 +210,9 @@ void WeightCopyDialog::SavePoseState() {
 	prevBPose = project->bPose;
 
 	std::vector<std::string> allBones;
-	AnimSkeleton::getInstance().GetBoneNames(allBones);
+	project->GetSkeleton().GetBoneNames(allBones);
 	for (const auto& boneName : allBones) {
-		AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
+		AnimBone* bone = project->GetSkeleton().GetBonePtr(boneName);
 		if (bone)
 			savedPose[boneName] = {bone->poseRotVec, bone->poseTranVec, bone->poseScale};
 	}
@@ -220,9 +220,9 @@ void WeightCopyDialog::SavePoseState() {
 
 void WeightCopyDialog::RestorePoseState() {
 	std::vector<std::string> allBones;
-	AnimSkeleton::getInstance().GetBoneNames(allBones);
+	project->GetSkeleton().GetBoneNames(allBones);
 	for (const auto& boneName : allBones) {
-		AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
+		AnimBone* bone = project->GetSkeleton().GetBonePtr(boneName);
 		if (!bone)
 			continue;
 		auto it = savedPose.find(boneName);
@@ -256,9 +256,9 @@ void WeightCopyDialog::OnPoseSelected(wxCommandEvent&) {
 	int sel = poseChoice->GetSelection();
 	if (sel == 0) {
 		std::vector<std::string> bones;
-		AnimSkeleton::getInstance().GetBoneNames(bones);
+		project->GetSkeleton().GetBoneNames(bones);
 		for (const auto& boneName : bones) {
-			AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
+			AnimBone* bone = project->GetSkeleton().GetBonePtr(boneName);
 			if (bone) {
 				bone->poseRotVec = Vector3(0.0f, 0.0f, 0.0f);
 				bone->poseTranVec = Vector3(0.0f, 0.0f, 0.0f);
@@ -270,7 +270,7 @@ void WeightCopyDialog::OnPoseSelected(wxCommandEvent&) {
 	}
 	else {
 		auto poseData = reinterpret_cast<PoseData*>(poseChoice->GetClientData(sel));
-		poseData->ApplyToSkeleton();
+		poseData->ApplyToSkeleton(project->GetSkeleton());
 		project->bPose = true;
 	}
 

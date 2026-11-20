@@ -15,7 +15,7 @@ See the included LICENSE file
 
 #include <wx/string.h>
 
-class OutfitStudioFrame;
+class IStudioSession;
 class OutfitProject;
 
 namespace nifly {
@@ -26,7 +26,7 @@ class NiShape;
 // automation dialog, headless automation and anything else that runs steps.
 class AutomationRunner {
 public:
-	explicit AutomationRunner(OutfitStudioFrame* outfitStudio);
+	explicit AutomationRunner(IStudioSession& inSession);
 
 	// Unattended runs import with default options instead of asking for them
 	void SetHeadless(bool headless) { headlessMode = headless; }
@@ -62,7 +62,7 @@ public:
 	static bool StepChangesSliderSet(AutomationStepType type);
 
 private:
-	OutfitStudioFrame* outfitStudio = nullptr;
+	IStudioSession* session = nullptr;
 	OutfitProject* project = nullptr;
 	bool headlessMode = false;
 	ObjImportOptions objImportOptions;

@@ -8,8 +8,8 @@ See the included LICENSE file
 #include "components/ClippingFixer.h"
 #include "components/MaskOps.h"
 #include "components/StarfieldSpace.h"
-#include "outfitstudio/OutfitStudioFrame.h"
-#include "outfitstudio/GLPanel.h"
+#include "project/ProjectOperations.h"
+#include "project/StudioSession.h"
 #include "components/UndoHistory.h"
 #include "utils/TargetGame.h"
 #include "utils/ConfigurationManager.h"
@@ -160,7 +160,7 @@ MeshAnalysis::BoneWeightMap WeightMap(AnimInfo* anim, const std::string& shape) 
 // new weight of vertices by bone, 0 removes it. Bones the shape doesn't have yet are added to it. Returns the
 // number of changed vertex weights.
 size_t ApplyWeights(OutfitStudioMcp& mcp, NiShape* shape, const std::map<std::string, std::unordered_map<uint16_t, float>>& newWeights) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	OutfitProject& project = mcp.Project();
 	AnimInfo* anim = project.GetWorkAnim();
 	const std::string shapeName = shape->name.get();
@@ -192,20 +192,20 @@ size_t ApplyWeights(OutfitStudioMcp& mcp, NiShape* shape, const std::map<std::st
 		if (anim->GetShapeBoneIndex(shapeName, bw.boneName) < 0)
 			anim->AddShapeBone(shapeName, bw.boneName);
 
-	UndoStateProject* usp = frame->editor.undoHistory.PushState();
+	UndoStateProject* usp = session->Editor().undoHistory.PushState();
 	usp->undoType = UndoType::Weight;
 	usp->usss.push_back(std::move(uss));
 
-	frame->ApplyRefresh(mcp.Ops().ApplyShapeEdits(*usp, false));
-	frame->UpdateUndoTools();
-	frame->UpdateAnimationGUI();
-	frame->RefreshGUIWeightColors();
-	frame->SetPendingChanges();
+	session->ApplyRefresh(mcp.Ops().ApplyShapeEdits(*usp, false));
+	session->UpdateUndoTools();
+	session->UpdateAnimationGUI();
+	session->RefreshGUIWeightColors();
+	session->SetPendingChanges();
 	return changed;
 }
 
 // The name of the bone on the other side of the body, or the name itself when there is none
-std::string MirrorBoneName(const std::string& name) {
+std::string MirrorBoneName(AnimSkeleton& skeleton, const std::string& name) {
 	static const std::vector<std::pair<std::string, std::string>> pairs = {
 		{" L ", " R "}, {"[L", "[R"}, {"Left", "Right"}, {"left", "right"}, {"_L", "_R"}, {".L", ".R"}, {"L_", "R_"},
 	};
@@ -230,7 +230,7 @@ std::string MirrorBoneName(const std::string& name) {
 			mirrored += name[i++];
 	}
 
-	if (mirrored != name && AnimSkeleton::getInstance().GetBonePtr(mirrored))
+	if (mirrored != name && skeleton.GetBonePtr(mirrored))
 		return mirrored;
 	return name;
 }
@@ -369,7 +369,7 @@ McpToolResult ListMeshParts(OutfitStudioMcp& mcp, const json& args) {
 }
 
 McpToolResult RigidifySlider(OutfitStudioMcp& mcp, const json& args) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	OutfitProject& project = mcp.Project();
 	auto shapes = mcp.Shapes(args, "shapes");
 
@@ -388,7 +388,7 @@ McpToolResult RigidifySlider(OutfitStudioMcp& mcp, const json& args) {
 	size_t bending = 0;
 	options.outBendingParts = &bending;
 
-	UndoHistory& history = frame->editor.undoHistory;
+	UndoHistory& history = session->Editor().undoHistory;
 	json changed = json::object();
 	size_t parts = 0;
 	for (auto& slider : sliders) {
@@ -402,7 +402,7 @@ McpToolResult RigidifySlider(OutfitStudioMcp& mcp, const json& args) {
 		if (!result.ok || usp->usss.empty())
 			history.PopState();
 
-		frame->UpdateUndoTools();
+		session->UpdateUndoTools();
 		mcp.Apply(result);
 		if (vertices)
 			changed[slider] = vertices;
@@ -508,7 +508,7 @@ McpToolResult AnalyzeSeams(OutfitStudioMcp& mcp, const json& args) {
 }
 
 McpToolResult WeldSeams(OutfitStudioMcp& mcp, const json& args) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	OutfitProject& project = mcp.Project();
 	auto shapes = SeamShapes(mcp, args);
 	const float tolerance = McpArgs::Float(args, "tolerance", SeamTolerance);
@@ -535,7 +535,7 @@ McpToolResult WeldSeams(OutfitStudioMcp& mcp, const json& args) {
 	result.data["seams"] = groups.size();
 
 	if (doSliders) {
-		UndoHistory& history = frame->editor.undoHistory;
+		UndoHistory& history = session->Editor().undoHistory;
 		json changedSliders = json::object();
 		for (auto& slider : MorphSliders(project, args, "sliders", shapes)) {
 			auto deltas = ShapeDeltas(mcp, shapes, slider);
@@ -584,7 +584,7 @@ McpToolResult WeldSeams(OutfitStudioMcp& mcp, const json& args) {
 			}
 			if (usp->usss.empty())
 				history.PopState();
-			frame->UpdateUndoTools();
+			session->UpdateUndoTools();
 			mcp.Apply(combined);
 			changedSliders[slider] = vertices;
 		}
@@ -839,7 +839,7 @@ McpToolResult MirrorWeights(OutfitStudioMcp& mcp, const json& args) {
 				float w = WeightOf(anim, shapeName, bone, t.p1) * sp.u + WeightOf(anim, shapeName, bone, t.p2) * sp.v + WeightOf(anim, shapeName, bone, t.p3) * sp.w;
 				if (w <= 0.0f)
 					continue;
-				goal[MirrorBoneName(bone)] += w;
+				goal[MirrorBoneName(mcp.Skeleton(), bone)] += w;
 				sum += w;
 			}
 			if (sum <= 0.0f) {
@@ -902,7 +902,7 @@ std::vector<Vector3> MorphedVerts(OutfitProject& project, NiShape* shape) {
 std::vector<std::string> PoseNames(OutfitStudioMcp& mcp, const json& args) {
 	std::vector<std::string> poses = McpArgs::Strings(args, "poses");
 	if (poses.empty())
-		for (auto& pose : mcp.GetFrame()->poseDataCollection.poseData)
+		for (auto& pose : mcp.Session().Poses().poseData)
 			poses.push_back(pose.name);
 	if (poses.empty())
 		throw McpToolError("There are no poses to check. list_poses lists them.");
@@ -926,7 +926,7 @@ public:
 			std::vector<MatTransform> list(bones.size());
 			std::vector<bool> valid(bones.size(), false);
 			for (size_t b = 0; b < bones.size(); b++) {
-				AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(bones[b]);
+				AnimBone* bone = mcp.Skeleton().GetBonePtr(bones[b]);
 				MatTransform skinToBone;
 				if (!bone || !anim->GetXFormSkinToBone(shapeName, bones[b], skinToBone))
 					continue;
@@ -1179,7 +1179,7 @@ McpToolResult ReassignWeights(OutfitStudioMcp& mcp, const json& args) {
 			targets[bone] = to;
 			continue;
 		}
-		AnimBone* animBone = AnimSkeleton::getInstance().GetBonePtr(bone);
+		AnimBone* animBone = mcp.Skeleton().GetBonePtr(bone);
 		if (!animBone || !animBone->parent)
 			throw McpToolError("The skeleton has no parent for '" + bone + "'.");
 		targets[bone] = animBone->parent->boneName;
@@ -1503,7 +1503,7 @@ json Sample(const std::vector<int>& items, size_t count = 20) {
 }
 
 McpToolResult ValidateProject(OutfitStudioMcp& mcp, const json& args) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	OutfitProject& project = mcp.Project();
 	NifFile* nif = project.GetWorkNif();
 	NiShape* reference = project.GetBaseShape();
@@ -1765,7 +1765,7 @@ McpToolResult ValidateProject(OutfitStudioMcp& mcp, const json& args) {
 	if (bad.found)
 		f.Add(f.warnings, "", "badBones", "Bones whose transforms don't match the skeleton. fix_bad_bones fixes them.");
 
-	if (frame->HasPendingChanges())
+	if (session->HasPendingChanges())
 		f.Add(f.info, "", "unsaved", "The project has changes that aren't saved.");
 
 	McpToolResult result;
@@ -1821,7 +1821,7 @@ std::vector<bool> NearOpenEdges(const std::vector<Vector3>& verts, const std::ve
 }
 
 McpToolResult AnalysisExclusions(OutfitStudioMcp& mcp, const json& args) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	OutfitProject& project = mcp.Project();
 	const std::string op = McpArgs::String(args, "op");
 	const bool replace = McpArgs::Bool(args, "replace", false);
@@ -1866,13 +1866,13 @@ McpToolResult AnalysisExclusions(OutfitStudioMcp& mcp, const json& args) {
 			// Puts the exclusions into the mask to look at them with render_view display.mask
 			const std::vector<bool>* excluded = mcp.Excluded(shape);
 			Mesh* m = ShapeMesh(mcp, shape);
-			frame->glView->ApplyMaskChanges({m}, [&](Mesh& mesh) {
+			session->ApplyMaskChanges({m}, [&](Mesh& mesh) {
 				std::unordered_map<int, float> changes;
 				for (int v = 0; v < mesh.nVerts; v++)
 					changes[v] = excluded && v < static_cast<int>(excluded->size()) && (*excluded)[v] ? 1.0f : 0.0f;
 				return changes;
 			});
-			frame->glView->Render();
+			session->Render();
 			result.data["shapes"][name] = {{"excluded", excluded ? std::count(excluded->begin(), excluded->end(), true) : 0}};
 			continue;
 		}
@@ -1971,7 +1971,7 @@ McpPoseScope::McpPoseScope(OutfitStudioMcp& inMcp)
 	: mcp(inMcp)
 	, saved(std::make_unique<PoseData>()) {
 	wasPosed = mcp.Project().bPose;
-	PoseDataCollection::CaptureCurrentPose("MCP", false, *saved);
+	PoseDataCollection::CaptureCurrentPose(mcp.Skeleton(), "MCP", false, *saved);
 }
 
 McpPoseScope::~McpPoseScope() {
@@ -1979,13 +1979,13 @@ McpPoseScope::~McpPoseScope() {
 }
 
 void McpPoseScope::Restore() {
-	OutfitStudioFrame* frame = mcp.GetFrame();
-	if (!frame->project)
+	IStudioSession* session = &mcp.Session();
+	if (!session->GetProject())
 		return;
 
-	ProjectOperations(*frame->project, frame->editor).ResetPose();
-	saved->ApplyToSkeleton();
-	frame->project->bPose = wasPosed;
+	ProjectOperations(*session->GetProject(), session->Editor()).ResetPose();
+	saved->ApplyToSkeleton(mcp.Skeleton());
+	session->GetProject()->bPose = wasPosed;
 }
 
 void McpPoseScope::Set(const std::string& pose) {
@@ -1995,13 +1995,13 @@ void McpPoseScope::Set(const std::string& pose) {
 		return;
 	}
 
-	auto& poses = mcp.GetFrame()->poseDataCollection.poseData;
+	auto& poses = mcp.Session().Poses().poseData;
 	auto it = std::find_if(poses.begin(), poses.end(), [&](const PoseData& p) { return p.name == pose; });
 	if (it == poses.end())
 		throw McpToolError("There is no pose '" + pose + "'. list_poses lists them.");
 
 	mcp.Ops().ResetPose();
-	it->ApplyToSkeleton();
+	it->ApplyToSkeleton(mcp.Skeleton());
 	project.bPose = true;
 }
 
@@ -2141,12 +2141,12 @@ McpExclusionMaskScope::McpExclusionMaskScope(OutfitStudioMcp& inMcp, const std::
 }
 
 McpExclusionMaskScope::~McpExclusionMaskScope() {
-	OutfitStudioFrame* frame = mcp.GetFrame();
-	if (!frame->project)
+	IStudioSession* session = &mcp.Session();
+	if (!session->GetProject())
 		return;
 
 	for (auto& s : saved) {
-		Mesh* m = frame->project->GetHost().GetShapeMesh(s.first);
+		Mesh* m = session->GetProject()->GetHost().GetShapeMesh(s.first);
 		if (!m || !m->mask)
 			continue;
 		for (auto& v : s.second)
@@ -2348,7 +2348,7 @@ std::vector<float> McpVertexMetric(OutfitStudioMcp& mcp, NiShape* shape, const j
 
 // Mask from a measurement, for mask_ops from_analysis
 McpToolResult McpMaskFromMetric(OutfitStudioMcp& mcp, const json& args) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	OutfitProject& project = mcp.Project();
 	const std::string target = McpArgs::String(args, "target", "fix");
 	if (target != "fix" && target != "protect")
@@ -2392,18 +2392,18 @@ McpToolResult McpMaskFromMetric(OutfitStudioMcp& mcp, const json& args) {
 		auto isExcluded = [excluded](int v) { return excluded && v < static_cast<int>(excluded->size()) && (*excluded)[v]; };
 
 		Mesh* m = ShapeMesh(mcp, shape);
-		frame->glView->ApplyMaskChanges({m}, [&](Mesh& mesh) {
+		session->ApplyMaskChanges({m}, [&](Mesh& mesh) {
 			std::unordered_map<int, float> changes;
 			for (int v = 0; v < mesh.nVerts && v < static_cast<int>(found.size()); v++)
 				changes[v] = (found[v] == (target == "protect") || isExcluded(v)) ? 1.0f : 0.0f;
 			return changes;
 		});
 		for (int i = 0; i < feather; i++)
-			frame->glView->ApplyMaskChanges({m}, [](Mesh& mesh) { return MaskOps::SmoothChanges(mesh, 0.5f); });
+			session->ApplyMaskChanges({m}, [](Mesh& mesh) { return MaskOps::SmoothChanges(mesh, 0.5f); });
 		// The feather only spreads outwards: what was selected keeps its value, so a fix takes full effect there
 		// instead of fading out over the very vertices it's for
 		if (feather > 0)
-			frame->glView->ApplyMaskChanges({m}, [&](Mesh& mesh) {
+			session->ApplyMaskChanges({m}, [&](Mesh& mesh) {
 				std::unordered_map<int, float> changes;
 				for (int v = 0; v < mesh.nVerts && v < static_cast<int>(found.size()); v++) {
 					if (isExcluded(v))
@@ -2426,7 +2426,7 @@ McpToolResult McpMaskFromMetric(OutfitStudioMcp& mcp, const json& args) {
 			summary["excluded"] = std::count(excluded->begin(), excluded->end(), true);
 		result.data["shapes"][shape->name.get()] = summary;
 	}
-	frame->glView->Render();
+	session->Render();
 	return result;
 }
 

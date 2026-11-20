@@ -13,8 +13,8 @@ See the included LICENSE file
 #include "components/PoseFit.h"
 #include "components/PoseMath.h"
 #include "components/SurfaceFit.h"
-#include "outfitstudio/OutfitStudioFrame.h"
-#include "outfitstudio/GLPanel.h"
+#include "project/ProjectOperations.h"
+#include "project/StudioSession.h"
 #include "components/UndoHistory.h"
 
 #include <algorithm>
@@ -58,7 +58,7 @@ PoseFit::Template MakeTemplate(OutfitProject& project, NiShape* shape, float uni
 
 	size_t weighted = 0;
 	for (auto& boneName : skin->second.boneNames) {
-		AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(boneName.first);
+		AnimBone* bone = project.GetSkeleton().GetBonePtr(boneName.first);
 		auto weights = skin->second.boneWeights.find(boneName.second);
 		if (!bone || weights == skin->second.boneWeights.end())
 			continue;
@@ -171,8 +171,7 @@ std::optional<float> BorderGap(const std::vector<Vector3>& verts,
 	return gaps[gaps.size() / 2];
 }
 
-std::vector<AnimBone*> SkeletonBoneList() {
-	AnimSkeleton& skeleton = AnimSkeleton::getInstance();
+std::vector<AnimBone*> SkeletonBoneList(AnimSkeleton& skeleton) {
 	std::vector<std::string> names;
 	skeleton.GetBoneNames(names);
 	std::vector<AnimBone*> bones;
@@ -182,8 +181,8 @@ std::vector<AnimBone*> SkeletonBoneList() {
 	return bones;
 }
 
-AnimBone* BoneByName(const std::string& name) {
-	AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(name);
+AnimBone* BoneByName(AnimSkeleton& skeleton, const std::string& name) {
+	AnimBone* bone = skeleton.GetBonePtr(name);
 	if (!bone)
 		throw McpToolError("There is no bone '" + name + "' in the skeleton. list_skeleton_bones lists them.");
 	return bone;
@@ -195,7 +194,7 @@ bool IsFinger(const AnimBone* bone) {
 
 // The bones to fit by default: the main bones that move template skin, the fingers with fingers: true, and the bone
 // above them all (COM in Skyrim), so the body as a whole can move
-std::vector<AnimBone*> DefaultFitBones(const std::vector<PoseFit::Template>& templates, bool fingers) {
+std::vector<AnimBone*> DefaultFitBones(AnimSkeleton& skeleton, const std::vector<PoseFit::Template>& templates, bool fingers) {
 	std::set<const AnimBone*> skinned;
 	for (auto& t : templates)
 		for (auto& vertex : t.influences)
@@ -214,7 +213,7 @@ std::vector<AnimBone*> DefaultFitBones(const std::vector<PoseFit::Template>& tem
 		return false;
 	};
 
-	std::vector<AnimBone*> all = SkeletonBoneList();
+	std::vector<AnimBone*> all = SkeletonBoneList(skeleton);
 	std::vector<AnimBone*> bones;
 	for (AnimBone* bone : PoseMath::MainBones(all))
 		if (movesSkin(bone))
@@ -253,7 +252,7 @@ json PoseSummary(const PoseFit::Result& fit, float units) {
 }
 
 McpToolResult FitPoseToShapes(OutfitStudioMcp& mcp, const json& args) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	OutfitProject& project = mcp.Project();
 	ProjectOperations ops = mcp.Ops();
 	const float units = McpBoneUnits(mcp);
@@ -285,10 +284,10 @@ McpToolResult FitPoseToShapes(OutfitStudioMcp& mcp, const json& args) {
 	PoseFit::Options options;
 	if (McpArgs::Has(args, "bones")) {
 		for (auto& name : McpArgs::Strings(args, "bones"))
-			options.bones.push_back(BoneByName(name));
+			options.bones.push_back(BoneByName(mcp.Skeleton(), name));
 	}
 	else
-		options.bones = DefaultFitBones(templates, McpArgs::Bool(args, "fingers", false));
+		options.bones = DefaultFitBones(mcp.Skeleton(), templates, McpArgs::Bool(args, "fingers", false));
 	if (options.bones.empty())
 		throw McpToolError("No bones to fit: the templates move no main bones of the skeleton.");
 
@@ -307,8 +306,8 @@ McpToolResult FitPoseToShapes(OutfitStudioMcp& mcp, const json& args) {
 	PoseFit::Result fit = PoseFit::Fit(templates, surfaceVerts, surfaceTris, options);
 
 	PoseData posed;
-	PoseDataCollection::CaptureCurrentPose("MCP", false, posed);
-	frame->ApplyRefresh(ops.SetPreviewPose(posed));
+	PoseDataCollection::CaptureCurrentPose(mcp.Skeleton(), "MCP", false, posed);
+	session->ApplyRefresh(ops.SetPreviewPose(posed));
 
 	McpToolResult result;
 	result.data["distanceBefore"] = RoundTo(fit.distanceBefore * units);
@@ -322,12 +321,12 @@ McpToolResult FitPoseToShapes(OutfitStudioMcp& mcp, const json& args) {
 }
 
 McpToolResult ScaleToBody(OutfitStudioMcp& mcp, const json& args) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	OutfitProject& project = mcp.Project();
 
 	if (project.bPose)
 		throw McpToolError("A preview pose is on. Clear it with clear_preview_pose first: the scale is measured on the unposed body.");
-	if (frame->editor.bEditSlider)
+	if (session->Editor().bEditSlider)
 		throw McpToolError("A slider is in edit mode. Leave it with set_slider_edit first.");
 	mcp.CheckPositionEdit();
 
@@ -365,7 +364,7 @@ McpToolResult ScaleToBody(OutfitStudioMcp& mcp, const json& args) {
 	const bool moveToFeet = McpArgs::Bool(args, "moveToFeet", true);
 	const Vector3 destination = moveToFeet ? estimate.templateFloor : estimate.figureFloor;
 
-	UndoHistory* history = frame->glView->GetUndoHistory();
+	UndoHistory* history = &session->Editor().undoHistory;
 	UndoStateProject* usp = history->PushState();
 	usp->undoType = UndoType::VertexPosition;
 	size_t changed = 0;
@@ -394,8 +393,8 @@ McpToolResult ScaleToBody(OutfitStudioMcp& mcp, const json& args) {
 		history->PopState();
 		throw McpToolError("Nothing moved: the shapes already have the size and place.");
 	}
-	frame->glView->ApplyUndoState(usp, false);
-	frame->UpdateUndoTools();
+	session->ApplyUndoState(usp, false);
+	session->UpdateUndoTools();
 
 	McpToolResult result;
 	result.data["scale"] = RoundTo(scale, 0.0001f);
@@ -440,14 +439,14 @@ void ApplyBoneExclusions(std::vector<std::vector<PoseFit::Template::Influence>>&
 }
 
 McpToolResult UnposeShapes(OutfitStudioMcp& mcp, const json& args) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	OutfitProject& project = mcp.Project();
 	ProjectOperations ops = mcp.Ops();
 	const float units = McpBoneUnits(mcp);
 
 	if (!project.bPose)
 		throw McpToolError("No preview pose is on. Fit the skeleton to the shapes with fit_pose_to_shapes (or pose it with set_preview_pose) first.");
-	if (frame->editor.bEditSlider)
+	if (session->Editor().bEditSlider)
 		throw McpToolError("A slider is in edit mode. Leave it with set_slider_edit first: unposing changes the base shapes.");
 	mcp.CheckPositionEdit();
 
@@ -463,14 +462,14 @@ McpToolResult UnposeShapes(OutfitStudioMcp& mcp, const json& args) {
 
 	std::vector<AnimBone*> excluded;
 	for (auto& name : McpArgs::Strings(args, "excludeBones"))
-		excluded.push_back(BoneByName(name));
+		excluded.push_back(BoneByName(mcp.Skeleton(), name));
 
 	const float searchRadius = McpArgs::Float(args, "searchRadius", 50.0f) / units;
 	const int smoothIterations = std::clamp(McpArgs::Int(args, "smoothIterations", 4), 0, 100);
 	const bool rigidParts = McpArgs::Bool(args, "rigidParts", false);
 	const int maxPartVertices = std::max(1, McpArgs::Int(args, "maxPartVertices", 300));
 
-	UndoHistory* history = frame->glView->GetUndoHistory();
+	UndoHistory* history = &session->Editor().undoHistory;
 	UndoStateProject* usp = history->PushState();
 	usp->undoType = UndoType::VertexPosition;
 
@@ -554,12 +553,12 @@ McpToolResult UnposeShapes(OutfitStudioMcp& mcp, const json& args) {
 		throw McpToolError("Nothing moved: the pose doesn't move the shapes' closest template skin.");
 	}
 
-	frame->glView->ApplyUndoState(usp, false);
-	frame->UpdateUndoTools();
+	session->ApplyUndoState(usp, false);
+	session->UpdateUndoTools();
 
 	if (McpArgs::Bool(args, "clearPose", true)) {
 		ops.ResetPose();
-		frame->ApplyRefresh(ops.ClearPreviewPose());
+		session->ApplyRefresh(ops.ClearPreviewPose());
 	}
 
 	McpToolResult result;
@@ -569,7 +568,7 @@ McpToolResult UnposeShapes(OutfitStudioMcp& mcp, const json& args) {
 }
 
 McpToolResult FitToBody(OutfitStudioMcp& mcp, const json& args) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	OutfitProject& project = mcp.Project();
 
 	if (project.bPose)
@@ -591,7 +590,7 @@ McpToolResult FitToBody(OutfitStudioMcp& mcp, const json& args) {
 
 	const std::string sliderName = McpArgs::String(args, "asSlider", "");
 	if (sliderName.empty()) {
-		if (frame->editor.bEditSlider)
+		if (session->Editor().bEditSlider)
 			throw McpToolError("A slider is in edit mode. Leave it with set_slider_edit first, or pass asSlider to write the fit into a slider.");
 		mcp.CheckPositionEdit();
 	}
@@ -665,12 +664,12 @@ McpToolResult FitToBody(OutfitStudioMcp& mcp, const json& args) {
 	if (autoGap && !useMask)
 		throw McpToolError("autoGap measures the gap at the border of the mask; it needs useMask.");
 
-	UndoHistory* history = frame->glView->GetUndoHistory();
+	UndoHistory* history = &session->Editor().undoHistory;
 	UndoStateProject* usp = history->PushState();
 	usp->undoType = UndoType::VertexPosition;
 
 	if (!sliderName.empty() && !project.ValidSlider(sliderName))
-		frame->NewSlider(sliderName, true);
+		session->NewSlider(sliderName, true);
 
 	ProjectOperations ops = mcp.Ops();
 	OpResult opResult;
@@ -780,10 +779,10 @@ McpToolResult FitToBody(OutfitStudioMcp& mcp, const json& args) {
 	}
 
 	if (sliderName.empty())
-		frame->glView->ApplyUndoState(usp, false);
+		session->ApplyUndoState(usp, false);
 	else
 		mcp.Apply(opResult);
-	frame->UpdateUndoTools();
+	session->UpdateUndoTools();
 
 	McpToolResult result;
 	result.data["shapes"] = shapesResult;
@@ -803,7 +802,7 @@ std::vector<float> Freedom(OutfitProject& project, NiShape* shape, size_t count)
 }
 
 McpToolResult FixFlippedTriangles(OutfitStudioMcp& mcp, const json& args) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	OutfitProject& project = mcp.Project();
 
 	if (project.bPose)
@@ -826,7 +825,7 @@ McpToolResult FixFlippedTriangles(OutfitStudioMcp& mcp, const json& args) {
 			throw McpToolError("There is no snapshot '" + snapshotName + "'. Snapshots: " + store.Names().dump());
 		before = &entry->snapshot->project->workNif;
 		if (!preview) {
-			if (frame->editor.bEditSlider)
+			if (session->Editor().bEditSlider)
 				throw McpToolError("A slider is in edit mode. Leave it with set_slider_edit first.");
 			mcp.CheckPositionEdit();
 		}
@@ -839,7 +838,7 @@ McpToolResult FixFlippedTriangles(OutfitStudioMcp& mcp, const json& args) {
 	options.strength = std::clamp(McpArgs::Float(args, "strength", options.strength), 0.05f, 1.0f);
 	const bool useMask = McpArgs::Bool(args, "useMask", true);
 
-	UndoHistory* history = frame->glView->GetUndoHistory();
+	UndoHistory* history = &session->Editor().undoHistory;
 	UndoStateProject* usp = preview ? nullptr : history->PushState();
 	if (usp)
 		usp->undoType = UndoType::VertexPosition;
@@ -851,10 +850,10 @@ McpToolResult FixFlippedTriangles(OutfitStudioMcp& mcp, const json& args) {
 	auto fail = [&](const std::string& error) {
 		if (usp && !usp->usss.empty()) {
 			if (before)
-				frame->glView->ApplyUndoState(usp, false);
+				session->ApplyUndoState(usp, false);
 			else
 				mcp.Apply(opResult);
-			frame->UpdateUndoTools();
+			session->UpdateUndoTools();
 		}
 		else if (usp)
 			history->PopState();
@@ -949,15 +948,15 @@ McpToolResult FixFlippedTriangles(OutfitStudioMcp& mcp, const json& args) {
 	}
 
 	if (before)
-		frame->glView->ApplyUndoState(usp, false);
+		session->ApplyUndoState(usp, false);
 	else
 		mcp.Apply(opResult);
-	frame->UpdateUndoTools();
+	session->UpdateUndoTools();
 	return result;
 }
 
 McpToolResult MakeContactMorph(OutfitStudioMcp& mcp, const json& args) {
-	OutfitStudioFrame* frame = mcp.GetFrame();
+	IStudioSession* session = &mcp.Session();
 	OutfitProject& project = mcp.Project();
 
 	if (project.bPose)
@@ -1080,7 +1079,7 @@ McpToolResult MakeContactMorph(OutfitStudioMcp& mcp, const json& args) {
 		return result;
 
 	if (!project.ValidSlider(sliderName))
-		frame->NewSlider(sliderName, true);
+		session->NewSlider(sliderName, true);
 
 	auto write = [&project, &sliderName](NiShape* shape, const std::vector<Vector3>& deltas) {
 		project.ClearSlider(shape, sliderName);

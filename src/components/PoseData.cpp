@@ -138,16 +138,16 @@ std::string PoseDataCollection::SanitizeFileStem(const std::string& name) {
 	return std::string(wxName.ToUTF8().data());
 }
 
-void PoseDataCollection::CaptureCurrentPose(const std::string& poseName, bool absoluteLocal, PoseData& outPose) {
+void PoseDataCollection::CaptureCurrentPose(AnimSkeleton& skeleton, const std::string& poseName, bool absoluteLocal, PoseData& outPose) {
 	outPose.name = poseName;
 	outPose.absoluteLocal = absoluteLocal;
 	outPose.boneData.clear();
 
 	std::vector<std::string> bones;
-	AnimSkeleton::getInstance().GetBoneNames(bones);
+	skeleton.GetBoneNames(bones);
 
 	for (const auto& boneName : bones) {
-		AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
+		AnimBone* bone = skeleton.GetBonePtr(boneName);
 		if (!bone)
 			continue;
 
@@ -219,14 +219,14 @@ void PoseData::Interpolate(const PoseData& a, const PoseData& b, float t, PoseDa
 	}
 }
 
-void PoseData::ApplyToSkeleton() const {
+void PoseData::ApplyToSkeleton(AnimSkeleton& skeleton) const {
 	using namespace nifly;
 
 	std::vector<std::string> bones;
-	AnimSkeleton::getInstance().GetBoneNames(bones);
+	skeleton.GetBoneNames(bones);
 
 	for (const auto& boneName : bones) {
-		AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
+		AnimBone* bone = skeleton.GetBonePtr(boneName);
 		if (!bone)
 			continue;
 

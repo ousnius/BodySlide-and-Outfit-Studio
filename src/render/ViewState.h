@@ -5,7 +5,7 @@ See the included LICENSE file
 
 #pragma once
 
-#include "render/GLSurface.h"
+#include "GLSurface.h"
 
 #include <map>
 #include <string>
