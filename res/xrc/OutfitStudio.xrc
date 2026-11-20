@@ -1257,6 +1257,54 @@
 																			</object>
 																			<object class="sizeritem">
 																				<option>0</option>
+																				<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+																				<border>5</border>
+																				<object class="wxBoxSizer">
+																					<orient>wxHORIZONTAL</orient>
+																					<object class="sizeritem">
+																						<option>1</option>
+																						<flag>wxALIGN_CENTER_VERTICAL</flag>
+																						<object class="wxOwnerDrawnComboBox" name="presetQuick" subclass="wxFavoriteChoice">
+																							<style>wxCB_READONLY</style>
+																							<tooltip>Preview a slider preset. Inverted sliders will have inverted values.</tooltip>
+																						</object>
+																					</object>
+																					<object class="sizeritem">
+																						<option>0</option>
+																						<flag>wxLEFT|wxALIGN_CENTER_VERTICAL</flag>
+																						<border>5</border>
+																						<object class="wxRadioButton" name="presetWeightLo">
+																							<style>wxRB_GROUP</style>
+																							<fg>#ffffff</fg>
+																							<label>Low</label>
+																							<tooltip>Preview the low weight values of the preset.</tooltip>
+																						</object>
+																					</object>
+																					<object class="sizeritem">
+																						<option>0</option>
+																						<flag>wxLEFT|wxALIGN_CENTER_VERTICAL</flag>
+																						<border>5</border>
+																						<object class="wxRadioButton" name="presetWeightHi">
+																							<fg>#ffffff</fg>
+																							<label>High</label>
+																							<value>1</value>
+																							<tooltip>Preview the high weight values of the preset.</tooltip>
+																						</object>
+																					</object>
+																					<object class="sizeritem">
+																						<option>0</option>
+																						<flag>wxLEFT|wxALIGN_CENTER_VERTICAL</flag>
+																						<border>5</border>
+																						<object class="wxRadioButton" name="presetOff">
+																							<fg>#ffffff</fg>
+																							<label>Off</label>
+																							<tooltip>Turn the preset off, setting the sliders to zero. Ctrl+P switches between the preset and off.</tooltip>
+																						</object>
+																					</object>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
 																				<flag>wxALL|wxEXPAND</flag>
 																				<border>5</border>
 																				<object class="wxCheckBox" name="cbFixedWeight">

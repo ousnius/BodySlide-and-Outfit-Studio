@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "physics/PumpClock.h"
 #include "project/EditorState.h"
 #include "project/ProjectOperations.h"
+#include "ui/wxFavoriteChoice.h"
 #include "ui/wxSliderPanel.h"
 #include "utils/MainThreadDispatcher.h"
 
@@ -215,6 +216,16 @@ public:
 	wxSearchCtrl* sliderFilter = nullptr;
 	wxSearchCtrl* bonesFilter = nullptr;
 
+	// Preset preview above the slider list: Low/High (or just "Preset") show the selected preset, Off sets
+	// the sliders to zero
+	wxFavoriteChoice* presetQuick = nullptr;
+	wxRadioButton* presetWeightLo = nullptr;
+	wxRadioButton* presetWeightHi = nullptr;
+	wxRadioButton* presetOff = nullptr;
+	PresetCollection quickPresets;
+	// The weight that turning the preset back on uses
+	bool presetLastHi = true;
+
 	wxStateButton* currentTabButton = nullptr;
 	wxStateButton* meshTabButton = nullptr;
 	wxStateButton* boneTabButton = nullptr;
@@ -274,6 +285,19 @@ public:
 	void SetSliderValue(const size_t index, int val);
 	void SetSliderValue(const std::string& name, int val);
 	void ZeroSliders();
+	// Sets the preset's slider values, or zeroes the sliders. Both leave the slider in edit mode alone.
+	void ApplyPresetValues(PresetCollection& presets, const std::string& presetName, bool hi);
+	void ZeroPresetSliders();
+	// Reloads the presets of the preset dropdown, keeping the selection if the preset still exists
+	void RefreshQuickPresets();
+	// Shows a preset in the preset dropdown, with its weight and whether it's turned on
+	void SyncQuickPreset(const std::string& presetName, bool hi, bool on);
+	// Low and high weight only exist for projects that generate weights, others get "Preset" and "Off".
+	// Returns whether Low was checked and had to make way for High.
+	bool UpdateQuickPresetWeightVisibility();
+	bool IsQuickPresetOn() const;
+	// Checks Off, or the weight that was chosen last
+	void SetQuickPresetOn(bool on);
 	// Shows the slider values of the project on the slider panels
 	void SyncSliderPanels();
 
@@ -603,6 +627,12 @@ private:
 
 	void OnLoadPreset(wxCommandEvent& event);
 	void OnSavePreset(wxCommandEvent& event);
+	void OnQuickPreset(wxCommandEvent& event);
+	void OnQuickPresetDropdown(wxCommandEvent& event);
+	void OnQuickPresetState(wxCommandEvent& event);
+	void OnQuickPresetToggleAccel(wxCommandEvent& event);
+	// Applies the selected preset with the checked weight, or zeroes the sliders when Off is checked
+	void ApplyQuickPreset();
 	bool ShowConform(ConformOptions& options, bool silent = false);
 	void OnSliderConform(wxCommandEvent& event);
 	void OnSliderConformAll(wxCommandEvent& event);

@@ -48,6 +48,24 @@ void OutfitStudioFrame::CreateSetSliders() {
 	sliderPanels.clear();
 	sliderFilter->Clear();
 
+	// A loaded project starts at zero, so a selected preset is off until it's turned on again.
+	// Rebuilding the sliders for other reasons (an import, for one) keeps the values and the preset state.
+	if (presetOff && presetQuick && presetQuick->GetSelection() != wxNOT_FOUND) {
+		bool allZero = true;
+		for (size_t i = 0; i < project->SliderCount() && allZero; i++) {
+			if (project->SliderClamp(i))
+				continue;
+			if (editor.bEditSlider && project->GetSliderName(i) == editor.activeSlider)
+				continue;
+			if (project->SliderValue(i) != 0.0f)
+				allZero = false;
+		}
+
+		if (allZero)
+			presetOff->SetValue(true);
+	}
+	UpdateQuickPresetWeightVisibility();
+
 	for (size_t i = 0; i < project->SliderCount(); i++) {
 		UpdateProgress(inc, _("Loading slider: ") + project->GetSliderName(i));
 		if (project->SliderClamp(i)) // clamp sliders are a special case, usually an incorrect scale

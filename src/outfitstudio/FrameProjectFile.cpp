@@ -676,6 +676,10 @@ bool OutfitStudioFrame::SaveProjectAs() {
 		menuBar->Enable(XRCID("fileSave"), true);
 
 		RenameProject(strOutfitName.ToUTF8().data());
+		// Saving may have turned generating weights on or off. Low weight values that are shown then
+		// make way for the high weight ones, the only ones left.
+		if (UpdateQuickPresetWeightVisibility())
+			ApplyQuickPreset();
 		EndProgress(_("Saved."));
 	}
 	else {

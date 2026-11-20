@@ -18,6 +18,7 @@ See the included LICENSE file
 #include "ui/outfitstudio/SliderDataImportDialog.h"
 #include "utils/ProjectUtil.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdlib>
 #include <functional>
@@ -48,6 +49,12 @@ void OutfitStudioFrame::OnLoadPreset(wxCommandEvent& WXUNUSED(event)) {
 
 		presetChoice->SetSelection(0);
 
+		// Without generated weights only the high weight values are used, as in BodySlide
+		if (!project->mGenWeights) {
+			XRCCTRL(dlg, "weightHi", wxRadioButton)->SetValue(true);
+			XRCCTRL(dlg, "weightLo", wxRadioButton)->Enable(false);
+		}
+
 		dlg.SetSize(dlg.FromDIP(wxSize(325, 175)));
 		dlg.SetSizeHints(dlg.FromDIP(wxSize(325, 175)), wxSize(-1, -1));
 		dlg.CenterOnParent();
@@ -60,18 +67,186 @@ void OutfitStudioFrame::OnLoadPreset(wxCommandEvent& WXUNUSED(event)) {
 			hi = false;
 
 		if (choice == "Zero All") {
-			ZeroSliders();
+			ZeroPresetSliders();
+			if (presetOff)
+				presetOff->SetValue(true);
 			wxLogMessage("Sliders were reset to zero.");
 			return;
 		}
 
-		wxLogMessage("Applying preset '%s' with option '%s'.", choice, hi ? "High" : "Low");
+		ApplyPresetValues(presets, choice, hi);
 
-		for (auto& value : ProjectOperations(*project, editor).GetPresetValues(presets, choice, hi))
-			SetSliderValue(value.first, value.second * 100.0f);
-
-		ApplySliders();
+		// The dropdown's presets may be older than the ones the dialog just loaded
+		RefreshQuickPresets();
+		SyncQuickPreset(choice, hi, true);
 	}
+}
+
+void OutfitStudioFrame::ApplyPresetValues(PresetCollection& presets, const std::string& presetName, bool hi) {
+	wxLogMessage("Applying preset '%s' with option '%s'.", presetName, hi ? "High" : "Low");
+
+	for (auto& value : ProjectOperations(*project, editor).GetPresetValues(presets, presetName, hi)) {
+		// The slider in edit mode keeps its value
+		if (editor.bEditSlider && value.first == editor.activeSlider)
+			continue;
+
+		SetSliderValue(value.first, value.second * 100.0f);
+	}
+
+	ApplySliders();
+}
+
+void OutfitStudioFrame::ZeroPresetSliders() {
+	if (!editor.bEditSlider) {
+		ZeroSliders();
+		return;
+	}
+
+	// ProjectOperations::ZeroSliders would zero the slider in edit mode as well
+	for (size_t i = 0; i < project->SliderCount(); i++) {
+		if (project->SliderClamp(i))
+			continue;
+
+		if (project->GetSliderName(i) == editor.activeSlider)
+			continue;
+
+		SetSliderValue(i, 0);
+	}
+
+	ApplySliders();
+}
+
+void OutfitStudioFrame::RefreshQuickPresets() {
+	if (!presetQuick)
+		return;
+
+	std::string selected;
+	if (presetQuick->GetSelection() != wxNOT_FOUND)
+		selected = presetQuick->GetString(presetQuick->GetSelection()).ToUTF8();
+
+	quickPresets.Clear();
+
+	std::vector<std::string> names;
+	quickPresets.LoadPresets(ProjectUtil::GetProjectPath() + "/SliderPresets", "", names, true);
+	quickPresets.GetPresetNames(names);
+	std::sort(names.begin(), names.end(), [](const std::string& a, const std::string& b) {
+		return wxString::FromUTF8(a).CmpNoCase(wxString::FromUTF8(b)) < 0;
+	});
+
+	presetQuick->Clear();
+
+	int selection = wxNOT_FOUND;
+	for (auto& n : names) {
+		int item = presetQuick->AppendItem(wxString::FromUTF8(n));
+		if (n == selected)
+			selection = item;
+	}
+
+	presetQuick->SetSelection(selection);
+}
+
+void OutfitStudioFrame::SyncQuickPreset(const std::string& presetName, bool hi, bool on) {
+	if (!presetQuick)
+		return;
+
+	int item = presetQuick->FindString(wxString::FromUTF8(presetName), true);
+	presetQuick->SetSelection(item);
+
+	// Without generated weights there's no weight to choose, keep the one chosen for projects that have them
+	if (project->mGenWeights)
+		presetLastHi = hi;
+	SetQuickPresetOn(on);
+}
+
+bool OutfitStudioFrame::UpdateQuickPresetWeightVisibility() {
+	if (!presetWeightLo || !presetWeightHi)
+		return false;
+
+	// Without generated weights there's only one set of values, the high weight one, as in BodySlide
+	const bool genWeights = project && project->mGenWeights;
+	if (presetWeightLo->IsShown() == genWeights)
+		return false;
+
+	bool lowToHigh = false;
+	if (!genWeights && presetWeightLo->GetValue()) {
+		presetWeightHi->SetValue(true);
+		lowToHigh = true;
+	}
+
+	presetWeightLo->Show(genWeights);
+	presetWeightHi->SetLabel(genWeights ? _("High") : _("Preset"));
+	presetWeightHi->SetToolTip(genWeights ? _("Preview the high weight values of the preset.") : _("Preview the preset."));
+	presetWeightLo->GetParent()->Layout();
+	return lowToHigh;
+}
+
+bool OutfitStudioFrame::IsQuickPresetOn() const {
+	return !presetOff || !presetOff->GetValue();
+}
+
+void OutfitStudioFrame::SetQuickPresetOn(bool on) {
+	if (!presetWeightLo || !presetWeightHi || !presetOff)
+		return;
+
+	if (!on)
+		presetOff->SetValue(true);
+	else if (presetLastHi || !presetWeightLo->IsShown())
+		presetWeightHi->SetValue(true);
+	else
+		presetWeightLo->SetValue(true);
+}
+
+void OutfitStudioFrame::ApplyQuickPreset() {
+	if (!presetQuick || presetQuick->GetSelection() == wxNOT_FOUND)
+		return;
+
+	if (!IsQuickPresetOn()) {
+		ZeroPresetSliders();
+		return;
+	}
+
+	// Without generated weights only the high weight values are used
+	bool hi = !project->mGenWeights || !presetWeightLo || !presetWeightLo->GetValue();
+	std::string presetName{presetQuick->GetString(presetQuick->GetSelection()).ToUTF8()};
+	ApplyPresetValues(quickPresets, presetName, hi);
+}
+
+void OutfitStudioFrame::OnQuickPreset(wxCommandEvent& WXUNUSED(event)) {
+	CloseBrushSettings();
+
+	// Picking a preset shows it, with the weight it had last
+	SetQuickPresetOn(true);
+	ApplyQuickPreset();
+}
+
+void OutfitStudioFrame::OnQuickPresetDropdown(wxCommandEvent& event) {
+	// Presets saved in BodySlide or elsewhere in the meantime show up as well
+	RefreshQuickPresets();
+	event.Skip();
+}
+
+void OutfitStudioFrame::OnQuickPresetState(wxCommandEvent& WXUNUSED(event)) {
+	CloseBrushSettings();
+
+	// Turning the preset back on (Ctrl+P) uses the weight that was chosen last
+	if (presetWeightLo && presetWeightLo->GetValue())
+		presetLastHi = false;
+	else if (presetWeightHi && presetWeightHi->GetValue())
+		presetLastHi = true;
+
+	ApplyQuickPreset();
+}
+
+void OutfitStudioFrame::OnQuickPresetToggleAccel(wxCommandEvent& WXUNUSED(event)) {
+	if (!presetQuick || presetQuick->GetSelection() == wxNOT_FOUND) {
+		wxLogMessage("No preset is selected to turn on or off.");
+		statusBar->SetStatusText(_("Select a preset above the sliders first to turn it on or off with Ctrl+P."));
+		return;
+	}
+
+	CloseBrushSettings();
+	SetQuickPresetOn(!IsQuickPresetOn());
+	ApplyQuickPreset();
 }
 
 void OutfitStudioFrame::OnSavePreset(wxCommandEvent& WXUNUSED(event)) {
@@ -137,7 +312,10 @@ void OutfitStudioFrame::OnSavePreset(wxCommandEvent& WXUNUSED(event)) {
 	if (error) {
 		wxLogError("Failed to save preset (%d)!", error);
 		wxMessageBox(wxString::Format(_("Failed to save preset (%d)!"), error), _("Error"), wxICON_ERROR, this);
+		return;
 	}
+
+	RefreshQuickPresets();
 }
 
 void OutfitStudioFrame::OnSliderImportNIF(wxCommandEvent& WXUNUSED(event)) {

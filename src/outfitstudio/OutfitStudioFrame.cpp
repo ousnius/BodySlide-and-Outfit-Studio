@@ -165,6 +165,12 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 
 	EVT_MENU(XRCID("sliderLoadPreset"), OutfitStudioFrame::OnLoadPreset)
 	EVT_MENU(XRCID("sliderSavePreset"), OutfitStudioFrame::OnSavePreset)
+	EVT_COMBOBOX(XRCID("presetQuick"), OutfitStudioFrame::OnQuickPreset)
+	EVT_COMBOBOX_DROPDOWN(XRCID("presetQuick"), OutfitStudioFrame::OnQuickPresetDropdown)
+	EVT_RADIOBUTTON(XRCID("presetWeightLo"), OutfitStudioFrame::OnQuickPresetState)
+	EVT_RADIOBUTTON(XRCID("presetWeightHi"), OutfitStudioFrame::OnQuickPresetState)
+	EVT_RADIOBUTTON(XRCID("presetOff"), OutfitStudioFrame::OnQuickPresetState)
+	EVT_MENU(XRCID("presetToggleAccel"), OutfitStudioFrame::OnQuickPresetToggleAccel)
 	EVT_MENU(XRCID("sliderConform"), OutfitStudioFrame::OnSliderConform)
 	EVT_MENU(XRCID("sliderConformAll"), OutfitStudioFrame::OnSliderConformAll)
 	EVT_MENU(XRCID("sliderFixClipping"), OutfitStudioFrame::OnSliderFixClipping)
@@ -666,6 +672,21 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	xrc->AttachUnknownControl("sliderFilter", sliderFilter, this);
 	xrc->AttachUnknownControl("bonesFilter", bonesFilter, this);
 	bonesFilter->GetParent()->Hide();
+
+	presetQuick = (wxFavoriteChoice*)FindWindowByName("presetQuick");
+	presetWeightLo = (wxRadioButton*)FindWindowByName("presetWeightLo");
+	presetWeightHi = (wxRadioButton*)FindWindowByName("presetWeightHi");
+	presetOff = (wxRadioButton*)FindWindowByName("presetOff");
+	// Long preset names would otherwise widen the whole panel
+	if (presetQuick)
+		presetQuick->SetMinSize(wxSize(FromDIP(60), -1));
+	RefreshQuickPresets();
+
+	// Ctrl+P has no menu item, the menu bar keeps its own accelerators next to this table
+	wxAcceleratorEntry accelEntries[1];
+	accelEntries[0].Set(wxACCEL_CTRL, (int)'P', XRCID("presetToggleAccel"));
+	wxAcceleratorTable accelTable(1, accelEntries);
+	SetAcceleratorTable(accelTable);
 
 	project = new OutfitProject(skeleton, &projectHost); // Create empty project
 	CreateSetSliders();
