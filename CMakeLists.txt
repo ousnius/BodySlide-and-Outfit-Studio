@@ -279,7 +279,6 @@ set(BSOS_COMMON_INCLUDE_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}/lib/fkYAML/include
 	${CMAKE_CURRENT_SOURCE_DIR}/lib/nlohmannjson/include
 	${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/include
-	${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/external
 	${CMAKE_CURRENT_SOURCE_DIR}/lib/TinyXML-2
 	${CMAKE_CURRENT_SOURCE_DIR}/lib/cpp-httplib
 	${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -298,6 +297,9 @@ endif()
 # Settings every target shares: include folders, definitions, warnings and wxWidgets.
 add_library(bsos_options INTERFACE)
 target_include_directories(bsos_options INTERFACE ${BSOS_COMMON_INCLUDE_DIRS})
+# Third-party headers nifly bundles (half.hpp, Miniball.hpp), whose warnings aren't ours: newer MSVC flags the
+# discarded std::frexp result of half.hpp in every file that includes it
+target_include_directories(bsos_options SYSTEM INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/external)
 if(NOT TARGET OpenGL::GL AND OPENGL_INCLUDE_DIR)
 	target_include_directories(bsos_options SYSTEM INTERFACE ${OPENGL_INCLUDE_DIR})
 endif()
