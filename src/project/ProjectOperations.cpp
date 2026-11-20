@@ -810,6 +810,82 @@ OpResult ProjectOperations::CopyBoneWeights(const std::vector<NiShape*>& shapes,
 	return result;
 }
 
+OpResult ProjectOperations::NormalizeWeights(const std::vector<NiShape*>& shapes, UndoStateProject& usp, size_t* outChangedVertices) {
+	AnimInfo& workAnim = *project.GetWorkAnim();
+	usp.undoType = UndoType::Weight;
+
+	OpResult result;
+	size_t changedVertices = 0;
+	for (NiShape* shape : shapes) {
+		const std::string shapeName = shape->name.get();
+		auto shapeBones = workAnim.shapeBones.find(shapeName);
+		if (shapeBones == workAnim.shapeBones.end() || shapeBones->second.empty())
+			continue;
+
+		const size_t limit = project.GetBonesPerVertexLimit(shape);
+		std::vector<float> influence = MaskOps::FixWeights(GetMesh(shapeName));
+
+		// The weights of each vertex, by bone index
+		std::vector<std::vector<std::pair<float, size_t>>> vertexWeights(shape->GetNumVertices());
+		const std::vector<std::string>& bones = shapeBones->second;
+		for (size_t bi = 0; bi < bones.size(); bi++) {
+			auto weights = workAnim.GetWeightsPtr(shapeName, bones[bi]);
+			if (!weights)
+				continue;
+			for (auto& w : *weights)
+				if (w.first < vertexWeights.size() && w.second > 0.0f)
+					vertexWeights[w.first].emplace_back(w.second, bi);
+		}
+
+		UndoStateShape uss;
+		uss.shapeName = shapeName;
+		uss.boneWeights.resize(bones.size());
+		for (size_t bi = 0; bi < bones.size(); bi++)
+			uss.boneWeights[bi].boneName = bones[bi];
+
+		for (size_t v = 0; v < vertexWeights.size(); v++) {
+			auto& weights = vertexWeights[v];
+			if (weights.empty() || (v < influence.size() && influence[v] <= 0.0f))
+				continue;
+
+			// Keep the largest weights
+			std::sort(weights.begin(), weights.end(), [](const auto& a, const auto& b) { return a.first > b.first; });
+			float sum = 0.0f;
+			for (size_t i = 0; i < weights.size() && i < limit; i++)
+				sum += weights[i].first;
+
+			bool changed = false;
+			for (size_t i = 0; i < weights.size(); i++) {
+				float goal = i < limit ? weights[i].first / sum : 0.0f;
+				if (std::fabs(goal - weights[i].first) < 1e-6f)
+					continue;
+
+				auto& bw = uss.boneWeights[weights[i].second].weights[static_cast<uint16_t>(v)];
+				bw.startVal = weights[i].first;
+				bw.endVal = goal;
+				changed = true;
+			}
+
+			if (changed)
+				changedVertices++;
+		}
+
+		uss.boneWeights.erase(std::remove_if(uss.boneWeights.begin(), uss.boneWeights.end(), [](const UndoStateBoneWeights& bw) { return bw.weights.empty(); }),
+							  uss.boneWeights.end());
+		if (!uss.boneWeights.empty())
+			usp.usss.push_back(std::move(uss));
+	}
+
+	if (!usp.usss.empty()) {
+		result.refresh |= ApplyShapeEdits(usp, false);
+		result.refresh |= RefreshFlags::WeightDisplay;
+	}
+
+	if (outChangedVertices)
+		*outChangedVertices = changedVertices;
+	return result;
+}
+
 RefreshFlags ProjectOperations::ZeroSliders() {
 	if (project.AllSlidersZero())
 		return RefreshFlags::None;

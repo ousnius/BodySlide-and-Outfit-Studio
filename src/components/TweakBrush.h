@@ -157,6 +157,9 @@ public:
 	virtual void strokeInit(const std::vector<Mesh*>&, TweakPickInfo&, UndoStateProject&);
 	virtual void strokeInit(const std::vector<Mesh*>&, TweakPickInfo&, UndoStateProject&, std::vector<std::vector<nifly::Vector3>>&) {}
 
+	// Called for each mesh of the stroke when it ends, before its changes are applied to the project
+	virtual void strokeEnd(Mesh*, UndoStateShape&) {}
+
 	// Using the start and end points, determine if enough distance has been covered to satisfy the spacing setting.
 	virtual bool checkSpacing(nifly::Vector3& start, nifly::Vector3& end);
 
@@ -436,6 +439,8 @@ public:
 	}
 
 	virtual void brushAction(Mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
+	// The stroke only removes weight. With normalizing, the vertices it changed are normalized when it ends.
+	virtual void strokeEnd(Mesh* refmesh, UndoStateShape& uss);
 };
 
 class TB_SmoothWeight : public TweakBrush {
@@ -449,6 +454,9 @@ public:
 	// bXMirrorBone:  if true, boneNames[1] is the x-mirror bone
 	bool bXMirrorBone;
 	bool bNormalizeWeights = false;
+	// bAccumulate: smooth the current weights with each dab instead of the weights from the start
+	// of the stroke, so going over an area again keeps smoothing it further.
+	bool bAccumulate = false;
 	uint8_t method; // 0 for laplacian, 1 for HC-Smooth.
 	float hcAlpha;	// Blending constants.
 	float hcBeta;

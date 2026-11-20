@@ -542,6 +542,8 @@ private:
 	void OnMaskVertexColor(wxCommandEvent& event);
 	void OnFixedWeight(wxCommandEvent& event);
 	void OnCBNormalizeWeights(wxCommandEvent& event);
+	void OnCBAccumulateSmooth(wxCommandEvent& event);
+	void OnNormalizeWeights(wxCommandEvent& event);
 	void OnSelectSliders(wxCommandEvent& event);
 
 	void OnSliderFilterChanged(wxCommandEvent&);

@@ -7,6 +7,10 @@ See the included LICENSE file
 #include "Anim.h"
 #include "WeightNorm.h"
 
+#include <algorithm>
+#include <array>
+#include <map>
+
 using namespace nifly;
 
 std::vector<std::future<void>> TweakStroke::normalUpdates{};
@@ -116,6 +120,9 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 
 void TweakStroke::endStroke() {
 	const int nMesh = refMeshes.size();
+	for (int mi = 0; mi < nMesh && mi < static_cast<int>(usp.usss.size()); ++mi)
+		refBrush->strokeEnd(refMeshes[mi], usp.usss[mi]);
+
 	if (refBrush->Type() == TweakBrush::BrushType::Move) {
 		for (int mi = 0; mi < nMesh; ++mi) {
 			Mesh* m = refMeshes[mi];
@@ -1277,6 +1284,7 @@ TB_Weight::~TB_Weight() {}
 void TB_Weight::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
 	BoneWeightAutoNormalizer nzer;
 	nzer.SetUp(&uss, animInfo, m->shapeName, boneNames, lockedBoneNames, bXMirrorBone ? 2 : 1, bSpreadWeight);
+	nzer.SetFillModified(true);
 	nzer.GrabStartingWeights(points, nPoints);
 
 	float meshradius = m->TransformDistModelToMesh(radius);
@@ -1358,7 +1366,6 @@ void TB_Unweight::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* point
 
 	for (int pi = 0; pi < nPoints; pi++) {
 		int i = points[pi];
-		bool adjFlag[2] = {true, false};
 		float orDist = meshorigin.DistanceTo(m->verts[i]);
 		float morDist = mOrigin.DistanceTo(m->verts[i]);
 		float falloff = getFalloff(orDist, meshradius);
@@ -1368,31 +1375,50 @@ void TB_Unweight::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* point
 		if (bMirror && morDist < orDist)
 			b0falloff = mFalloff;
 
-		adjFlag[0] = b0falloff > 0.0;
-
 		float maskF = 1.0f - m->mask[i];
 
+		// Only removes weight; the other bones don't take it up until the stroke ends
 		uss.boneWeights[0].weights[i].endVal += strength * maskF * b0falloff;
-
-		if (!bNormalizeWeights)
-			ClampWeight(uss.boneWeights[0].weights[i].endVal);
+		ClampWeight(uss.boneWeights[0].weights[i].endVal);
 
 		if (bXMirrorBone) {
 			float b1falloff = mFalloff;
 			if (bMirror && orDist < morDist)
 				b1falloff = falloff;
 
-			adjFlag[1] = b1falloff > 0.0;
 			uss.boneWeights[1].weights[i].endVal += strength * maskF * b1falloff;
-
-			if (!bNormalizeWeights)
-				ClampWeight(uss.boneWeights[1].weights[i].endVal);
+			ClampWeight(uss.boneWeights[1].weights[i].endVal);
 		}
 
-		if (bNormalizeWeights)
-			nzer.AdjustWeights(i, adjFlag);
-
 		m->weight[i] = uss.boneWeights[0].weights[i].endVal;
+	}
+
+	m->QueueUpdate(Mesh::UpdateType::Weight);
+}
+
+void TB_Unweight::strokeEnd(Mesh* m, UndoStateShape& uss) {
+	if (!bNormalizeWeights || uss.boneWeights.empty())
+		return;
+
+	const uint32_t nMBones = bXMirrorBone ? 2 : 1;
+	BoneWeightAutoNormalizer nzer;
+	nzer.SetUp(&uss, animInfo, m->shapeName, boneNames, lockedBoneNames, nMBones, bSpreadWeight);
+	nzer.SetFillModified(true);
+
+	// The vertices the stroke took weight from, and from which of the edited bones
+	std::map<int, std::array<bool, 2>> changed;
+	for (uint32_t bi = 0; bi < nMBones && bi < uss.boneWeights.size(); ++bi)
+		for (auto& w : uss.boneWeights[bi].weights)
+			if (w.second.endVal != w.second.startVal)
+				changed[w.first][bi] = true;
+
+	// The edited bones keep what the stroke left them, the other bones take up the rest
+	for (auto& c : changed) {
+		nzer.GrabOneVertexStartingWeights(c.first);
+		nzer.AdjustWeights(c.first, c.second.data());
+
+		if (c.first < m->nVerts)
+			m->weight[c.first] = uss.boneWeights[0].weights[c.first].endVal;
 	}
 
 	m->QueueUpdate(Mesh::UpdateType::Weight);
@@ -1507,10 +1533,10 @@ void TB_SmoothWeight::bppfFilter(Mesh* m, const int* points, int nPoints, std::u
 		for (int n = 0; n < balCount; n += 2) {
 			int p1 = balPts[n];
 			int p2 = balPts[n + 1];
-			float fitw = ParabolaFit(m, pti, p1, p2, [&weights, &wPtr](int p) {
+			float fitw = ParabolaFit(m, pti, p1, p2, [this, &weights, &wPtr](int p) {
 				auto wit = weights.find(p);
 				if (wit != weights.end())
-					return wit->second.startVal;
+					return bAccumulate ? wit->second.endVal : wit->second.startVal;
 				if (wPtr) {
 					auto wpit = wPtr->find(p);
 					if (wpit != wPtr->end())
@@ -1529,8 +1555,15 @@ void TB_SmoothWeight::bppfFilter(Mesh* m, const int* points, int nPoints, std::u
 }
 
 void TB_SmoothWeight::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
+	// The filters average over the neighbors of each vertex
+	if (!m->adjVerts)
+		m->BuildVertexAdjacency();
+	if (!m->adjVerts)
+		return;
+
 	BoneWeightAutoNormalizer nzer;
 	nzer.SetUp(&uss, animInfo, m->shapeName, boneNames, lockedBoneNames, bXMirrorBone ? 2 : 1, bSpreadWeight);
+	nzer.SetFillModified(true);
 	nzer.GrabStartingWeights(points, nPoints);
 
 	float meshradius = m->TransformDistModelToMesh(radius);
@@ -1564,6 +1597,56 @@ void TB_SmoothWeight::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* p
 			hclapFilter(m, points, nPoints, mwv, uss, 1, animInfo->GetWeightsPtr(m->shapeName, boneNames[1]));
 		else // balanced-pair parabola-fit smooth
 			bppfFilter(m, points, nPoints, mwv, uss, 1, animInfo->GetWeightsPtr(m->shapeName, boneNames[1]));
+	}
+
+	// With normalizing, the other unlocked bones are smoothed along with the edited ones. Normalizing alone
+	// gives or takes the weight in each vertex's own ratio of the other bones, which keeps their edges sharp.
+	// The filters average the neighbors with factors that add up to one, so smoothing all bones together
+	// keeps the weights normalized and spreads the change smoothly over the bones around it.
+	const size_t nMBones = bXMirrorBone ? 2 : 1;
+	std::vector<size_t> otherBones;
+	std::vector<std::unordered_map<int, float>> otherWv;
+	if (bNormalizeWeights && method != 0) {
+		for (size_t bi = nMBones; bi < boneNames.size(); ++bi) {
+			auto& bw = uss.boneWeights[bi].weights;
+			const std::unordered_map<uint16_t, float>* wPtr = animInfo->GetWeightsPtr(m->shapeName, boneNames[bi]);
+			auto hasWeight = [&](int p) {
+				auto wit = bw.find(p);
+				if (wit != bw.end())
+					return wit->second.startVal > 0.0f || wit->second.endVal > 0.0f;
+				if (wPtr) {
+					auto wpit = wPtr->find(p);
+					return wpit != wPtr->end() && wpit->second > 0.0f;
+				}
+				return false;
+			};
+
+			// Only bones with weight under the brush or next to it can change
+			bool used = false;
+			for (int pi = 0; pi < nPoints && !used; pi++) {
+				int i = points[pi];
+				used = hasWeight(i);
+				for (size_t ai = 0; ai < m->adjVerts[i].size() && !used; ai++)
+					used = hasWeight(m->adjVerts[i][ai]);
+			}
+
+			if (!used)
+				continue;
+
+			std::unordered_map<int, float> owv;
+			for (int pi = 0; pi < nPoints; pi++) {
+				auto wit = bw.find(points[pi]);
+				owv[points[pi]] = wit != bw.end() ? wit->second.endVal : 0.0f;
+			}
+
+			if (method == 1)
+				hclapFilter(m, points, nPoints, owv, uss, static_cast<int>(bi), wPtr);
+			else
+				bppfFilter(m, points, nPoints, owv, uss, static_cast<int>(bi), wPtr);
+
+			otherBones.push_back(bi);
+			otherWv.push_back(std::move(owv));
+		}
 	}
 
 	for (int pi = 0; pi < nPoints; pi++) {
@@ -1600,6 +1683,29 @@ void TB_SmoothWeight::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* p
 
 			if (!bNormalizeWeights)
 				ClampWeight(uss.boneWeights[1].weights[i].endVal);
+		}
+
+		if (!otherBones.empty()) {
+			// The other bones follow wherever an edited bone is smoothed
+			float oFalloff = adjFlag[0] ? b0falloff : 0.0f;
+			if (bXMirrorBone && adjFlag[1])
+				oFalloff = std::max(oFalloff, bMirror && orDist < morDist ? falloff : mFalloff);
+
+			for (size_t oi = 0; oi < otherBones.size(); oi++) {
+				auto& bw = uss.boneWeights[otherBones[oi]].weights;
+				auto wit = bw.find(i);
+				float ow = wit != bw.end() ? wit->second.endVal : 0.0f;
+				float nw = ow + (otherWv[oi][i] - ow) * maskF * oFalloff;
+				if (nw < 0.0f)
+					nw = 0.0f;
+
+				if (wit != bw.end())
+					wit->second.endVal = nw;
+				else if (nw > 0.0f) {
+					bw[i].startVal = 0.0f;
+					bw[i].endVal = nw;
+				}
+			}
 		}
 
 		if (bNormalizeWeights)

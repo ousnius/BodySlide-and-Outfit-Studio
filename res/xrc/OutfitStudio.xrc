@@ -1270,9 +1270,39 @@
 																				<option>0</option>
 																				<flag>wxALL|wxEXPAND</flag>
 																				<border>5</border>
-																				<object class="wxCheckBox" name="cbNormalizeWeights">
+																				<object class="wxBoxSizer">
+																					<orient>wxHORIZONTAL</orient>
+																					<object class="sizeritem">
+																						<option>0</option>
+																						<flag>wxRIGHT|wxALIGN_CENTER_VERTICAL</flag>
+																						<border>10</border>
+																						<object class="wxCheckBox" name="cbNormalizeWeights">
+																							<fg>#ffffff</fg>
+																							<label>Normalize Weights Live</label>
+																							<checked>0</checked>
+																							<hidden>1</hidden>
+																						</object>
+																					</object>
+																					<object class="sizeritem">
+																						<option>0</option>
+																						<flag>wxALIGN_CENTER_VERTICAL</flag>
+																						<object class="wxButton" name="btnNormalizeWeights">
+																							<style>wxBU_EXACTFIT</style>
+																							<label>Normalize</label>
+																							<tooltip>Normalize the weights of the selected shapes once: each vertex keeps its largest weights, up to the bones per vertex its shape is saved with, and they add up to 1.</tooltip>
+																							<hidden>1</hidden>
+																						</object>
+																					</object>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxALL|wxEXPAND</flag>
+																				<border>5</border>
+																				<object class="wxCheckBox" name="cbAccumulateSmooth">
 																					<fg>#ffffff</fg>
-																					<label>Normalize Weights</label>
+																					<label>Accumulate Smoothing</label>
+																					<tooltip>The smooth weight brush (Shift) keeps smoothing the weights further as you go over an area again, instead of stopping at how smooth they get in one stroke.</tooltip>
 																					<checked>0</checked>
 																					<hidden>1</hidden>
 																				</object>

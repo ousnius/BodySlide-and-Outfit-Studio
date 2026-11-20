@@ -599,6 +599,205 @@ TEST_CASE("Smoothing a mask turns its border into a gradient", "[OutfitProject]"
 	CHECK(m->mask[row + 6] == Catch::Approx(0.0f));
 }
 
+namespace {
+// The body grid with a hard edge: BoneLeft has columns 0 to 4, BoneRight columns 5 to 10. BoneFar shares
+// the far corner with BoneRight, so it has weights but none near the edge.
+struct WeightEdgeFixture : ProjectFixture {
+	static constexpr int row = 5 * 11;
+
+	WeightEdgeFixture() {
+		project.AddCustomBoneRef("BoneFar", "", nifly::MatTransform());
+
+		std::unordered_map<uint16_t, float> left, right, farWeights;
+		for (uint16_t i = 0; i < 121; i++) {
+			if (i % 11 <= 4)
+				left[i] = 1.0f;
+			else
+				right[i] = 1.0f;
+		}
+		right[120] = 0.5f;
+		farWeights[120] = 0.5f;
+
+		auto anim = project.GetWorkAnim();
+		anim->SetWeights("Body", "BoneLeft", left);
+		anim->SetWeights("Body", "BoneRight", right);
+		anim->SetWeights("Body", "BoneFar", farWeights);
+		editor.activeBone = "BoneLeft";
+	}
+
+	// Smooths BoneLeft with dabs going back and forth across the edge in the middle row
+	void SmoothEdge(int passes, bool normalize, bool accumulate) {
+		Mesh* m = host.GetShapeMesh("Body");
+		REQUIRE(m);
+
+		TB_SmoothWeight brush;
+		ops.GetWeightBrushBones("").ApplyTo(brush, project.GetWorkAnim());
+		brush.bNormalizeWeights = normalize;
+		brush.bAccumulate = accumulate;
+		brush.setRadius(0.25f);
+		brush.setStrength(0.225f);
+
+		BrushStrokeController controller(project, editor);
+		controller.PrepareWeightStroke({body});
+		controller.Begin({m}, &brush, BrushStrokeController::PickAtVertex(m, row + 4));
+		for (int p = 0; p < passes; p++) {
+			controller.Update(BrushStrokeController::PickAtVertex(m, row + 5));
+			controller.Update(BrushStrokeController::PickAtVertex(m, row + 4));
+		}
+		ApplyRefresh(controller.End());
+	}
+
+	float Total(uint16_t vertex) { return Weight(body, "BoneLeft", vertex) + Weight(body, "BoneRight", vertex) + Weight(body, "BoneFar", vertex); }
+};
+} // namespace
+
+TEST_CASE("Smoothing a normalized bone smooths the bones that take its weight", "[OutfitProject]") {
+	WeightEdgeFixture f;
+	f.SmoothEdge(10, true, false);
+
+	// The edge got softer on both sides
+	CHECK(f.Weight(f.body, "BoneLeft", WeightEdgeFixture::row + 4) < 0.95f);
+	CHECK(f.Weight(f.body, "BoneLeft", WeightEdgeFixture::row + 5) > 0.05f);
+
+	for (uint16_t i = 0; i < 121; i++) {
+		INFO("Vertex " << i);
+		// BoneRight takes what BoneLeft gives up, so the weights stay normalized
+		CHECK(f.Total(i) == Catch::Approx(1.0f).margin(1e-3));
+		// BoneFar has no weight near the edge, so it doesn't get any
+		if (i != 120)
+			CHECK(f.Weight(f.body, "BoneFar", i) == 0.0f);
+	}
+	CHECK(f.Weight(f.body, "BoneFar", 120) == Catch::Approx(0.5f));
+}
+
+TEST_CASE("Accumulated weight smoothing goes further than one stroke's target", "[OutfitProject]") {
+	WeightEdgeFixture once;
+	once.SmoothEdge(20, true, false);
+
+	WeightEdgeFixture accumulated;
+	accumulated.SmoothEdge(20, true, true);
+
+	// Without accumulating, the edge only gets as smooth as the weights at the start of the stroke allow.
+	// Accumulating keeps spreading it into the columns next to it.
+	const uint16_t nextColumn = WeightEdgeFixture::row + 3;
+	CHECK(accumulated.Weight(accumulated.body, "BoneLeft", nextColumn) < once.Weight(once.body, "BoneLeft", nextColumn) - 0.02f);
+	CHECK(accumulated.Total(nextColumn) == Catch::Approx(1.0f).margin(1e-3));
+}
+
+TEST_CASE("Painting a normalized bone on vertices without weights gives them all of it", "[OutfitProject]") {
+	ProjectFixture f;
+	Mesh* m = f.host.GetShapeMesh("Skirt");
+	REQUIRE(m);
+	f.editor.activeBone = "BoneLeft";
+
+	const bool normalize = GENERATE(false, true);
+	TB_Weight brush;
+	f.ops.GetWeightBrushBones("").ApplyTo(brush, f.project.GetWorkAnim());
+	brush.bNormalizeWeights = normalize;
+	brush.setRadius(0.3f);
+
+	// One dab in the middle of the skirt, which has no weights yet
+	const int center = 24;
+	BrushStrokeController controller(f.project, f.editor);
+	controller.PrepareWeightStroke({f.skirt});
+	controller.Begin({m}, &brush, BrushStrokeController::PickAtVertex(m, center));
+	f.ApplyRefresh(controller.End());
+
+	float painted = f.Weight(f.skirt, "BoneLeft", center);
+	if (normalize) {
+		// The bone is the only one with weight there, so it has all of it
+		CHECK(painted == Catch::Approx(1.0f));
+		CHECK(f.Weight(f.skirt, "BoneLeft", center + 1) == Catch::Approx(1.0f));
+	}
+	else {
+		CHECK(painted > 0.0f);
+		CHECK(painted < 0.1f);
+	}
+	CHECK(f.Weight(f.skirt, "BoneLeft", 0) == 0.0f);
+	CHECK(f.Weight(f.skirt, "BoneRight", center) == 0.0f);
+}
+
+TEST_CASE("Erasing weight only normalizes when the stroke ends", "[OutfitProject]") {
+	ProjectFixture f;
+	Mesh* m = f.host.GetShapeMesh("Body");
+	REQUIRE(m);
+	f.editor.activeBone = "BoneLeft";
+
+	const bool normalize = GENERATE(false, true);
+	TB_Unweight brush;
+	f.ops.GetWeightBrushBones("").ApplyTo(brush, f.project.GetWorkAnim());
+	brush.bNormalizeWeights = normalize;
+	brush.setRadius(0.25f);
+	brush.setStrength(-0.1f);
+
+	// The middle of the body grid has half of each bone
+	const uint16_t center = 5 * 11 + 5;
+	BrushStrokeController controller(f.project, f.editor);
+	controller.PrepareWeightStroke({f.body});
+	controller.Begin({m}, &brush, BrushStrokeController::PickAtVertex(m, center));
+	controller.Update(BrushStrokeController::PickAtVertex(m, center + 1));
+	controller.Update(BrushStrokeController::PickAtVertex(m, center));
+
+	// While erasing, the other bone doesn't take up the weight
+	const float erased = f.Weight(f.body, "BoneLeft", center);
+	CHECK(erased < 0.45f);
+	CHECK(f.Weight(f.body, "BoneRight", center) == Catch::Approx(0.5f));
+
+	f.ApplyRefresh(controller.End());
+
+	CHECK(f.Weight(f.body, "BoneLeft", center) == Catch::Approx(erased));
+	if (normalize)
+		CHECK(f.Weight(f.body, "BoneRight", center) == Catch::Approx(1.0f - erased));
+	else
+		CHECK(f.Weight(f.body, "BoneRight", center) == Catch::Approx(0.5f));
+}
+
+TEST_CASE("Normalizing weights keeps the largest ones up to the bones per vertex and makes them add up to 1", "[OutfitProject]") {
+	ProjectFixture f;
+	Mesh* m = f.host.GetShapeMesh("Skirt");
+	REQUIRE(m);
+
+	// Vertex 0 has five bones adding up to 1.1, vertex 1 one bone at 0.5, vertex 2 the same but masked
+	const std::vector<std::string> bones = {"Bone1", "Bone2", "Bone3", "Bone4", "Bone5"};
+	const std::vector<float> weights = {0.4f, 0.3f, 0.2f, 0.12f, 0.08f};
+	auto anim = f.project.GetWorkAnim();
+	for (size_t b = 0; b < bones.size(); b++) {
+		f.project.AddCustomBoneRef(bones[b], "", nifly::MatTransform());
+		std::unordered_map<uint16_t, float> w{{0, weights[b]}};
+		if (b == 0) {
+			w[1] = 0.5f;
+			w[2] = 0.5f;
+		}
+		anim->SetWeights("Skirt", bones[b], w);
+	}
+
+	std::vector<float> mask(m->nVerts, 0.0f);
+	mask[2] = 1.0f;
+	REQUIRE(MaskOps::SetMask(*m, mask));
+
+	UndoStateProject usp;
+	size_t changed = 0;
+	REQUIRE(f.ops.NormalizeWeights({f.skirt}, usp, &changed).ok);
+	CHECK(changed == 2);
+
+	// Skyrim keeps 4 bones per vertex: the smallest weight goes, the rest are scaled from 1.02 to 1
+	CHECK(f.Weight(f.skirt, "Bone5", 0) == 0.0f);
+	float total = 0.0f;
+	for (size_t b = 0; b < 4; b++) {
+		CHECK(f.Weight(f.skirt, bones[b], 0) == Catch::Approx(weights[b] / 1.02f));
+		total += f.Weight(f.skirt, bones[b], 0);
+	}
+	CHECK(total == Catch::Approx(1.0f));
+	CHECK(f.Weight(f.skirt, "Bone1", 1) == Catch::Approx(1.0f));
+	CHECK(f.Weight(f.skirt, "Bone1", 2) == Catch::Approx(0.5f));
+
+	// It's one undo step
+	f.ops.ApplyShapeEdits(usp, true);
+	CHECK(f.Weight(f.skirt, "Bone5", 0) == Catch::Approx(0.08f));
+	CHECK(f.Weight(f.skirt, "Bone1", 0) == Catch::Approx(0.4f));
+	CHECK(f.Weight(f.skirt, "Bone1", 1) == Catch::Approx(0.5f));
+}
+
 TEST_CASE("Fixing clipping leaves masked vertices alone", "[OutfitProject]") {
 	// The skirt lies below the body grid, so it clips everywhere
 	ProjectFixture f(-0.3f);

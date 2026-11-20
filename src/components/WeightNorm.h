@@ -39,8 +39,16 @@ class BoneWeightAutoNormalizer {
 	std::vector<std::unordered_map<uint16_t, float>*> wPtrs, lWPtrs;
 	uint32_t nMBones = 0;
 	bool bSpreadWeight = false;
+	bool bFillModified = false;
 
 public:
+	/* SetFillModified: if fill is true, AdjustWeights gives the weight that
+	no other bone can take to the modified bones, so a vertex whose only
+	weights are those of the modified bones is normalized as well.  Brushes
+	that add weight use this; without it, painting on a vertex without
+	other weights leaves its total below one. */
+	void SetFillModified(bool fill) { bFillModified = fill; }
+
 	/* SetUp: fills in the class's private data.  ussi->boneWeights
 	must either already match boneNames or be empty, in which case
 	it is initialized.  boneNames and lockedBoneNames must not have

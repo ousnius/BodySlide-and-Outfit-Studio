@@ -193,6 +193,10 @@ public:
 	bool GetToolOptionConnectedOnly() { return toolOptionConnectedOnly; }
 	void SetToolOptionConnectedOnly(bool on = true) { toolOptionConnectedOnly = on; }
 
+	// The smooth weight brush keeps smoothing further with each dab instead of converging per stroke
+	bool GetToolOptionAccumulateSmoothWeight() { return toolOptionAccumulateSmoothWeight; }
+	void SetToolOptionAccumulateSmoothWeight(bool on = true) { toolOptionAccumulateSmoothWeight = on; }
+
 	bool GetToolOptionMerge() { return toolOptionMerge; }
 	void SetToolOptionMerge(bool on = true) { toolOptionMerge = on; }
 
@@ -443,6 +447,7 @@ private:
 	bool toolOptionXMirror = true;
 	bool toolOptionXMirrorWeight = false;
 	bool toolOptionConnectedOnly = false;
+	bool toolOptionAccumulateSmoothWeight = false;
 	bool toolOptionMerge = false;
 	bool toolOptionWeld = false;
 	bool toolOptionRestrictSurface = false;

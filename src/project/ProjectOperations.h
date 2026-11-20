@@ -375,6 +375,11 @@ public:
 							 UndoStateProject& usp,
 							 std::map<std::string, BoneWeightCopyReport>* outReport = nullptr);
 
+	// Limits each vertex of the shapes to the most bones per vertex its shape keeps when saved, dropping the
+	// smallest weights, and makes its weights add up to 1. Masked vertices and vertices without weights stay as
+	// they are. The changes are recorded in usp, so the caller can keep them as an undo step.
+	OpResult NormalizeWeights(const std::vector<nifly::NiShape*>& shapes, UndoStateProject& usp, size_t* outChangedVertices = nullptr);
+
 	// Adds changes (NIF coordinates) to the morph of a slider on an outfit shape. They are recorded in usp
 	// like a brush stroke in slider edit mode, so the caller can keep them as an undo step; all changes
 	// recorded in one usp have to be for the same slider.

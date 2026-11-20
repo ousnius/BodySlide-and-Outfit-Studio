@@ -323,6 +323,34 @@ void OutfitStudioFrame::OnCBNormalizeWeights(wxCommandEvent& event) {
 		weightBrush->bNormalizeWeights = checked;
 }
 
+void OutfitStudioFrame::OnCBAccumulateSmooth(wxCommandEvent& event) {
+	glView->SetToolOptionAccumulateSmoothWeight(event.IsChecked());
+}
+
+void OutfitStudioFrame::OnNormalizeWeights(wxCommandEvent& WXUNUSED(event)) {
+	if (!ShapeSelectionCheck())
+		return;
+
+	std::vector<NiShape*> shapes;
+	for (auto& sel : selectedItems)
+		shapes.push_back(sel->GetShape());
+
+	size_t changedVertices = 0;
+	UndoStateProject* usp = glView->GetUndoHistory()->PushState();
+	OpResult result = ProjectOperations(*project, editor).NormalizeWeights(shapes, *usp, &changedVertices);
+	if (!result.ok || usp->usss.empty())
+		glView->GetUndoHistory()->PopState();
+
+	ApplyRefresh(result.refresh);
+	RefreshGUIWeightColors();
+	UpdateUndoTools();
+
+	if (!result.ok)
+		wxMessageBox(wxString::FromUTF8(result.error), _("Normalize Weights"), wxOK | wxICON_WARNING, this);
+	else
+		statusBar->SetStatusText(wxString::Format(_("Normalized the weights of %zu vertices."), changedVertices));
+}
+
 void OutfitStudioFrame::ToggleBoneState(wxTreeItemId item) {
 	if (!item.IsOk())
 		return;

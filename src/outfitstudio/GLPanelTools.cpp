@@ -119,6 +119,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 		else if (wxGetKeyState(WXK_SHIFT)) {
 			bones.ApplyTo(smoothWeightBrush, animInfo);
 			smoothWeightBrush.bNormalizeWeights = weightBrush.bNormalizeWeights;
+			smoothWeightBrush.bAccumulate = toolOptionAccumulateSmoothWeight;
 			smoothWeightBrush.setStrength(weightBrush.getStrength() * 15.0f);
 			smoothWeightBrush.setFocus(weightBrush.getFocus());
 			smoothWeightBrush.setSpacing(weightBrush.getSpacing());
