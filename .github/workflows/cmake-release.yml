@@ -14,9 +14,18 @@ jobs:
     name: Windows x64 RelWithDebInfo
     runs-on: windows-2025-vs2026
 
+    # packages: the vcpkg binary cache in GitHub Packages
+    permissions:
+      contents: read
+      packages: write
+
     env:
       BUILD_TYPE: RelWithDebInfo
-      VCPKG_TARGET_TRIPLET: x64-windows-static
+      # Static like x64-windows-static, but release libraries only (.github/vcpkg-triplets)
+      VCPKG_TARGET_TRIPLET: x64-windows-static-release
+      # A vcpkg release, so the packages stay the same between runs and their binary cache can be reused. Update it
+      # to get newer packages: everything is built once then, and cached again.
+      VCPKG_COMMIT: 9eec002df1cd109f8f104cd966a763daf9751489 # 2026.10.16
 
     steps:
       - name: Checkout
@@ -37,35 +46,78 @@ jobs:
       - name: Pull Git LFS objects
         run: git lfs pull
 
-      - name: Cache vcpkg binary packages
-        uses: actions/cache@v5
+      # The packages vcpkg built before, one file each, named after vcpkg's hash of everything that went into it
+      # (port, triplet, compiler, dependencies). The newest cache is restored; packages that no longer match are
+      # rebuilt and a new cache is saved after the install.
+      - name: Restore vcpkg binary cache
+        id: vcpkg-cache
+        uses: actions/cache/restore@v5
         with:
           path: vcpkg-binary-cache
-          key: vcpkg-${{ runner.os }}-${{ env.VCPKG_TARGET_TRIPLET }}-${{ hashFiles('.github/workflows/cmake-release.yml') }}
+          key: vcpkg-files-${{ runner.os }}-${{ env.VCPKG_TARGET_TRIPLET }}-
           restore-keys: |
-            vcpkg-${{ runner.os }}-${{ env.VCPKG_TARGET_TRIPLET }}-
+            vcpkg-files-${{ runner.os }}-${{ env.VCPKG_TARGET_TRIPLET }}-
 
       - name: Bootstrap vcpkg
         shell: pwsh
         run: |
           $vcpkgRoot = Join-Path $env:RUNNER_TEMP "vcpkg"
-          git clone https://github.com/microsoft/vcpkg.git $vcpkgRoot
+          git init --quiet $vcpkgRoot
+          git -C $vcpkgRoot fetch --quiet --depth 1 https://github.com/microsoft/vcpkg.git $env:VCPKG_COMMIT
+          git -C $vcpkgRoot checkout --quiet FETCH_HEAD
           & (Join-Path $vcpkgRoot "bootstrap-vcpkg.bat") -disableMetrics
+          "VCPKG_ROOT=$vcpkgRoot" >> $env:GITHUB_ENV
+
+      # The second binary cache: GitHub Packages keeps each package on its own, for every branch, so packages
+      # survive when the cache above is evicted or was saved by another branch
+      - name: Add GitHub Packages as a NuGet source
+        shell: pwsh
+        run: |
+          $nuget = & (Join-Path $env:VCPKG_ROOT "vcpkg.exe") fetch nuget | Select-Object -Last 1
+          $feed = "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+          & $nuget sources add -Source $feed -StorePasswordInClearText -Name GitHubPackages `
+            -UserName "${{ github.repository_owner }}" -Password "${{ secrets.GITHUB_TOKEN }}"
+          & $nuget setapikey "${{ secrets.GITHUB_TOKEN }}" -Source $feed
 
       - name: Install dependencies
         shell: pwsh
         run: |
-          $vcpkgRoot = Join-Path $env:RUNNER_TEMP "vcpkg"
           $vcpkgCache = Join-Path $env:GITHUB_WORKSPACE "vcpkg-binary-cache"
           New-Item -ItemType Directory -Force -Path $vcpkgCache | Out-Null
-          $env:VCPKG_BINARY_SOURCES = "clear;files,$vcpkgCache,readwrite"
-          & (Join-Path $vcpkgRoot "vcpkg.exe") install "wxwidgets[debug-support]:$env:VCPKG_TARGET_TRIPLET" "catch2:$env:VCPKG_TARGET_TRIPLET" "bullet3:$env:VCPKG_TARGET_TRIPLET" "openexr:$env:VCPKG_TARGET_TRIPLET"
+          $env:VCPKG_BINARY_SOURCES = "clear;files,$vcpkgCache,readwrite;nuget,GitHubPackages,readwrite;nugettimeout,600"
+          & (Join-Path $env:VCPKG_ROOT "vcpkg.exe") install `
+            --overlay-triplets="$env:GITHUB_WORKSPACE/.github/vcpkg-triplets" `
+            --triplet "$env:VCPKG_TARGET_TRIPLET" `
+            "wxwidgets[debug-support]" catch2 bullet3 openexr
+
+      # Keeps only the packages this install used, and names the cache after them, so it is saved again exactly
+      # when something was rebuilt
+      - name: Prune vcpkg binary cache
+        id: vcpkg-prune
+        shell: pwsh
+        run: |
+          $vcpkgCache = Join-Path $env:GITHUB_WORKSPACE "vcpkg-binary-cache"
+          $status = Join-Path $env:VCPKG_ROOT "installed/vcpkg/status"
+          $used = @(Select-String -Path $status -Pattern '^Abi: (\w+)' | ForEach-Object { $_.Matches[0].Groups[1].Value })
+          Get-ChildItem $vcpkgCache -Recurse -File | Where-Object { $used -notcontains $_.BaseName } | Remove-Item
+          $kept = @(Get-ChildItem $vcpkgCache -Recurse -File | ForEach-Object BaseName | Sort-Object)
+          $sha = [Security.Cryptography.SHA256]::Create()
+          $hash = -join ($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($kept -join "`n")) | ForEach-Object { $_.ToString("x2") })
+          "Keeping $($kept.Count) of $($used.Count) installed packages in the cache"
+          "count=$($kept.Count)" >> $env:GITHUB_OUTPUT
+          "key=vcpkg-files-${{ runner.os }}-$env:VCPKG_TARGET_TRIPLET-$hash" >> $env:GITHUB_OUTPUT
+
+      - name: Save vcpkg binary cache
+        if: steps.vcpkg-prune.outputs.count != '0' && steps.vcpkg-cache.outputs.cache-matched-key != steps.vcpkg-prune.outputs.key
+        uses: actions/cache/save@v5
+        with:
+          path: vcpkg-binary-cache
+          key: ${{ steps.vcpkg-prune.outputs.key }}
 
       - name: Configure CMake
         shell: pwsh
         run: |
-          $vcpkgRoot = Join-Path $env:RUNNER_TEMP "vcpkg"
-          $toolchainFile = Join-Path $vcpkgRoot "scripts/buildsystems/vcpkg.cmake"
+          $toolchainFile = Join-Path $env:VCPKG_ROOT "scripts/buildsystems/vcpkg.cmake"
           cmake -S . -B build/windows-x64-relwithdebinfo `
             -G "Visual Studio 18 2026" `
             -A x64 `
