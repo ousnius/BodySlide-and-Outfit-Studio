@@ -1330,39 +1330,40 @@ TEST_CASE("BodySlide conforms add-on sliders like Outfit Studio does", "[OutfitP
 }
 
 namespace {
-// Saves an add-on "A Extra" of the saved fixture project "A" with an "Extra" slider for the body
-std::string SaveBodyAddOn(SavedProjectFixture& f) {
-	const std::string setsPath = (f.projectFolder.path / "SliderSets" / "A.osp").u8string();
+// Saves an add-on "<base> Extra" of the saved fixture project <base> with an "Extra" slider that moves the body up by <up>
+std::string SaveBodyAddOn(SavedProjectFixture& f, const std::string& baseName = "A", float up = 2.0f) {
+	const std::string addOnName = baseName + " Extra";
+	const std::string setsPath = (f.projectFolder.path / "SliderSets" / (baseName + ".osp")).u8string();
 	SliderSetFile baseFile(setsPath);
 	REQUIRE_FALSE(baseFile.fail());
 	SliderSet base;
-	REQUIRE(baseFile.GetSet("A", base) == 0);
+	REQUIRE(baseFile.GetSet(baseName, base) == 0);
 
 	SliderSet addOn;
-	addOn.SetName("A Extra");
+	addOn.SetName(addOnName);
 	addOn.SetProjectID(SliderSet::GenerateProjectID());
 	addOn.SetDataFolder(base.GetDefaultDataFolder());
 	addOn.SetInputFile(base.GetInputFile());
 	addOn.SetOutputPath(base.GetOutputPath());
 	addOn.SetOutputFile(base.GetOutputFile());
 	addOn.SetAddOn(true);
-	addOn.SetSliderDataFile("A Extra.osd");
-	addOn.SetBaseProject("", "A", base.GetProjectID());
+	addOn.SetSliderDataFile(addOnName + ".osd");
+	addOn.SetBaseProject("", baseName, base.GetProjectID());
 	for (auto shape = base.ShapesBegin(); shape != base.ShapesEnd(); ++shape)
 		addOn.AddShapeTarget(shape->first, shape->second.targetShape);
-	addOn[addOn.CreateSlider("Extra")].AddDataFile("Body", "BodyExtra", "A Extra.osd" + std::string(PathSepStr) + "BodyExtra");
+	addOn[addOn.CreateSlider("Extra")].AddDataFile("Body", "BodyExtra", addOnName + ".osd" + std::string(PathSepStr) + "BodyExtra");
 
 	SliderSetFile file;
-	file.New((f.projectFolder.path / "SliderSets" / "A Extra.osp").u8string());
+	file.New((f.projectFolder.path / "SliderSets" / (addOnName + ".osp")).u8string());
 	file.UpdateSet(addOn);
 	REQUIRE(file.Save());
 
 	OSDataFile osd;
 	TargetDataDiffs extra;
 	for (uint16_t i = 0; i < f.body->GetNumVertices(); i++)
-		extra[i] = Vector3(0.0f, 0.0f, 2.0f);
+		extra[i] = Vector3(0.0f, 0.0f, up);
 	osd.SetDataDiff("BodyExtra", extra);
-	REQUIRE(osd.Write(f.DataPath("A Extra.osd").u8string()));
+	REQUIRE(osd.Write(f.DataPath(addOnName + ".osd").u8string()));
 	return addOn.GetProjectID();
 }
 } // namespace
@@ -1408,6 +1409,57 @@ TEST_CASE("Loading a reference can load the sliders of its add-ons", "[OutfitPro
 	CHECK(saved["Extra"].addOnName == "A Extra");
 	CHECK(saved["Extra"].addOnID == addOnID);
 	CHECK_FALSE(saved["Grow"].NeedsAddOn());
+}
+
+TEST_CASE("Loading the add-ons of another reference merges sliders the outfit already has", "[OutfitProject]") {
+	SavedProjectFixture f;
+
+	// Two bodies, each with an add-on that has a slider of the same name
+	REQUIRE(f.Save("C", "Shared.nif").empty());
+	REQUIRE(f.Save().empty());
+	const std::string addOnA = SaveBodyAddOn(f, "A", 2.0f);
+	const std::string addOnC = SaveBodyAddOn(f, "C", 3.0f);
+
+	ReferenceSource source;
+	source.file = (f.projectFolder.path / "SliderSets" / "A.osp").u8string();
+	source.set = "A";
+	source.shape = "Body";
+	source.mergeSliders = true;
+	source.mergeZaps = true;
+	source.loadAddOns = true;
+	REQUIRE(f.ops.LoadReference(source).ok);
+	f.host.BuildMeshes();
+
+	NiShape* skirt = f.project.GetWorkNif()->FindBlockByName<NiShape>("Skirt");
+	REQUIRE(skirt);
+	REQUIRE(f.ops.ConformSliders({skirt}, ConformOptions()).ok);
+	std::vector<Vector3> deltas;
+	REQUIRE(f.ops.GetSliderDeltas(skirt, "Extra", deltas).ok);
+	CHECK(deltas[0].z == Catch::Approx(2.0f).margin(1e-4));
+
+	// The other body replaces the reference, the outfit keeps its sliders
+	f.project.DeleteShape(f.project.GetBaseShape());
+	source.file = (f.projectFolder.path / "SliderSets" / "C.osp").u8string();
+	source.set = "C";
+	std::vector<std::string> addOnSliders;
+	REQUIRE(f.ops.LoadReference(source, &addOnSliders).ok);
+	f.host.BuildMeshes();
+	CHECK(addOnSliders == std::vector<std::string>{"Extra"});
+
+	NiShape* body = f.project.GetBaseShape();
+	REQUIRE(body);
+	REQUIRE(f.ops.GetSliderDeltas(body, "Extra", deltas).ok);
+	CHECK(deltas[0].z == Catch::Approx(3.0f));
+
+	// The conformed data of the outfit stays, and the slider now needs the add-on of the new reference
+	REQUIRE(f.ops.GetSliderDeltas(skirt, "Extra", deltas).ok);
+	CHECK(deltas[0].z == Catch::Approx(2.0f).margin(1e-4));
+
+	const SliderData& extra = f.project.activeSet["Extra"];
+	CHECK(extra.addOnName == "C Extra");
+	CHECK(extra.addOnID == addOnC);
+	CHECK(std::count_if(extra.dataFiles.begin(), extra.dataFiles.end(), [](const DiffInfo& df) { return df.targetName == "Body"; }) == 1);
+	CHECK(addOnA != addOnC);
 }
 
 TEST_CASE("The reference keeps its data folders when it's unset and set again", "[OutfitProject]") {
