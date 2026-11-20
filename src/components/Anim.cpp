@@ -300,21 +300,20 @@ bool AnimInfo::CloneShape(NifFile* nif, NiShape* shape, const std::string& newSh
 }
 
 void AnimInfo::SetShapeSkin(const std::string& shape, const std::vector<std::string>& bones, const AnimSkin& skin) {
-	auto& skeleton = GetSkeleton();
 	std::vector<std::string> oldBones = std::move(shapeBones[shape]);
 
 	// Reference the new bones first, so the ones in both lists never drop to zero
 	for (auto& bn : bones)
-		skeleton.RefBone(bn);
+		skeleton->RefBone(bn);
 
 	shapeBones[shape] = bones;
 	shapeSkinning[shape] = skin;
 
 	for (auto& bn : oldBones) {
-		skeleton.ReleaseBone(bn);
+		skeleton->ReleaseBone(bn);
 
 		// Like RemoveShapeBone, drop nodes that no shape uses anymore
-		if (refNif && refNif->IsValid() && skeleton.GetBoneRefCount(bn) <= 0) {
+		if (refNif && refNif->IsValid() && skeleton->GetBoneRefCount(bn) <= 0) {
 			if (refNif->CanDeleteNode(bn))
 				refNif->DeleteNode(bn);
 		}
