@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<resource xmlns="http://www.wxwidgets.org/wxxrc" version="2.5.3.0">
+	<object class="wxFrame" name="dlgPhysicsEditor">
+		<style>wxFRAME_FLOAT_ON_PARENT|wxCAPTION|wxRESIZE_BORDER|wxMAXIMIZE_BOX|wxCLOSE_BOX|wxSYSTEM_MENU|wxTAB_TRAVERSAL</style>
+		<title>Physics Editor</title>
+		<size>900,600</size>
+		<centered>1</centered>
+		<object class="wxBoxSizer">
+			<orient>wxVERTICAL</orient>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxRIGHT|wxALIGN_CENTER_VERTICAL</flag>
+						<border>5</border>
+						<object class="wxButton" name="physXmlNew">
+							<label>New...</label>
+							<tooltip>Start a new physics XML and link it to the selected shapes</tooltip>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxRIGHT|wxALIGN_CENTER_VERTICAL</flag>
+						<border>5</border>
+						<object class="wxButton" name="physXmlImport">
+							<label>Import...</label>
+							<tooltip>Replace the selected document with the contents of another file</tooltip>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxRIGHT|wxALIGN_CENTER_VERTICAL</flag>
+						<border>5</border>
+						<object class="wxButton" name="physXmlExport">
+							<label>Export...</label>
+							<tooltip>Write the selected document to a file of your choosing</tooltip>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxRIGHT|wxALIGN_CENTER_VERTICAL</flag>
+						<border>5</border>
+						<object class="wxButton" name="physXmlSave">
+							<label>Save</label>
+							<tooltip>Write the selected document back over the file it was read from</tooltip>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxRIGHT|wxALIGN_CENTER_VERTICAL</flag>
+						<border>5</border>
+						<object class="wxButton" name="physXmlSaveAll">
+							<label>Save All</label>
+							<tooltip>Write every edited document back over the file it was read from</tooltip>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_CENTER_VERTICAL</flag>
+						<object class="wxButton" name="physXmlLink">
+							<label>Link to Shapes...</label>
+							<tooltip>Add the selected document to the shapes selected in Outfit Studio</tooltip>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxSplitterWindow" name="physSplitter">
+					<style>wxSP_3D|wxSP_LIVE_UPDATE</style>
+					<sashpos>280</sashpos>
+					<minsize>150</minsize>
+					<orientation>vertical</orientation>
+					<object class="wxPanel" name="physTreePanel">
+						<object class="wxBoxSizer">
+							<orient>wxVERTICAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxBOTTOM|wxEXPAND</flag>
+								<border>4</border>
+								<object class="wxSearchCtrl" name="physFilter">
+									<value></value>
+									<tooltip>Show only elements whose name contains this text</tooltip>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxEXPAND</flag>
+								<object class="wxTreeCtrl" name="physTree">
+									<style>wxTR_HAS_BUTTONS|wxTR_HIDE_ROOT|wxTR_LINES_AT_ROOT|wxTR_SINGLE</style>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="wxPanel" name="physRightPanel">
+						<object class="wxBoxSizer">
+							<orient>wxVERTICAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxBOTTOM|wxEXPAND</flag>
+								<border>4</border>
+								<object class="wxStaticText" name="physElementLabel">
+									<label>Nothing selected</label>
+									<style>wxST_ELLIPSIZE_MIDDLE|wxST_NO_AUTORESIZE</style>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxEXPAND</flag>
+								<object class="wxSplitterWindow" name="physRightSplitter">
+									<style>wxSP_3D|wxSP_LIVE_UPDATE</style>
+									<sashpos>330</sashpos>
+									<minsize>100</minsize>
+									<orientation>horizontal</orientation>
+									<object class="wxPanel" name="physGridPanel">
+										<object class="wxBoxSizer">
+											<orient>wxVERTICAL</orient>
+											<object class="sizeritem">
+												<option>1</option>
+												<flag>wxEXPAND</flag>
+												<object class="unknown" name="pgProperties" />
+											</object>
+										</object>
+									</object>
+									<object class="wxPanel" name="physInfoPanel">
+										<object class="wxBoxSizer">
+											<orient>wxVERTICAL</orient>
+											<object class="sizeritem">
+												<option>1</option>
+												<flag>wxTOP|wxEXPAND</flag>
+												<border>4</border>
+												<object class="wxNotebook" name="physInfoBook">
+													<object class="notebookpage">
+														<label>Collisions</label>
+														<object class="wxListCtrl" name="physCollisionList">
+															<style>wxLC_REPORT|wxLC_SINGLE_SEL|wxLC_HRULES</style>
+															<tooltip>Every other skinned shape, and whether this one would ever be tested against it</tooltip>
+														</object>
+													</object>
+													<object class="notebookpage">
+														<label>Diagnostics</label>
+														<object class="wxListCtrl" name="physDiagnosticList">
+															<style>wxLC_REPORT|wxLC_SINGLE_SEL|wxLC_HRULES</style>
+															<tooltip>Double click an entry to select what it is about</tooltip>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+									</object>
+								</object>
+							</object>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxRIGHT|wxALIGN_CENTER_VERTICAL</flag>
+						<border>10</border>
+						<object class="wxStaticText" name="physStatus">
+							<label></label>
+							<style>wxST_ELLIPSIZE_END|wxST_NO_AUTORESIZE</style>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxRIGHT|wxALIGN_CENTER_VERTICAL</flag>
+						<border>5</border>
+						<object class="wxButton" name="physUndo">
+							<size>80,25</size>
+							<label>Undo</label>
+							<enabled>0</enabled>
+							<tooltip>Take back the last change to this physics XML (Ctrl+Z)</tooltip>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxRIGHT|wxALIGN_CENTER_VERTICAL</flag>
+						<border>15</border>
+						<object class="wxButton" name="physRedo">
+							<size>80,25</size>
+							<label>Redo</label>
+							<enabled>0</enabled>
+							<tooltip>Put back the change that was taken back (Ctrl+Y)</tooltip>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_CENTER_VERTICAL</flag>
+						<object class="wxButton" name="physClose">
+							<size>80,25</size>
+							<label>Close</label>
+						</object>
+					</object>
+				</object>
+			</object>
+		</object>
+	</object>
+</resource>

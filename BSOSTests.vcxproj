@@ -274,6 +274,10 @@
     <ClCompile Include="src\physics\Controller.cpp" />
     <ClCompile Include="src\physics\DebugDraw.cpp" />
     <ClCompile Include="src\physics\SystemBuilder.cpp" />
+    <ClCompile Include="src\physics\LivePatch.cpp" />
+    <ClCompile Include="src\physics\XmlDocument.cpp" />
+    <ClCompile Include="src\physics\XmlEditSession.cpp" />
+    <ClCompile Include="src\physics\XmlSchema.cpp" />
     <ClCompile Include="src\physics\hdt\XmlReader.cpp" />
     <ClCompile Include="src\physics\hdt\hdtBoneScaleConstraint.cpp" />
     <ClCompile Include="src\physics\hdt\hdtCollider.cpp" />
@@ -338,6 +342,8 @@
     <ClCompile Include="tests\OutfitProjectTest.cpp" />
     <ClCompile Include="tests\PhysicsChainsTest.cpp" />
     <ClCompile Include="tests\PhysicsXmlFileTest.cpp" />
+    <ClCompile Include="tests\PhysicsEditSessionTest.cpp" />
+    <ClCompile Include="tests\PhysicsXmlDocumentTest.cpp" />
     <ClCompile Include="tests\PoseDataJsonTest.cpp" />
     <ClCompile Include="tests\SFMorphFileTest.cpp" />
     <ClCompile Include="tests\StarfieldSpaceTest.cpp" />

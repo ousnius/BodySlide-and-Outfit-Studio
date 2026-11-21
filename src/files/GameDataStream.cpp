@@ -76,7 +76,18 @@ std::unique_ptr<std::istream> OpenArchive(const std::string& relPath, const std:
 	return nullptr;
 }
 
-std::unique_ptr<std::istream> OpenPhysicsXml(const std::string& xmlPath, const std::string& nifFilePath) {
+std::unique_ptr<std::istream> OpenPhysicsXml(const std::string& xmlPath, const std::string& nifFilePath, FoundAt* foundAt) {
+	if (foundAt)
+		*foundAt = FoundAt();
+
+	// Reports where a loose file was found, so an editor can write back to the file the preview reads
+	auto openLoose = [foundAt](const std::string& fullPath) {
+		auto stream = OpenLoose(fullPath);
+		if (stream && foundAt)
+			foundAt->path = fullPath;
+		return stream;
+	};
+
 	// The paths are relative to the game data folder, but the game's resource
 	// system also accepts a leading "Data\" prefix ("Data\meshes\...") and mods
 	// in the wild use both spellings, so strip it before resolving.
@@ -89,7 +100,7 @@ std::unique_ptr<std::istream> OpenPhysicsXml(const std::string& xmlPath, const s
 
 	// 1) Loose file in a data folder
 	for (auto& folder : DataFolders())
-		if (auto stream = OpenLoose(folder + relPath))
+		if (auto stream = openLoose(folder + relPath))
 			return stream;
 
 	// 2) Relative to the NIF the link came from: its "meshes" anchor points at
@@ -100,7 +111,7 @@ std::unique_ptr<std::istream> OpenPhysicsXml(const std::string& xmlPath, const s
 
 		auto meshesPos = nifDirLower.rfind("/meshes/");
 		if (meshesPos != std::string::npos) {
-			if (auto stream = OpenLoose(nifDir.substr(0, meshesPos + 1) + relPath))
+			if (auto stream = openLoose(nifDir.substr(0, meshesPos + 1) + relPath))
 				return stream;
 		}
 
@@ -108,19 +119,24 @@ std::unique_ptr<std::istream> OpenPhysicsXml(const std::string& xmlPath, const s
 		if (lastSlash != std::string::npos) {
 			// Also try directly beside the NIF (both the full relative path and
 			// just the file name), for standalone test setups
-			if (auto stream = OpenLoose(nifDir.substr(0, lastSlash + 1) + relPath))
+			if (auto stream = openLoose(nifDir.substr(0, lastSlash + 1) + relPath))
 				return stream;
 
 			auto fileNamePos = relPath.rfind('/');
 			if (fileNamePos != std::string::npos) {
-				if (auto stream = OpenLoose(nifDir.substr(0, lastSlash + 1) + relPath.substr(fileNamePos + 1)))
+				if (auto stream = openLoose(nifDir.substr(0, lastSlash + 1) + relPath.substr(fileNamePos + 1)))
 					return stream;
 			}
 		}
 	}
 
 	// 3) Search in archives
-	return OpenArchive(relPath);
+	auto stream = OpenArchive(relPath);
+	if (stream && foundAt) {
+		foundAt->path = relPath;
+		foundAt->inArchive = true;
+	}
+	return stream;
 }
 
 std::unique_ptr<std::istream> OpenExternalGeometry(const std::string& path, const std::string& dataPath, const std::string& nifFilePath) {

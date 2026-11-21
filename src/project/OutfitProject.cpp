@@ -903,6 +903,38 @@ void OutfitProject::CaptureRootPhysicsData(NifFile& srcNif) {
 	}
 }
 
+int OutfitProject::LinkPhysicsFile(const std::string& xmlPath, const std::vector<std::string>& shapeNames) {
+	if (xmlPath.empty())
+		return 0;
+
+	const std::string wanted = ToLower(xmlPath);
+	auto isWanted = [&wanted](const std::string& file) { return ToLower(file) == wanted; };
+
+	int linked = 0;
+	for (auto& shapeName : shapeNames) {
+		if (!workNif.FindBlockByName<NiShape>(shapeName))
+			continue;
+
+		// The map is what the preview reads, the way it reads the links of shapes merged in from other files
+		auto& files = shapePhysicsFiles[shapeName];
+		if (std::none_of(files.begin(), files.end(), isWanted)) {
+			files.push_back(xmlPath);
+			linked++;
+		}
+	}
+
+	// The game only reads the link on the root node, which ChoosePhysicsData writes from this list on save
+	bool known = std::any_of(rootPhysicsData.begin(), rootPhysicsData.end(), [&](auto& data) { return isWanted(data->stringData.get()); });
+	if (linked > 0 && !known) {
+		auto rootData = std::make_unique<NiStringExtraData>();
+		rootData->name.get() = "HDT Skinned Mesh Physics Object";
+		rootData->stringData.get() = xmlPath;
+		rootPhysicsData.push_back(std::move(rootData));
+	}
+
+	return linked;
+}
+
 void OutfitProject::MergeRootExtraData(NifFile& srcNif) {
 	auto srcRoot = srcNif.GetRootNode();
 	auto destRoot = workNif.GetRootNode();

@@ -28,6 +28,7 @@ WindDirection WindDirectionFromIndex(int index) {
 
 #include "NiflyBullet.h"
 #include "DebugDraw.h"
+#include "LivePatch.h"
 #include "SystemBuilder.h"
 #include "physics/hdt/hdtSkinnedMeshWorld.h"
 
@@ -225,6 +226,21 @@ namespace {
 	}
 }
 
+std::vector<SystemInfo> CollectPhysicsXmlLinks(nifly::NifFile* nif, const ShapePhysicsFileMap& shapePhysicsFiles) {
+	std::vector<SystemInfo> result;
+
+	for (auto& entry : CollectPhysicsXmlEntries(nif, shapePhysicsFiles)) {
+		SystemInfo info;
+		info.xmlPath = entry.path;
+		for (auto* shape : entry.shapes)
+			info.shapeNames.push_back(shape->name.get());
+
+		result.push_back(std::move(info));
+	}
+
+	return result;
+}
+
 bool HasPhysicsLinks(nifly::NifFile* nif, const ShapePhysicsFileMap& shapePhysicsFiles) {
 	if (!nif)
 		return false;
@@ -271,6 +287,17 @@ struct Controller::Impl {
 
 	PreviewWorld world;
 	std::vector<hdt::Ref<PreviewSystem>> systems;
+	// What each entry of "systems" was built from, same order and size
+	std::vector<SystemInfo> systemInfos;
+
+	// The system built from an XML, by its path as the NIF link spells it. Null when there is none.
+	PreviewSystem* findSystem(const std::string& xmlPath) const {
+		for (size_t i = 0; i < systemInfos.size(); ++i)
+			if (systemInfos[i].xmlPath == xmlPath)
+				return systems[i].get();
+		return nullptr;
+	}
+
 	PoseOverrideMap poseOverrides;
 	std::unordered_set<std::string> affectedShapes;
 	DebugVis debugVis;
@@ -385,6 +412,13 @@ size_t Controller::BuildFromNif(nifly::NifFile* nif,
 		impl->world.addSkinnedMeshSystem(system.get());
 		impl->systems.push_back(system);
 
+		SystemInfo info;
+		info.xmlPath = entry.path;
+		for (auto* shape : entry.shapes)
+			info.shapeNames.push_back(shape->name.get());
+
+		impl->systemInfos.push_back(std::move(info));
+
 		// A shape needs re-skinning against pose overrides when its skin
 		// references at least one dynamic (non-kinematic) bone of the system.
 		for (auto* shape : entry.shapes) {
@@ -426,10 +460,15 @@ void Controller::Clear() {
 		impl->world.removeSkinnedMeshSystem(system.get());
 
 	impl->systems.clear();
+	impl->systemInfos.clear();
 	impl->poseOverrides.clear();
 	impl->affectedShapes.clear();
 	impl->rootYawRad = 0.0f;
 	impl->leftoverTime = 0.0f;
+}
+
+const std::vector<SystemInfo>& Controller::Systems() const {
+	return impl->systemInfos;
 }
 
 bool Controller::IsActive() const {
@@ -458,6 +497,88 @@ void Controller::ResetDynamics() {
 	for (auto& system : impl->systems)
 		system->readTransform(system->prepareForRead(hdt::RESET_PHYSICS));
 
+	impl->leftoverTime = 0.0f;
+}
+
+bool Controller::PatchProperty(const PatchRequest& request) {
+	PreviewSystem* system = IsActive() ? impl->findSystem(request.xmlPath) : nullptr;
+	return system && PatchLiveProperty(*system, request);
+}
+
+DynamicState Controller::CaptureDynamicState() const {
+	DynamicState state;
+	if (!IsActive())
+		return state;
+
+	constexpr float radToDeg = 180.0f / 3.14159265358979323846f;
+	state.rootYawDegrees = impl->rootYawRad * radToDeg;
+
+	for (size_t i = 0; i < impl->systems.size(); ++i) {
+		const std::string& xmlPath = impl->systemInfos[i].xmlPath;
+
+		for (auto& bone : impl->systems[i]->getBones()) {
+			// The pose puts kinematic bones where they belong on its own, and
+			// their velocity is derived from it again every frame
+			if (bone->m_rig.isStaticOrKinematicObject())
+				continue;
+
+			DynamicState::BoneMotion motion;
+			motion.xmlPath = xmlPath;
+			motion.boneName = bone->m_name.str();
+			// Recorded as the bone's own frame rather than the rigid body's,
+			// so an edited center of mass does not displace it on the way back
+			motion.transform = FromBt(bone->m_rig.getWorldTransform() * bone->m_rigToLocal);
+			motion.linearVelocity = FromBt(bone->m_rig.getLinearVelocity());
+			motion.angularVelocity = FromBt(bone->m_rig.getAngularVelocity());
+			state.bones.push_back(std::move(motion));
+		}
+	}
+
+	return state;
+}
+
+void Controller::RestoreDynamicState(const DynamicState& state) {
+	if (!IsActive())
+		return;
+
+	// The bodies the grab held on to belonged to the systems this replaces
+	EndGrab();
+
+	// The captured transforms are in the world the root motion had turned the
+	// mesh into, so the yaw has to come back with them. Clear() reset it.
+	constexpr float degToRad = 3.14159265358979323846f / 180.0f;
+	impl->rootYawRad = state.rootYawDegrees * degToRad;
+	impl->applyWind();
+
+	for (const auto& motion : state.bones) {
+		// One system per distinct XML path, spelled the same way on both sides
+		// of the rebuild because both read the link out of the same NIF
+		PreviewSystem* system = impl->findSystem(motion.xmlPath);
+		if (!system)
+			continue;
+
+		auto* bone = system->findBone(hdt::IDStr(motion.boneName));
+
+		// A bone the edit turned kinematic is driven by the pose from now on
+		if (!bone || bone->m_rig.isStaticOrKinematicObject())
+			continue;
+
+		const btTransform rigTransform = ToBt(motion.transform) * bone->m_localToRig;
+		const btVector3 linearVelocity = ToBt(motion.linearVelocity);
+		const btVector3 angularVelocity = ToBt(motion.angularVelocity);
+
+		bone->m_rig.setWorldTransform(rigTransform);
+		bone->m_rig.setInterpolationWorldTransform(rigTransform);
+		bone->m_rig.setLinearVelocity(linearVelocity);
+		bone->m_rig.setAngularVelocity(angularVelocity);
+		bone->m_rig.setInterpolationLinearVelocity(linearVelocity);
+		bone->m_rig.setInterpolationAngularVelocity(angularVelocity);
+		bone->m_rig.updateInertiaTensor();
+		bone->m_rig.activate();
+	}
+
+	// Whatever was left of the tick the rebuild interrupted is not owed to a
+	// simulation that no longer exists
 	impl->leftoverTime = 0.0f;
 }
 
@@ -663,6 +784,10 @@ bool HasPhysicsLinks(nifly::NifFile*, const ShapePhysicsFileMap&) {
 	return false;
 }
 
+std::vector<SystemInfo> CollectPhysicsXmlLinks(nifly::NifFile*, const ShapePhysicsFileMap&) {
+	return std::vector<SystemInfo>();
+}
+
 struct Controller::Impl {};
 
 Controller::Controller() = default;
@@ -670,6 +795,11 @@ Controller::~Controller() = default;
 
 size_t Controller::BuildFromNif(nifly::NifFile*, AnimInfo*, const XmlStreamResolver&, const ShapePhysicsFileMap&, std::vector<std::string>&) {
 	return 0;
+}
+
+const std::vector<SystemInfo>& Controller::Systems() const {
+	static const std::vector<SystemInfo> empty;
+	return empty;
 }
 
 void Controller::Clear() {}
@@ -681,6 +811,16 @@ bool Controller::IsActive() const {
 void Controller::SetShapeVertices(const std::string&, const std::vector<nifly::Vector3>&) {}
 
 void Controller::ResetDynamics() {}
+
+bool Controller::PatchProperty(const PatchRequest&) {
+	return false;
+}
+
+DynamicState Controller::CaptureDynamicState() const {
+	return DynamicState();
+}
+
+void Controller::RestoreDynamicState(const DynamicState&) {}
 void Controller::Step(float) {}
 void Controller::InjectCameraYaw(float) {}
 void Controller::SetWindStrength(float) {}

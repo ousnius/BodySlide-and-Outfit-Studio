@@ -98,6 +98,7 @@ struct ClippingFixOptions;
 class OutfitStudioFrame;
 class AnimationPlayer;
 class PhysicsPreview;
+class PhysicsXmlEditor;
 class SegmentPartitionEditor;
 class PosePanel;
 class ArchiveBrowser;
@@ -176,6 +177,8 @@ public:
 
 	// The physics preview, with the controls of the physics pane
 	std::unique_ptr<PhysicsPreview> physicsPreview;
+	// The physics XMLs of the loaded meshes, open for editing, with their list in the physics pane and the editor window
+	std::unique_ptr<PhysicsXmlEditor> physicsXml;
 
 	wxGLPanel* glView = nullptr;
 	EditUV* editUV = nullptr;

@@ -836,8 +836,8 @@ int OutfitProject::ExportFBX(const std::string& fileName, const std::vector<NiSh
 }
 #endif
 
-std::unique_ptr<std::istream> OutfitProject::GetPhysicsXmlStream(const std::string& xmlPath) {
-	return GameDataStream::OpenPhysicsXml(xmlPath, activeSet.GetInputFileName());
+std::unique_ptr<std::istream> OutfitProject::GetPhysicsXmlStream(const std::string& xmlPath, GameDataStream::FoundAt* foundAt) {
+	return GameDataStream::OpenPhysicsXml(xmlPath, activeSet.GetInputFileName(), foundAt);
 }
 
 std::vector<std::pair<std::string, PhysicsXmlFile>> OutfitProject::ReadPhysicsXmls(const std::string& shapeName, std::vector<std::string>* outMissing) {

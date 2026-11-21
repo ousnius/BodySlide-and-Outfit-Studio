@@ -468,7 +468,11 @@ target_link_libraries(bsos_render PUBLIC bsos_core ${BSOS_OPENGL_LIBRARIES} ${BS
 set(BSOS_PHYSICS_SOURCES
 	src/physics/Controller.cpp
 	src/physics/DebugDraw.cpp
+	src/physics/LivePatch.cpp
 	src/physics/SystemBuilder.cpp
+	src/physics/XmlDocument.cpp
+	src/physics/XmlEditSession.cpp
+	src/physics/XmlSchema.cpp
 	src/physics/hdt/XmlReader.cpp
 	src/physics/hdt/hdtBoneScaleConstraint.cpp
 	src/physics/hdt/hdtCollider.cpp
@@ -567,6 +571,7 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/outfitstudio/FrameMasks.cpp
 	src/outfitstudio/FramePack.cpp
 	src/outfitstudio/PhysicsPreview.cpp
+	src/outfitstudio/PhysicsXmlEditor.cpp
 	src/outfitstudio/PosePanel.cpp
 	src/outfitstudio/FrameProjectFile.cpp
 	src/outfitstudio/SegmentPartitionEditor.cpp
@@ -594,6 +599,7 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/ui/outfitstudio/EditUV.cpp
 	src/ui/outfitstudio/FBXImportDialog.cpp
 	src/ui/outfitstudio/ObjImportDialog.cpp
+	src/ui/outfitstudio/PhysicsEditorDialog.cpp
 	src/ui/outfitstudio/ShapeProperties.cpp
 	src/ui/outfitstudio/SliderDataDialog.cpp
 	src/ui/outfitstudio/SliderDataImportDialog.cpp
@@ -666,6 +672,8 @@ if(BSOS_BUILD_TESTS)
 		tests/MeshRefineTest.cpp
 		tests/OutfitProjectTest.cpp
 		tests/PhysicsChainsTest.cpp
+		tests/PhysicsEditSessionTest.cpp
+		tests/PhysicsXmlDocumentTest.cpp
 		tests/PhysicsXmlFileTest.cpp
 		tests/PoseDataJsonTest.cpp
 		tests/PoseFitTest.cpp
