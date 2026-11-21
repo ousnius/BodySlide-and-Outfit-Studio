@@ -490,6 +490,23 @@ const char* NameFromKind(ElementKind kind) {
 	return desc ? desc->name : "";
 }
 
+bool IsConstraintKind(ElementKind kind) {
+	return kind == ElementKind::GenericConstraint || kind == ElementKind::StiffSpringConstraint || kind == ElementKind::ConeTwistConstraint;
+}
+
+bool IsProfileUserKind(ElementKind kind) {
+	return kind == ElementKind::Bone || IsConstraintKind(kind);
+}
+
+std::vector<const ChildDesc*> ReplacedTogether(const ChildDesc& desc) {
+	const ElementDesc* bone = FindElement(ElementKind::Bone);
+	const ChildDesc* can = bone->Child("can-collide-with-bone");
+	const ChildDesc* no = bone->Child("no-collide-with-bone");
+	if (&desc == can || &desc == no)
+		return {can, no};
+	return {&desc};
+}
+
 bool IsDefaultKind(ElementKind kind) {
 	switch (kind) {
 		case ElementKind::BoneDefault:

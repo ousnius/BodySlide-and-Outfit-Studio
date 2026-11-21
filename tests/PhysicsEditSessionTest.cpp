@@ -4,6 +4,8 @@
 
 #include <tinyxml2.h>
 
+#include <filesystem>
+#include <fstream>
 #include <map>
 #include <sstream>
 #include <string>
@@ -203,9 +205,8 @@ TEST_CASE("A document out of an archive knows it cannot be saved over", "[Physic
 	REQUIRE(doc != nullptr);
 	REQUIRE(doc->Origin() == XmlOrigin::Archive);
 
-	// Not a writable location, but still worth carrying: it names the file and
-	// gives the export dialog somewhere to start.
-	REQUIRE(doc->SourcePath() == "SKSE/Plugins/hdtSkinnedMeshConfigs/packed.xml");
+	// The path inside the archive is no file: export starts from the link and the physics XML folder instead
+	REQUIRE(doc->SourcePath().empty());
 }
 
 TEST_CASE("Opening a document twice returns the one already held", "[PhysicsEditSession]") {
@@ -249,6 +250,44 @@ TEST_CASE("A new document exists only in the session", "[PhysicsEditSession]") {
 		auto resolver = session.Resolver();
 		REQUIRE(ReadAll(resolver("SKSE/Plugins/hdtSkinnedMeshConfigs/new.xml")).find("<system") != std::string::npos);
 	}
+}
+
+TEST_CASE("A document without unsaved edits follows its file", "[PhysicsEditSession]") {
+	const std::filesystem::path path = std::filesystem::temp_directory_path() / "BSOSTests-follow.xml";
+	auto write = [&path](const std::string& text) { std::ofstream(path, std::ios::binary) << text; };
+	write(kSystemXml);
+
+	FakeSource source;
+	source.Add("outfit.xml", kSystemXml, path.u8string());
+
+	XmlEditSession session;
+	session.SetSourceResolver(source.Resolver());
+
+	std::string error;
+	XmlDocument* doc = session.Open("outfit.xml", error);
+	REQUIRE(doc != nullptr);
+	const auto revision = session.Revision();
+
+	SECTION("a change outside the editor reaches the preview") {
+		write("<system><bone name=\"Changed\"/></system>");
+		REQUIRE(ReadAll(session.Resolver()("outfit.xml")).find("Changed") != std::string::npos);
+		REQUIRE(session.Revision() != revision);
+	}
+
+	SECTION("unsaved edits win over the file") {
+		const ChildDesc* massDesc = FindElement(ElementKind::Bone)->Child("mass");
+		REQUIRE(doc->SetValue(doc->Root()->FirstChildElement("bone"), *massDesc, ValueVariant(9.0f)));
+		write("<system><bone name=\"Changed\"/></system>");
+		REQUIRE(ReadAll(session.Resolver()("outfit.xml")).find("Changed") == std::string::npos);
+	}
+
+	SECTION("an unchanged file changes nothing") {
+		REQUIRE(session.Open("outfit.xml", error) == doc);
+		REQUIRE(session.Revision() == revision);
+	}
+
+	std::error_code ec;
+	std::filesystem::remove(path, ec);
 }
 
 TEST_CASE("Closing a document forgets it", "[PhysicsEditSession]") {

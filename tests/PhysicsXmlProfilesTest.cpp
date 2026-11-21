@@ -56,18 +56,27 @@ tinyxml2::XMLElement* Bone(const XmlDocument& doc, const std::string& name) {
 	return nullptr;
 }
 
-// What the builder makes of one property of an element, worked out independently of the profile code: a value from
-// the element or the last default supplying it, and a list adding up along the chain and then the element.
+// What the builder makes of one property of an element, worked out independently of the profile code: the element,
+// or else the last default of its chain, that sets it. readBoneTemplate clears both collide lists at the first entry
+// of either, so for those either one counts.
 std::string Built(const XmlDocument& doc, const tinyxml2::XMLElement* element, const ChildDesc& desc) {
-	if (desc.mult == Multiplicity::List) {
-		std::string text;
-		for (const tinyxml2::XMLElement* declared : doc.TemplateChain(element))
-			text += doc.ValueText(declared, desc);
-		return text + doc.ValueText(element, desc);
-	}
+	const std::string name = desc.name;
+	const bool collide = name == "can-collide-with-bone" || name == "no-collide-with-bone";
+	const ElementDesc* bone = FindElement(ElementKind::Bone);
 
-	const EffectiveValue effective = doc.ResolveEffective(element, desc);
-	return effective.source ? doc.ValueText(effective.source, desc) : "(schema default)";
+	auto sets = [&](const tinyxml2::XMLElement* reader) {
+		if (doc.HasValue(reader, desc))
+			return true;
+		return collide && (doc.HasValue(reader, *bone->Child("can-collide-with-bone")) || doc.HasValue(reader, *bone->Child("no-collide-with-bone")));
+	};
+
+	std::vector<const tinyxml2::XMLElement*> readers = doc.TemplateChain(element);
+	readers.push_back(element);
+	for (auto it = readers.rbegin(); it != readers.rend(); ++it)
+		if (sets(*it))
+			return "[" + doc.ValueText(*it, desc) + "]";
+
+	return "(schema default)";
 }
 
 // Every property of every bone and constraint, by element position and property name
@@ -134,9 +143,15 @@ TEST_CASE("Defaults read as profiles", "[PhysicsXml][profiles]") {
 		REQUIRE(ProfileUsers(doc, second).size() == 2);
 	}
 
-	SECTION("lists add up along the chain") {
+	SECTION("a collide list replaces both lists a bone inherits") {
+		// base's list replaces the first default's
 		const EffectiveValue list = doc.ResolveChain(doc.TemplateChain(Bone(doc, "B")), BoneProperty("can-collide-with-bone"));
-		REQUIRE(std::get<std::vector<std::string>>(list.value) == std::vector<std::string>{"NPC Head [Head]", "NPC Spine2 [Spn2]"});
+		REQUIRE(std::get<std::vector<std::string>>(list.value) == std::vector<std::string>{"NPC Spine2 [Spn2]"});
+
+		// E's own replaces what it inherits
+		const EffectiveValue own = doc.ResolveEffective(Bone(doc, "E"), BoneProperty("can-collide-with-bone"));
+		REQUIRE(own.explicitHere);
+		REQUIRE(std::get<std::vector<std::string>>(own.value) == std::vector<std::string>{"E1"});
 	}
 
 	SECTION("unnamed defaults with others of their kind are positional, named ones never") {
@@ -223,6 +238,44 @@ TEST_CASE("Tidying refuses what only declaring bones could keep", "[PhysicsXml][
 	REQUIRE_FALSE(doc.CanUndo());
 }
 
+TEST_CASE("The two collide lists of a bone go together", "[PhysicsXml][profiles]") {
+	XmlDocument doc = Load(R"(<system>
+	<bone-default><can-collide-with-bone>Head</can-collide-with-bone></bone-default>
+	<bone name="A"><no-collide-with-bone>Spine</no-collide-with-bone></bone>
+	<bone name="B"/>
+</system>)");
+	tinyxml2::XMLElement* a = Bone(doc, "A");
+	const ChildDesc& can = BoneProperty("can-collide-with-bone");
+	const ChildDesc& no = BoneProperty("no-collide-with-bone");
+
+	SECTION("the other list clears an inherited one") {
+		const EffectiveValue cleared = doc.ResolveEffective(a, can);
+		REQUIRE(cleared.explicitHere);
+		REQUIRE(std::get<std::vector<std::string>>(cleared.value).empty());
+		REQUIRE(HasOwnValue(doc, a, can));
+	}
+
+	SECTION("applying one to the profile moves both") {
+		const std::string b = Built(doc, Bone(doc, "B"), can) + Built(doc, Bone(doc, "B"), no);
+		REQUIRE(ApplyToProfile(doc, a, can));
+		REQUIRE_FALSE(HasOwnValue(doc, a, no));
+		REQUIRE(Built(doc, a, can) + Built(doc, a, no) == "[][<no-collide-with-bone>Spine</no-collide-with-bone>]");
+		REQUIRE(Built(doc, Bone(doc, "B"), can) + Built(doc, Bone(doc, "B"), no) != b);
+	}
+
+	SECTION("resetting one resets both") {
+		ResetToProfile(doc, a, can);
+		REQUIRE(Built(doc, a, can) == "[<can-collide-with-bone>Head</can-collide-with-bone>]");
+		REQUIRE_FALSE(doc.HasValue(a, no));
+	}
+
+	SECTION("tidying keeps them") {
+		const std::map<std::string, std::string> before = BuiltAll(doc);
+		REQUIRE(TidyDefaults(doc).ok);
+		REQUIRE(BuiltAll(doc) == before);
+	}
+}
+
 TEST_CASE("Values move between an element and its profile", "[PhysicsXml][profiles]") {
 	XmlDocument doc = Load(ReadFixture("defaults.xml"));
 	const std::string original = doc.Serialize();
@@ -238,10 +291,10 @@ TEST_CASE("Values move between an element and its profile", "[PhysicsXml][profil
 		REQUIRE(doc.Serialize() == original);
 	}
 
-	SECTION("a list entry applied to the profile is added after the profile's") {
+	SECTION("a collide list applied to the profile replaces the profile's") {
 		REQUIRE(ApplyToProfile(doc, Bone(doc, "E"), BoneProperty("can-collide-with-bone")));
 		const std::string expected = Built(doc, Bone(doc, "E"), BoneProperty("can-collide-with-bone"));
-		REQUIRE(expected.find("E1") != std::string::npos);
+		REQUIRE(expected == "[<can-collide-with-bone>E1</can-collide-with-bone>]");
 		// D uses the same profile
 		REQUIRE(Built(doc, Bone(doc, "D"), BoneProperty("can-collide-with-bone")) == expected);
 	}

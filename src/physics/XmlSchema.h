@@ -202,6 +202,18 @@ bool CascadeApplies(ElementKind instanceKind);
 // True for the elements a <system> may contain directly.
 bool IsSystemChildKind(ElementKind kind);
 
+// The three kinds of constraint.
+bool IsConstraintKind(ElementKind kind);
+// Bones and constraints: the elements that start from a profile, a *-default
+// this preview cascades.
+bool IsProfileUserKind(ElementKind kind);
+
+// The properties the builder replaces together. Reading a bone or a
+// bone-default, the first can-collide-with-bone or no-collide-with-bone entry
+// clears both lists it inherited, so the two lists come from the same
+// element. Every other property stands alone.
+std::vector<const ChildDesc*> ReplacedTogether(const ChildDesc& desc);
+
 // Human readable one-liners for the UI.
 const char* PreviewSupportNote(PreviewSupport support);
 }

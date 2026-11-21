@@ -7,6 +7,7 @@ See the included LICENSE file
 
 #include "XmlDocument.h"
 
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -20,7 +21,8 @@ from, which their own values override.
 
 In the file they are order-dependent. An unnamed default replaces the ambient set for everything after it, a named
 one is a snapshot of what it @extends at the point it is declared, and an element reads its @template, or the
-ambient set, at its own position. A profile is one *-default, and the elements using it are the ones whose template
+ambient set, at its own position. The two collide-with-bone lists of a bone are replaced as a pair
+(ReplacedTogether). A profile is one *-default, and the elements using it are the ones whose template
 chain contains it (XmlDocument::TemplateChain), which hides that bookkeeping.
 
 TidyDefaults rewrites a file so that it no longer depends on the order: flat named profiles at the top, an unnamed
@@ -32,6 +34,25 @@ defaults (see CascadeApplies).
 namespace Physics {
 // The kinds of the *-defaults that are profiles: bone, generic, stiffspring and conetwist
 const std::vector<ElementKind>& ProfileKinds();
+bool IsProfileKind(ElementKind kind);
+
+// Every element of the system in the order the builder reads them, descending into constraint groups
+void ForEachInReadingOrder(const XmlDocument& doc, const std::function<void(tinyxml2::XMLElement*)>& visit);
+
+// Where the bones of a system come from. The builder reads the file top to bottom: a <bone> declares a bone, a
+// skinned shape creates the bones its NIF shape is weighted to and a constraint the two it joins, from the ambient
+// bone-default at that line, unless they exist by then. A <bone> for a bone that exists is skipped.
+struct BoneOrigins {
+	struct Implicit {
+		std::string name;
+		tinyxml2::XMLElement* createdBy = nullptr;
+	};
+	std::vector<Implicit> implicitBones;
+	std::vector<tinyxml2::XMLElement*> ignoredBoneElements;
+};
+// The bones a NIF shape is skinned to, by the shape name the XML uses; empty when unknown
+using SkinBones = std::function<std::vector<std::string>(const std::string& shapeName)>;
+BoneOrigins TraceBones(const XmlDocument& doc, const SkinBones& skinBones);
 
 // Every profile in reading order, those inside constraint groups included
 std::vector<tinyxml2::XMLElement*> Profiles(const XmlDocument& doc);
@@ -51,8 +72,13 @@ bool IsPositional(const XmlDocument& doc, const tinyxml2::XMLElement* profile);
 // groups, names declared twice, or templates naming nothing declared before them
 bool NeedsTidy(const XmlDocument& doc);
 
-// Moves the element's own value of "desc" onto its profile, as one undo step. False when the element has no value of
-// its own or no profile.
+// Whether the element sets "desc" itself (see XmlDocument::Decides)
+bool HasOwnValue(const XmlDocument& doc, const tinyxml2::XMLElement* element, const ChildDesc& desc);
+// Hands "desc" back to the element's profile, as one undo step; the collide lists go back as a pair
+void ResetToProfile(XmlDocument& doc, tinyxml2::XMLElement* element, const ChildDesc& desc);
+
+// Moves the element's own value of "desc" onto its profile, as one undo step; the collide lists move as a pair. False
+// when the element has no value of its own or no profile.
 bool ApplyToProfile(XmlDocument& doc, tinyxml2::XMLElement* element, const ChildDesc& desc);
 
 // Creates a profile named "name" from the element's own values, on top of the profile it had, and points the element

@@ -67,16 +67,6 @@ bool IsNameKind(ValueKind kind) {
 	}
 }
 
-bool IsProfileUser(ElementKind kind) {
-	return kind == ElementKind::Bone || kind == ElementKind::GenericConstraint || kind == ElementKind::StiffSpringConstraint
-		   || kind == ElementKind::ConeTwistConstraint;
-}
-
-bool IsProfile(ElementKind kind) {
-	const auto& kinds = ProfileKinds();
-	return std::find(kinds.begin(), kinds.end(), kind) != kinds.end();
-}
-
 // "3 bones", "1 constraint": what uses a profile of this kind
 wxString UserCount(ElementKind profileKind, std::size_t count) {
 	if (profileKind == ElementKind::BoneDefault)
@@ -403,10 +393,11 @@ void PhysicsEditorDialog::RefreshDocuments() {
 	if (!loaded)
 		return;
 
-	// Where the user was, by address: the tree is about to be rebuilt
-	std::string selectedPath;
-	NodePath selectedNode;
-	if (const wxTreeItemId selected = tree->GetSelection(); selected.IsOk()) {
+	// Where the user was, by address: the tree is about to be rebuilt. The element shown, whose address an edit
+	// may have just moved, else the row selected (a document or a heading).
+	std::string selectedPath = currentXmlPath;
+	NodePath selectedNode = currentNode;
+	if (const wxTreeItemId selected = tree->GetSelection(); selectedNode.Empty() && selected.IsOk()) {
 		if (auto* data = static_cast<ItemData*>(tree->GetItemData(selected))) {
 			selectedPath = data->xmlPath;
 			selectedNode = data->node;
@@ -542,7 +533,7 @@ void PhysicsEditorDialog::AddElementItem(const wxTreeItemId& parent, XmlDocument
 	if (showKind && kind != ElementKind::Unknown && label != FromSchema(NameFromKind(kind)))
 		label += wxString::Format("  [%s]", FromSchema(NameFromKind(kind)));
 
-	if (IsProfileUser(kind)) {
+	if (IsProfileUserKind(kind)) {
 		const tinyxml2::XMLElement* profile = ProfileOf(doc, element);
 		label += wxString::Format("  (%s)", profile ? wxString::FromUTF8(doc.ProfileLabel(profile)) : _("schema defaults"));
 	}
@@ -665,9 +656,10 @@ void PhysicsEditorDialog::ApplyChange(const wxPGProperty* property, const ChildD
 	const ValueKind kind = child ? child->kind : attr->kind;
 	const Multiplicity mult = child ? child->mult : Multiplicity::Once;
 	ValueVariant value = ReadProperty(property, kind, mult);
+	const std::string before = doc->Serialize();
 
 	// The profile picker: its first entry is the profile the element has by position, which takes no @template
-	if (attr && std::strcmp(attr->name, "template") == 0 && IsProfileUser(KindFromName(element->Name()))) {
+	if (attr && std::strcmp(attr->name, "template") == 0 && IsProfileUserKind(KindFromName(element->Name()))) {
 		const auto* picked = std::get_if<std::string>(&value);
 		if (!picked || wxString::FromUTF8(*picked) == AmbientProfileLabel(*doc, element))
 			value = std::monostate();
@@ -675,12 +667,13 @@ void PhysicsEditorDialog::ApplyChange(const wxPGProperty* property, const ChildD
 
 	// The descriptor is a static table entry, so its address identifies the property being dragged; changes to it
 	// within half a second fold into one undo step
-	doc->BeginEdit(child ? child->name : attr->name, currentNode, child ? static_cast<const void*>(child) : static_cast<const void*>(attr));
+	const bool added
+		= doc->BeginEdit(child ? child->name : attr->name, currentNode, child ? static_cast<const void*>(child) : static_cast<const void*>(attr));
 
 	const bool written = child ? doc->SetValue(element, *child, value) : doc->SetAttr(element, *attr, value);
-	if (!written) {
-		// The document didn't take it, so there is no edit to keep
-		doc->Undo();
+	if (!written || doc->Serialize() == before) {
+		// Nothing to keep: the document didn't take it, or it already said this
+		doc->AbandonEdit(before, added);
 		UpdateEditControls();
 		return;
 	}
@@ -779,7 +772,7 @@ void PhysicsEditorDialog::ShowElement(XmlDocument* doc, tinyxml2::XMLElement* el
 			const AttrDesc& attr = desc->attrs[i];
 			const ValueVariant value = doc->GetAttr(element, attr);
 
-			if (std::strcmp(attr.name, "template") == 0 && IsProfileUser(KindFromName(element->Name()))) {
+			if (std::strcmp(attr.name, "template") == 0 && IsProfileUserKind(KindFromName(element->Name()))) {
 				AppendProperty(grid, MakeProfilePicker(*doc, element), true);
 				continue;
 			}
@@ -861,7 +854,11 @@ void PhysicsEditorDialog::ShowElement(XmlDocument* doc, tinyxml2::XMLElement* el
 	appendChildren(notSimulated, _("Not simulated in this preview"));
 
 	const ElementKind kind = KindFromName(element->Name());
-	if (IsProfile(kind)) {
+	if (owner && kind == ElementKind::Bone && owner->IsIgnoredBoneElement(*doc, element))
+		status->SetLabel(_("SMP skips this <bone>: the bone exists by then, made by a skinned shape or a constraint above it, or "
+						   "declared before. Move it up to have it count."));
+
+	if (IsProfileKind(kind)) {
 		wxString what = wxString::Format(_("Profile %s: %s start from it, and their own values override it."),
 										 wxString::FromUTF8(doc->ProfileLabel(element)),
 										 UserCount(kind, ProfileUsers(*doc, element).size()));
@@ -911,7 +908,7 @@ void PhysicsEditorDialog::ShowUsers(XmlDocument* doc, tinyxml2::XMLElement* elem
 	usedByList->DeleteAllItems();
 	usedByRows.clear();
 
-	if (!doc || !element || !IsProfile(KindFromName(element->Name()))) {
+	if (!doc || !element || !IsProfileKind(KindFromName(element->Name()))) {
 		usedByList->InsertItem(0, _("Select a profile to see what starts from it."));
 		return;
 	}
@@ -1311,14 +1308,14 @@ void PhysicsEditorDialog::OnPropertyRightClick(wxPropertyGridEvent& event) {
 	XmlDocument* doc = CurrentDocument();
 	tinyxml2::XMLElement* element = CurrentElement();
 	const wxPGProperty* property = RootProperty(event.GetProperty());
-	if (!doc || !element || !property || !IsProfileUser(KindFromName(element->Name())))
+	if (!doc || !element || !property || !IsProfileUserKind(KindFromName(element->Name())))
 		return;
 
 	const ElementKind kind = KindFromName(element->Name());
 	const std::string name = std::string(property->GetName().ToUTF8());
 	const ChildDesc* child = name.empty() || name[0] == '@' ? nullptr : FindElement(kind)->Child(name.c_str());
 	tinyxml2::XMLElement* profile = ProfileOf(*doc, element);
-	const bool own = child && doc->HasValue(element, *child);
+	const bool own = child && HasOwnValue(*doc, element, *child);
 
 	enum { idReset = wxID_HIGHEST + 1, idApply, idNew };
 	wxMenu menu;
@@ -1333,10 +1330,7 @@ void PhysicsEditorDialog::OnPropertyRightClick(wxPropertyGridEvent& event) {
 	menu.Append(idNew, _("New Profile from This Element..."));
 
 	switch (GetPopupMenuSelectionFromUser(menu)) {
-		case idReset:
-			doc->BeginEdit("reset to profile");
-			doc->ClearValue(element, *child);
-			break;
+		case idReset: ResetToProfile(*doc, element, *child); break;
 
 		case idApply: ApplyToProfile(*doc, element, *child); break;
 

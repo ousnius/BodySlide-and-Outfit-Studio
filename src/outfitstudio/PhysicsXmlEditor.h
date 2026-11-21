@@ -6,7 +6,9 @@ See the included LICENSE file
 #pragma once
 
 #include "physics/XmlEditSession.h"
+#include "physics/XmlProfiles.h"
 
+#include <cstdint>
 #include <set>
 #include <string>
 #include <vector>
@@ -44,9 +46,9 @@ public:
 	void RefreshLinks();
 	// Closes the editor and drops the documents, for when the project goes away
 	void Shutdown();
-	// Reads a document again after something else rewrote its file, and rebuilds the preview. A document with
-	// unsaved edits is kept.
-	void ReloadDocument(const std::string& xmlPath);
+	// Something else rewrote physics XMLs: the documents read their files again, unless they have unsaved edits, and
+	// the preview rebuilds
+	void FilesChanged();
 
 	// Called by the editor window when it closes
 	void EditorClosed();
@@ -87,8 +89,12 @@ public:
 	// The names of the loaded shapes, and of the bones the simulation can resolve: the skeleton's and the NIF's nodes
 	std::vector<std::string> ShapeNames() const;
 	std::vector<std::string> BoneNames() const;
-	// The bones a loaded shape is skinned to
+	// The bones a loaded shape is skinned to, by its name in any case
 	std::vector<std::string> ShapeBoneNames(const std::string& shapeName) const;
+	// The same as a lookup for Physics::TraceBones
+	Physics::SkinBones SkinBoneLookup() const;
+	// A <bone> the builder skips because its bone exists by then (see Physics::TraceBones)
+	bool IsIgnoredBoneElement(const Physics::XmlDocument& doc, const tinyxml2::XMLElement* element) const;
 	// What validating a document needs from outside the file
 	Physics::ValidationContext ValidationInputs() const;
 
@@ -107,6 +113,8 @@ private:
 	wxTreeCtrl* list = nullptr;
 	wxButton* btnEdit = nullptr;
 	PhysicsEditorDialog* editor = nullptr;
+	// The session revision the editor shows
+	std::uint32_t shownRevision = 0;
 	// The bones were hidden when the editor opened and are shown only while it is
 	bool bonesShownForEditor = false;
 };

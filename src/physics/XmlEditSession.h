@@ -9,6 +9,7 @@ See the included LICENSE file
 #include "XmlDocument.h"
 #include "files/GameDataStream.h"
 
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <string>
@@ -46,7 +47,9 @@ public:
 	void SetSourceResolver(SourceResolver resolver) { sourceResolver = std::move(resolver); }
 
 	// The resolver to hand Controller::BuildFromNif. Serves the session's text
-	// for documents it already holds, and adopts anything else it can read.
+	// for documents it already holds, and adopts anything else it can read. A
+	// held document without unsaved edits is read again first when its file
+	// changed, so edits made outside the editor still reach the preview.
 	//
 	// A file tinyxml2 cannot parse is deliberately *not* adopted: the preview
 	// gets the original bytes and behaves exactly as it did before the editor
@@ -61,7 +64,8 @@ public:
 	const XmlDocument* Find(const std::string& xmlPath) const;
 
 	// Reads "xmlPath" through the source resolver and adopts it. Returns the
-	// document it already held for that path unchanged, if any.
+	// document it already held for that path, read again when its file
+	// changed and it has no unsaved edits.
 	XmlDocument* Open(const std::string& xmlPath, std::string& outError);
 
 	// Adds an empty <system/> document that exists only in the session until it
@@ -89,6 +93,10 @@ public:
 	const std::vector<std::string>& Warnings() const { return warnings; }
 	void ClearWarnings() { warnings.clear(); }
 
+	// Changes whenever a document is adopted, closed or read again from its
+	// file, so a view can tell that its tree of the documents is out of date.
+	std::uint32_t Revision() const { return revision; }
+
 	// The comparison key the session matches paths by.
 	static std::string NormalizeXmlPath(const std::string& xmlPath);
 
@@ -102,9 +110,12 @@ private:
 	std::unique_ptr<std::istream> ResolveStream(const std::string& xmlPath, std::string* outError);
 
 	const Entry* FindEntry(const std::string& xmlPath) const;
+	// Reads a clean loose document again when its file no longer says what it holds
+	void RefreshFromFile(XmlDocument& doc);
 
 	std::vector<Entry> documents;
 	SourceResolver sourceResolver;
 	std::vector<std::string> warnings;
+	std::uint32_t revision = 0;
 };
 }

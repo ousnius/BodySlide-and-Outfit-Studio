@@ -355,6 +355,6 @@ Physics::XmlEditSession* OutfitStudioSession::PhysicsXmlSession() {
 	return &frame.physicsXml->Session();
 }
 
-void OutfitStudioSession::PhysicsXmlChanged(const std::string& xmlPath) {
-	frame.physicsXml->ReloadDocument(xmlPath);
+void OutfitStudioSession::PhysicsXmlChanged(const std::string& WXUNUSED(xmlPath)) {
+	frame.physicsXml->FilesChanged();
 }

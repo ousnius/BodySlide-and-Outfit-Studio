@@ -23,35 +23,11 @@ std::string AttrText(const XMLElement* element, const char* name) {
 	return raw ? std::string(raw) : std::string();
 }
 
-bool IsProfileKind(ElementKind kind) {
-	const auto& kinds = ProfileKinds();
-	return std::find(kinds.begin(), kinds.end(), kind) != kinds.end();
-}
-
-bool IsConstraintKind(ElementKind kind) {
-	return kind == ElementKind::GenericConstraint || kind == ElementKind::StiffSpringConstraint || kind == ElementKind::ConeTwistConstraint;
-}
-
-// Every element of the system in the order the builder reads them, descending into constraint groups
-void ForEachInReadingOrder(const XmlDocument& doc, const std::function<void(XMLElement*)>& visit) {
-	std::function<void(XMLElement*)> walk = [&](XMLElement* parent) {
-		for (XMLElement* child = parent->FirstChildElement(); child; child = child->NextSiblingElement()) {
-			visit(child);
-			if (KindFromName(child->Name()) == ElementKind::ConstraintGroup)
-				walk(child);
-		}
-	};
-
-	if (XMLElement* root = doc.Root())
-		walk(root);
-}
-
 // The bones and constraints, in reading order
 std::vector<XMLElement*> ProfileUsersOfAnyKind(const XmlDocument& doc) {
 	std::vector<XMLElement*> elements;
 	ForEachInReadingOrder(doc, [&](XMLElement* element) {
-		const ElementKind kind = KindFromName(element->Name());
-		if (kind == ElementKind::Bone || IsConstraintKind(kind))
+		if (IsProfileUserKind(KindFromName(element->Name())))
 			elements.push_back(element);
 	});
 	return elements;
@@ -73,20 +49,11 @@ const ElementDesc& DescOf(ElementKind instanceKind) {
 	return *FindElement(instanceKind);
 }
 
-// A property as a template chain supplies it, as XML text: the last default that sets it, or every default's
-// entries for a list, which the builder appends one after the other. Empty for the schema default.
+// A property as a template chain supplies it, as XML text. Empty for the schema default, and for a collide list the
+// other one cleared.
 std::string ChainText(const XmlDocument& doc, const std::vector<const XMLElement*>& chain, const ChildDesc& desc) {
-	std::string text;
-	for (const XMLElement* declared : chain) {
-		if (!doc.HasValue(declared, desc))
-			continue;
-
-		if (desc.mult == Multiplicity::List)
-			text += doc.ValueText(declared, desc);
-		else
-			text = doc.ValueText(declared, desc);
-	}
-	return text;
+	const EffectiveValue supplied = doc.ResolveChain(chain, desc);
+	return supplied.source ? doc.ValueText(supplied.source, desc) : std::string();
 }
 
 // Everything a template chain supplies, one entry per property of the kind
@@ -104,20 +71,14 @@ bool IsEmpty(const Signature& signature) {
 	return std::all_of(signature.begin(), signature.end(), [](const std::string& text) { return text.empty(); });
 }
 
-// What an element is built with, per property: its own value, or its own list entries after the template's
+// What an element is built with, per property, as XML text
 Signature ElementSignature(const XmlDocument& doc, const XMLElement* element) {
-	const ElementKind kind = KindFromName(element->Name());
-	const ElementDesc& desc = DescOf(kind);
-	const std::vector<const XMLElement*> chain = doc.TemplateChain(element);
+	const ElementDesc& desc = DescOf(KindFromName(element->Name()));
 
 	Signature signature;
 	for (std::size_t i = 0; i < desc.childCount; i++) {
-		const ChildDesc& child = desc.children[i];
-		const std::string own = doc.ValueText(element, child);
-		if (child.mult == Multiplicity::List)
-			signature.push_back(ChainText(doc, chain, child) + own);
-		else
-			signature.push_back(doc.HasValue(element, child) ? own : ChainText(doc, chain, child));
+		const EffectiveValue effective = doc.ResolveEffective(element, desc.children[i]);
+		signature.push_back(effective.source ? doc.ValueText(effective.source, desc.children[i]) : std::string());
 	}
 	return signature;
 }
@@ -137,18 +98,18 @@ std::vector<Signature> Snapshot(const XmlDocument& doc) {
 void Flatten(XmlDocument& doc, const std::vector<const XMLElement*>& chain, ElementKind instanceKind, XMLElement* target) {
 	const ElementDesc& desc = DescOf(instanceKind);
 	for (std::size_t i = 0; i < desc.childCount; i++) {
-		const ChildDesc& child = desc.children[i];
-		if (child.mult == Multiplicity::List) {
-			for (const XMLElement* declared : chain)
-				if (doc.HasValue(declared, child))
-					doc.CopyValue(declared, target, child, true);
-			continue;
-		}
-
-		const EffectiveValue supplied = doc.ResolveChain(chain, child);
+		const EffectiveValue supplied = doc.ResolveChain(chain, desc.children[i]);
 		if (supplied.source)
-			doc.CopyValue(supplied.source, target, child);
+			doc.CopyValue(supplied.source, target, desc.children[i]);
 	}
+}
+
+// The positions in a kind's property list of the properties replaced together with "child"
+std::vector<std::size_t> GroupIndices(const ElementDesc& desc, const ChildDesc& child) {
+	std::vector<std::size_t> indices;
+	for (const ChildDesc* together : ReplacedTogether(child))
+		indices.push_back(static_cast<std::size_t>(together - desc.children));
+	return indices;
 }
 
 void SetAttribute(XmlDocument& doc, XMLElement* element, const char* name, const std::string& value) {
@@ -159,6 +120,67 @@ void SetAttribute(XmlDocument& doc, XMLElement* element, const char* name, const
 }
 
 } // namespace
+
+void ForEachInReadingOrder(const XmlDocument& doc, const std::function<void(XMLElement*)>& visit) {
+	std::function<void(XMLElement*)> walk = [&](XMLElement* parent) {
+		for (XMLElement* child = parent->FirstChildElement(); child; child = child->NextSiblingElement()) {
+			visit(child);
+			if (KindFromName(child->Name()) == ElementKind::ConstraintGroup)
+				walk(child);
+		}
+	};
+
+	if (XMLElement* root = doc.Root())
+		walk(root);
+}
+
+bool IsProfileKind(ElementKind kind) {
+	const auto& kinds = ProfileKinds();
+	return std::find(kinds.begin(), kinds.end(), kind) != kinds.end();
+}
+
+BoneOrigins TraceBones(const XmlDocument& doc, const SkinBones& skinBones) {
+	BoneOrigins origins;
+	std::set<std::string> exists;
+
+	auto create = [&](const std::string& name, XMLElement* by) {
+		if (!name.empty() && exists.insert(ToLower(name)).second)
+			origins.implicitBones.push_back({name, by});
+	};
+
+	ForEachInReadingOrder(doc, [&](XMLElement* element) {
+		const ElementKind kind = KindFromName(element->Name());
+		const std::string name = AttrText(element, "name");
+
+		if (kind == ElementKind::Bone) {
+			if (!exists.insert(ToLower(name)).second)
+				origins.ignoredBoneElements.push_back(element);
+		}
+		else if (kind == ElementKind::PerVertexShape || kind == ElementKind::PerTriangleShape) {
+			if (skinBones)
+				for (auto& bone : skinBones(name))
+					create(bone, element);
+		}
+		else if (IsConstraintKind(kind)) {
+			create(AttrText(element, "bodyA"), element);
+			create(AttrText(element, "bodyB"), element);
+		}
+	});
+
+	return origins;
+}
+
+bool HasOwnValue(const XmlDocument& doc, const XMLElement* element, const ChildDesc& desc) {
+	return doc.Decides(element, desc);
+}
+
+void ResetToProfile(XmlDocument& doc, XMLElement* element, const ChildDesc& desc) {
+	doc.BeginEdit("reset to profile");
+
+	// Clearing only one collide list would leave the other one deciding both
+	for (const ChildDesc* together : ReplacedTogether(desc))
+		doc.ClearValue(element, *together);
+}
 
 const std::vector<ElementKind>& ProfileKinds() {
 	static const std::vector<ElementKind> kinds{ElementKind::BoneDefault,
@@ -260,14 +282,16 @@ bool NeedsTidy(const XmlDocument& doc) {
 
 bool ApplyToProfile(XmlDocument& doc, XMLElement* element, const ChildDesc& desc) {
 	XMLElement* profile = ProfileOf(doc, element);
-	if (!profile || !doc.HasValue(element, desc))
+	if (!profile || !doc.Decides(element, desc))
 		return false;
 
 	doc.BeginEdit("apply to profile");
 
-	// The element's list entries came after the profile's, so they go after them there too
-	doc.CopyValue(element, profile, desc, desc.mult == Multiplicity::List);
-	doc.ClearValue(element, desc);
+	// The collide lists go together: the element's pair replaces the profile's
+	for (const ChildDesc* together : ReplacedTogether(desc)) {
+		doc.CopyValue(element, profile, *together);
+		doc.ClearValue(element, *together);
+	}
 	return true;
 }
 
@@ -285,11 +309,14 @@ XMLElement* CreateProfileFrom(XmlDocument& doc, XMLElement* element, const std::
 	const std::vector<const XMLElement*> chain = doc.TemplateChain(element);
 	const std::string base = chain.empty() ? std::string() : AttrText(chain.back(), "name");
 
-	doc.BeginEdit("new profile");
+	const std::string before = doc.Serialize();
+	const bool added = doc.BeginEdit("new profile");
 
 	XMLElement* created = doc.InsertElementBefore(defaultKind, element);
-	if (!created)
+	if (!created) {
+		doc.AbandonEdit(before, added);
 		return nullptr;
+	}
 
 	SetAttribute(doc, created, "name", name);
 	SetAttribute(doc, created, "extends", base);
@@ -482,20 +509,34 @@ TidyResult TidyDefaults(XmlDocument& doc) {
 			if (profile.ambient && !IsEmpty(profile.signature))
 				ambient = &profile;
 
+		// Per group of properties replaced together: whether the profile says the same as the Default, and whether it
+		// says nothing where the Default says something, which it can't take back
+		auto sameAsAmbient = [&](const NewProfile& profile, std::size_t i) {
+			for (std::size_t j : GroupIndices(desc, desc.children[i]))
+				if (profile.signature[j] != ambient->signature[j])
+					return false;
+			return true;
+		};
+		auto unsetsAmbient = [&](const NewProfile& profile, std::size_t i) {
+			bool own = false;
+			bool base = false;
+			for (std::size_t j : GroupIndices(desc, desc.children[i])) {
+				own = own || !profile.signature[j].empty();
+				base = base || !ambient->signature[j].empty();
+			}
+			return !own && base;
+		};
+
 		auto extendsAmbient = [&](const NewProfile& profile) {
 			if (!ambient)
 				return false;
 
-			for (std::size_t i = 0; i < desc.childCount; i++) {
-				const std::string& own = profile.signature[i];
-				const std::string& base = ambient->signature[i];
-				if (desc.children[i].mult == Multiplicity::List ? own.compare(0, base.size(), base) != 0 : own.empty() && !base.empty())
+			for (std::size_t i = 0; i < desc.childCount; i++)
+				if (unsetsAmbient(profile, i))
 					return false;
-			}
 			return true;
 		};
 
-		XMLElement* ambientElement = nullptr;
 		for (int pass = 0; pass < 3; pass++) {
 			for (const NewProfile& profile : plan.profiles) {
 				const bool isAmbient = &profile == ambient;
@@ -511,18 +552,13 @@ TidyResult TidyDefaults(XmlDocument& doc) {
 				Flatten(work, profile.chain, instanceKind, created);
 				written++;
 
-				if (isAmbient) {
-					ambientElement = created;
+				if (pass != 2)
 					continue;
-				}
 
 				// Only what it changes about the Default, which it starts from
-				for (std::size_t i = 0; i < desc.childCount && pass == 2; i++) {
-					const ChildDesc& child = desc.children[i];
-					if (child.mult == Multiplicity::List)
-						work.RemoveLeadingValues(created, child, work.ValueCount(ambientElement, child));
-					else if (!ambient->signature[i].empty() && profile.signature[i] == ambient->signature[i])
-						work.ClearValue(created, child);
+				for (std::size_t i = 0; i < desc.childCount; i++) {
+					if (sameAsAmbient(profile, i))
+						work.ClearValue(created, desc.children[i]);
 				}
 			}
 		}
@@ -550,9 +586,10 @@ TidyResult TidyDefaults(XmlDocument& doc) {
 		return result;
 	}
 
-	doc.BeginEdit("tidy defaults");
+	const std::string original = doc.Serialize();
+	const bool added = doc.BeginEdit("tidy defaults");
 	if (!doc.ReplaceContent(work.Serialize(), error)) {
-		doc.Undo();
+		doc.AbandonEdit(original, added);
 		result.report = error;
 		return result;
 	}

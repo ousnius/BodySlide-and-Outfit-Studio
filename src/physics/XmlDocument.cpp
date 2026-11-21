@@ -5,6 +5,7 @@ See the included LICENSE file
 
 #include "XmlDocument.h"
 #include "XmlProfiles.h"
+#include "utils/PlatformUtil.h"
 
 #include "hdt/hdtStringUtils.h"
 #include "utils/StringStuff.h"
@@ -17,6 +18,7 @@ See the included LICENSE file
 #include <chrono>
 #include <cstdio>
 #include <cstring>
+#include <fstream>
 #include <functional>
 #include <map>
 #include <sstream>
@@ -278,8 +280,17 @@ std::string XmlDocument::Serialize() const {
 }
 
 bool XmlDocument::SaveToFile(const std::string& path, std::string& outError) const {
-	if (doc->SaveFile(path.c_str()) != XML_SUCCESS) {
-		outError = doc->ErrorStr() ? doc->ErrorStr() : "could not write the file";
+	// Through PlatformUtil, which takes the UTF-8 path; tinyxml2's SaveFile opens it in the ANSI code page on Windows
+	std::fstream file;
+	PlatformUtil::OpenFileStream(file, path, std::ios::out | std::ios::binary | std::ios::trunc);
+	if (!file.is_open()) {
+		outError = "could not open the file for writing";
+		return false;
+	}
+
+	file << Serialize();
+	if (!file) {
+		outError = "could not write the file";
 		return false;
 	}
 	return true;
@@ -480,6 +491,13 @@ bool XmlDocument::HasValue(const XMLElement* owner, const ChildDesc& desc) const
 	return FindChild(owner, desc) != nullptr;
 }
 
+bool XmlDocument::Decides(const XMLElement* owner, const ChildDesc& desc) const {
+	for (const ChildDesc* together : ReplacedTogether(desc))
+		if (HasValue(owner, *together))
+			return true;
+	return false;
+}
+
 std::string XmlDocument::ValueText(const XMLElement* owner, const ChildDesc& desc) const {
 	if (!owner)
 		return std::string();
@@ -657,18 +675,12 @@ void XmlDocument::InsertInSchemaOrder(XMLElement* owner, XMLElement* child, cons
 		owner->InsertFirstChild(child);
 }
 
-void XmlDocument::CopyValue(const XMLElement* from, XMLElement* to, const ChildDesc& desc, bool append) {
+void XmlDocument::CopyValue(const XMLElement* from, XMLElement* to, const ChildDesc& desc) {
 	if (!from || !to || from == to)
 		return;
 
+	ClearValue(to, desc);
 	XMLElement* previous = nullptr;
-	if (append) {
-		for (XMLElement* child = to->FirstChildElement(); child; child = child->NextSiblingElement())
-			if (NameMatches(child, desc))
-				previous = child;
-	}
-	else
-		ClearValue(to, desc);
 
 	// A list is several elements, which stay together and in their order
 	for (const XMLElement* child = from->FirstChildElement(); child; child = child->NextSiblingElement()) {
@@ -895,27 +907,6 @@ XMLElement* XmlDocument::InsertElement(ElementKind kind, XMLElement* parent, XML
 	return created;
 }
 
-std::size_t XmlDocument::ValueCount(const XMLElement* owner, const ChildDesc& desc) const {
-	std::size_t count = 0;
-	for (const XMLElement* child = owner ? owner->FirstChildElement() : nullptr; child; child = child->NextSiblingElement())
-		if (NameMatches(child, desc))
-			count++;
-	return count;
-}
-
-void XmlDocument::RemoveLeadingValues(XMLElement* owner, const ChildDesc& desc, std::size_t count) {
-	std::vector<XMLElement*> doomed;
-	for (XMLElement* child = owner ? owner->FirstChildElement() : nullptr; child && doomed.size() < count; child = child->NextSiblingElement())
-		if (NameMatches(child, desc))
-			doomed.push_back(child);
-
-	for (XMLElement* child : doomed)
-		owner->DeleteChild(child);
-
-	if (!doomed.empty())
-		dirty = true;
-}
-
 XMLElement* XmlDocument::InsertElementBefore(ElementKind kind, XMLElement* before) {
 	XMLElement* parent = before && before->Parent() ? before->Parent()->ToElement() : nullptr;
 	if (!parent)
@@ -956,19 +947,33 @@ void XmlDocument::PushSnapshot(std::deque<Snapshot>& stack, const std::string& l
 		stack.pop_front();
 }
 
-void XmlDocument::BeginEdit(const std::string& label, const NodePath& coalesceKey, const void* coalesceDesc) {
+bool XmlDocument::BeginEdit(const std::string& label, const NodePath& coalesceKey, const void* coalesceDesc) {
 	// Dragging a spin control fires a change per pixel; folding those into the
 	// step that started them keeps undo usable.
 	if (coalesceDesc && !undoStack.empty()) {
 		const Snapshot& last = undoStack.back();
 		if (last.coalesceDesc == coalesceDesc && last.coalesceKey == coalesceKey && NowMs() - last.stamp < kCoalesceWindowMs) {
 			redoStack.clear();
-			return;
+			return false;
 		}
 	}
 
 	PushSnapshot(undoStack, label, coalesceKey, coalesceDesc);
 	redoStack.clear();
+	return true;
+}
+
+void XmlDocument::AbandonEdit(const std::string& before, bool added) {
+	if (Serialize() != before) {
+		auto parsed = std::make_unique<XMLDocument>();
+		if (parsed->Parse(before.c_str(), before.size()) == XML_SUCCESS) {
+			doc = std::move(parsed);
+			dirty = Serialize() != cleanText;
+		}
+	}
+
+	if (added && !undoStack.empty())
+		undoStack.pop_back();
 }
 
 bool XmlDocument::RestoreFrom(std::deque<Snapshot>& from, std::deque<Snapshot>& to) {
@@ -1066,8 +1071,9 @@ EffectiveValue XmlDocument::ResolveEffective(const XMLElement* element, const Ch
 		return result;
 	}
 
-	if (HasValue(element, desc)) {
-		result.value = GetValue(element, desc);
+	if (Decides(element, desc)) {
+		// A collide list the other one cleared is set here, to nothing
+		result.value = HasValue(element, desc) ? GetValue(element, desc) : ValueVariant(std::vector<std::string>());
 		result.source = element;
 		result.explicitHere = true;
 		return result;
@@ -1133,32 +1139,13 @@ std::vector<const XMLElement*> XmlDocument::TemplateChain(ElementKind defaultKin
 EffectiveValue XmlDocument::ResolveChain(const std::vector<const XMLElement*>& chain, const ChildDesc& desc) const {
 	EffectiveValue result;
 
-	if (desc.mult == Multiplicity::List) {
-		std::vector<std::string> items;
-		for (const XMLElement* declared : chain) {
-			if (!HasValue(declared, desc))
-				continue;
-
-			const ValueVariant value = GetValue(declared, desc);
-			if (const auto* list = std::get_if<std::vector<std::string>>(&value))
-				items.insert(items.end(), list->begin(), list->end());
-			result.source = declared;
-		}
-
-		if (result.source) {
-			result.value = std::move(items);
-			result.sourceLabel = ProfileLabel(result.source);
-			return result;
-		}
-	}
-
 	// Last one wins: each default in the chain was applied on top of the ones
 	// before it.
 	for (auto it = chain.rbegin(); it != chain.rend(); ++it) {
-		if (!HasValue(*it, desc))
+		if (!Decides(*it, desc))
 			continue;
 
-		result.value = GetValue(*it, desc);
+		result.value = HasValue(*it, desc) ? GetValue(*it, desc) : ValueVariant(std::vector<std::string>());
 		result.source = *it;
 		result.sourceLabel = ProfileLabel(*it);
 		return result;

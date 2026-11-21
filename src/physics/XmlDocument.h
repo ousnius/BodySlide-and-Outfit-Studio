@@ -158,6 +158,9 @@ public:
 	// The XML of the child elements that hold "desc", as one string; empty when absent. Compares any two values
 	// exactly, structure included, where GetValue only reads plain values.
 	std::string ValueText(const tinyxml2::XMLElement* owner, const ChildDesc& desc) const;
+	// Whether "owner" decides "desc" rather than inheriting it: it has the value, or the other list of the ones the
+	// builder replaces together (see ReplacedTogether), which leaves this one empty.
+	bool Decides(const tinyxml2::XMLElement* owner, const ChildDesc& desc) const;
 	// Resolves what "element" is really built with for one property: its own
 	// value, or the one the *-default cascade hands it, or the schema default.
 	// Mirrors this preview, so for the kinds whose defaults SystemBuilder does
@@ -174,8 +177,7 @@ public:
 	// would read for "templateName"
 	std::vector<const tinyxml2::XMLElement*> TemplateChain(ElementKind defaultKind, const tinyxml2::XMLElement* position, const std::string& templateName) const;
 	// A property as a template chain supplies it: the last default in it that
-	// sets the property, or the schema default. A list adds up instead, the way
-	// the builder appends every default's entries to the copy it extends.
+	// decides the property (see Decides), or the schema default.
 	EffectiveValue ResolveChain(const std::vector<const tinyxml2::XMLElement*>& chain, const ChildDesc& desc) const;
 
 	// What to call a *-default in the UI: its name, or "Default" for an unnamed
@@ -204,13 +206,8 @@ public:
 
 	// Replaces what "to" says for "desc" with a copy of what "from" says,
 	// element by element, so it works for structure too (transforms, lists).
-	// When "from" doesn't have it, "to" loses it as well. With "append" the
-	// copy goes after what "to" has, which is how lists add up along a chain.
-	void CopyValue(const tinyxml2::XMLElement* from, tinyxml2::XMLElement* to, const ChildDesc& desc, bool append = false);
-	// How many child elements hold "desc": the entries of a list, otherwise 0 or 1
-	std::size_t ValueCount(const tinyxml2::XMLElement* owner, const ChildDesc& desc) const;
-	// Removes the first "count" of them, e.g. the list entries a template already supplies
-	void RemoveLeadingValues(tinyxml2::XMLElement* owner, const ChildDesc& desc, std::size_t count);
+	// When "from" doesn't have it, "to" loses it as well.
+	void CopyValue(const tinyxml2::XMLElement* from, tinyxml2::XMLElement* to, const ChildDesc& desc);
 
 	// Creates an element of "kind" with its required attributes present but
 	// empty, inserted after "after" or, when that is null, at the end of
@@ -224,7 +221,11 @@ public:
 	// "coalesceDesc" identify what is being edited: repeated changes to the
 	// same property within half a second fold into one undo step, so dragging
 	// a spin control does not bury the history.
-	void BeginEdit(const std::string& label, const NodePath& coalesceKey = {}, const void* coalesceDesc = nullptr);
+	// Returns whether it added an undo step, which it doesn't when the change folds into the last one.
+	bool BeginEdit(const std::string& label, const NodePath& coalesceKey = {}, const void* coalesceDesc = nullptr);
+	// Takes back a change that failed or changed nothing: the text goes back to "before" (Serialize() before the
+	// change), and the step BeginEdit added, if "added", goes without becoming a redo step.
+	void AbandonEdit(const std::string& before, bool added);
 
 	bool CanUndo() const { return !undoStack.empty(); }
 	bool CanRedo() const { return !redoStack.empty(); }

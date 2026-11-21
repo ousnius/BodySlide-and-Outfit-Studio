@@ -53,15 +53,22 @@ XmlSource OpenXml(OutfitStudioMcp& mcp, const std::string& given, std::vector<st
 	std::error_code ec;
 	const bool isFile = std::filesystem::is_regular_file(std::filesystem::u8path(filePath), ec);
 
+	// The editor's copy, found by the link, or by the file it was read from when given a file
 	XmlEditSession* editing = mcp.Session().PhysicsXmlSession();
-	if (!isFile && editing) {
-		if (XmlDocument* held = editing->Find(given)) {
-			source.doc = held;
-			source.from = "editor";
-			source.unsaved = held->IsDirty();
-			source.path = held->Origin() == XmlOrigin::Loose ? held->SourcePath() : std::string();
-			return source;
-		}
+	XmlDocument* held = editing && !isFile ? editing->Find(given) : nullptr;
+	for (XmlDocument* open : editing && isFile ? editing->Documents() : std::vector<XmlDocument*>()) {
+		if (open->Origin() == XmlOrigin::Loose && !open->SourcePath().empty()
+			&& std::filesystem::equivalent(std::filesystem::u8path(open->SourcePath()), std::filesystem::u8path(filePath), ec))
+			held = open;
+	}
+
+	if (held) {
+		source.link = held->XmlPath();
+		source.doc = held;
+		source.from = "editor";
+		source.unsaved = held->IsDirty();
+		source.path = held->Origin() == XmlOrigin::Loose ? held->SourcePath() : std::string();
+		return source;
 	}
 
 	std::unique_ptr<std::istream> stream;
@@ -161,65 +168,40 @@ std::string ProfileName(const XmlDocument& doc, const tinyxml2::XMLElement* prof
 	return profile ? doc.ProfileLabel(profile) : "schema defaults";
 }
 
-// What a chain of defaults gives every property, in "values"; the profile each comes from in "from"
-void AddChainValues(const XmlDocument& doc, const std::vector<const tinyxml2::XMLElement*>& chain, const ElementDesc& desc, bool all, json& values, json* from) {
+// What a chain of defaults gives every property
+json ChainValues(const XmlDocument& doc, const std::vector<const tinyxml2::XMLElement*>& chain, const ElementDesc& desc, bool all) {
+	json values = json::object();
 	for (std::size_t i = 0; i < desc.childCount; i++) {
 		const ChildDesc& child = desc.children[i];
 		const EffectiveValue supplied = doc.ResolveChain(chain, child);
-		if (!supplied.source && !all)
-			continue;
-
-		values[child.name] = ValueJson(doc, supplied.value, supplied.source, child);
-		if (from && supplied.source)
-			(*from)[child.name] = supplied.sourceLabel;
+		if (supplied.source || all)
+			values[child.name] = ValueJson(doc, supplied.value, supplied.source, child);
 	}
+	return values;
 }
 
-// What a bone or constraint is built with. A list is the profile's entries and then the element's own, as the builder
-// appends them. Without "all", properties at their schema default are left out. "inherited" names the default a value
-// comes from only where that isn't the element's profile itself, e.g. what the profile extends.
+// What a bone or constraint is built with. Without "all", properties at their schema default are left out.
+// "inherited" names the default a value comes from only where that isn't the element's profile itself, e.g. what the
+// profile extends.
 json ElementJson(const XmlDocument& doc, const tinyxml2::XMLElement* element, bool all) {
 	const ElementDesc& desc = *FindElement(KindFromName(element->Name()));
-	const std::vector<const tinyxml2::XMLElement*> chain = doc.TemplateChain(element);
-	const std::string profile = ProfileName(doc, chain.empty() ? nullptr : chain.back());
+	const tinyxml2::XMLElement* profileElement = ProfileOf(doc, element);
+	const std::string profile = ProfileName(doc, profileElement);
 
 	json values = json::object();
 	json inherited = json::object();
 	json own = json::array();
 	for (std::size_t i = 0; i < desc.childCount; i++) {
 		const ChildDesc& child = desc.children[i];
-		const bool explicitHere = doc.HasValue(element, child);
-		const EffectiveValue supplied = doc.ResolveChain(chain, child);
+		const EffectiveValue effective = doc.ResolveEffective(element, child);
+		if (!effective.source && !all)
+			continue;
 
-		if (explicitHere)
+		values[child.name] = ValueJson(doc, effective.value, effective.source, child);
+		if (effective.explicitHere)
 			own.push_back(child.name);
-
-		if (child.mult == Multiplicity::List) {
-			std::vector<std::string> items;
-			if (const auto* list = std::get_if<std::vector<std::string>>(&supplied.value))
-				items = *list;
-			const ValueVariant ownValue = doc.GetValue(element, child);
-			if (const auto* list = std::get_if<std::vector<std::string>>(&ownValue))
-				items.insert(items.end(), list->begin(), list->end());
-
-			if (!items.empty() || all)
-				values[child.name] = items;
-			if (supplied.source && supplied.sourceLabel != profile)
-				inherited[child.name] = supplied.sourceLabel;
-			continue;
-		}
-
-		if (explicitHere) {
-			values[child.name] = ValueJson(doc, doc.GetValue(element, child), element, child);
-			continue;
-		}
-
-		if (!supplied.source && !all)
-			continue;
-
-		values[child.name] = ValueJson(doc, supplied.value, supplied.source, child);
-		if (supplied.source && supplied.sourceLabel != profile)
-			inherited[child.name] = supplied.sourceLabel;
+		else if (effective.source && effective.source != profileElement)
+			inherited[child.name] = effective.sourceLabel;
 	}
 
 	json entry = {{"profile", profile}, {"values", values}};
@@ -230,28 +212,14 @@ json ElementJson(const XmlDocument& doc, const tinyxml2::XMLElement* element, bo
 	return entry;
 }
 
-// Every element of the system in reading order, descending into constraint groups
-void ForEachInReadingOrder(const XmlDocument& doc, const std::function<void(tinyxml2::XMLElement*)>& visit) {
-	std::function<void(tinyxml2::XMLElement*)> walk = [&](tinyxml2::XMLElement* parent) {
-		for (tinyxml2::XMLElement* child = parent->FirstChildElement(); child; child = child->NextSiblingElement()) {
-			visit(child);
-			if (KindFromName(child->Name()) == ElementKind::ConstraintGroup)
-				walk(child);
-		}
-	};
-	walk(doc.Root());
-}
-
-bool IsConstraint(ElementKind kind) {
-	return kind == ElementKind::GenericConstraint || kind == ElementKind::StiffSpringConstraint || kind == ElementKind::ConeTwistConstraint;
-}
-
 // The bones a loaded shape is skinned to, by its name in any case
-std::vector<std::string> SkinBones(OutfitProject& project, const std::string& shapeName) {
-	for (auto& [name, bones] : project.GetWorkAnim()->shapeBones)
-		if (StringsEqualInsens(name.c_str(), shapeName.c_str()))
-			return bones;
-	return {};
+SkinBones ProjectSkinBones(OutfitProject& project) {
+	return [&project](const std::string& shapeName) {
+		for (auto& [name, bones] : project.GetWorkAnim()->shapeBones)
+			if (StringsEqualInsens(name.c_str(), shapeName.c_str()))
+				return bones;
+		return std::vector<std::string>();
+	};
 }
 
 bool Wanted(const std::set<std::string>& filter, const std::string& name) {
@@ -289,8 +257,7 @@ McpToolResult InspectPhysicsXml(OutfitStudioMcp& mcp, const json& args) {
 			std::vector<const tinyxml2::XMLElement*> chain = doc.TemplateChain(profile);
 			chain.push_back(profile);
 
-			json values = json::object();
-			AddChainValues(doc, chain, *FindElement(InstanceKindOf(KindFromName(profile->Name()))), all, values, nullptr);
+			const json values = ChainValues(doc, chain, *FindElement(InstanceKindOf(KindFromName(profile->Name()))), all);
 
 			json users = json::array();
 			for (const tinyxml2::XMLElement* user : ProfileUsers(doc, profile))
@@ -302,55 +269,43 @@ McpToolResult InspectPhysicsXml(OutfitStudioMcp& mcp, const json& args) {
 			profiles.push_back(entry);
 		}
 
-		// The builder reads the file top to bottom: a <bone> declares a bone, a skinned shape creates the bones it is
-		// weighted to and a constraint the two it joins from the ambient bone-default at that line, unless they
-		// exist. A <bone> after the bone was created that way is skipped.
-		json bones = json::array();
-		json constraints = json::array();
-		json implicitBones = json::array();
-		json ignoredBones = json::array();
-		std::set<std::string> exists;
-
-		auto createImplicit = [&](const std::string& name, const tinyxml2::XMLElement* by) {
-			if (name.empty() || !exists.insert(ToLower(name)).second || !Wanted(filter, name))
-				return;
-
-			const std::vector<const tinyxml2::XMLElement*> chain = doc.TemplateChain(ElementKind::BoneDefault, by, std::string());
-			json values = json::object();
-			json from = json::object();
-			AddChainValues(doc, chain, *FindElement(ElementKind::Bone), all, values, &from);
-			implicitBones.push_back({{"name", name},
-									 {"createdBy", KindName(by) + " " + XmlDocument::DisplayName(by)},
-									 {"profile", ProfileName(doc, chain.empty() ? nullptr : chain.back())},
-									 {"values", values}});
+		const BoneOrigins origins = TraceBones(doc, ProjectSkinBones(project));
+		auto ignored = [&origins](const tinyxml2::XMLElement* element) {
+			return std::find(origins.ignoredBoneElements.begin(), origins.ignoredBoneElements.end(), element) != origins.ignoredBoneElements.end();
 		};
 
+		json implicitBones = json::array();
+		for (const BoneOrigins::Implicit& bone : origins.implicitBones) {
+			if (!Wanted(filter, bone.name))
+				continue;
+
+			const std::vector<const tinyxml2::XMLElement*> chain = doc.TemplateChain(ElementKind::BoneDefault, bone.createdBy, std::string());
+			implicitBones.push_back({{"name", bone.name},
+									 {"createdBy", KindName(bone.createdBy) + " " + XmlDocument::DisplayName(bone.createdBy)},
+									 {"profile", ProfileName(doc, chain.empty() ? nullptr : chain.back())},
+									 {"values", ChainValues(doc, chain, *FindElement(ElementKind::Bone), all)}});
+		}
+
+		json ignoredBones = json::array();
+		for (const tinyxml2::XMLElement* element : origins.ignoredBoneElements)
+			if (Wanted(filter, XmlDocument::DisplayName(element)))
+				ignoredBones.push_back(XmlDocument::DisplayName(element));
+
+		json bones = json::array();
+		json constraints = json::array();
 		ForEachInReadingOrder(doc, [&](tinyxml2::XMLElement* element) {
 			const ElementKind kind = KindFromName(element->Name());
-			const std::string name = element->Attribute("name") ? element->Attribute("name") : "";
-
 			if (kind == ElementKind::Bone) {
-				if (!exists.insert(ToLower(name)).second) {
-					if (Wanted(filter, name))
-						ignoredBones.push_back(name);
-					return;
-				}
-				if (Wanted(filter, name)) {
+				const std::string name = XmlDocument::DisplayName(element);
+				if (!ignored(element) && Wanted(filter, name)) {
 					json entry = ElementJson(doc, element, all);
 					entry["name"] = name;
 					bones.push_back(entry);
 				}
 			}
-			else if (kind == ElementKind::PerVertexShape || kind == ElementKind::PerTriangleShape) {
-				for (auto& bone : SkinBones(project, name))
-					createImplicit(bone, element);
-			}
-			else if (IsConstraint(kind)) {
+			else if (IsConstraintKind(kind)) {
 				const std::string bodyA = element->Attribute("bodyA") ? element->Attribute("bodyA") : "";
 				const std::string bodyB = element->Attribute("bodyB") ? element->Attribute("bodyB") : "";
-				createImplicit(bodyA, element);
-				createImplicit(bodyB, element);
-
 				if (Wanted(filter, bodyA) || Wanted(filter, bodyB)) {
 					json entry = ElementJson(doc, element, all);
 					entry["kind"] = KindName(element);
@@ -507,7 +462,7 @@ void AddPhysicsXmlTools(OutfitStudioMcp& mcp) {
 		"profile (the *-default it starts from) and its values, which of them it sets itself (own), and for values from "
 		"another default than the profile (what it extends) which one (inherited). Resolves what is easy to misread in the XML: an unnamed *-default applies to what "
 		"follows it, a named one is a snapshot of what it extends when declared, template names match in any case, and "
-		"list entries (can-collide-with-bone) add up along the chain. Also lists the bones the loaded shapes' skins and "
+		"a can-collide-with-bone or no-collide-with-bone entry replaces both collide lists a bone inherits. Also lists the bones the loaded shapes' skins and "
 		"the constraints create without a <bone> element (implicitBones, from the bone-default at that line), <bone> "
 		"elements the builder skips because the bone exists by then (ignoredBoneElements), each profile with what uses "
 		"it, the diagnostics, and needsTidy when defaults depend on their position (see tidy_physics_xml). Reads what "

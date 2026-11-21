@@ -927,6 +927,31 @@ TEST_CASE("Collision filtering answers with the rule the simulation uses", "[Phy
 	}
 }
 
+TEST_CASE("An edit that is taken back leaves the one before it alone", "[PhysicsXml][dirty]") {
+	XmlDocument doc;
+	std::string error;
+	REQUIRE(doc.LoadFromString("<system><bone name=\"A\"/></system>", error));
+	tinyxml2::XMLElement* bone = doc.Root()->FirstChildElement("bone");
+	const ChildDesc* mass = FindElement(ElementKind::Bone)->Child("mass");
+	const std::string original = doc.Serialize();
+
+	REQUIRE(doc.BeginEdit("mass", doc.PathOf(bone), mass));
+	REQUIRE(doc.SetValue(bone, *mass, ValueVariant(2.0f)));
+	const std::string edited = doc.Serialize();
+
+	// Folded into the step above, then taken back: the first edit stays, and stays undoable
+	const std::string before = doc.Serialize();
+	const bool added = doc.BeginEdit("mass", doc.PathOf(bone), mass);
+	REQUIRE_FALSE(added);
+	REQUIRE(doc.SetValue(bone, *mass, ValueVariant(3.0f)));
+	doc.AbandonEdit(before, added);
+
+	REQUIRE(doc.Serialize() == edited);
+	REQUIRE_FALSE(doc.CanRedo());
+	REQUIRE(doc.Undo());
+	REQUIRE(doc.Serialize() == original);
+}
+
 TEST_CASE("A document that is edited back to where it started is not dirty", "[PhysicsXml][dirty]") {
 	XmlDocument doc = LoadFixture("roundtrip.xml");
 	REQUIRE_FALSE(doc.IsDirty());

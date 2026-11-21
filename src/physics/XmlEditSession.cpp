@@ -51,8 +51,10 @@ std::unique_ptr<std::istream> XmlEditSession::ResolveStream(const std::string& x
 	if (outError)
 		outError->clear();
 
-	if (XmlDocument* doc = Find(xmlPath))
+	if (XmlDocument* doc = Find(xmlPath)) {
+		RefreshFromFile(*doc);
 		return std::make_unique<std::istringstream>(doc->Serialize());
+	}
 
 	if (!sourceResolver) {
 		if (outError)
@@ -85,7 +87,8 @@ std::unique_ptr<std::istream> XmlEditSession::ResolveStream(const std::string& x
 		return std::make_unique<std::istringstream>(std::move(text));
 	}
 
-	doc->SetSource(xmlPath, foundAt.path, foundAt.inArchive ? XmlOrigin::Archive : XmlOrigin::Loose);
+	// The path inside an archive is no file to write back to
+	doc->SetSource(xmlPath, foundAt.inArchive ? std::string() : foundAt.path, foundAt.inArchive ? XmlOrigin::Archive : XmlOrigin::Loose);
 
 	// Serialize before the document moves into the store, so the stream does
 	// not depend on where it landed.
@@ -95,8 +98,34 @@ std::unique_ptr<std::istream> XmlEditSession::ResolveStream(const std::string& x
 	entry.key = NormalizeXmlPath(xmlPath);
 	entry.doc = std::move(doc);
 	documents.push_back(std::move(entry));
+	++revision;
 
 	return std::make_unique<std::istringstream>(std::move(serialized));
+}
+
+void XmlEditSession::RefreshFromFile(XmlDocument& doc) {
+	// Edits that aren't saved are the editor's, and the other origins have no file of their own to change
+	if (doc.IsDirty() || doc.Origin() != XmlOrigin::Loose || doc.SourcePath().empty())
+		return;
+
+	auto stream = GameDataStream::OpenLoose(doc.SourcePath());
+	if (!stream)
+		return;
+
+	std::ostringstream contents;
+	contents << stream->rdbuf();
+
+	XmlDocument fresh;
+	std::string error;
+	if (!fresh.LoadFromString(contents.str(), error) || fresh.Serialize() == doc.Serialize())
+		return;
+
+	// Changed on disk since it was read, by something other than this editor
+	const std::string xmlPath = doc.XmlPath();
+	const std::string sourcePath = doc.SourcePath();
+	doc.LoadFromString(contents.str(), error);
+	doc.SetSource(xmlPath, sourcePath, XmlOrigin::Loose);
+	++revision;
 }
 
 XmlStreamResolver XmlEditSession::Resolver() {
@@ -104,8 +133,10 @@ XmlStreamResolver XmlEditSession::Resolver() {
 }
 
 XmlDocument* XmlEditSession::Open(const std::string& xmlPath, std::string& outError) {
-	if (XmlDocument* existing = Find(xmlPath))
+	if (XmlDocument* existing = Find(xmlPath)) {
+		RefreshFromFile(*existing);
 		return existing;
+	}
 
 	ResolveStream(xmlPath, &outError);
 
@@ -126,6 +157,7 @@ XmlDocument* XmlEditSession::Create(const std::string& xmlPath) {
 	entry.key = NormalizeXmlPath(xmlPath);
 	entry.doc = std::move(doc);
 	documents.push_back(std::move(entry));
+	++revision;
 
 	return documents.back().doc.get();
 }
@@ -138,6 +170,7 @@ bool XmlEditSession::Close(const std::string& xmlPath) {
 			continue;
 
 		documents.erase(it);
+		++revision;
 		return true;
 	}
 
@@ -147,6 +180,7 @@ bool XmlEditSession::Close(const std::string& xmlPath) {
 void XmlEditSession::Clear() {
 	documents.clear();
 	warnings.clear();
+	++revision;
 }
 
 std::vector<XmlDocument*> XmlEditSession::Documents() {

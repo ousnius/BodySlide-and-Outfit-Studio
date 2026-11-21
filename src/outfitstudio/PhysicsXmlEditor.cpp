@@ -8,11 +8,14 @@ See the included LICENSE file
 #include "PhysicsPreview.h"
 #include "ShapeTreeItems.h"
 #include "GLPanel.h"
+#include "physics/XmlProfiles.h"
 #include "project/OutfitProject.h"
+#include "utils/PlatformUtil.h"
 #include "utils/StringStuff.h"
 #include "ui/outfitstudio/PhysicsEditorDialog.h"
 #include "utils/ConfigurationManager.h"
 
+#include <algorithm>
 #include <fstream>
 #include <sstream>
 #include <tinyxml2.h>
@@ -104,7 +107,10 @@ void PhysicsXmlEditor::RefreshList() {
 	if (btnEdit)
 		btnEdit->Enable(!session.Empty());
 
-	RefreshEditor();
+	// Only when documents came, went or were read again: this runs on every rebuild of the preview, and rebuilding
+	// the editor's tree would throw away what is being edited in it
+	if (session.Revision() != shownRevision)
+		RefreshEditor();
 }
 
 void PhysicsXmlEditor::RefreshLinks() {
@@ -124,17 +130,14 @@ void PhysicsXmlEditor::Shutdown() {
 	session.Clear();
 }
 
-void PhysicsXmlEditor::ReloadDocument(const std::string& xmlPath) {
-	if (XmlDocument* doc = session.Find(xmlPath))
-		if (!doc->IsDirty())
-			session.Close(xmlPath);
-
-	// Opens it again if the loaded meshes link it
+void PhysicsXmlEditor::FilesChanged() {
+	// Opening the linked documents reads a changed file again, unless the editor has unsaved edits of it
 	RefreshList();
 	frame.physicsPreview->RequestRebuild();
 }
 
 void PhysicsXmlEditor::RefreshEditor() {
+	shownRevision = session.Revision();
 	if (editor)
 		editor->RefreshDocuments();
 }
@@ -214,8 +217,9 @@ void PhysicsXmlEditor::HighlightBones(const std::set<std::string>& boneNames) {
 bool PhysicsXmlEditor::PropertyChanged(XmlDocument& doc, tinyxml2::XMLElement* element, const ChildDesc& desc) {
 	bool patched = false;
 
-	// The schema says what is meant to be patchable, the controller what actually could be
-	if (element && desc.patch == PatchKind::Hot) {
+	// The schema says what is meant to be patchable, the controller what actually could be. A <bone> the builder
+	// skips has no live bone of its own: the one of that name came from elsewhere.
+	if (element && desc.patch == PatchKind::Hot && !IsIgnoredBoneElement(doc, element)) {
 		PatchRequest request;
 		request.xmlPath = doc.XmlPath();
 		request.kind = KindFromName(element->Name());
@@ -334,8 +338,9 @@ bool PhysicsXmlEditor::Export(XmlDocument& doc) {
 }
 
 bool PhysicsXmlEditor::Import(XmlDocument& doc, const wxString& path) {
-	std::ifstream stream(std::string(path.ToUTF8()), std::ios::binary);
-	if (!stream.good()) {
+	std::fstream stream;
+	PlatformUtil::OpenFileStream(stream, std::string(path.ToUTF8()), std::ios::in | std::ios::binary);
+	if (!stream.is_open()) {
 		wxMessageBox(wxString::Format(_("Could not read '%s'."), path), _("Import physics XML"), wxICON_ERROR);
 		return false;
 	}
@@ -344,11 +349,12 @@ bool PhysicsXmlEditor::Import(XmlDocument& doc, const wxString& path) {
 	contents << stream.rdbuf();
 
 	// One undo step like any other edit: importing over the wrong document is what undo is for
-	doc.BeginEdit("import");
+	const std::string before = doc.Serialize();
+	const bool added = doc.BeginEdit("import");
 
 	std::string error;
 	if (!doc.ReplaceContent(contents.str(), error)) {
-		doc.Undo();
+		doc.AbandonEdit(before, added);
 		wxMessageBox(wxString::Format(_("'%s' is not a physics XML this editor can read:\n\n%s"), path, wxString::FromUTF8(error)),
 					 _("Import physics XML"),
 					 wxICON_ERROR);
@@ -479,9 +485,23 @@ std::vector<std::string> PhysicsXmlEditor::ShapeBoneNames(const std::string& sha
 	if (!frame.project)
 		return {};
 
-	auto& shapeBones = frame.project->GetWorkAnim()->shapeBones;
-	auto bones = shapeBones.find(shapeName);
-	return bones != shapeBones.end() ? bones->second : std::vector<std::string>();
+	// The XML names a shape in any case
+	for (auto& [name, bones] : frame.project->GetWorkAnim()->shapeBones)
+		if (StringsEqualInsens(name.c_str(), shapeName.c_str()))
+			return bones;
+	return {};
+}
+
+SkinBones PhysicsXmlEditor::SkinBoneLookup() const {
+	return [this](const std::string& shapeName) { return ShapeBoneNames(shapeName); };
+}
+
+bool PhysicsXmlEditor::IsIgnoredBoneElement(const XmlDocument& doc, const tinyxml2::XMLElement* element) const {
+	if (KindFromName(element->Name()) != ElementKind::Bone)
+		return false;
+
+	const auto ignored = TraceBones(doc, SkinBoneLookup()).ignoredBoneElements;
+	return std::find(ignored.begin(), ignored.end(), element) != ignored.end();
 }
 
 ValidationContext PhysicsXmlEditor::ValidationInputs() const {
