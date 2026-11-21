@@ -112,6 +112,7 @@ OutfitStudioMcp::OutfitStudioMcp(IStudioSession& inSession)
 	AddTextureTools(*this);
 	AddGameTools(*this);
 	AddPhysicsTools(*this);
+	AddPhysicsXmlTools(*this);
 	AddGuideTools(*this);
 }
 

@@ -31,6 +31,10 @@ namespace nifly {
 class NiShape;
 }
 
+namespace Physics {
+class XmlEditSession;
+}
+
 // Overlays of the view that aren't shapes
 enum class ViewOverlay { Bones, Nodes, Floor };
 
@@ -154,4 +158,10 @@ public:
 	virtual bool FrameBone(const std::string& boneName, float minWeight = 0.1f) = 0;
 	virtual bool IsOverlayShown(ViewOverlay overlay) = 0;
 	virtual void ShowOverlay(ViewOverlay overlay, bool show) = 0;
+
+	// Physics XMLs
+	// The ones the physics editor holds open, edits included. Null when there is none.
+	virtual Physics::XmlEditSession* PhysicsXmlSession() = 0;
+	// One was rewritten on disk: whatever holds it reads it again, and the physics preview rebuilds
+	virtual void PhysicsXmlChanged(const std::string& xmlPath) = 0;
 };

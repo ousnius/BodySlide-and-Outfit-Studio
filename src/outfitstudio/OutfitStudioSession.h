@@ -105,6 +105,9 @@ public:
 	bool IsOverlayShown(ViewOverlay overlay) override;
 	void ShowOverlay(ViewOverlay overlay, bool show) override;
 
+	Physics::XmlEditSession* PhysicsXmlSession() override;
+	void PhysicsXmlChanged(const std::string& xmlPath) override;
+
 private:
 	OutfitStudioFrame& frame;
 };

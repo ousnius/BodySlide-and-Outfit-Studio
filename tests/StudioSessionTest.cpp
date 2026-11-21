@@ -12,6 +12,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <filesystem>
+#include <fstream>
 #include <map>
 #include <memory>
 #include <random>
@@ -241,6 +242,8 @@ public:
 	bool FrameBone(const std::string&, float = 0.1f) override { return false; }
 	bool IsOverlayShown(ViewOverlay) override { return false; }
 	void ShowOverlay(ViewOverlay, bool) override {}
+	Physics::XmlEditSession* PhysicsXmlSession() override { return nullptr; }
+	void PhysicsXmlChanged(const std::string&) override {}
 };
 
 // A session with a body grid as the reference, with a "Grow" slider, and a skirt grid above it
@@ -289,6 +292,69 @@ TEST_CASE("Automation steps run on a session without a window", "[StudioSession]
 	deleteSlider.deleteSliderNames = {"Grow"};
 	REQUIRE(runner.RunStep(deleteSlider) == 0);
 	CHECK(f.session.project.SliderCount() == 0);
+}
+
+TEST_CASE("MCP tools read and tidy physics XMLs", "[StudioSession][PhysicsXml]") {
+	SessionFixture f;
+	OutfitStudioMcp mcp(f.session);
+
+	auto write = [&](const std::string& name, const std::string& xml) {
+		const std::filesystem::path path = f.folder.path / name;
+		std::ofstream(path, std::ios::binary) << xml;
+		return path.u8string();
+	};
+
+	// The constraint creates both its bones from the first default, so the later <bone> for one of them is skipped
+	const std::string hair = write("hair.xml", R"(<system>
+	<bone-default><mass>1</mass></bone-default>
+	<generic-constraint bodyA="Hair 1" bodyB="NPC Head [Head]"/>
+	<bone name="Hair 1"><mass>2</mass></bone>
+	<bone-default><mass>3</mass></bone-default>
+	<bone name="Hair 2"/>
+	<per-vertex-shape name="Hair"><tag>hair</tag><no-collide-with-tag>hair</no-collide-with-tag></per-vertex-shape>
+	<per-triangle-shape name="Head"><tag>head</tag></per-triangle-shape>
+</system>)");
+
+	McpToolResult inspect = mcp.CallTool("inspect_physics_xml", {{"xml", json::array({hair})}});
+	REQUIRE_FALSE(inspect.isError);
+	const json& file = inspect.data["files"][0];
+	CHECK(file["needsTidy"] == true);
+	CHECK(file["ignoredBoneElements"] == json::array({"Hair 1"}));
+	REQUIRE(file["implicitBones"].size() == 2);
+	CHECK(file["implicitBones"][0]["name"] == "Hair 1");
+	CHECK(file["implicitBones"][0]["values"]["mass"] == 1.0f);
+	REQUIRE(file["bones"].size() == 1);
+	CHECK(file["bones"][0]["name"] == "Hair 2");
+	CHECK(file["bones"][0]["profile"] == "Default 2");
+	CHECK(file["bones"][0]["values"]["mass"] == 3.0f);
+
+	McpToolResult collisions = mcp.CallTool("physics_collisions", {{"xml", json::array({hair})}});
+	REQUIRE_FALSE(collisions.isError);
+	REQUIRE(collisions.data["pairs"].size() == 1);
+	CHECK(collisions.data["pairs"][0]["collides"] == true);
+
+	// The shapes create their bones from the second default, the constraint from the first
+	McpToolResult refused = mcp.CallTool("tidy_physics_xml", {{"xml", hair}, {"overwrite", true}});
+	REQUIRE_FALSE(refused.isError);
+	CHECK(refused.data["ok"] == false);
+
+	const std::string simple = write("simple.xml", R"(<system>
+	<bone name="Root"/>
+	<bone-default><mass>1</mass></bone-default>
+	<bone name="Tip"/>
+</system>)");
+	CHECK(mcp.CallTool("tidy_physics_xml", {{"xml", simple}}).isError);
+
+	McpToolResult tidied = mcp.CallTool("tidy_physics_xml", {{"xml", simple}, {"overwrite", true}});
+	REQUIRE_FALSE(tidied.isError);
+	CHECK(tidied.data["ok"] == true);
+
+	McpToolResult after = mcp.CallTool("inspect_physics_xml", {{"xml", json::array({simple})}});
+	REQUIRE_FALSE(after.isError);
+	const json& tidiedFile = after.data["files"][0];
+	CHECK_FALSE(tidiedFile.contains("needsTidy"));
+	CHECK(tidiedFile["bones"][0]["profile"] == "Schema defaults");
+	CHECK(tidiedFile["bones"][1]["values"]["mass"] == 1.0f);
 }
 
 TEST_CASE("MCP tools run on a session without a window", "[StudioSession]") {

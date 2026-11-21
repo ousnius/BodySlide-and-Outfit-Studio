@@ -9,6 +9,7 @@ See the included LICENSE file
 #include "AnimationPlayer.h"
 #include "OutfitStudioFrame.h"
 #include "ShapeTreeItems.h"
+#include "utils/StringStuff.h"
 
 #include <cmath>
 #include <cstdlib>
@@ -178,6 +179,22 @@ void wxGLPanel::ShowBones(bool show) {
 	gls.RenderOneFrame();
 }
 
+void wxGLPanel::SetPhysicsBones(std::set<std::string> lowerCaseNames) {
+	if (lowerCaseNames == physicsBones)
+		return;
+
+	physicsBones = std::move(lowerCaseNames);
+
+	// The bones drawn depend on it, not only their colors
+	UpdateBones();
+	Render();
+}
+
+bool wxGLPanel::IsPhysicsBone(const std::string& boneName) const {
+	// Physics XMLs name bones case-insensitively
+	return !physicsBones.empty() && physicsBones.count(ToLower(boneName)) != 0;
+}
+
 void wxGLPanel::UpdateBones() {
 	for (auto& m : bonesPoints)
 		gls.DeleteOverlay(m);
@@ -199,12 +216,13 @@ void wxGLPanel::UpdateBones() {
 			bool childBonesInSelection = addChildBones(cb);
 
 			if (!cb->boneName.empty()) {
-				bool boneInSelection = false;
+				// The bones the physics editor has selected count as selected too
+				bool boneInSelection = IsPhysicsBone(cb->boneName);
 				for (auto& si : os->GetSelectedItems()) {
-					if (workAnim->GetShapeBoneIndex(si->GetShape()->name.get(), cb->boneName) != -1) {
-						boneInSelection = true;
+					if (boneInSelection)
 						break;
-					}
+
+					boneInSelection = workAnim->GetShapeBoneIndex(si->GetShape()->name.get(), cb->boneName) != -1;
 				}
 
 				if (boneInSelection || childBonesInSelection) {
@@ -294,6 +312,7 @@ void wxGLPanel::UpdateNodeColors() {
 	}
 
 	// Hovered bones are yellow, or orange when also active, and drawn on top.
+	// The bones selected in the physics editor are cyan.
 	// Connector bones are grey unless selected.
 	for (auto& m : bonesPoints) {
 		auto nodeName = m->shapeName.substr(3, m->shapeName.length() - 3);
@@ -301,6 +320,10 @@ void wxGLPanel::UpdateNodeColors() {
 		const bool selected = !active && os->IsBoneSelected(nodeName);
 		if (!hoverBone.empty() && nodeName == hoverBone) {
 			m->color = active ? Vector3(1.0f, 0.5f, 0.0f) : Vector3(1.0f, 1.0f, 0.0f);
+			m->overlayLayer = OverlayLayer::NodeSelection;
+		}
+		else if (IsPhysicsBone(nodeName)) {
+			m->color = Vector3(0.0f, 0.85f, 1.0f);
 			m->overlayLayer = OverlayLayer::NodeSelection;
 		}
 		else if (active) {
@@ -327,6 +350,10 @@ void wxGLPanel::UpdateNodeColors() {
 		const bool selected = !active && os->IsBoneSelected(nodeName);
 		if (!hoverBone.empty() && nodeName == hoverBone) {
 			m->color = active ? Vector3(0.9f, 0.45f, 0.0f) : Vector3(0.9f, 0.9f, 0.0f);
+			m->overlayLayer = OverlayLayer::NodeSelection;
+		}
+		else if (IsPhysicsBone(nodeName)) {
+			m->color = Vector3(0.0f, 0.6f, 0.75f);
 			m->overlayLayer = OverlayLayer::NodeSelection;
 		}
 		else if (active) {

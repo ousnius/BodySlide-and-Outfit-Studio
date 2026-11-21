@@ -421,6 +421,7 @@
     <None Include="res\xrc\ConvertBodyReference.xrc" />
     <None Include="res\xrc\Automation.xrc" />
     <None Include="res\xrc\EditUV.xrc" />
+    <None Include="res\xrc\PhysicsEditor.xrc" />
     <None Include="res\xrc\ImportDialog.xrc" />
     <None Include="res\xrc\OutfitStudio.xrc" />
     <None Include="res\xrc\Project.xrc" />
@@ -868,6 +869,11 @@
     <ClInclude Include="src\physics\DebugDraw.h" />
     <ClInclude Include="src\physics\PumpClock.h" />
     <ClInclude Include="src\physics\SystemBuilder.h" />
+    <ClInclude Include="src\physics\LivePatch.h" />
+    <ClInclude Include="src\physics\XmlDocument.h" />
+    <ClInclude Include="src\physics\XmlEditSession.h" />
+    <ClInclude Include="src\physics\XmlProfiles.h" />
+    <ClInclude Include="src\physics\XmlSchema.h" />
     <ClInclude Include="src\physics\hdt\XmlReader.h" />
     <ClInclude Include="src\physics\hdt\hdtAABB.h" />
     <ClInclude Include="src\physics\hdt\hdtBone.h" />
@@ -894,6 +900,7 @@
     <ClInclude Include="src\components\Automation.h" />
     <ClInclude Include="src\components\AutomationJson.h" />
     <ClInclude Include="src\ui\outfitstudio\EditUV.h" />
+    <ClInclude Include="src\ui\outfitstudio\PhysicsEditorDialog.h" />
     <ClInclude Include="src\ui\outfitstudio\FBXImportDialog.h" />
     <ClInclude Include="src\ui\GroupManager.h" />
     <ClInclude Include="src\ui\outfitstudio\ObjImportDialog.h" />
@@ -915,6 +922,7 @@
     <ClInclude Include="src\outfitstudio\GLPanel.h" />
     <ClInclude Include="src\outfitstudio\AnimationPlayer.h" />
     <ClInclude Include="src\outfitstudio\PhysicsPreview.h" />
+    <ClInclude Include="src\outfitstudio\PhysicsXmlEditor.h" />
     <ClInclude Include="src\outfitstudio\PosePanel.h" />
     <ClInclude Include="src\outfitstudio\SegmentPartitionEditor.h" />
     <ClInclude Include="src\outfitstudio\DropTargets.h" />
@@ -1046,6 +1054,11 @@
     <ClCompile Include="src\physics\Controller.cpp" />
     <ClCompile Include="src\physics\DebugDraw.cpp" />
     <ClCompile Include="src\physics\SystemBuilder.cpp" />
+    <ClCompile Include="src\physics\LivePatch.cpp" />
+    <ClCompile Include="src\physics\XmlDocument.cpp" />
+    <ClCompile Include="src\physics\XmlEditSession.cpp" />
+    <ClCompile Include="src\physics\XmlProfiles.cpp" />
+    <ClCompile Include="src\physics\XmlSchema.cpp" />
     <ClCompile Include="src\physics\hdt\XmlReader.cpp" />
     <ClCompile Include="src\physics\hdt\hdtBoneScaleConstraint.cpp" />
     <ClCompile Include="src\physics\hdt\hdtCollider.cpp" />
@@ -1072,6 +1085,7 @@
     <ClCompile Include="src\components\Automation.cpp" />
     <ClCompile Include="src\components\AutomationJson.cpp" />
     <ClCompile Include="src\ui\outfitstudio\EditUV.cpp" />
+    <ClCompile Include="src\ui\outfitstudio\PhysicsEditorDialog.cpp" />
     <ClCompile Include="src\ui\outfitstudio\FBXImportDialog.cpp" />
     <ClCompile Include="src\ui\GroupManager.cpp" />
     <ClCompile Include="src\ui\outfitstudio\ObjImportDialog.cpp" />
@@ -1111,6 +1125,7 @@
     <ClCompile Include="src\outfitstudio\FrameProjectFile.cpp" />
     <ClCompile Include="src\outfitstudio\PosePanel.cpp" />
     <ClCompile Include="src\outfitstudio\PhysicsPreview.cpp" />
+    <ClCompile Include="src\outfitstudio\PhysicsXmlEditor.cpp" />
     <ClCompile Include="src\outfitstudio\FramePack.cpp" />
     <ClCompile Include="src\outfitstudio\FrameMasks.cpp" />
     <ClCompile Include="src\outfitstudio\FrameImportExport.cpp" />
@@ -1137,6 +1152,7 @@
     <ClCompile Include="src\mcp\McpToolsMeasure.cpp" />
     <ClCompile Include="src\mcp\McpToolsQuality.cpp" />
     <ClCompile Include="src\mcp\McpToolsPhysics.cpp" />
+    <ClCompile Include="src\mcp\McpToolsPhysicsXml.cpp" />
     <ClCompile Include="src\mcp\McpToolsShapes.cpp" />
     <ClCompile Include="src\mcp\McpToolsSliderFiles.cpp" />
     <ClCompile Include="src\mcp\McpToolsSliders.cpp" />

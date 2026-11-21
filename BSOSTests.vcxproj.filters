@@ -197,6 +197,9 @@
     <ClCompile Include="src\mcp\McpToolsPhysics.cpp">
       <Filter>MCP</Filter>
     </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsPhysicsXml.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
     <ClCompile Include="src\mcp\McpToolsProject.cpp">
       <Filter>MCP</Filter>
     </ClCompile>
@@ -228,6 +231,21 @@
       <Filter>Physics</Filter>
     </ClCompile>
     <ClCompile Include="src\physics\SystemBuilder.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\LivePatch.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\XmlDocument.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\XmlEditSession.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\XmlProfiles.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\XmlSchema.cpp">
       <Filter>Physics</Filter>
     </ClCompile>
     <ClCompile Include="src\physics\hdt\XmlReader.cpp">
@@ -396,6 +414,15 @@
       <Filter>Tests</Filter>
     </ClCompile>
     <ClCompile Include="tests\PhysicsXmlFileTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\PhysicsXmlProfilesTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\PhysicsEditSessionTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\PhysicsXmlDocumentTest.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
     <ClCompile Include="tests\MaskTransferTest.cpp">

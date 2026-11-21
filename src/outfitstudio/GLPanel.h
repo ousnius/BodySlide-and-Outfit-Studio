@@ -163,6 +163,9 @@ public:
 	void ShowBones(bool show = true);
 	bool IsBonesMode() { return bonesMode; }
 	void UpdateBones();
+	// The bones the physics editor has selected, by lower case name: drawn whether or not the selected shapes use
+	// them, and highlighted. Empty for none.
+	void SetPhysicsBones(std::set<std::string> lowerCaseNames);
 
 	void ShowFloor(bool show = true);
 	void UpdateFloor();
@@ -544,6 +547,9 @@ private:
 	// Drawn bones that the selected shapes don't use, shown dimmed only to
 	// connect the bones below them to the hierarchy
 	std::set<std::string> connectorBones;
+	// See SetPhysicsBones
+	std::set<std::string> physicsBones;
+	bool IsPhysicsBone(const std::string& boneName) const;
 	std::vector<Mesh*> floorMeshes;
 
 	wxDECLARE_EVENT_TABLE();

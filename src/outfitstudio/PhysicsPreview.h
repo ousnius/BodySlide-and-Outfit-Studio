@@ -28,6 +28,8 @@ class wxTextCtrl;
 namespace Physics {
 class Controller;
 struct GrabTarget;
+struct PatchRequest;
+struct SystemInfo;
 } // namespace Physics
 
 // The physics preview (HDT-SMP) of an Outfit Studio window, with the controls of its physics pane.
@@ -73,6 +75,16 @@ public:
 	// Re-seats the simulated bodies on the current pose, for when the pose jumps
 	void ResetDynamics();
 
+	// The systems the simulation built while it runs, otherwise the ones the loaded meshes link
+	std::vector<Physics::SystemInfo> ListSystems() const;
+	// Writes one edited property of a physics XML into the running simulation, see Controller::PatchProperty.
+	// False when it isn't running or the change needs a rebuild.
+	bool PatchProperty(const Physics::PatchRequest& request);
+	// Rebuilds the running simulation from the edited XMLs a moment from now. Every call restarts the wait, so dragging
+	// a value through many settings rebuilds once at the end. Does nothing while physics isn't running: the next start
+	// reads the edits anyway.
+	void RequestRebuild();
+
 	// Feeds a horizontal camera rotation into the physics preview so cloth
 	// and hair react as if the character turned under a fixed camera. No-op
 	// while physics is not simulating.
@@ -98,6 +110,12 @@ public:
 	void EndGrab();
 
 private:
+	// Builds the systems from the XMLs of the edit session, logging what couldn't be done. Returns how many it built.
+	size_t BuildSystems();
+	// Rebuilds the running simulation, keeping the bones where they are and moving as they are, so a structural edit
+	// doesn't drop the cloth back onto the pose
+	void Rebuild();
+
 	void StartPump();
 	void StopPump();
 	// Puts the grab checkbox in the state a (not) running simulation allows
@@ -125,6 +143,7 @@ private:
 	void OnWindSlider(wxScrollEvent& event);
 	void OnWindDir(wxCommandEvent& event);
 	void OnTimer(wxTimerEvent& event);
+	void OnRebuildTimer(wxTimerEvent& event);
 	void OnIdle(wxIdleEvent& event);
 
 	OutfitStudioFrame& frame;
@@ -148,6 +167,8 @@ private:
 	std::unique_ptr<Physics::Controller> controller;
 	bool available = false;
 	wxTimer timer;
+	// One shot, armed by RequestRebuild
+	wxTimer rebuildTimer;
 	bool running = false;
 	bool pumpActive = false;
 	Physics::PumpClock clock;
