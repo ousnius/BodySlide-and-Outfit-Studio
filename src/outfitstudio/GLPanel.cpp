@@ -330,6 +330,7 @@ void wxGLPanel::Cleanup() {
 	nodesLines.clear();
 	bonesPoints.clear();
 	bonesLines.clear();
+	physicsBones.clear();
 	floorMeshes.clear();
 
 	BVHUpdateQueue.clear();

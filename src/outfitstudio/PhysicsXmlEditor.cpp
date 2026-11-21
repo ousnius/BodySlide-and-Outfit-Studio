@@ -7,7 +7,9 @@ See the included LICENSE file
 #include "OutfitStudioFrame.h"
 #include "PhysicsPreview.h"
 #include "ShapeTreeItems.h"
+#include "GLPanel.h"
 #include "project/OutfitProject.h"
+#include "utils/StringStuff.h"
 #include "ui/outfitstudio/PhysicsEditorDialog.h"
 #include "utils/ConfigurationManager.h"
 
@@ -160,6 +162,13 @@ void PhysicsXmlEditor::OnEdit(wxCommandEvent& WXUNUSED(event)) {
 		}
 
 		editor = dialog;
+
+		// The editor's selection is highlighted on the bones, which have to be shown for that
+		if (!frame.session.IsOverlayShown(ViewOverlay::Bones)) {
+			frame.session.ShowOverlay(ViewOverlay::Bones, true);
+			bonesShownForEditor = true;
+		}
+
 		editor->CenterOnParent();
 		editor->Show();
 	}
@@ -171,6 +180,25 @@ void PhysicsXmlEditor::OnEdit(wxCommandEvent& WXUNUSED(event)) {
 	const std::string xmlPath = SelectedXmlPath();
 	if (!xmlPath.empty())
 		editor->SelectDocument(xmlPath);
+}
+
+void PhysicsXmlEditor::EditorClosed() {
+	editor = nullptr;
+
+	frame.glView->SetPhysicsBones({});
+
+	// Hidden again unless they were shown before or since
+	if (bonesShownForEditor && frame.session.IsOverlayShown(ViewOverlay::Bones))
+		frame.session.ShowOverlay(ViewOverlay::Bones, false);
+	bonesShownForEditor = false;
+}
+
+void PhysicsXmlEditor::HighlightBones(const std::set<std::string>& boneNames) {
+	std::set<std::string> lowerCase;
+	for (auto& name : boneNames)
+		lowerCase.insert(ToLower(name));
+
+	frame.glView->SetPhysicsBones(std::move(lowerCase));
 }
 
 bool PhysicsXmlEditor::PropertyChanged(XmlDocument& doc, tinyxml2::XMLElement* element, const ChildDesc& desc) {
@@ -435,6 +463,15 @@ std::vector<std::string> PhysicsXmlEditor::BoneNames() const {
 				names.push_back(node->name.get());
 
 	return names;
+}
+
+std::vector<std::string> PhysicsXmlEditor::ShapeBoneNames(const std::string& shapeName) const {
+	if (!frame.project)
+		return {};
+
+	auto& shapeBones = frame.project->GetWorkAnim()->shapeBones;
+	auto bones = shapeBones.find(shapeName);
+	return bones != shapeBones.end() ? bones->second : std::vector<std::string>();
 }
 
 ValidationContext PhysicsXmlEditor::ValidationInputs() const {

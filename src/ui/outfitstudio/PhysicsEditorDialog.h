@@ -7,6 +7,7 @@ See the included LICENSE file
 
 #include "physics/XmlDocument.h"
 
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -108,6 +109,14 @@ private:
 	// a NiShape, the document for a collision shape, and every open document for a tag. Editable wherever offered,
 	// so a name none of them knows still round trips.
 	wxArrayString ChoicesFor(Physics::ValueKind kind, const Physics::XmlDocument& doc) const;
+
+	// The bones an element stands for: a bone's own, the two a constraint joins, those of the constraints of a group,
+	// and the ones a skinned shape is skinned to
+	std::set<std::string> BonesOf(const tinyxml2::XMLElement* element) const;
+	// The same for a tree row. A document or heading row stands for everything under it.
+	std::set<std::string> BonesOfItem(const wxTreeItemId& item) const;
+	// Highlights the bones of the selected row in the viewport
+	void HighlightSelection();
 
 	// Every other skinned shape, and whether this one would ever be tested against it. Only for skinned shapes.
 	void ShowCollisions(Physics::XmlDocument* doc, tinyxml2::XMLElement* element);

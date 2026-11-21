@@ -380,6 +380,7 @@ void PhysicsEditorDialog::RefreshDocuments() {
 
 	if (selectedPath.empty()) {
 		ShowNothing(_("Nothing selected"));
+		HighlightSelection();
 		return;
 	}
 
@@ -387,11 +388,13 @@ void PhysicsEditorDialog::RefreshDocuments() {
 	const wxTreeItemId restored = FindTreeItem(selectedPath, selectedNode);
 	if (!restored.IsOk()) {
 		ShowNothing(_("The selected element is no longer in the document"));
+		HighlightSelection();
 		return;
 	}
 
 	tree->SelectItem(restored);
 	tree->EnsureVisible(restored);
+	HighlightSelection();
 }
 
 void PhysicsEditorDialog::SelectDocument(const std::string& xmlPath) {
@@ -623,6 +626,9 @@ void PhysicsEditorDialog::ApplyChange(const wxPGProperty* property, const ChildD
 	// A tag or a collide list changes the collisions page, and almost any edit can raise or clear a diagnostic
 	ShowCollisions(doc, element);
 	ShowDiagnostics(doc);
+
+	// A renamed bone or a constraint joining other bones
+	HighlightSelection();
 }
 
 void PhysicsEditorDialog::ReloadAfterDocumentChange() {
@@ -830,6 +836,67 @@ wxArrayString PhysicsEditorDialog::ChoicesFor(ValueKind kind, const XmlDocument&
 	}
 
 	return choices;
+}
+
+std::set<std::string> PhysicsEditorDialog::BonesOf(const tinyxml2::XMLElement* element) const {
+	std::set<std::string> bones;
+	auto addAttribute = [&bones, element](const char* name) {
+		const char* value = element->Attribute(name);
+		if (value && *value)
+			bones.insert(value);
+	};
+
+	switch (KindFromName(element->Name())) {
+		case ElementKind::Bone: addAttribute("name"); break;
+
+		case ElementKind::GenericConstraint:
+		case ElementKind::StiffSpringConstraint:
+		case ElementKind::ConeTwistConstraint:
+			addAttribute("bodyA");
+			addAttribute("bodyB");
+			break;
+
+		case ElementKind::ConstraintGroup:
+			for (const tinyxml2::XMLElement* child = element->FirstChildElement(); child; child = child->NextSiblingElement())
+				bones.merge(BonesOf(child));
+			break;
+
+		case ElementKind::PerVertexShape:
+		case ElementKind::PerTriangleShape:
+			if (const char* name = element->Attribute("name"); name && owner)
+				for (auto& bone : owner->ShapeBoneNames(name))
+					bones.insert(bone);
+			break;
+
+		default: break;
+	}
+
+	return bones;
+}
+
+std::set<std::string> PhysicsEditorDialog::BonesOfItem(const wxTreeItemId& item) const {
+	auto* data = item.IsOk() ? static_cast<ItemData*>(tree->GetItemData(item)) : nullptr;
+	XmlEditSession* session = Session();
+	XmlDocument* doc = data && session ? session->Find(data->xmlPath) : nullptr;
+	if (!doc)
+		return {};
+
+	if (!data->node.Empty()) {
+		const tinyxml2::XMLElement* element = doc->Resolve(data->node);
+		return element ? BonesOf(element) : std::set<std::string>();
+	}
+
+	std::set<std::string> bones;
+	wxTreeItemIdValue cookie;
+	for (wxTreeItemId child = tree->GetFirstChild(item, cookie); child.IsOk(); child = tree->GetNextChild(item, cookie))
+		bones.merge(BonesOfItem(child));
+
+	return bones;
+}
+
+void PhysicsEditorDialog::HighlightSelection() {
+	if (owner)
+		owner->HighlightBones(BonesOfItem(tree->GetSelection()));
 }
 
 void PhysicsEditorDialog::ShowCollisions(XmlDocument* doc, tinyxml2::XMLElement* element) {
@@ -1048,6 +1115,10 @@ void PhysicsEditorDialog::OnTreeSelectionChanged(wxTreeEvent& event) {
 	const wxTreeItemId item = event.GetItem();
 	auto* data = item.IsOk() ? static_cast<ItemData*>(tree->GetItemData(item)) : nullptr;
 	XmlDocument* doc = session && data ? session->Find(data->xmlPath) : nullptr;
+
+	// The viewport shows the bones of what is selected here
+	HighlightSelection();
+
 	if (!doc) {
 		ShowNothing(_("Nothing selected"));
 		return;

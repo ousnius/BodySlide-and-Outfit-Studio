@@ -7,6 +7,7 @@ See the included LICENSE file
 
 #include "physics/XmlEditSession.h"
 
+#include <set>
 #include <string>
 #include <vector>
 #include <wx/event.h>
@@ -45,7 +46,10 @@ public:
 	void Shutdown();
 
 	// Called by the editor window when it closes
-	void EditorClosed() { editor = nullptr; }
+	void EditorClosed();
+
+	// Highlights the bones of what is selected in the editor in the viewport, by name in any case
+	void HighlightBones(const std::set<std::string>& boneNames);
 
 	// An edited property: written straight into the running simulation when the schema and the controller both allow
 	// it, otherwise the simulation is rebuilt a moment later. Returns whether it went in without a rebuild.
@@ -80,6 +84,8 @@ public:
 	// The names of the loaded shapes, and of the bones the simulation can resolve: the skeleton's and the NIF's nodes
 	std::vector<std::string> ShapeNames() const;
 	std::vector<std::string> BoneNames() const;
+	// The bones a loaded shape is skinned to
+	std::vector<std::string> ShapeBoneNames(const std::string& shapeName) const;
 	// What validating a document needs from outside the file
 	Physics::ValidationContext ValidationInputs() const;
 
@@ -98,4 +104,6 @@ private:
 	wxTreeCtrl* list = nullptr;
 	wxButton* btnEdit = nullptr;
 	PhysicsEditorDialog* editor = nullptr;
+	// The bones were hidden when the editor opened and are shown only while it is
+	bool bonesShownForEditor = false;
 };
