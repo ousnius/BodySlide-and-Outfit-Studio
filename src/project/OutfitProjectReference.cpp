@@ -371,7 +371,7 @@ std::vector<std::string> OutfitProject::LoadReferenceAddOns() {
 
 	for (size_t i = 0; i < refSet.size(); i++) {
 		const SliderData& refSlider = refSet[i];
-		if (refSlider.stackedFrom.empty() || activeSet.SliderExists(refSlider.name))
+		if (refSlider.stackedFrom.empty())
 			continue;
 
 		auto refData = std::find_if(refSlider.dataFiles.begin(), refSlider.dataFiles.end(), [&refTarget](const DiffInfo& df) { return df.targetName == refTarget; });
@@ -382,19 +382,9 @@ std::vector<std::string> OutfitProject::LoadReferenceAddOns() {
 		if (!diffs)
 			continue;
 
-		SliderData slider = refSlider;
-		slider.dataFiles.clear();
-		slider.bInherited = false;
-		slider.stackedFrom.clear();
-		slider.curValue = 0.0f;
-
-		// Keeping the slider off outfits is up to the body's add-on, not the outfit
-		slider.bNoAutoConform = false;
-
 		// The slider needs the add-on to be installed
-		slider.addOnName = refSlider.stackedFrom;
 		const ProjectCatalogEntry* addOn = catalog.Find(refSlider.stackedFrom);
-		slider.addOnID = addOn ? addOn->projectID : "";
+		const std::string addOnID = addOn ? addOn->projectID : "";
 
 		DiffInfo data = *refData;
 		if (data.bGenerated) {
@@ -416,11 +406,39 @@ std::vector<std::string> OutfitProject::LoadReferenceAddOns() {
 				activeSet.AddTargetDataFolder(target, dataFolder);
 		}
 
-		slider.dataFiles.push_back(data);
-		activeSet.CopySlider(&slider);
-		baseDiffData.LoadSet(data.dataName, target, *diffs);
+		if (activeSet.SliderExists(refSlider.name)) {
+			// Like the sliders of the reference itself, the data of the reference replaces what the slider had for
+			// its target, e.g. that of another body's add-on, and the slider keeps its data for the other shapes
+			SliderData& slider = activeSet[refSlider.name];
+			slider.dataFiles.erase(std::remove_if(slider.dataFiles.begin(), slider.dataFiles.end(), [&target](const DiffInfo& df) { return df.targetName == target; }),
+								   slider.dataFiles.end());
+			slider.dataFiles.push_back(data);
 
-		addedSliders.push_back(slider.name);
+			// A slider of an add-on now needs the add-on of this reference. One of the outfit's own stays without one.
+			if (slider.NeedsAddOn()) {
+				slider.addOnName = refSlider.stackedFrom;
+				slider.addOnID = addOnID;
+			}
+		}
+		else {
+			SliderData slider = refSlider;
+			slider.dataFiles.clear();
+			slider.bInherited = false;
+			slider.stackedFrom.clear();
+			slider.curValue = 0.0f;
+
+			// Keeping the slider off outfits is up to the body's add-on, not the outfit
+			slider.bNoAutoConform = false;
+
+			slider.addOnName = refSlider.stackedFrom;
+			slider.addOnID = addOnID;
+
+			slider.dataFiles.push_back(data);
+			activeSet.CopySlider(&slider);
+		}
+
+		baseDiffData.LoadSet(data.dataName, target, *diffs);
+		addedSliders.push_back(refSlider.name);
 	}
 
 	if (!addedSliders.empty())
