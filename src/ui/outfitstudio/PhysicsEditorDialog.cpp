@@ -144,7 +144,12 @@ ValueVariant ReadProperty(const wxPGProperty* property, ValueKind kind, Multipli
 // A parent row with an editable number per component, so a Vec3 reads as "1; 1; 1" collapsed
 wxPGProperty* ComposedProperty(const wxString& label, const wxString& name, std::initializer_list<std::pair<wxString, float>> components) {
 	auto* parent = new wxStringProperty(label, name);
+#if wxCHECK_VERSION(3, 3, 0)
 	parent->ChangeFlag(wxPGFlags::ComposedValue, true);
+#else
+	// The Linux builds use the wxWidgets 3.2 of the distribution, from before the flags became an enum class
+	parent->ChangeFlag(wxPG_PROP_COMPOSED_VALUE, true);
+#endif
 	for (auto& [componentName, value] : components)
 		parent->AppendChild(new wxFloatProperty(componentName, name + "." + componentName, value));
 	return parent;
