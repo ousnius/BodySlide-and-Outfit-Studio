@@ -88,8 +88,11 @@ private:
 					 const wxString& label,
 					 std::initializer_list<Physics::ElementKind> kinds,
 					 bool nestConstraintGroups = false);
-	// "showKind" names the element's kind after its name, for the headings that merge several kinds
+	// "showKind" names the element's kind after its name, for the headings that merge several kinds. Bones and
+	// constraints also name the profile they start from.
 	void AddElementItem(const wxTreeItemId& parent, Physics::XmlDocument& doc, tinyxml2::XMLElement* element, bool showKind);
+	// The *-defaults bones and constraints start from, as profiles with how many use each
+	void AddProfiles(const wxTreeItemId& parent, Physics::XmlDocument& doc);
 
 	// True when "element" passes the filter box, itself or through one of the elements nested in it
 	bool MatchesFilter(tinyxml2::XMLElement* element) const;
@@ -112,7 +115,8 @@ private:
 
 	// The bones an element stands for: a bone's own, the two a constraint joins, those of the constraints of a group,
 	// and the ones a skinned shape is skinned to
-	std::set<std::string> BonesOf(const tinyxml2::XMLElement* element) const;
+	// A profile stands for the bones of everything using it.
+	std::set<std::string> BonesOf(const Physics::XmlDocument& doc, const tinyxml2::XMLElement* element) const;
 	// The same for a tree row. A document or heading row stands for everything under it.
 	std::set<std::string> BonesOfItem(const wxTreeItemId& item) const;
 	// Highlights the bones of the selected row in the viewport
@@ -122,6 +126,14 @@ private:
 	void ShowCollisions(Physics::XmlDocument* doc, tinyxml2::XMLElement* element);
 	// Revalidates the document and fills the diagnostics page
 	void ShowDiagnostics(Physics::XmlDocument* doc);
+	// What starts from the selected profile
+	void ShowUsers(Physics::XmlDocument* doc, tinyxml2::XMLElement* element);
+
+	// The profile picker of a bone or constraint: the profile its position gives it without a @template, then the
+	// named profiles declared before it. Positional unnamed defaults can only be had by position.
+	wxPGProperty* MakeProfilePicker(const Physics::XmlDocument& doc, const tinyxml2::XMLElement* element) const;
+	// The first entry of the picker
+	wxString AmbientProfileLabel(const Physics::XmlDocument& doc, const tinyxml2::XMLElement* element) const;
 
 	// The element the grid shows, kept as a path because undo reparses the document under every pointer into it
 	Physics::XmlDocument* CurrentDocument() const;
@@ -147,6 +159,10 @@ private:
 	void OnSaveAllXml(wxCommandEvent& event);
 	void OnLinkXml(wxCommandEvent& event);
 	void OnPropertyChanged(wxPropertyGridEvent& event);
+	// Reset to the profile, apply to the profile, new profile from the element
+	void OnPropertyRightClick(wxPropertyGridEvent& event);
+	void OnUsedByActivated(wxListEvent& event);
+	void OnTidy(wxCommandEvent& event);
 	void OnCollisionActivated(wxListEvent& event);
 	void OnDiagnosticActivated(wxListEvent& event);
 	void OnUndo(wxCommandEvent& event);
@@ -162,6 +178,7 @@ private:
 	wxButton* btnSave = nullptr;
 	wxButton* btnSaveAll = nullptr;
 	wxButton* btnLink = nullptr;
+	wxButton* btnTidy = nullptr;
 	wxSearchCtrl* filterBox = nullptr;
 	wxTreeCtrl* tree = nullptr;
 	wxStaticText* elementLabel = nullptr;
@@ -169,6 +186,7 @@ private:
 	wxNotebook* infoBook = nullptr;
 	wxListCtrl* collisionList = nullptr;
 	wxListCtrl* diagnosticList = nullptr;
+	wxListCtrl* usedByList = nullptr;
 	wxStaticText* status = nullptr;
 	wxButton* btnUndo = nullptr;
 	wxButton* btnRedo = nullptr;
@@ -182,4 +200,5 @@ private:
 	// What each row of the two lists points at, addressed like the tree items and for the same reason
 	std::vector<std::pair<std::string, Physics::NodePath>> collisionRows;
 	std::vector<std::pair<std::string, Physics::NodePath>> diagnosticRows;
+	std::vector<std::pair<std::string, Physics::NodePath>> usedByRows;
 };

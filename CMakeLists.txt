@@ -472,6 +472,7 @@ set(BSOS_PHYSICS_SOURCES
 	src/physics/SystemBuilder.cpp
 	src/physics/XmlDocument.cpp
 	src/physics/XmlEditSession.cpp
+	src/physics/XmlProfiles.cpp
 	src/physics/XmlSchema.cpp
 	src/physics/hdt/XmlReader.cpp
 	src/physics/hdt/hdtBoneScaleConstraint.cpp
@@ -674,6 +675,7 @@ if(BSOS_BUILD_TESTS)
 		tests/PhysicsChainsTest.cpp
 		tests/PhysicsEditSessionTest.cpp
 		tests/PhysicsXmlDocumentTest.cpp
+		tests/PhysicsXmlProfilesTest.cpp
 		tests/PhysicsXmlFileTest.cpp
 		tests/PoseDataJsonTest.cpp
 		tests/PoseFitTest.cpp

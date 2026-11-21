@@ -239,6 +239,9 @@
     <ClCompile Include="src\physics\XmlEditSession.cpp">
       <Filter>Physics</Filter>
     </ClCompile>
+    <ClCompile Include="src\physics\XmlProfiles.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
     <ClCompile Include="src\physics\XmlSchema.cpp">
       <Filter>Physics</Filter>
     </ClCompile>
@@ -408,6 +411,9 @@
       <Filter>Tests</Filter>
     </ClCompile>
     <ClCompile Include="tests\PhysicsXmlFileTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\PhysicsXmlProfilesTest.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
     <ClCompile Include="tests\PhysicsEditSessionTest.cpp">

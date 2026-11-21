@@ -72,8 +72,9 @@ struct EffectiveValue {
 	// True when the instance carries the property itself, so editing it is a
 	// change to this element rather than an override of something inherited.
 	bool explicitHere = false;
-	// How to name the source in the UI, e.g. "bone-default #2" or
-	// "generic-constraint-default \"soft\"". Empty when source is null.
+	// How to name the source in the UI: the element's own name for an explicit
+	// value, otherwise the profile it comes from (see ProfileLabel), e.g.
+	// "Default 2" or "soft". Empty when source is null.
 	std::string sourceLabel;
 };
 
@@ -154,11 +155,32 @@ public:
 	// returning something: the ones that carry structure rather than a value
 	// (a transform, a list) are present without having a value to hand back.
 	bool HasValue(const tinyxml2::XMLElement* owner, const ChildDesc& desc) const;
+	// The XML of the child elements that hold "desc", as one string; empty when absent. Compares any two values
+	// exactly, structure included, where GetValue only reads plain values.
+	std::string ValueText(const tinyxml2::XMLElement* owner, const ChildDesc& desc) const;
 	// Resolves what "element" is really built with for one property: its own
 	// value, or the one the *-default cascade hands it, or the schema default.
 	// Mirrors this preview, so for the kinds whose defaults SystemBuilder does
 	// not implement it goes straight to the schema default; see CascadeApplies.
 	EffectiveValue ResolveEffective(const tinyxml2::XMLElement* element, const ChildDesc& desc) const;
+
+	// The *-defaults "element" reads its template from, oldest first: the chain
+	// its @template (@extends for a *-default) names among the defaults of its
+	// kind read before it, or the ambient chain when the name is empty or not
+	// declared before it. Names match without regard to case, like IDStr. Empty
+	// for the kinds this preview doesn't cascade (see CascadeApplies).
+	std::vector<const tinyxml2::XMLElement*> TemplateChain(const tinyxml2::XMLElement* element) const;
+	// What an element right before "position" (null: at the end of the file)
+	// would read for "templateName"
+	std::vector<const tinyxml2::XMLElement*> TemplateChain(ElementKind defaultKind, const tinyxml2::XMLElement* position, const std::string& templateName) const;
+	// A property as a template chain supplies it: the last default in it that
+	// sets the property, or the schema default. A list adds up instead, the way
+	// the builder appends every default's entries to the copy it extends.
+	EffectiveValue ResolveChain(const std::vector<const tinyxml2::XMLElement*>& chain, const ChildDesc& desc) const;
+
+	// What to call a *-default in the UI: its name, or "Default" for an unnamed
+	// one, numbered from the second unnamed one of its kind on ("Default 2")
+	std::string ProfileLabel(const tinyxml2::XMLElement* defaultElement) const;
 
 	// Every tag declared by a per-*-shape in this document, deduplicated, in the
 	// order they appear. What the collide list pickers offer.
@@ -180,10 +202,22 @@ public:
 	// Removes the child again, handing the property back to the cascade.
 	void ClearValue(tinyxml2::XMLElement* owner, const ChildDesc& desc);
 
+	// Replaces what "to" says for "desc" with a copy of what "from" says,
+	// element by element, so it works for structure too (transforms, lists).
+	// When "from" doesn't have it, "to" loses it as well. With "append" the
+	// copy goes after what "to" has, which is how lists add up along a chain.
+	void CopyValue(const tinyxml2::XMLElement* from, tinyxml2::XMLElement* to, const ChildDesc& desc, bool append = false);
+	// How many child elements hold "desc": the entries of a list, otherwise 0 or 1
+	std::size_t ValueCount(const tinyxml2::XMLElement* owner, const ChildDesc& desc) const;
+	// Removes the first "count" of them, e.g. the list entries a template already supplies
+	void RemoveLeadingValues(tinyxml2::XMLElement* owner, const ChildDesc& desc, std::size_t count);
+
 	// Creates an element of "kind" with its required attributes present but
 	// empty, inserted after "after" or, when that is null, at the end of
 	// "parent".
 	tinyxml2::XMLElement* InsertElement(ElementKind kind, tinyxml2::XMLElement* parent, tinyxml2::XMLElement* after);
+	// The same, inserted right before "before", under its parent
+	tinyxml2::XMLElement* InsertElementBefore(ElementKind kind, tinyxml2::XMLElement* before);
 	void RemoveElement(tinyxml2::XMLElement* element);
 
 	// Records the state before a change so it can be undone. "coalesceKey" and
@@ -251,6 +285,8 @@ private:
 
 	tinyxml2::XMLElement* FindChild(const tinyxml2::XMLElement* owner, const ChildDesc& desc) const;
 	tinyxml2::XMLElement* EnsureChild(tinyxml2::XMLElement* owner, const ChildDesc& desc);
+	// Inserts "child" into "owner" where the schema lists "desc", moving nothing that is already there
+	void InsertInSchemaOrder(tinyxml2::XMLElement* owner, tinyxml2::XMLElement* child, const ChildDesc& desc);
 };
 
 /*

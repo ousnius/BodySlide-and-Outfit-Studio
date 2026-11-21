@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "XmlDocument.h"
+#include "XmlProfiles.h"
 
 #include "hdt/hdtStringUtils.h"
 #include "utils/StringStuff.h"
@@ -479,6 +480,18 @@ bool XmlDocument::HasValue(const XMLElement* owner, const ChildDesc& desc) const
 	return FindChild(owner, desc) != nullptr;
 }
 
+std::string XmlDocument::ValueText(const XMLElement* owner, const ChildDesc& desc) const {
+	if (!owner)
+		return std::string();
+
+	XMLPrinter printer(nullptr, true);
+	for (const XMLElement* child = owner->FirstChildElement(); child; child = child->NextSiblingElement())
+		if (NameMatches(child, desc))
+			child->Accept(&printer);
+
+	return printer.CStr();
+}
+
 ValueVariant XmlDocument::GetValue(const XMLElement* owner, const ChildDesc& desc) const {
 	if (!owner)
 		return std::monostate();
@@ -608,38 +621,69 @@ XMLElement* XmlDocument::EnsureChild(XMLElement* owner, const ChildDesc& desc) {
 	if (XMLElement* existing = FindChild(owner, desc))
 		return existing;
 
-	const ElementDesc* ownerDesc = FindElement(KindFromName(owner->Name()));
 	XMLElement* created = doc->NewElement(desc.name);
+	InsertInSchemaOrder(owner, created, desc);
+	return created;
+}
 
+void XmlDocument::InsertInSchemaOrder(XMLElement* owner, XMLElement* child, const ChildDesc& desc) {
+	const ElementDesc* ownerDesc = FindElement(KindFromName(owner->Name()));
 	if (!ownerDesc) {
-		owner->InsertEndChild(created);
-		return created;
+		owner->InsertEndChild(child);
+		return;
 	}
 
 	// Put it where the schema lists it, so a file the editor has touched still
 	// reads in a predictable order. Nothing already present ever moves.
 	const int order = DescriptorOrder(*ownerDesc, desc);
 	XMLElement* before = nullptr;
-	for (XMLElement* child = owner->FirstChildElement(); child; child = child->NextSiblingElement()) {
-		const ChildDesc* childDesc = ownerDesc->Child(child->Name());
-		if (childDesc && DescriptorOrder(*ownerDesc, *childDesc) > order) {
-			before = child;
+	for (XMLElement* sibling = owner->FirstChildElement(); sibling; sibling = sibling->NextSiblingElement()) {
+		const ChildDesc* siblingDesc = ownerDesc->Child(sibling->Name());
+		if (sibling != child && siblingDesc && DescriptorOrder(*ownerDesc, *siblingDesc) > order) {
+			before = sibling;
 			break;
 		}
 	}
 
 	if (!before) {
-		owner->InsertEndChild(created);
-		return created;
+		owner->InsertEndChild(child);
+		return;
 	}
 
 	XMLNode* previous = before->PreviousSiblingElement();
 	if (previous)
-		owner->InsertAfterChild(previous, created);
+		owner->InsertAfterChild(previous, child);
 	else
-		owner->InsertFirstChild(created);
+		owner->InsertFirstChild(child);
+}
 
-	return created;
+void XmlDocument::CopyValue(const XMLElement* from, XMLElement* to, const ChildDesc& desc, bool append) {
+	if (!from || !to || from == to)
+		return;
+
+	XMLElement* previous = nullptr;
+	if (append) {
+		for (XMLElement* child = to->FirstChildElement(); child; child = child->NextSiblingElement())
+			if (NameMatches(child, desc))
+				previous = child;
+	}
+	else
+		ClearValue(to, desc);
+
+	// A list is several elements, which stay together and in their order
+	for (const XMLElement* child = from->FirstChildElement(); child; child = child->NextSiblingElement()) {
+		if (!NameMatches(child, desc))
+			continue;
+
+		XMLElement* copy = child->DeepClone(doc.get())->ToElement();
+		if (previous)
+			to->InsertAfterChild(previous, copy);
+		else
+			InsertInSchemaOrder(to, copy, desc);
+
+		previous = copy;
+		dirty = true;
+	}
 }
 
 bool XmlDocument::SetValue(XMLElement* owner, const ChildDesc& desc, const ValueVariant& value) {
@@ -851,6 +895,42 @@ XMLElement* XmlDocument::InsertElement(ElementKind kind, XMLElement* parent, XML
 	return created;
 }
 
+std::size_t XmlDocument::ValueCount(const XMLElement* owner, const ChildDesc& desc) const {
+	std::size_t count = 0;
+	for (const XMLElement* child = owner ? owner->FirstChildElement() : nullptr; child; child = child->NextSiblingElement())
+		if (NameMatches(child, desc))
+			count++;
+	return count;
+}
+
+void XmlDocument::RemoveLeadingValues(XMLElement* owner, const ChildDesc& desc, std::size_t count) {
+	std::vector<XMLElement*> doomed;
+	for (XMLElement* child = owner ? owner->FirstChildElement() : nullptr; child && doomed.size() < count; child = child->NextSiblingElement())
+		if (NameMatches(child, desc))
+			doomed.push_back(child);
+
+	for (XMLElement* child : doomed)
+		owner->DeleteChild(child);
+
+	if (!doomed.empty())
+		dirty = true;
+}
+
+XMLElement* XmlDocument::InsertElementBefore(ElementKind kind, XMLElement* before) {
+	XMLElement* parent = before && before->Parent() ? before->Parent()->ToElement() : nullptr;
+	if (!parent)
+		return nullptr;
+
+	XMLElement* previous = before->PreviousSiblingElement();
+	XMLElement* created = InsertElement(kind, parent, previous);
+	if (created && !previous) {
+		// InsertElement appends without a sibling to go after
+		parent->InsertFirstChild(created);
+	}
+
+	return created;
+}
+
 void XmlDocument::RemoveElement(XMLElement* element) {
 	if (!element)
 		return;
@@ -993,22 +1073,31 @@ EffectiveValue XmlDocument::ResolveEffective(const XMLElement* element, const Ch
 		return result;
 	}
 
-	const ElementKind kind = KindFromName(element->Name());
-	const ElementKind defaultKind = DefaultKindOf(kind);
-	if (defaultKind == ElementKind::Unknown || !CascadeApplies(kind)) {
-		result.value = DefaultValue(desc);
-		return result;
-	}
+	return ResolveChain(TemplateChain(element), desc);
+}
 
-	// Every *-default of the matching kind the parser would have read before it
-	// reached this element, in reading order. Constraint groups are descended
-	// into: a default declared inside one is not scoped to it, because the
-	// builder puts it in the same template map as all the others.
+std::vector<const XMLElement*> XmlDocument::TemplateChain(const XMLElement* element) const {
+	if (!element)
+		return {};
+
+	const ElementKind kind = KindFromName(element->Name());
+	if (!CascadeApplies(kind))
+		return {};
+
+	const ElementKind defaultKind = IsDefaultKind(kind) ? kind : DefaultKindOf(kind);
+	return TemplateChain(defaultKind, element, AttrText(element, IsDefaultKind(kind) ? "extends" : "template"));
+}
+
+std::vector<const XMLElement*> XmlDocument::TemplateChain(ElementKind defaultKind, const XMLElement* position, const std::string& templateName) const {
+	// Every *-default of the kind the parser would have read before it reached
+	// the position, in reading order. Constraint groups are descended into: a
+	// default declared inside one is not scoped to it, because the builder puts
+	// it in the same template map as all the others.
 	std::vector<const XMLElement*> preceding;
 	bool reached = false;
 	std::function<void(const XMLElement*)> walk = [&](const XMLElement* parent) {
 		for (const XMLElement* child = parent->FirstChildElement(); child && !reached; child = child->NextSiblingElement()) {
-			if (child == element) {
+			if (child == position) {
 				reached = true;
 				return;
 			}
@@ -1028,17 +1117,40 @@ EffectiveValue XmlDocument::ResolveEffective(const XMLElement* element, const Ch
 	// stood when it was declared: @extends composes, the ambient set lives
 	// under the empty name, and a name that was never declared falls back to
 	// the ambient set rather than to nothing, exactly as getBoneTemplate does.
+	// The names are IDStr there, which compare without regard to case.
 	std::map<std::string, std::vector<const XMLElement*>> chains;
 	for (const XMLElement* declared : preceding) {
-		const auto base = chains.find(AttrText(declared, "extends"));
+		const auto base = chains.find(ToLower(AttrText(declared, "extends")));
 		std::vector<const XMLElement*> chain = base != chains.end() ? base->second : chains[std::string()];
 		chain.push_back(declared);
-		chains[AttrText(declared, "name")] = std::move(chain);
+		chains[ToLower(AttrText(declared, "name"))] = std::move(chain);
 	}
 
-	const std::string selected = AttrText(element, IsDefaultKind(kind) ? "extends" : "template");
-	const auto found = chains.find(selected);
-	const std::vector<const XMLElement*>& chain = found != chains.end() ? found->second : chains[std::string()];
+	const auto found = chains.find(ToLower(templateName));
+	return found != chains.end() ? found->second : chains[std::string()];
+}
+
+EffectiveValue XmlDocument::ResolveChain(const std::vector<const XMLElement*>& chain, const ChildDesc& desc) const {
+	EffectiveValue result;
+
+	if (desc.mult == Multiplicity::List) {
+		std::vector<std::string> items;
+		for (const XMLElement* declared : chain) {
+			if (!HasValue(declared, desc))
+				continue;
+
+			const ValueVariant value = GetValue(declared, desc);
+			if (const auto* list = std::get_if<std::vector<std::string>>(&value))
+				items.insert(items.end(), list->begin(), list->end());
+			result.source = declared;
+		}
+
+		if (result.source) {
+			result.value = std::move(items);
+			result.sourceLabel = ProfileLabel(result.source);
+			return result;
+		}
+	}
 
 	// Last one wins: each default in the chain was applied on top of the ones
 	// before it.
@@ -1048,23 +1160,40 @@ EffectiveValue XmlDocument::ResolveEffective(const XMLElement* element, const Ch
 
 		result.value = GetValue(*it, desc);
 		result.source = *it;
-
-		// The common case is an unnamed default, which can only be pointed at
-		// by where it sits among the others of its kind.
-		const std::string name = AttrText(*it, "name");
-		const std::string tag = (*it)->Name() ? (*it)->Name() : "";
-		if (!name.empty())
-			result.sourceLabel = tag + " \"" + name + "\"";
-		else {
-			const auto position = std::find(preceding.begin(), preceding.end(), *it);
-			result.sourceLabel = tag + " #" + std::to_string(std::distance(preceding.begin(), position) + 1);
-		}
-
+		result.sourceLabel = ProfileLabel(*it);
 		return result;
 	}
 
 	result.value = DefaultValue(desc);
 	return result;
+}
+
+std::string XmlDocument::ProfileLabel(const XMLElement* defaultElement) const {
+	if (!defaultElement || !defaultElement->Name())
+		return std::string();
+
+	const std::string name = AttrText(defaultElement, "name");
+	if (!name.empty())
+		return name;
+
+	// Unnamed ones can only be told apart by where they are among the unnamed ones of their kind
+	int position = 0;
+	bool found = false;
+	std::function<void(const XMLElement*)> count = [&](const XMLElement* parent) {
+		for (const XMLElement* child = parent->FirstChildElement(); child && !found; child = child->NextSiblingElement()) {
+			if (KindFromName(child->Name()) == ElementKind::ConstraintGroup)
+				count(child);
+			else if (child->Name() && std::strcmp(child->Name(), defaultElement->Name()) == 0 && AttrText(child, "name").empty()) {
+				position++;
+				found = child == defaultElement;
+			}
+		}
+	};
+
+	if (const XMLElement* root = doc->RootElement())
+		count(root);
+
+	return position > 1 ? "Default " + std::to_string(position) : "Default";
 }
 
 std::vector<std::string> XmlDocument::CollectTags() const {
@@ -1352,6 +1481,16 @@ std::vector<Diagnostic> XmlDocument::Validate(const ValidationContext& context) 
 
 	for (const XMLElement* child = root->FirstChildElement(); child; child = child->NextSiblingElement())
 		visit(child, rootDesc);
+
+	// Not wrong, but what the defaults apply to depends on where they are, which is easy to get wrong
+	for (const XMLElement* profile : Profiles(*this)) {
+		if (IsPositional(*this, profile)) {
+			report(Diagnostic::Severity::Info,
+				   profile,
+				   "what this default applies to depends on where it is in the file; Tidy Defaults rewrites the defaults into "
+				   "profiles that don't depend on the order");
+		}
+	}
 
 	return diagnostics;
 }

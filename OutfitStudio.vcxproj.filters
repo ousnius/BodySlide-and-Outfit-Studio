@@ -895,6 +895,9 @@
     <ClInclude Include="src\physics\XmlEditSession.h">
       <Filter>Physics</Filter>
     </ClInclude>
+    <ClInclude Include="src\physics\XmlProfiles.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
     <ClInclude Include="src\physics\XmlSchema.h">
       <Filter>Physics</Filter>
     </ClInclude>
@@ -2455,6 +2458,9 @@
       <Filter>Physics</Filter>
     </ClCompile>
     <ClCompile Include="src\physics\XmlEditSession.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\XmlProfiles.cpp">
       <Filter>Physics</Filter>
     </ClCompile>
     <ClCompile Include="src\physics\XmlSchema.cpp">

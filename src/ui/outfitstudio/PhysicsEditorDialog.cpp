@@ -6,6 +6,7 @@ See the included LICENSE file
 #include "PhysicsEditorDialog.h"
 #include "outfitstudio/PhysicsXmlEditor.h"
 #include "physics/XmlEditSession.h"
+#include "physics/XmlProfiles.h"
 #include "utils/ConfigurationManager.h"
 #include "utils/StringStuff.h"
 
@@ -63,6 +64,34 @@ bool IsNameKind(ValueKind kind) {
 		case ValueKind::ShapeRef:
 		case ValueKind::TagRef: return true;
 		default: return false;
+	}
+}
+
+bool IsProfileUser(ElementKind kind) {
+	return kind == ElementKind::Bone || kind == ElementKind::GenericConstraint || kind == ElementKind::StiffSpringConstraint
+		   || kind == ElementKind::ConeTwistConstraint;
+}
+
+bool IsProfile(ElementKind kind) {
+	const auto& kinds = ProfileKinds();
+	return std::find(kinds.begin(), kinds.end(), kind) != kinds.end();
+}
+
+// "3 bones", "1 constraint": what uses a profile of this kind
+wxString UserCount(ElementKind profileKind, std::size_t count) {
+	if (profileKind == ElementKind::BoneDefault)
+		return wxString::Format(wxPLURAL("%zu bone", "%zu bones", count), count);
+	return wxString::Format(wxPLURAL("%zu constraint", "%zu constraints", count), count);
+}
+
+// What a profile is for, in the tree
+wxString ProfileKindName(ElementKind profileKind) {
+	switch (profileKind) {
+		case ElementKind::BoneDefault: return _("bone");
+		case ElementKind::GenericConstraintDefault: return _("generic constraint");
+		case ElementKind::StiffSpringConstraintDefault: return _("stiff spring constraint");
+		case ElementKind::ConeTwistConstraintDefault: return _("cone twist constraint");
+		default: return wxString();
 	}
 }
 
@@ -270,12 +299,14 @@ PhysicsEditorDialog::PhysicsEditorDialog(wxWindow* parent, PhysicsXmlEditor& own
 	btnSave = XRCCTRL(*this, "physXmlSave", wxButton);
 	btnSaveAll = XRCCTRL(*this, "physXmlSaveAll", wxButton);
 	btnLink = XRCCTRL(*this, "physXmlLink", wxButton);
+	btnTidy = XRCCTRL(*this, "physXmlTidy", wxButton);
 	filterBox = XRCCTRL(*this, "physFilter", wxSearchCtrl);
 	tree = XRCCTRL(*this, "physTree", wxTreeCtrl);
 	elementLabel = XRCCTRL(*this, "physElementLabel", wxStaticText);
 	infoBook = XRCCTRL(*this, "physInfoBook", wxNotebook);
 	collisionList = XRCCTRL(*this, "physCollisionList", wxListCtrl);
 	diagnosticList = XRCCTRL(*this, "physDiagnosticList", wxListCtrl);
+	usedByList = XRCCTRL(*this, "physUsedByList", wxListCtrl);
 	status = XRCCTRL(*this, "physStatus", wxStaticText);
 	btnUndo = XRCCTRL(*this, "physUndo", wxButton);
 	btnRedo = XRCCTRL(*this, "physRedo", wxButton);
@@ -296,6 +327,7 @@ PhysicsEditorDialog::PhysicsEditorDialog(wxWindow* parent, PhysicsXmlEditor& own
 	Bind(wxEVT_BUTTON, &PhysicsEditorDialog::OnSaveXml, this, XRCID("physXmlSave"));
 	Bind(wxEVT_BUTTON, &PhysicsEditorDialog::OnSaveAllXml, this, XRCID("physXmlSaveAll"));
 	Bind(wxEVT_BUTTON, &PhysicsEditorDialog::OnLinkXml, this, XRCID("physXmlLink"));
+	Bind(wxEVT_BUTTON, &PhysicsEditorDialog::OnTidy, this, XRCID("physXmlTidy"));
 	Bind(wxEVT_BUTTON, &PhysicsEditorDialog::OnUndo, this, XRCID("physUndo"));
 	Bind(wxEVT_BUTTON, &PhysicsEditorDialog::OnRedo, this, XRCID("physRedo"));
 	Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { Close(); }, XRCID("physClose"));
@@ -303,8 +335,10 @@ PhysicsEditorDialog::PhysicsEditorDialog(wxWindow* parent, PhysicsXmlEditor& own
 	Bind(wxEVT_TEXT, &PhysicsEditorDialog::OnFilterChanged, this, XRCID("physFilter"));
 	Bind(wxEVT_LIST_ITEM_ACTIVATED, &PhysicsEditorDialog::OnCollisionActivated, this, XRCID("physCollisionList"));
 	Bind(wxEVT_LIST_ITEM_ACTIVATED, &PhysicsEditorDialog::OnDiagnosticActivated, this, XRCID("physDiagnosticList"));
+	Bind(wxEVT_LIST_ITEM_ACTIVATED, &PhysicsEditorDialog::OnUsedByActivated, this, XRCID("physUsedByList"));
 	Bind(wxEVT_CLOSE_WINDOW, &PhysicsEditorDialog::OnCloseWindow, this);
 	grid->Bind(wxEVT_PG_CHANGED, &PhysicsEditorDialog::OnPropertyChanged, this);
+	grid->Bind(wxEVT_PG_RIGHT_CLICK, &PhysicsEditorDialog::OnPropertyRightClick, this);
 
 	// The grid eats plain keys while a cell is edited, so undo and redo go on the frame
 	const wxAcceleratorEntry accelerators[]
@@ -329,6 +363,9 @@ PhysicsEditorDialog::PhysicsEditorDialog(wxWindow* parent, PhysicsXmlEditor& own
 	diagnosticList->AppendColumn(_("Severity"), wxLIST_FORMAT_LEFT, FromDIP(70));
 	diagnosticList->AppendColumn(_("Element"), wxLIST_FORMAT_LEFT, FromDIP(190));
 	diagnosticList->AppendColumn(_("Detail"), wxLIST_FORMAT_LEFT, FromDIP(640));
+
+	usedByList->AppendColumn(_("Element"), wxLIST_FORMAT_LEFT, FromDIP(220));
+	usedByList->AppendColumn(_("Kind"), wxLIST_FORMAT_LEFT, FromDIP(180));
 
 	// A frame from XRC comes up at the minimum of its sizer, far too small for a tree beside a property grid
 	SetMinSize(FromDIP(wxSize(600, 400)));
@@ -453,15 +490,8 @@ void PhysicsEditorDialog::PopulateTree() {
 					{ElementKind::GenericConstraint, ElementKind::StiffSpringConstraint, ElementKind::ConeTwistConstraint, ElementKind::ConstraintGroup},
 					true);
 		AddCategory(docItem, *doc, _("Collision shapes"), {ElementKind::Shape});
-		AddCategory(docItem,
-					*doc,
-					_("Defaults"),
-					{ElementKind::BoneDefault,
-					 ElementKind::PerVertexShapeDefault,
-					 ElementKind::PerTriangleShapeDefault,
-					 ElementKind::GenericConstraintDefault,
-					 ElementKind::StiffSpringConstraintDefault,
-					 ElementKind::ConeTwistConstraintDefault});
+		AddProfiles(docItem, *doc);
+		AddCategory(docItem, *doc, _("Shape defaults"), {ElementKind::PerVertexShapeDefault, ElementKind::PerTriangleShapeDefault});
 
 		// Elements the schema table doesn't describe are kept and written back untouched, so they have to be visible
 		AddCategory(docItem, *doc, _("Not in the schema"), {ElementKind::Unknown});
@@ -512,7 +542,37 @@ void PhysicsEditorDialog::AddElementItem(const wxTreeItemId& parent, XmlDocument
 	if (showKind && kind != ElementKind::Unknown && label != FromSchema(NameFromKind(kind)))
 		label += wxString::Format("  [%s]", FromSchema(NameFromKind(kind)));
 
+	if (IsProfileUser(kind)) {
+		const tinyxml2::XMLElement* profile = ProfileOf(doc, element);
+		label += wxString::Format("  (%s)", profile ? wxString::FromUTF8(doc.ProfileLabel(profile)) : _("schema defaults"));
+	}
+
 	tree->AppendItem(parent, label, -1, -1, new ItemData(doc.XmlPath(), doc.PathOf(element)));
+}
+
+void PhysicsEditorDialog::AddProfiles(const wxTreeItemId& parent, XmlDocument& doc) {
+	std::vector<tinyxml2::XMLElement*> shown;
+	for (tinyxml2::XMLElement* profile : Profiles(doc))
+		if (MatchesFilter(profile))
+			shown.push_back(profile);
+
+	if (shown.empty())
+		return;
+
+	const wxTreeItemId heading
+		= tree->AppendItem(parent, wxString::Format("%s (%zu)", _("Profiles"), shown.size()), -1, -1, new ItemData(doc.XmlPath(), NodePath()));
+
+	for (tinyxml2::XMLElement* profile : shown) {
+		const ElementKind kind = KindFromName(profile->Name());
+		wxString label = wxString::Format("%s (%s) - %s",
+										  wxString::FromUTF8(doc.ProfileLabel(profile)),
+										  ProfileKindName(kind),
+										  UserCount(kind, ProfileUsers(doc, profile).size()));
+		if (IsPositional(doc, profile))
+			label += _(", depends on position");
+
+		tree->AppendItem(heading, label, -1, -1, new ItemData(doc.XmlPath(), doc.PathOf(profile)));
+	}
 }
 
 bool PhysicsEditorDialog::MatchesFilter(tinyxml2::XMLElement* element) const {
@@ -541,6 +601,7 @@ void PhysicsEditorDialog::ShowNothing(const wxString& reason) {
 
 	ShowCollisions(nullptr, nullptr);
 	ShowDiagnostics(nullptr);
+	ShowUsers(nullptr, nullptr);
 }
 
 void PhysicsEditorDialog::UpdateEditControls() {
@@ -557,6 +618,10 @@ void PhysicsEditorDialog::UpdateEditControls() {
 
 	if (!doc)
 		return;
+
+	btnTidy->Enable(NeedsTidy(*doc));
+	btnTidy->SetToolTip(btnTidy->IsEnabled() ? _("Rewrite the defaults into profiles that don't depend on where they are in the file")
+											 : _("The defaults of this file don't depend on where they are"));
 
 	const wxTreeItemId item = FindDocumentItem(doc->XmlPath());
 	if (item.IsOk() && tree->GetItemText(item) != DocumentLabel(*doc))
@@ -599,7 +664,14 @@ void PhysicsEditorDialog::ApplyChange(const wxPGProperty* property, const ChildD
 
 	const ValueKind kind = child ? child->kind : attr->kind;
 	const Multiplicity mult = child ? child->mult : Multiplicity::Once;
-	const ValueVariant value = ReadProperty(property, kind, mult);
+	ValueVariant value = ReadProperty(property, kind, mult);
+
+	// The profile picker: its first entry is the profile the element has by position, which takes no @template
+	if (attr && std::strcmp(attr->name, "template") == 0 && IsProfileUser(KindFromName(element->Name()))) {
+		const auto* picked = std::get_if<std::string>(&value);
+		if (!picked || wxString::FromUTF8(*picked) == AmbientProfileLabel(*doc, element))
+			value = std::monostate();
+	}
 
 	// The descriptor is a static table entry, so its address identifies the property being dragged; changes to it
 	// within half a second fold into one undo step
@@ -707,6 +779,11 @@ void PhysicsEditorDialog::ShowElement(XmlDocument* doc, tinyxml2::XMLElement* el
 			const AttrDesc& attr = desc->attrs[i];
 			const ValueVariant value = doc->GetAttr(element, attr);
 
+			if (std::strcmp(attr.name, "template") == 0 && IsProfileUser(KindFromName(element->Name()))) {
+				AppendProperty(grid, MakeProfilePicker(*doc, element), true);
+				continue;
+			}
+
 			// Attributes are named with a leading @, so an attribute and a child of the same name can't collide
 			wxPGProperty* property
 				= MakeProperty(FromSchema(attr.name), "@" + FromSchema(attr.name), attr.kind, Multiplicity::Once, attr.enumValues, ChoicesFor(attr.kind, *doc), value);
@@ -761,9 +838,10 @@ void PhysicsEditorDialog::ShowElement(XmlDocument* doc, tinyxml2::XMLElement* el
 			if (child->defaultText)
 				help += wxString::Format(_("\nDefault: %s"), FromSchema(child->defaultText));
 			if (absent && effective.source)
-				help += wxString::Format(_("\nNot set here; the value shown is inherited from %s."), wxString::FromUTF8(effective.sourceLabel));
+				help += wxString::Format(_("\nNot set here; the value shown comes from profile %s. Right click to set it here or there."),
+										 wxString::FromUTF8(effective.sourceLabel));
 			else if (absent && CascadeApplies(KindFromName(element->Name())))
-				help += _("\nNot set here, and no *-default before it supplies one, so the value shown is the schema default.");
+				help += _("\nNot set here, and no profile supplies it, so the value shown is the schema default.");
 			else if (absent)
 				help += _("\nNot set here; the value shown is the schema default.");
 			if (child->preview != PreviewSupport::Simulated)
@@ -782,8 +860,72 @@ void PhysicsEditorDialog::ShowElement(XmlDocument* doc, tinyxml2::XMLElement* el
 	appendChildren(simulated, _("Properties"));
 	appendChildren(notSimulated, _("Not simulated in this preview"));
 
+	const ElementKind kind = KindFromName(element->Name());
+	if (IsProfile(kind)) {
+		wxString what = wxString::Format(_("Profile %s: %s start from it, and their own values override it."),
+										 wxString::FromUTF8(doc->ProfileLabel(element)),
+										 UserCount(kind, ProfileUsers(*doc, element).size()));
+		if (IsPositional(*doc, element))
+			what += _(" Which ones depends on where it is in the file; Tidy Defaults makes it a profile that doesn't.");
+		status->SetLabel(what);
+	}
+
 	ShowCollisions(doc, element);
 	ShowDiagnostics(doc);
+	ShowUsers(doc, element);
+}
+
+wxString PhysicsEditorDialog::AmbientProfileLabel(const XmlDocument& doc, const tinyxml2::XMLElement* element) const {
+	const std::vector<const tinyxml2::XMLElement*> chain = doc.TemplateChain(DefaultKindOf(KindFromName(element->Name())), element, std::string());
+	return chain.empty() ? _("(schema defaults)") : wxString::FromUTF8(doc.ProfileLabel(chain.back()));
+}
+
+wxPGProperty* PhysicsEditorDialog::MakeProfilePicker(const XmlDocument& doc, const tinyxml2::XMLElement* element) const {
+	const ElementKind profileKind = DefaultKindOf(KindFromName(element->Name()));
+	const wxString ambient = AmbientProfileLabel(doc, element);
+
+	// A name declared again later is still one entry; what it means here is what was declared before the element
+	wxArrayString labels;
+	labels.Add(ambient);
+	for (const tinyxml2::XMLElement* profile : Profiles(doc)) {
+		const std::string name = profile->Attribute("name") ? profile->Attribute("name") : "";
+		if (KindFromName(profile->Name()) != profileKind || name.empty())
+			continue;
+
+		const std::vector<const tinyxml2::XMLElement*> chain = doc.TemplateChain(profileKind, element, name);
+		if (!chain.empty() && chain.back() == profile && labels.Index(wxString::FromUTF8(name), false) == wxNOT_FOUND)
+			labels.Add(wxString::FromUTF8(name));
+	}
+
+	const tinyxml2::XMLElement* current = ProfileOf(doc, element);
+	const int selected = current && current->Attribute("name") ? labels.Index(wxString::FromUTF8(current->Attribute("name")), false) : 0;
+
+	auto* picker = new wxEnumProperty(_("profile"), "@template", labels, wxArrayInt(), std::max(selected, 0));
+	picker->SetHelpString(_("The profile this element starts from; its own values override the profile's. Unnamed defaults "
+							"that depend on their position can't be picked here; Tidy Defaults makes them profiles.\n"
+							"Changing this rebuilds the simulation."));
+	return picker;
+}
+
+void PhysicsEditorDialog::ShowUsers(XmlDocument* doc, tinyxml2::XMLElement* element) {
+	usedByList->DeleteAllItems();
+	usedByRows.clear();
+
+	if (!doc || !element || !IsProfile(KindFromName(element->Name()))) {
+		usedByList->InsertItem(0, _("Select a profile to see what starts from it."));
+		return;
+	}
+
+	long row = 0;
+	for (tinyxml2::XMLElement* user : ProfileUsers(*doc, element)) {
+		usedByList->InsertItem(row, wxString::FromUTF8(XmlDocument::DisplayName(user)));
+		usedByList->SetItem(row, 1, FromSchema(user->Name()));
+		usedByRows.emplace_back(doc->XmlPath(), doc->PathOf(user));
+		row++;
+	}
+
+	if (row == 0)
+		usedByList->InsertItem(0, _("Nothing starts from this profile."));
 }
 
 wxArrayString PhysicsEditorDialog::ChoicesFor(ValueKind kind, const XmlDocument& doc) const {
@@ -838,7 +980,7 @@ wxArrayString PhysicsEditorDialog::ChoicesFor(ValueKind kind, const XmlDocument&
 	return choices;
 }
 
-std::set<std::string> PhysicsEditorDialog::BonesOf(const tinyxml2::XMLElement* element) const {
+std::set<std::string> PhysicsEditorDialog::BonesOf(const XmlDocument& doc, const tinyxml2::XMLElement* element) const {
 	std::set<std::string> bones;
 	auto addAttribute = [&bones, element](const char* name) {
 		const char* value = element->Attribute(name);
@@ -858,7 +1000,15 @@ std::set<std::string> PhysicsEditorDialog::BonesOf(const tinyxml2::XMLElement* e
 
 		case ElementKind::ConstraintGroup:
 			for (const tinyxml2::XMLElement* child = element->FirstChildElement(); child; child = child->NextSiblingElement())
-				bones.merge(BonesOf(child));
+				bones.merge(BonesOf(doc, child));
+			break;
+
+		case ElementKind::BoneDefault:
+		case ElementKind::GenericConstraintDefault:
+		case ElementKind::StiffSpringConstraintDefault:
+		case ElementKind::ConeTwistConstraintDefault:
+			for (const tinyxml2::XMLElement* user : ProfileUsers(doc, element))
+				bones.merge(BonesOf(doc, user));
 			break;
 
 		case ElementKind::PerVertexShape:
@@ -883,7 +1033,7 @@ std::set<std::string> PhysicsEditorDialog::BonesOfItem(const wxTreeItemId& item)
 
 	if (!data->node.Empty()) {
 		const tinyxml2::XMLElement* element = doc->Resolve(data->node);
-		return element ? BonesOf(element) : std::set<std::string>();
+		return element ? BonesOf(*doc, element) : std::set<std::string>();
 	}
 
 	std::set<std::string> bones;
@@ -1028,6 +1178,14 @@ void PhysicsEditorDialog::OnCollisionActivated(wxListEvent& event) {
 		SelectNode(collisionRows[row].first, collisionRows[row].second);
 }
 
+void PhysicsEditorDialog::OnUsedByActivated(wxListEvent& event) {
+	event.Skip();
+
+	const long row = event.GetIndex();
+	if (row >= 0 && static_cast<std::size_t>(row) < usedByRows.size())
+		SelectNode(usedByRows[row].first, usedByRows[row].second);
+}
+
 void PhysicsEditorDialog::OnDiagnosticActivated(wxListEvent& event) {
 	event.Skip();
 
@@ -1139,6 +1297,7 @@ void PhysicsEditorDialog::OnTreeSelectionChanged(wxTreeEvent& event) {
 	currentNode = NodePath();
 	ShowCollisions(nullptr, nullptr);
 	ShowDiagnostics(doc);
+	ShowUsers(nullptr, nullptr);
 	elementLabel->SetLabel(wxString::FromUTF8(doc->XmlPath()));
 
 	switch (doc->Origin()) {
@@ -1146,6 +1305,102 @@ void PhysicsEditorDialog::OnTreeSelectionChanged(wxTreeEvent& event) {
 		case XmlOrigin::New: status->SetLabel(_("New; it exists only in this session until it is exported.")); break;
 		case XmlOrigin::Loose: status->SetLabel(wxString::FromUTF8(doc->SourcePath())); break;
 	}
+}
+
+void PhysicsEditorDialog::OnPropertyRightClick(wxPropertyGridEvent& event) {
+	XmlDocument* doc = CurrentDocument();
+	tinyxml2::XMLElement* element = CurrentElement();
+	const wxPGProperty* property = RootProperty(event.GetProperty());
+	if (!doc || !element || !property || !IsProfileUser(KindFromName(element->Name())))
+		return;
+
+	const ElementKind kind = KindFromName(element->Name());
+	const std::string name = std::string(property->GetName().ToUTF8());
+	const ChildDesc* child = name.empty() || name[0] == '@' ? nullptr : FindElement(kind)->Child(name.c_str());
+	tinyxml2::XMLElement* profile = ProfileOf(*doc, element);
+	const bool own = child && doc->HasValue(element, *child);
+
+	enum { idReset = wxID_HIGHEST + 1, idApply, idNew };
+	wxMenu menu;
+	menu.Append(idReset, profile ? _("Reset to Profile Value") : _("Reset to Schema Default"))->Enable(own);
+	menu.Append(idApply,
+				profile ? wxString::Format(_("Apply to Profile %s (%s)"),
+										   wxString::FromUTF8(doc->ProfileLabel(profile)),
+										   UserCount(DefaultKindOf(kind), ProfileUsers(*doc, profile).size()))
+						: _("Apply to Profile"))
+		->Enable(own && profile);
+	menu.AppendSeparator();
+	menu.Append(idNew, _("New Profile from This Element..."));
+
+	switch (GetPopupMenuSelectionFromUser(menu)) {
+		case idReset:
+			doc->BeginEdit("reset to profile");
+			doc->ClearValue(element, *child);
+			break;
+
+		case idApply: ApplyToProfile(*doc, element, *child); break;
+
+		case idNew: {
+			const wxString profileName = wxGetTextFromUser(_("Name of the new profile. It takes this element's own values, and the element starts from it."),
+														   _("New Profile"),
+														   wxString(),
+														   this);
+			if (profileName.empty())
+				return;
+
+			if (!CreateProfileFrom(*doc, element, std::string(profileName.ToUTF8()))) {
+				wxMessageBox(wxString::Format(_("There already is a profile named '%s'."), profileName), _("New Profile"), wxICON_INFORMATION, this);
+				return;
+			}
+			break;
+		}
+
+		default: return;
+	}
+
+	// A new profile goes in before the element, which moves its address
+	currentNode = doc->PathOf(element);
+	ReloadAfterDocumentChange();
+}
+
+void PhysicsEditorDialog::OnTidy(wxCommandEvent& WXUNUSED(event)) {
+	XmlDocument* doc = CurrentDocument();
+	if (!doc)
+		return;
+
+	// Tried on a copy first, to say what it would do, or why it can't
+	XmlDocument trial;
+	std::string error;
+	if (!trial.LoadFromString(doc->Serialize(), error))
+		return;
+
+	const TidyResult preview = TidyDefaults(trial);
+	if (!preview.ok) {
+		wxMessageBox(wxString::FromUTF8(preview.report), _("Tidy Defaults"), wxICON_INFORMATION, this);
+		return;
+	}
+
+	const wxString question = wxString::Format(
+		_("This rewrites the %d defaults of '%s' into %d profiles at the top of the file: a Default for each kind, and named "
+		  "profiles that say what they change about it. Every bone and constraint keeps its values, and it can be undone.\n\n"
+		  "Comments inside the defaults are lost. Continue?"),
+		preview.defaultsBefore,
+		FileNameOf(doc->XmlPath()),
+		preview.profilesAfter);
+	if (wxMessageBox(question, _("Tidy Defaults"), wxYES_NO | wxICON_QUESTION, this) != wxYES)
+		return;
+
+	const std::string xmlPath = doc->XmlPath();
+	if (!TidyDefaults(*doc).ok)
+		return;
+
+	// Elements moved, so addresses into the document don't mean what they did
+	currentNode = NodePath();
+	RefreshDocuments();
+	SelectDocument(xmlPath);
+	UpdateEditControls();
+	if (owner)
+		owner->DocumentChanged(xmlPath);
 }
 
 void PhysicsEditorDialog::OnPropertyChanged(wxPropertyGridEvent& event) {

@@ -667,10 +667,10 @@ TEST_CASE("The ambient default cascade resolves the way the builder reads it", "
 	SECTION("an inherited value says where it came from") {
 		const EffectiveValue effective = doc.ResolveEffective(bones["B"], *mass);
 		REQUIRE_FALSE(effective.explicitHere);
-		REQUIRE(effective.sourceLabel == "bone-default #2");
+		REQUIRE(effective.sourceLabel == "Default 2");
 
 		const EffectiveValue named = doc.ResolveEffective(bones["C"], *mass);
-		REQUIRE(named.sourceLabel == "bone-default \"soft\"");
+		REQUIRE(named.sourceLabel == "soft");
 	}
 
 	SECTION("a property nothing supplies falls through to the schema default") {

@@ -66,6 +66,15 @@
 							<tooltip>Add the selected document to the shapes selected in Outfit Studio</tooltip>
 						</object>
 					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxALIGN_CENTER_VERTICAL</flag>
+						<border>5</border>
+						<object class="wxButton" name="physXmlTidy">
+							<label>Tidy Defaults...</label>
+							<tooltip>Rewrite the defaults of the selected document into profiles that don't depend on where they are in the file</tooltip>
+						</object>
+					</object>
 				</object>
 			</object>
 			<object class="sizeritem">
@@ -148,6 +157,13 @@
 														<object class="wxListCtrl" name="physDiagnosticList">
 															<style>wxLC_REPORT|wxLC_SINGLE_SEL|wxLC_HRULES</style>
 															<tooltip>Double click an entry to select what it is about</tooltip>
+														</object>
+													</object>
+													<object class="notebookpage">
+														<label>Used By</label>
+														<object class="wxListCtrl" name="physUsedByList">
+															<style>wxLC_REPORT|wxLC_SINGLE_SEL|wxLC_HRULES</style>
+															<tooltip>The bones and constraints that start from the selected profile. Double click one to select it.</tooltip>
 														</object>
 													</object>
 												</object>
