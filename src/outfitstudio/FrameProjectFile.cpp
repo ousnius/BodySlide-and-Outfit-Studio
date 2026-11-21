@@ -1074,7 +1074,16 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 		});
 
 		wiz.FitToPage(pg1);
-		wiz.CenterOnParent();
+
+		// The wizard only sizes itself when it shows the first page, so center it after that
+		bool centered = false;
+		wiz.Bind(wxEVT_WIZARD_PAGE_SHOWN, [&](wxWizardEvent& event) {
+			event.Skip();
+			if (!centered) {
+				centered = true;
+				wiz.CenterOnParent();
+			}
+		});
 
 		result = wiz.RunWizard(pg1);
 	}
@@ -1348,6 +1357,7 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 		ConfigDialogUtil::LoadDialogCheckBox(OutfitStudioConfig, dlg, "LoadReference", "npLoadAddOns");
 
 		dlg.Fit();
+		dlg.CenterOnParent();
 		result = dlg.ShowModal();
 	}
 	if (result == wxID_CANCEL)

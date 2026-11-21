@@ -54,7 +54,6 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, std::vector<
 		return;
 
 	SetDoubleBuffered(true);
-	CenterOnParent();
 
 	os = (OutfitStudioFrame*)parent;
 	nif = refNif;
@@ -240,6 +239,9 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, std::vector<
 		SetTitle(wxString::Format("%s - %s", GetTitle(), wxString::Format(_("%zu shapes selected"), shapeCount)));
 		nbProperties->SetSelection(1); // Make "Geometry" active
 	}
+
+	// The shader fields can grow the dialog, so center it after they're filled
+	CenterOnParent();
 }
 
 ShapeProperties::~ShapeProperties() {

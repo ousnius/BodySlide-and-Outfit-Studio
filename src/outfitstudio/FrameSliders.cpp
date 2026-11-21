@@ -1112,6 +1112,7 @@ void OutfitStudioFrame::ShowSliderProperties(const std::string& sliderName) {
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgSliderProp")) {
 		dlg.SetSize(dlg.FromDIP(wxSize(760, 560)));
 		dlg.SetMinSize(dlg.FromDIP(wxSize(500, 480)));
+		dlg.CenterOnParent();
 
 		wxTextCtrl* edSliderName = XRCCTRL(dlg, "edSliderName", wxTextCtrl);
 		wxStaticText* lbValLo = XRCCTRL(dlg, "lbValLo", wxStaticText);

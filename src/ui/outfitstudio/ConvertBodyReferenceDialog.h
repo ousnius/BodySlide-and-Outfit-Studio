@@ -32,6 +32,7 @@ private:
 	const std::vector<RefTemplate>& refTemplates;
 	wxWizardPage* pg1 = nullptr;
 	wxWizardPage* pg2 = nullptr;
+	bool centered = false;
 
 	wxChoice* npConvRefChoice = nullptr;
 	wxCheckBox* chkConformSliders = nullptr;

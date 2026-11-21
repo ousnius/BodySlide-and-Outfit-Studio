@@ -105,7 +105,15 @@ ConvertBodyReferenceDialog::ConvertBodyReferenceDialog(OutfitStudioFrame* outfit
 	});
 
 	SetDoubleBuffered(true);
-	CenterOnParent();
+
+	// The wizard only sizes itself when it shows the first page, so center it after that
+	Bind(wxEVT_WIZARD_PAGE_SHOWN, [this](wxWizardEvent& event) {
+		event.Skip();
+		if (!centered) {
+			centered = true;
+			CenterOnParent();
+		}
+	});
 }
 
 ConvertBodyReferenceDialog::~ConvertBodyReferenceDialog() {

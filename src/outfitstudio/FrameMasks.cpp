@@ -377,6 +377,7 @@ void OutfitStudioFrame::OnCopyMask(wxCommandEvent& WXUNUSED(event)) {
 	ConfigDialogUtil::LoadDialogCheckBox(OutfitStudioConfig, dlg, "CopyMask", "addToMask");
 
 	dlg.SetSize(dlg.GetBestSize());
+	dlg.CenterOnParent();
 	if (dlg.ShowModal() != wxID_OK)
 		return;
 

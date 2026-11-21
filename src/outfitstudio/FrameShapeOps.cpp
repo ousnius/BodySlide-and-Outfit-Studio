@@ -681,6 +681,7 @@ void OutfitStudioFrame::OnCopyGeo(wxCommandEvent& WXUNUSED(event)) {
 	sourceChoice->Bind(wxEVT_CHOICE, [this, &dlg, &mergeErrors](wxCommandEvent&) { mergeErrors = CheckCopyGeo(dlg); });
 	targetChoice->Bind(wxEVT_CHOICE, [this, &dlg, &mergeErrors](wxCommandEvent&) { mergeErrors = CheckCopyGeo(dlg); });
 	mergeErrors = CheckCopyGeo(dlg);
+	dlg.CenterOnParent();
 
 	if (dlg.ShowModal() != wxID_OK)
 		return;
@@ -1114,6 +1115,7 @@ bool OutfitStudioFrame::ShowVertexAsym(Mesh* m, const SymmetricVertices& symvert
 
 	UpdateStillUnmasked();
 	dlg.SetSize(dlg.GetBestSize());
+	dlg.CenterOnParent();
 
 	if (dlg.ShowModal() != wxID_OK)
 		return false;

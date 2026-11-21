@@ -354,6 +354,7 @@ bool ShowBadBonesDialog(wxWindow* parent, BadBonesReport& report, AnimInfo& anim
 	buttonSizer->Realize();
 	topBox->Add(buttonSizer, sizerFlags);
 	dlg.SetSizer(topBox);
+	dlg.CenterOnParent();
 
 	return dlg.ShowModal() != wxID_CANCEL;
 }
