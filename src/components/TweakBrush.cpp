@@ -588,10 +588,12 @@ void TB_SmoothMask::bppfFilter(Mesh* m, const int* points, int nPoints, std::uno
 		for (int n = 0; n < balCount; n += 2) {
 			int p1 = balPts[n];
 			int p2 = balPts[n + 1];
-			float fitm = ParabolaFit(m, pti, p1, p2, [&uss, &m](int p) {
-				auto pssit = uss.pointStartState.find(p);
-				if (pssit != uss.pointStartState.end())
-					return pssit->second.x;
+			float fitm = ParabolaFit(m, pti, p1, p2, [this, &uss, &m](int p) {
+				if (!bAccumulate) {
+					auto pssit = uss.pointStartState.find(p);
+					if (pssit != uss.pointStartState.end())
+						return pssit->second.x;
+				}
 				return m->mask[p];
 			});
 
@@ -605,6 +607,12 @@ void TB_SmoothMask::bppfFilter(Mesh* m, const int* points, int nPoints, std::uno
 }
 
 void TB_SmoothMask::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
+	// The filters average over the neighbors of each vertex
+	if (!m->adjVerts)
+		m->BuildVertexAdjacency();
+	if (!m->adjVerts)
+		return;
+
 	std::unordered_map<int, Vector3> wv;
 	Vector3 vs;
 	Vector3 vc;

@@ -232,6 +232,9 @@ public:
 
 class TB_SmoothMask : public TweakBrush {
 public:
+	// bAccumulate: smooth the current mask with each dab instead of the mask from the start
+	// of the stroke, so going over an area again keeps smoothing it further.
+	bool bAccumulate = false;
 	uint8_t method; // 0 for laplacian, 1 for HC-Smooth.
 	float hcAlpha;	// Blending constants.
 	float hcBeta;

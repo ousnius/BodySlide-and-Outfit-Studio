@@ -159,6 +159,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 		smoothMaskBrush.setStrength(activeBrush->getStrength());
 		smoothMaskBrush.setFocus(activeBrush->getFocus());
 		smoothMaskBrush.setSpacing(activeBrush->getSpacing());
+		smoothMaskBrush.bAccumulate = toolOptionAccumulateSmoothMask;
 		activeBrush = &smoothMaskBrush;
 	}
 	else if (activeBrush != &weightBrush && activeBrush != &maskBrush && wxGetKeyState(WXK_SHIFT)) {

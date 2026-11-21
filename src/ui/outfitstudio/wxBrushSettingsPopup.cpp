@@ -36,6 +36,8 @@ wxBrushSettingsPopupBase::wxBrushSettingsPopupBase(OutfitStudioFrame* parent, wx
 }
 
 void wxBrushSettingsPopupBase::Setup(wxWindow* popupWin) {
+	popupWindow = popupWin;
+
 	auto applySize = [&](float value) {
 		TweakBrush* brush = os->glView->GetActiveBrush();
 		if (brush) {
@@ -183,6 +185,17 @@ void wxBrushSettingsPopupBase::Setup(wxWindow* popupWin) {
 
 	topSizer->Add(flexGridSizer, 0, wxALL, 0);
 
+	cbAccumulateSmooth = new wxCheckBox(panel, wxID_ANY, _("Accumulate Smoothing"));
+	cbAccumulateSmooth->SetToolTip(
+		_("The smooth brush (Shift) keeps smoothing further as you go over an area again, instead of stopping at how smooth it gets in one stroke."));
+	cbAccumulateSmooth->Bind(wxEVT_CHECKBOX, [&](wxCommandEvent& event) {
+		bool* option = os->glView->GetActiveAccumulateSmoothOption();
+		if (option)
+			*option = event.IsChecked();
+	});
+	cbAccumulateSmooth->Hide();
+	topSizer->Add(cbAccumulateSmooth, 0, wxLEFT | wxRIGHT | wxBOTTOM, 5);
+
 	bottomSizer = new wxBoxSizer(wxHORIZONTAL);
 
 	buttonReset = new wxButton(panel, wxID_ANY, _("Reset"));
@@ -222,6 +235,16 @@ void wxBrushSettingsPopupBase::SetBrushFocus(float value) {
 void wxBrushSettingsPopupBase::SetBrushSpacing(float value) {
 	brushSpacing->SetValue(ValueToSlider(value, false));
 	brushSpacingVal->SetValue(value);
+}
+
+void wxBrushSettingsPopupBase::SetAccumulateSmooth(bool shown, bool checked) {
+	cbAccumulateSmooth->SetValue(checked);
+	if (cbAccumulateSmooth->IsShown() == shown)
+		return;
+
+	cbAccumulateSmooth->Show(shown);
+	topSizer->Fit(panel);
+	popupWindow->SetClientSize(panel->GetSize());
 }
 
 

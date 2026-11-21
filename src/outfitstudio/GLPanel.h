@@ -193,9 +193,20 @@ public:
 	bool GetToolOptionConnectedOnly() { return toolOptionConnectedOnly; }
 	void SetToolOptionConnectedOnly(bool on = true) { toolOptionConnectedOnly = on; }
 
-	// The smooth weight brush keeps smoothing further with each dab instead of converging per stroke
+	// The smooth weight and smooth mask brushes keep smoothing further with each dab instead of converging per stroke
 	bool GetToolOptionAccumulateSmoothWeight() { return toolOptionAccumulateSmoothWeight; }
 	void SetToolOptionAccumulateSmoothWeight(bool on = true) { toolOptionAccumulateSmoothWeight = on; }
+	bool GetToolOptionAccumulateSmoothMask() { return toolOptionAccumulateSmoothMask; }
+	void SetToolOptionAccumulateSmoothMask(bool on = true) { toolOptionAccumulateSmoothMask = on; }
+
+	// The accumulate option of the active brush's Shift smooth brush, or nullptr if it doesn't have one
+	bool* GetActiveAccumulateSmoothOption() {
+		if (activeBrush == &weightBrush)
+			return &toolOptionAccumulateSmoothWeight;
+		if (activeBrush == &maskBrush)
+			return &toolOptionAccumulateSmoothMask;
+		return nullptr;
+	}
 
 	bool GetToolOptionMerge() { return toolOptionMerge; }
 	void SetToolOptionMerge(bool on = true) { toolOptionMerge = on; }
@@ -447,7 +458,8 @@ private:
 	bool toolOptionXMirror = true;
 	bool toolOptionXMirrorWeight = false;
 	bool toolOptionConnectedOnly = false;
-	bool toolOptionAccumulateSmoothWeight = false;
+	bool toolOptionAccumulateSmoothWeight = true;
+	bool toolOptionAccumulateSmoothMask = true;
 	bool toolOptionMerge = false;
 	bool toolOptionWeld = false;
 	bool toolOptionRestrictSurface = false;

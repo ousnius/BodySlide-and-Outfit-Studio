@@ -137,7 +137,6 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_TEXT(XRCID("sliderFilter"), OutfitStudioFrame::OnSliderFilterChanged)
 	EVT_CHECKBOX(XRCID("cbFixedWeight"), OutfitStudioFrame::OnFixedWeight)
 	EVT_CHECKBOX(XRCID("cbNormalizeWeights"), OutfitStudioFrame::OnCBNormalizeWeights)
-	EVT_CHECKBOX(XRCID("cbAccumulateSmooth"), OutfitStudioFrame::OnCBAccumulateSmooth)
 	EVT_BUTTON(XRCID("btnNormalizeWeights"), OutfitStudioFrame::OnNormalizeWeights)
 
 	EVT_MENU(XRCID("saveBaseShape"), OutfitStudioFrame::OnSetBaseShape)
@@ -617,6 +616,9 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 		else
 			glView->ResetBrushSize();
 
+		glView->SetToolOptionAccumulateSmoothWeight(OutfitStudioConfig.GetBoolValue("BrushSettings.accumulateSmoothWeight", true));
+		glView->SetToolOptionAccumulateSmoothMask(OutfitStudioConfig.GetBoolValue("BrushSettings.accumulateSmoothMask", true));
+
 		std::vector<std::string> brushNames;
 		OutfitStudioConfig.GetValueAttributeArray("BrushSettings", "Brush", "name", brushNames);
 		std::vector<std::string> brushStrengthValues;
@@ -751,6 +753,8 @@ void OutfitStudioFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
 	sliderPool.Clear();
 
 	OutfitStudioConfig.SetValue("BrushSettings.brushsize", glView->GetBrushSize());
+	OutfitStudioConfig.SetBoolValue("BrushSettings.accumulateSmoothWeight", glView->GetToolOptionAccumulateSmoothWeight());
+	OutfitStudioConfig.SetBoolValue("BrushSettings.accumulateSmoothMask", glView->GetToolOptionAccumulateSmoothMask());
 
 	std::vector<std::map<std::string, std::string>> brushSettingsEntries;
 

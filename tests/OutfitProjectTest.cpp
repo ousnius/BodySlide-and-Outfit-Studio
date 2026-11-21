@@ -599,6 +599,46 @@ TEST_CASE("Smoothing a mask turns its border into a gradient", "[OutfitProject]"
 	CHECK(m->mask[row + 6] == Catch::Approx(0.0f));
 }
 
+TEST_CASE("Accumulated mask smoothing goes further than one stroke's target", "[OutfitProject]") {
+	// Smooths a hard mask border on columns 2 and 3 of the 7 x 7 skirt grid, with dabs going back and forth across it
+	auto smoothBorder = [](ProjectFixture& f, bool accumulate) -> std::vector<float> {
+		Mesh* m = f.host.GetShapeMesh("Skirt");
+		REQUIRE(m);
+
+		std::vector<float> mask(m->nVerts, 0.0f);
+		for (int y = 0; y <= 6; y++)
+			for (int x = 0; x <= 2; x++)
+				mask[y * 7 + x] = 1.0f;
+		REQUIRE(MaskOps::SetMask(*m, mask));
+
+		TB_SmoothMask brush;
+		brush.bAccumulate = accumulate;
+		brush.setRadius(0.25f);
+		brush.setStrength(0.5f);
+
+		const int row = 3 * 7;
+		BrushStrokeController controller(f.project, f.editor);
+		controller.Begin({m}, &brush, BrushStrokeController::PickAtVertex(m, row + 2));
+		for (int p = 0; p < 20; p++) {
+			controller.Update(BrushStrokeController::PickAtVertex(m, row + 3));
+			controller.Update(BrushStrokeController::PickAtVertex(m, row + 2));
+		}
+		f.ApplyRefresh(controller.End());
+		return std::vector<float>(m->mask.get(), m->mask.get() + m->nVerts);
+	};
+
+	ProjectFixture onceFixture;
+	std::vector<float> once = smoothBorder(onceFixture, false);
+	ProjectFixture accumulatedFixture;
+	std::vector<float> accumulated = smoothBorder(accumulatedFixture, true);
+
+	// Without accumulating, the border only gets as smooth as the mask at the start of the stroke allows.
+	// Accumulating keeps spreading it into the columns next to it.
+	const int row = 3 * 7;
+	CHECK(accumulated[row + 4] > once[row + 4] + 0.02f);
+	CHECK(accumulated[row + 1] < once[row + 1] - 0.02f);
+}
+
 namespace {
 // The body grid with a hard edge: BoneLeft has columns 0 to 4, BoneRight columns 5 to 10. BoneFar shares
 // the far corner with BoneRight, so it has weights but none near the edge.

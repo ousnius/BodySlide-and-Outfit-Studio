@@ -296,6 +296,9 @@ void OutfitStudioFrame::UpdateBrushSettings() {
 		brushSettingsPopupTransient->SetBrushStrength(brush->getStrength());
 		brushSettingsPopupTransient->SetBrushFocus(brush->getFocus());
 		brushSettingsPopupTransient->SetBrushSpacing(brush->getSpacing());
+
+		bool* accumulateSmooth = glView->GetActiveAccumulateSmoothOption();
+		brushSettingsPopupTransient->SetAccumulateSmooth(accumulateSmooth != nullptr, accumulateSmooth && *accumulateSmooth);
 	}
 }
 

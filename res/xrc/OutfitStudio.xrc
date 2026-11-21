@@ -1347,18 +1347,6 @@
 																				<option>0</option>
 																				<flag>wxALL|wxEXPAND</flag>
 																				<border>5</border>
-																				<object class="wxCheckBox" name="cbAccumulateSmooth">
-																					<fg>#ffffff</fg>
-																					<label>Accumulate Smoothing</label>
-																					<tooltip>The smooth weight brush (Shift) keeps smoothing the weights further as you go over an area again, instead of stopping at how smooth they get in one stroke.</tooltip>
-																					<checked>0</checked>
-																					<hidden>1</hidden>
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>0</option>
-																				<flag>wxALL|wxEXPAND</flag>
-																				<border>5</border>
 																				<object class="wxBoxSizer">
 																					<orient>wxHORIZONTAL</orient>
 																					<object class="sizeritem">

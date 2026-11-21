@@ -248,6 +248,13 @@ McpToolResult BrushStroke(OutfitStudioMcp& mcp, const json& args) {
 	brush->setMirror(McpArgs::Bool(args, "mirror", false));
 	brush->setConnected(McpArgs::Bool(args, "connectedOnly", false));
 
+	// Like the window's Accumulate Smoothing, on by default
+	const bool accumulate = McpArgs::Bool(args, "accumulate", true);
+	if (auto smoothMask = dynamic_cast<TB_SmoothMask*>(brush.get()))
+		smoothMask->bAccumulate = accumulate;
+	if (auto smoothWeight = dynamic_cast<TB_SmoothWeight*>(brush.get()))
+		smoothWeight->bAccumulate = accumulate;
+
 	if (auto colorBrush = dynamic_cast<TB_Color*>(brush.get())) {
 		if (const json* color = McpArgs::Find(args, "color")) {
 			if (!color->is_array() || color->size() != 3)
@@ -1035,6 +1042,9 @@ void AddEditTools(OutfitStudioMcp& mcp) {
 			{"spacing", McpProp("number", "Distance between dabs along the path, as in the window")},
 			{"mirror", McpProp("boolean", "Also paint mirrored on X. Default false.")},
 			{"connectedOnly", McpProp("boolean", "Only affect vertices connected to the path. Default false.")},
+			{"accumulate",
+			 McpProp("boolean", "smooth_mask and smooth_weight: keep smoothing further with each dab and pass, instead of stopping at how smooth the "
+								"values at the start of the stroke allow. Default true.")},
 			{"bone", McpProp("string", "Weight brushes: the bone to paint")},
 			{"mirrorBone", McpProp("string", "Weight brushes with mirror: the bone of the other side")},
 			{"normalize", McpProp("boolean", "Weight brushes: keep the weights of each vertex summing to 1. Default true.")},

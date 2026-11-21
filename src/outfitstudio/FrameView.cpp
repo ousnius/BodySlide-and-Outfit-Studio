@@ -497,7 +497,7 @@ bool OutfitStudioFrame::ResolvePendingTabChanges() {
 static const std::initializer_list<const char*> SegmentControls = {"segmentTypeLabel", "segmentType", "segmentSlotLabel", "segmentSlot", "segmentSSFLabel",
 																   "segmentSSFEdit", "segmentSSF", "segmentApply", "segmentReset"};
 static const std::initializer_list<const char*> PartitionControls = {"partitionTypeLabel", "partitionType", "partitionApply", "partitionReset"};
-static const std::initializer_list<const char*> BoneControls = {"totalBoneCountLabel", "selectedBoneCountLabel", "cbFixedWeight", "cbNormalizeWeights", "btnNormalizeWeights", "cbAccumulateSmooth", "xMirrorBoneLabel"};
+static const std::initializer_list<const char*> BoneControls = {"totalBoneCountLabel", "selectedBoneCountLabel", "cbFixedWeight", "cbNormalizeWeights", "btnNormalizeWeights", "xMirrorBoneLabel"};
 
 // What leaving the segment or partition tab turns back on
 void OutfitStudioFrame::LeaveSegmentPartitionMode() {
@@ -838,7 +838,6 @@ void OutfitStudioFrame::SetAnimationPlaybackLock(bool locked) {
 															FindWindow(XRCID("cbFixedWeight")),
 															FindWindow(XRCID("cbNormalizeWeights")),
 															FindWindow(XRCID("btnNormalizeWeights")),
-															FindWindow(XRCID("cbAccumulateSmooth")),
 															// The player itself stays usable; only the
 															// controls that would swap the animation out
 															// from under it are locked.

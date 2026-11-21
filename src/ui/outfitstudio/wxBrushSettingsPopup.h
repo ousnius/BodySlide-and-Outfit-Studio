@@ -40,6 +40,9 @@ protected:
 	wxSlider* brushSpacing = nullptr;
 	wxSpinCtrlDouble* brushSpacingVal = nullptr;
 
+	wxCheckBox* cbAccumulateSmooth = nullptr;
+
+	wxWindow* popupWindow = nullptr;
 	wxBoxSizer* bottomSizer = nullptr;
 	wxButton* buttonReset = nullptr;
 	wxStaticText* brushNameLabel = nullptr;
@@ -54,6 +57,8 @@ public:
 	void SetBrushStrength(float value);
 	void SetBrushFocus(float value);
 	void SetBrushSpacing(float value);
+	// Shows the accumulate option for brushes with a Shift smooth brush that has one, and hides it otherwise
+	void SetAccumulateSmooth(bool shown, bool checked);
 };
 
 class wxBrushSettingsPopupTransient : public wxPopupTransientWindow, public wxBrushSettingsPopupBase {
