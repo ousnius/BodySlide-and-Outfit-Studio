@@ -131,7 +131,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(Catch2IncludeDirectories)..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\2020.3.7\include;..\bullet3\install\include\bullet;src;lib;lib\gli;lib\fkYAML\include;lib\nifly\include;lib\nifly\external;lib\nlohmannjson\include;lib\TinyXML-2;lib\cpp-httplib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(Catch2IncludeDirectories)..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\2020.3.11\include;..\bullet3\install\include\bullet;src;lib;lib\gli;lib\fkYAML\include;lib\nifly\include;lib\nifly\external;lib\nlohmannjson\include;lib\TinyXML-2;lib\cpp-httplib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;BSOS_TEST_DATA_DIR="tests/data";WIN32_LEAN_AND_MEAN;NOMINMAX;USE_FBXSDK;USE_BULLET;BT_USE_SSE_IN_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -145,7 +145,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>Catch2Maind.lib;Catch2d.lib;glu32.lib;opengl32.lib;dbghelp.lib;winmm.lib;libfbxsdk-mt.lib;libxml2-mt.lib;zlib-mt.lib;BulletDynamics_Debug.lib;BulletCollision_Debug.lib;LinearMath_Debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(WxLibraryDirectory)..\FBX SDK\2020.3.7\lib\x64\debug;..\bullet3\install\lib;$(Catch2DebugLibraryDirectories)$(VcpkgCatch2DebugLibraryDirectories)%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(WxLibraryDirectory)..\FBX SDK\2020.3.11\lib\x64\debug;..\bullet3\install\lib;$(Catch2DebugLibraryDirectories)$(VcpkgCatch2DebugLibraryDirectories)%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
@@ -182,7 +182,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(Catch2IncludeDirectories)..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\2020.3.7\include;..\bullet3\install\include\bullet;src;lib;lib\gli;lib\fkYAML\include;lib\nifly\include;lib\nifly\external;lib\nlohmannjson\include;lib\TinyXML-2;lib\cpp-httplib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(Catch2IncludeDirectories)..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\2020.3.11\include;..\bullet3\install\include\bullet;src;lib;lib\gli;lib\fkYAML\include;lib\nifly\include;lib\nifly\external;lib\nlohmannjson\include;lib\TinyXML-2;lib\cpp-httplib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;BSOS_TEST_DATA_DIR="tests/data";WIN32_LEAN_AND_MEAN;NOMINMAX;USE_FBXSDK;USE_BULLET;BT_USE_SSE_IN_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>Level4</WarningLevel>
@@ -195,7 +195,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>Catch2Main.lib;Catch2.lib;glu32.lib;opengl32.lib;dbghelp.lib;winmm.lib;libfbxsdk-mt.lib;libxml2-mt.lib;zlib-mt.lib;BulletDynamics.lib;BulletCollision.lib;LinearMath.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(WxLibraryDirectory)..\FBX SDK\2020.3.7\lib\x64\release;..\bullet3\install\lib;$(Catch2ReleaseLibraryDirectories)$(VcpkgCatch2ReleaseLibraryDirectories)%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(WxLibraryDirectory)..\FBX SDK\2020.3.11\lib\x64\release;..\bullet3\install\lib;$(Catch2ReleaseLibraryDirectories)$(VcpkgCatch2ReleaseLibraryDirectories)%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
