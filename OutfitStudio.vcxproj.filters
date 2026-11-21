@@ -2886,6 +2886,9 @@
     <ClCompile Include="src\mcp\McpToolsPhysics.cpp">
       <Filter>MCP</Filter>
     </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsPhysicsXml.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
     <ClCompile Include="src\mcp\McpSnapshots.cpp">
       <Filter>MCP</Filter>
     </ClCompile>

@@ -44,6 +44,9 @@ public:
 	void RefreshLinks();
 	// Closes the editor and drops the documents, for when the project goes away
 	void Shutdown();
+	// Reads a document again after something else rewrote its file, and rebuilds the preview. A document with
+	// unsaved edits is kept.
+	void ReloadDocument(const std::string& xmlPath);
 
 	// Called by the editor window when it closes
 	void EditorClosed();

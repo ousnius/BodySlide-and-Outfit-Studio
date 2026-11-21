@@ -550,6 +550,7 @@ add_library(bsos_mcp STATIC
 	src/mcp/McpToolsGuides.cpp
 	src/mcp/McpToolsMeasure.cpp
 	src/mcp/McpToolsPhysics.cpp
+	src/mcp/McpToolsPhysicsXml.cpp
 	src/mcp/McpToolsProject.cpp
 	src/mcp/McpToolsQuality.cpp
 	src/mcp/McpToolsShapes.cpp

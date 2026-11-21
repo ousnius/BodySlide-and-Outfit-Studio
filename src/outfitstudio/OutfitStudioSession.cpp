@@ -7,6 +7,7 @@ See the included LICENSE file
 #include "GLPanel.h"
 #include "OutfitStudioFrame.h"
 #include "PosePanel.h"
+#include "PhysicsXmlEditor.h"
 #include "SegmentPartitionEditor.h"
 #include "ShapeTreeItems.h"
 #include "render/ViewState.h"
@@ -348,4 +349,12 @@ void OutfitStudioSession::ShowOverlay(ViewOverlay overlay, bool show) {
 	wxCommandEvent event(wxEVT_MENU, XRCID(OverlayMenuItem(overlay)));
 	event.SetInt(show ? 1 : 0);
 	frame.GetEventHandler()->ProcessEvent(event);
+}
+
+Physics::XmlEditSession* OutfitStudioSession::PhysicsXmlSession() {
+	return &frame.physicsXml->Session();
+}
+
+void OutfitStudioSession::PhysicsXmlChanged(const std::string& xmlPath) {
+	frame.physicsXml->ReloadDocument(xmlPath);
 }

@@ -124,6 +124,16 @@ void PhysicsXmlEditor::Shutdown() {
 	session.Clear();
 }
 
+void PhysicsXmlEditor::ReloadDocument(const std::string& xmlPath) {
+	if (XmlDocument* doc = session.Find(xmlPath))
+		if (!doc->IsDirty())
+			session.Close(xmlPath);
+
+	// Opens it again if the loaded meshes link it
+	RefreshList();
+	frame.physicsPreview->RequestRebuild();
+}
+
 void PhysicsXmlEditor::RefreshEditor() {
 	if (editor)
 		editor->RefreshDocuments();

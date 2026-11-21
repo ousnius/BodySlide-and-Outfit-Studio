@@ -53,6 +53,13 @@ Some parts the detection can't find or splits wrong: a braid that starts on the 
 - Link it with `set_extra_data` on the root node: name `HDT Skinned Mesh Physics Object`, value the XML's path as the game finds it (`Data\meshes\…`). Setting or deleting it there replaces any link of the loaded files.
 - **Settings only:** when only masses, damping or limits change, edit or write the XML again; the NIF stays as it is.
 
+## Reading and changing an existing XML
+
+The `*-default` blocks are easy to misread. An unnamed one applies to everything after it, up to the next one. A named one is a snapshot of what it `extends` at the point it is declared. Template names match in any case. List entries such as `can-collide-with-bone` add up along the chain. Bones that a shape's skin or a constraint needs without a `<bone>` are created at that line from the unnamed default in force there, and a `<bone>` for them further down is skipped.
+
+- `inspect_physics_xml` resolves all of this. Per bone and constraint it reports the profile, the values, and which of them it sets itself; it also lists the implicitly created bones and the skipped `<bone>` elements. Read it before editing a mod's XML, and again after, to see that only what you meant changed. It reads the physics editor's copy when the user has the file open there, unsaved edits included.
+- `tidy_physics_xml` rewrites the defaults into profiles that don't depend on their position: an unnamed Default per kind at the top, named profiles that say what they change, and a `template` on each element that uses another. Values stay exactly the same, which the tool checks. Use `preview` first, or `path` to write a copy. After tidying, a new bone or constraint only needs a `template`, wherever it goes.
+
 ## Settings by kind
 
 Keep a template with a profile per kind of part and pick per chain:
@@ -87,6 +94,8 @@ Keep a template with a profile per kind of part and pick per chain:
 - `jitters`: keeps shaking at rest (`jitter`, the frame-to-frame change of its velocity). The simulation's contacts shake more than the game's, so compare against a rig that is known to be fine instead of trusting the flag alone. `swingAfter` is still swinging after the motion (little damping).
 
 The tool only checks the mechanics. Ask the user to look at the hair in game.
+
+Hair passing through a collider, or two parts that shouldn't touch but do: `physics_collisions` lists which skinned shapes of the loaded XMLs are tested against each other and the rule that decides it (`shared`, tags, `can-collide-with-tag`, `no-collide-with-tag`).
 
 ## Traps
 

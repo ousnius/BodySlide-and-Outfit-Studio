@@ -263,6 +263,7 @@
     <ClCompile Include="src\mcp\McpToolsGuides.cpp" />
     <ClCompile Include="src\mcp\McpToolsMeasure.cpp" />
     <ClCompile Include="src\mcp\McpToolsPhysics.cpp" />
+    <ClCompile Include="src\mcp\McpToolsPhysicsXml.cpp" />
     <ClCompile Include="src\mcp\McpToolsProject.cpp" />
     <ClCompile Include="src\mcp\McpToolsQuality.cpp" />
     <ClCompile Include="src\mcp\McpToolsShapes.cpp" />
