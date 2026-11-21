@@ -198,7 +198,7 @@ std::unique_ptr<Mesh> Mesh::CreateFromShape(NifFile* nif, const std::string& sha
 	for (int i = 0; i < m->nVerts; i++)
 		m->verts[i] = Mesh::TransformPosNifToMesh(nifVerts[i]);
 
-	if (nifUvs && !nifUvs->empty()) {
+	if (nifUvs && nifUvs->size() == static_cast<size_t>(m->nVerts) && m->nVerts > 0) {
 		for (int i = 0; i < m->nVerts; i++) {
 			m->texcoord[i].u = (*nifUvs)[i].u;
 			m->texcoord[i].v = (*nifUvs)[i].v;
@@ -219,7 +219,7 @@ std::unique_ptr<Mesh> Mesh::CreateFromShape(NifFile* nif, const std::string& sha
 	for (int t = 0; t < m->nTris; t++)
 		m->tris[t] = nifTris[t];
 
-	if (!nifNorms || nifNorms->empty()) {
+	if (!nifNorms || nifNorms->size() != static_cast<size_t>(m->nVerts)) {
 		// Calc weldVerts and normals
 		m->SmoothNormals();
 	}
@@ -241,7 +241,7 @@ std::unique_ptr<Mesh> Mesh::CreateFromShape(NifFile* nif, const std::string& sha
 	}
 
 	std::vector<Color4> vColors;
-	if (nif->GetColorsForShape(shape, vColors)) {
+	if (nif->GetColorsForShape(shape, vColors) && vColors.size() == static_cast<size_t>(m->nVerts)) {
 		for (size_t v = 0; v < vColors.size(); v++) {
 			m->vcolors[v].x = vColors.at(v).r;
 			m->vcolors[v].y = vColors.at(v).g;
