@@ -21,7 +21,7 @@
 				<flag>wxALL|wxEXPAND</flag>
 				<border>5</border>
 				<object class="wxTreeCtrl" name="boneTree">
-					<style>wxTR_EXTENDED|wxTR_HAS_BUTTONS|wxTR_LINES_AT_ROOT|wxTR_MULTIPLE</style>
+					<style>wxTR_HAS_BUTTONS|wxTR_LINES_AT_ROOT|wxTR_MULTIPLE</style>
 				</object>
 			</object>
 			<object class="sizeritem">
@@ -62,7 +62,7 @@
 					<orient>wxHORIZONTAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL</flag>
+						<flag>wxALL|wxALIGN_CENTER_VERTICAL</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="lbParentBone">
 							<label>Parent</label>
@@ -88,7 +88,7 @@
 					<orient>wxHORIZONTAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL</flag>
+						<flag>wxALL|wxALIGN_CENTER_VERTICAL</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="lbBoneName">
 							<label>Name</label>
@@ -228,7 +228,7 @@
 					<orient>wxHORIZONTAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL</flag>
+						<flag>wxALL|wxALIGN_CENTER_VERTICAL</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="lbAddCount">
 							<label>Add Count #</label>

@@ -1596,7 +1596,7 @@
 								<orient>wxVERTICAL</orient>
 								<object class="sizeritem">
 									<option>0</option>
-									<flag>wxALIGN_CENTER_VERTICAL|wxTOP|wxLEFT|wxRIGHT</flag>
+									<flag>wxTOP|wxLEFT|wxRIGHT</flag>
 									<border>10</border>
 									<object class="wxStaticText" name="lbCoordIntro">
 										<label>Transform from shape to global coordinates:</label>

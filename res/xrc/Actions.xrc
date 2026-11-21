@@ -1522,7 +1522,7 @@
 					<orient>wxHORIZONTAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALIGN_CENTER_VERTICAL|wxALIGN_RIGHT|wxALL</flag>
+						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="sourceLabel">
 							<label>Source</label>
@@ -1531,7 +1531,7 @@
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALIGN_CENTER_VERTICAL|wxALIGN_RIGHT|wxALL</flag>
+						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 						<border>5</border>
 						<object class="wxChoice" name="sourceChoice">
 							<selection>0</selection>
@@ -1540,7 +1540,7 @@
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALIGN_CENTER_VERTICAL|wxALIGN_RIGHT|wxALL</flag>
+						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="targetLabel">
 							<label>Target</label>
@@ -1549,7 +1549,7 @@
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALIGN_CENTER_VERTICAL|wxALIGN_RIGHT|wxALL</flag>
+						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 						<border>5</border>
 						<object class="wxChoice" name="targetChoice">
 							<selection>0</selection>
@@ -1958,7 +1958,7 @@
 										</object>
 										<object class="sizeritem">
 											<option>0</option>
-											<flag>wxLEFT|wxRIGHT|wxALIGN_RIGHT</flag>
+											<flag>wxLEFT|wxRIGHT</flag>
 											<border>5</border>
 											<object class="wxStaticText" name="anyBoneText">
 												<label translate="0">0</label>
@@ -2000,7 +2000,7 @@
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxLEFT|wxRIGHT|wxALIGN_RIGHT</flag>
+						<flag>wxLEFT|wxRIGHT</flag>
 						<border>5</border>
 						<minsize>100,20</minsize>
 						<object class="wxStaticText" name="stillUnmaskedText">
