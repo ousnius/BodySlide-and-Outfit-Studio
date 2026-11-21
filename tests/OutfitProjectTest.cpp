@@ -16,6 +16,7 @@
 #include <map>
 #include <memory>
 #include <random>
+#include <sstream>
 
 using nifly::NifFile;
 using nifly::NiShape;
@@ -985,6 +986,118 @@ TEST_CASE("Adaptive refining splits only the chosen edges and keeps the mesh clo
 	f.project.ApplyShapeMeshUndo(f.skirt, noMask, usp.usss[0], true);
 	CHECK(f.skirt->GetNumVertices() == 49);
 	CHECK(f.skirt->GetNumTriangles() == 72);
+}
+
+TEST_CASE("Mesh edits keep the LOD triangles of a Starfield shape on its vertices", "[OutfitProject]") {
+	TargetGameScope targetGame{SF};
+	TempFolder folder;
+	AnimSkeleton skeleton;
+	MeshHost host;
+	OutfitProject project{skeleton, &host, false};
+	host.project = &project;
+
+	// 5 x 5 grid, LOD 0 with every other triangle, LOD 1 with the first and last one
+	std::vector<Vector3> gridVerts;
+	std::vector<Triangle> gridTris;
+	std::vector<Vector2> gridUvs;
+	MakeGrid(4, 10.0f, 0.0f, gridVerts, gridTris, gridUvs);
+	std::vector<std::vector<Triangle>> originalLods(2);
+	for (size_t t = 0; t < gridTris.size(); t += 2)
+		originalLods[0].push_back(gridTris[t]);
+	originalLods[1] = {gridTris.front(), gridTris.back()};
+	{
+		NifFile nif;
+		nif.Create(nifly::NiVersion::getSF());
+		auto block = std::make_unique<nifly::BSGeometry>();
+		block->name.get() = "Grid";
+		block->SetInternalGeomData(true);
+		auto meshSlot = block->AddMesh();
+		meshSlot->flags = 64;
+		auto& mesh = meshSlot->meshData;
+		mesh.version = 2;
+		mesh.scale = 1.0f;
+		mesh.nVertices = static_cast<uint32_t>(gridVerts.size());
+		mesh.Create(nif.GetHeader().GetVersion(), &gridVerts, nullptr, &gridUvs, nullptr);
+		mesh.tris = gridTris;
+		mesh.normals.assign(gridVerts.size(), Vector3(0, 0, 1));
+		mesh.lods = originalLods;
+		nif.GetRootNode()->childRefs.AddBlockRef(nif.GetHeader().AddBlock(std::move(block)));
+		REQUIRE(nif.Save(folder.path / "Grid.nif") == 0);
+	}
+	REQUIRE(project.ImportNIF((folder.path / "Grid.nif").string(), false) == 0);
+	auto shape = project.GetWorkNif()->FindBlockByName<nifly::BSGeometry>("Grid");
+	REQUIRE(shape);
+	auto meshData = dynamic_cast<nifly::BSGeometryMeshData*>(shape->GetGeomData());
+	REQUIRE(meshData);
+	REQUIRE(meshData->lods == originalLods);
+
+	std::vector<float> noMask;
+
+	SECTION("Deleting vertices drops their LOD triangles and renumbers the rest, undo brings them back") {
+		// Vertex 0 is only in the first triangle, which is in both LODs
+		UndoStateShape uss;
+		uss.shapeName = "Grid";
+		REQUIRE_FALSE(project.PrepareDeleteVerts(shape, {{0, 1.0f}}, uss));
+		REQUIRE(uss.delVerts.size() == 1);
+
+		auto shiftedDown = [](std::vector<Triangle> lod) {
+			lod.erase(lod.begin());
+			for (auto& t : lod) {
+				t.p1--;
+				t.p2--;
+				t.p3--;
+			}
+			return lod;
+		};
+		const std::vector<std::vector<Triangle>> expected{shiftedDown(originalLods[0]), shiftedDown(originalLods[1])};
+
+		project.ApplyShapeMeshUndo(shape, noMask, uss, false);
+		CHECK(shape->GetNumVertices() == 24);
+		CHECK(meshData->lods == expected);
+
+		project.ApplyShapeMeshUndo(shape, noMask, uss, true);
+		CHECK(shape->GetNumVertices() == 25);
+		CHECK(meshData->lods == originalLods);
+
+		// Redo
+		project.ApplyShapeMeshUndo(shape, noMask, uss, false);
+		CHECK(meshData->lods == expected);
+
+		// The saved LODs are the edited ones
+		std::stringstream stream(std::ios::in | std::ios::out | std::ios::binary);
+		REQUIRE(project.GetWorkNif()->Save(stream) == 0);
+		NifFile reloaded;
+		REQUIRE(reloaded.Load(stream) == 0);
+		auto reloadedShape = reloaded.FindBlockByName<nifly::BSGeometry>("Grid");
+		REQUIRE(reloadedShape);
+		auto reloadedData = dynamic_cast<nifly::BSGeometryMeshData*>(reloadedShape->GetGeomData());
+		REQUIRE(reloadedData);
+		CHECK(reloadedData->nVertices == 24);
+		CHECK(reloadedData->lods == expected);
+	}
+
+	SECTION("Inserting vertices renumbers the LOD triangles") {
+		UndoStateShape uss;
+		uss.shapeName = "Grid";
+		UndoStateVertex added;
+		added.index = 0;
+		added.pos = Vector3(-1.0f, 0.0f, 0.0f);
+		uss.addVerts.push_back(added);
+
+		project.ApplyShapeMeshUndo(shape, noMask, uss, false);
+		CHECK(shape->GetNumVertices() == 26);
+		REQUIRE(meshData->lods.size() == 2);
+		REQUIRE(meshData->lods[0].size() == originalLods[0].size());
+		for (size_t t = 0; t < originalLods[0].size(); t++) {
+			CHECK(meshData->lods[0][t].p1 == originalLods[0][t].p1 + 1);
+			CHECK(meshData->lods[0][t].p2 == originalLods[0][t].p2 + 1);
+			CHECK(meshData->lods[0][t].p3 == originalLods[0][t].p3 + 1);
+		}
+
+		project.ApplyShapeMeshUndo(shape, noMask, uss, true);
+		CHECK(shape->GetNumVertices() == 25);
+		CHECK(meshData->lods == originalLods);
+	}
 }
 
 namespace {

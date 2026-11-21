@@ -727,7 +727,7 @@ public:
 	void CollectVertexData(nifly::NiShape* shape, UndoStateShape& uss, const std::vector<uint16_t>& indices);
 	void CollectTriangleData(nifly::NiShape* shape, UndoStateShape& uss, const std::vector<uint32_t>& indices);
 	bool PrepareDeleteVerts(nifly::NiShape* shape, const std::unordered_map<uint16_t, float>& mask, UndoStateShape& uss);
-	void ApplyShapeMeshUndo(nifly::NiShape* shape, std::vector<float>& mask, const UndoStateShape& uss, bool bUndo);
+	void ApplyShapeMeshUndo(nifly::NiShape* shape, std::vector<float>& mask, UndoStateShape& uss, bool bUndo);
 
 	bool PrepareCollapseVertex(nifly::NiShape* shape, UndoStateShape& uss, const std::vector<uint16_t>& indices);
 	bool PrepareFlipEdge(nifly::NiShape* shape, UndoStateShape& uss, const nifly::Edge& edge);

@@ -108,6 +108,10 @@ struct UndoStateShape {
 	nifly::NiVector<nifly::BSDismemberSkinInstance::PartitionInfo> partitionInfoBefore;
 	nifly::NiVector<nifly::BSDismemberSkinInstance::PartitionInfo> partitionInfoAfter;
 	bool hadVertexColors = false;
+	// The LOD triangle lists of a Starfield shape before the mesh edit, recorded when the edit is first
+	// applied. Undo restores them, since the edit drops the LOD triangles of deleted vertices.
+	bool hasLodsBefore = false;
+	std::vector<std::vector<nifly::Triangle>> lodsBefore;
 	bool hasClothSources = false;
 	std::vector<std::string> clothSourcesBefore, clothSourcesAfter;
 };

@@ -339,7 +339,7 @@ bool OutfitProject::PrepareDeleteVerts(NiShape* shape, const std::unordered_map<
 	return false;
 }
 
-void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, std::vector<float>& mask, const UndoStateShape& uss, bool bUndo) {
+void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, std::vector<float>& mask, UndoStateShape& uss, bool bUndo) {
 	if (uss.hasClothSources)
 		clothData.SetShapeSources(shape->name.get(), bUndo ? uss.clothSourcesBefore : uss.clothSourcesAfter);
 
@@ -351,6 +351,18 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, std::vector<float>& mask,
 	// Gather data
 	std::vector<Triangle> tris;
 	shape->GetTriangles(tris);
+
+	// The LOD triangle lists of a Starfield shape index the same vertices, so they follow the edit as well
+	auto* meshData = dynamic_cast<BSGeometryMeshData*>(shape->GetGeomData());
+	std::vector<std::vector<Triangle>> lods;
+	if (meshData) {
+		if (!bUndo && !uss.hasLodsBefore) {
+			uss.hasLodsBefore = true;
+			uss.lodsBefore = meshData->lods;
+		}
+
+		lods = meshData->lods;
+	}
 
 	std::vector<int> triParts;
 	NifSegmentationInfo inf;
@@ -445,6 +457,8 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, std::vector<float>& mask,
 
 		// ...from triangles
 		ApplyMapToTriangles(tris, vertCollapseMap);
+		for (auto& lod : lods)
+			ApplyMapToTriangles(lod, vertCollapseMap);
 
 		// ...from workAnim
 		workAnim.DeleteVertsForShape(shape->name.get(), delVertInds);
@@ -484,6 +498,8 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, std::vector<float>& mask,
 
 		// ...into triangles
 		ApplyMapToTriangles(tris, vertExpandMap);
+		for (auto& lod : lods)
+			ApplyMapToTriangles(lod, vertExpandMap);
 
 		// ...into workAnim
 		skin.InsertVertexIndices(insVertInds);
@@ -631,6 +647,12 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, std::vector<float>& mask,
 		workNif.SetEyeDataForShape(shape, eyeData);
 
 	shape->SetTriangles(tris);
+
+	if (meshData) {
+		// Undo brings back the LOD triangles that the edit dropped
+		meshData->lods = bUndo && uss.hasLodsBefore ? uss.lodsBefore : lods;
+		meshData->nLODS = static_cast<uint32_t>(meshData->lods.size());
+	}
 
 	if (gotsegs)
 		workNif.SetShapeSegments(shape, inf, triParts);
