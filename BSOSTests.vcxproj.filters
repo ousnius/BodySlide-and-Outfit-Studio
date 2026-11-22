@@ -344,6 +344,9 @@
     <ClCompile Include="tests\AnimTest.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
+    <ClCompile Include="tests\CameraTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
     <ClCompile Include="tests\ClothDataTest.cpp">
       <Filter>Tests</Filter>
     </ClCompile>

@@ -651,6 +651,7 @@ if(BSOS_BUILD_TESTS)
 	add_executable(BSOSTests
 		tests/AddOnSlidersTest.cpp
 		tests/AnimTest.cpp
+		tests/CameraTest.cpp
 		tests/ClothDataTest.cpp
 		tests/ArchiveIndexTest.cpp
 		tests/AutomationJsonTest.cpp

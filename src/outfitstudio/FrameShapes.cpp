@@ -71,10 +71,8 @@ void OutfitStudioFrame::UpdateActiveShape() {
 	menuBar->Enable(XRCID("btnSmoothSeamsAngle"), enableSmoothSeamsAngle);
 	menuBar->Check(XRCID("btnLockNormals"), lockNormals);
 
-	if (autoFrameSelected)
-		FrameSelected();
-	else if (glView->rotationCenterMode == RotationCenterMode::MeshCenter)
-		glView->gls.camRotOffset = glView->gls.GetActiveCenter();
+	if (glView->rotationCenterMode == RotationCenterMode::MeshCenter)
+		glView->gls.SetRotationCenter(glView->gls.GetActiveCenter());
 
 	glView->UpdateBones();
 	glView->Render();

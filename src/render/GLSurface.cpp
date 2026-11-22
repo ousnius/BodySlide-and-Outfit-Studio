@@ -267,6 +267,48 @@ void GLSurface::DollyCamera(int dAmt) {
 	camPos.z += (float)dAmt / 200.0f;
 }
 
+// The turntable rotation of the view matrix, between the translations to and from the rotation center
+static glm::mat3 CameraRotation(const Vector3& camRot) {
+	glm::mat4 rot = glm::rotate(glm::identity<glm::mat4>(), glm::radians(camRot.x), glm::vec3(1.0f, 0.0f, 0.0f));
+	rot = glm::rotate(rot, glm::radians(camRot.y), glm::vec3(0.0f, 1.0f, 0.0f));
+	return glm::mat3(rot);
+}
+
+// A model point p ends up at camPos + c + R * (p + camOffset - c) in view space, with c = camRotOffset.
+// The camera turns around the model point c - camOffset.
+
+void GLSurface::SetRotationCenter(const Vector3& center) {
+	// Moving c by d needs camPos to move by R * d - d to keep every point where it is
+	Vector3 newRotOffset = center + camOffset;
+	glm::vec3 d(newRotOffset.x - camRotOffset.x, newRotOffset.y - camRotOffset.y, newRotOffset.z - camRotOffset.z);
+	glm::vec3 shift = CameraRotation(camRot) * d - d;
+
+	camPos.x += shift.x;
+	camPos.y += shift.y;
+
+	// The orthographic zoom comes from the distance, and the depth doesn't move anything there
+	if (perspective)
+		camPos.z += shift.z;
+
+	camRotOffset = newRotOffset;
+}
+
+void GLSurface::ResetRotationCenter() {
+	SetRotationCenter(camOffset * -1.0f);
+}
+
+void GLSurface::LookAtRotationCenter(const Vector3& center, float distance) {
+	// The center then ends up at camPos + c in view space, whatever the rotation
+	camRotOffset = center + camOffset;
+	camPos.x = -camRotOffset.x;
+	camPos.y = -camRotOffset.y;
+
+	if (perspective)
+		camPos.z = -distance - camRotOffset.z;
+	else
+		camPos.z = -distance;
+}
+
 void GLSurface::ClampCameraPosition(char axis, float lower, float upper) {
 	switch (axis) {
 		case 'X': camPos.x = std::max(lower, std::min(camPos.x, upper)); break;

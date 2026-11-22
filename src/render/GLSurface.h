@@ -278,6 +278,13 @@ public:
 	void PitchCamera(int dScreenY);
 	void PanCamera(int dScreenX, int dScreenY);
 	void DollyCamera(int dAmount);
+	// Moves the point the camera turns around to the center, in model space, without moving the view
+	void SetRotationCenter(const nifly::Vector3& center);
+	// Turns around the point the camera offset moves to the origin again, without moving the view
+	void ResetRotationCenter();
+	// Turns around the center, in model space, and looks at it from the distance, keeping the camera rotation.
+	// The orthographic view is as high as the distance.
+	void LookAtRotationCenter(const nifly::Vector3& center, float distance);
 	void ClampCameraPosition(char axis, float lower, float upper);
 	void UnprojectCamera(nifly::Vector3& result);
 

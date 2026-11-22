@@ -285,7 +285,7 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		if (wxGetKeyState(WXK_ALT)) {
 			if (lastHitResult.hoverPoint != -1) {
 				rotationCenterMode = RotationCenterMode::Picked;
-				gls.camRotOffset = lastHitResult.hoverRealCoord;
+				gls.SetRotationCenter(lastHitResult.hoverRealCoord);
 			}
 		}
 

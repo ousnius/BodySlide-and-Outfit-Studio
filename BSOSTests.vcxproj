@@ -311,6 +311,7 @@
     <ClCompile Include="src\utils\WxBuildConfigCheck.cpp" />
     <ClCompile Include="tests\StudioSessionTest.cpp" />
     <ClCompile Include="tests\AnimTest.cpp" />
+    <ClCompile Include="tests\CameraTest.cpp" />
     <ClCompile Include="tests\ClothDataTest.cpp" />
     <ClCompile Include="tests\SFLayeredMaterialTest.cpp" />
     <ClCompile Include="tests\SFMaterialFileTest.cpp" />

@@ -190,7 +190,6 @@ public:
 	ShapeItemData* activeItem = nullptr;
 	std::vector<ShapeItemData*> selectedItems;
 	bool ShapeSelectionCheck();
-	bool autoFrameSelected = false;
 
 	std::deque<ProjectHistoryEntry> projectHistory;
 

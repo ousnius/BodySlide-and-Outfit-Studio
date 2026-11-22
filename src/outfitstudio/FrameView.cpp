@@ -152,22 +152,19 @@ void OutfitStudioFrame::OnTogglePerspective(wxCommandEvent& event) {
 }
 
 void OutfitStudioFrame::OnToggleRotationCenter(wxCommandEvent& WXUNUSED(event)) {
-	autoFrameSelected = false;
-
 	if (glView->rotationCenterMode != RotationCenterMode::Zero) {
 		glView->rotationCenterMode = RotationCenterMode::Zero;
-		glView->gls.camRotOffset.Zero();
+		glView->gls.ResetRotationCenter();
 	}
 	else {
 		glView->rotationCenterMode = RotationCenterMode::MeshCenter;
-		glView->gls.camRotOffset = glView->gls.GetActiveCenter();
+		glView->gls.SetRotationCenter(glView->gls.GetActiveCenter());
 	}
 
 	glView->Render();
 }
 
 void OutfitStudioFrame::OnFrameSelected(wxCommandEvent& WXUNUSED(event)) {
-	autoFrameSelected = !autoFrameSelected;
 	FrameSelected();
 }
 
@@ -207,20 +204,18 @@ void OutfitStudioFrame::FrameSelected() {
 	if (radius < 0.001f)
 		radius = 0.001f;
 
-	gls.camRotOffset = center;
-	glView->rotationCenterMode = RotationCenterMode::MeshCenter;
+	// The camera keeps turning around the framed center until the rotation center is changed again.
+	// The mesh center mode moves it to the next selected shapes.
+	if (glView->rotationCenterMode == RotationCenterMode::Zero)
+		glView->rotationCenterMode = RotationCenterMode::Picked;
 
-	gls.camPos.x = -center.x;
-	gls.camPos.y = -center.y;
+	float distance;
+	if (gls.perspective)
+		distance = radius / std::tan(gls.mFov * DEG2RAD / 2.0f) + radius;
+	else
+		distance = radius * 2.5f;
 
-	if (gls.perspective) {
-		float fovRad = gls.mFov * DEG2RAD;
-		float distance = radius / std::tan(fovRad / 2.0f);
-		gls.camPos.z = -(distance + radius);
-	}
-	else {
-		gls.camPos.z = -(radius * 2.5f);
-	}
+	gls.LookAtRotationCenter(center, distance);
 
 	glView->Render();
 }
