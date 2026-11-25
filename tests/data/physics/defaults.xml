@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Order-dependent defaults for PhysicsXmlProfilesTest. Hand-written, not mod content. -->
+<system>
+	<bone-default>
+		<mass>1</mass>
+		<inertia x="1" y="1" z="1"/>
+		<centerOfMassTransform>
+			<basis x="0" y="0" z="0" w="1"/>
+			<origin x="0" y="1" z="0"/>
+		</centerOfMassTransform>
+		<can-collide-with-bone>NPC Head [Head]</can-collide-with-bone>
+	</bone-default>
+	<bone name="A"/>
+	<bone-default name="base">
+		<linearDamping>0.5</linearDamping>
+		<can-collide-with-bone>NPC Spine2 [Spn2]</can-collide-with-bone>
+	</bone-default>
+	<bone-default name="soft" extends="base">
+		<mass>0.25</mass>
+	</bone-default>
+	<!-- Redefining base after soft extended it doesn't change soft -->
+	<bone-default name="base">
+		<linearDamping>0.9</linearDamping>
+	</bone-default>
+	<bone name="B" template="soft">
+		<angularDamping>0.3</angularDamping>
+	</bone>
+	<bone name="C" template="BASE"/>
+	<bone-default>
+		<mass>2</mass>
+	</bone-default>
+	<bone name="D"/>
+	<bone name="E" template="nothing-declares-this">
+		<can-collide-with-bone>E1</can-collide-with-bone>
+	</bone>
+	<per-vertex-shape name="Body">
+		<tag>body</tag>
+	</per-vertex-shape>
+	<generic-constraint-default>
+		<linearStiffness x="1" y="1" z="1"/>
+	</generic-constraint-default>
+	<generic-constraint bodyA="A" bodyB="B"/>
+	<constraint-group>
+		<generic-constraint-default name="stiff">
+			<linearStiffness x="9" y="9" z="9"/>
+		</generic-constraint-default>
+		<generic-constraint bodyA="B" bodyB="C" template="stiff"/>
+	</constraint-group>
+	<generic-constraint bodyA="C" bodyB="D"/>
+	<stiffspring-constraint bodyA="D" bodyB="E"/>
+	<stiffspring-constraint-default name="unused">
+		<stiffness>3</stiffness>
+	</stiffspring-constraint-default>
+	<conetwist-constraint-default>
+		<swingSpan1>0.5</swingSpan1>
+	</conetwist-constraint-default>
+	<conetwist-constraint bodyA="A" bodyB="E"/>
+</system>

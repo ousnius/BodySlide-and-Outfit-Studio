@@ -785,6 +785,11 @@
     <ClInclude Include="src\physics\Controller.h" />
     <ClInclude Include="src\physics\DebugDraw.h" />
     <ClInclude Include="src\physics\SystemBuilder.h" />
+    <ClInclude Include="src\physics\LivePatch.h" />
+    <ClInclude Include="src\physics\XmlDocument.h" />
+    <ClInclude Include="src\physics\XmlEditSession.h" />
+    <ClInclude Include="src\physics\XmlProfiles.h" />
+    <ClInclude Include="src\physics\XmlSchema.h" />
     <ClInclude Include="src\physics\hdt\XmlReader.h" />
     <ClInclude Include="src\physics\hdt\hdtAABB.h" />
     <ClInclude Include="src\physics\hdt\hdtBone.h" />
@@ -915,6 +920,11 @@
     <ClCompile Include="src\physics\Controller.cpp" />
     <ClCompile Include="src\physics\DebugDraw.cpp" />
     <ClCompile Include="src\physics\SystemBuilder.cpp" />
+    <ClCompile Include="src\physics\LivePatch.cpp" />
+    <ClCompile Include="src\physics\XmlDocument.cpp" />
+    <ClCompile Include="src\physics\XmlEditSession.cpp" />
+    <ClCompile Include="src\physics\XmlProfiles.cpp" />
+    <ClCompile Include="src\physics\XmlSchema.cpp" />
     <ClCompile Include="src\physics\hdt\XmlReader.cpp" />
     <ClCompile Include="src\physics\hdt\hdtBoneScaleConstraint.cpp" />
     <ClCompile Include="src\physics\hdt\hdtCollider.cpp" />

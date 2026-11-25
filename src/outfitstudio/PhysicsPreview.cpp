@@ -9,6 +9,7 @@ See the included LICENSE file
 #include "FrameHelpers.h"
 #include "GLPanel.h"
 #include "OutfitStudioFrame.h"
+#include "PhysicsXmlEditor.h"
 #include "physics/Controller.h"
 #include "project/OutfitProject.h"
 
@@ -37,10 +38,12 @@ PhysicsPreview::PhysicsPreview(OutfitStudioFrame& frame)
 	: frame(frame)
 	, timer(this) {
 	Bind(wxEVT_TIMER, &PhysicsPreview::OnTimer, this);
+	rebuildTimer.Bind(wxEVT_TIMER, &PhysicsPreview::OnRebuildTimer, this);
 }
 
 PhysicsPreview::~PhysicsPreview() {
 	timer.Stop();
+	rebuildTimer.Stop();
 }
 
 void PhysicsPreview::Init() {
@@ -295,6 +298,10 @@ void PhysicsPreview::UpdateControlsVisibility() {
 
 	OutfitProject* project = frame.project;
 	const bool nowAvailable = project && Physics::HasPhysicsLinks(project->GetWorkNif(), project->shapePhysicsFiles);
+
+	// The list follows the loaded meshes even when the pane's visibility doesn't change
+	frame.physicsXml->RefreshList();
+
 	if (nowAvailable == available)
 		return;
 
@@ -316,7 +323,12 @@ void PhysicsPreview::UpdateControlsVisibility() {
 
 void PhysicsPreview::Shutdown() {
 	StopPump();
+	rebuildTimer.Stop();
 	running = false;
+
+	// The documents were read out of the project that is going away. Only this clears them: stopping the
+	// simulation keeps the edits.
+	frame.physicsXml->Shutdown();
 
 	if (frame.project)
 		frame.project->physicsPose = nullptr;
@@ -348,18 +360,7 @@ void PhysicsPreview::UpdateState() {
 		if (!controller)
 			controller = std::make_unique<Physics::Controller>();
 
-		std::vector<std::string> warnings;
-		OutfitProject* proj = project;
-		size_t systemCount = controller->BuildFromNif(
-			project->GetWorkNif(),
-			project->GetWorkAnim(),
-			[proj](const std::string& xmlPath) { return proj->GetPhysicsXmlStream(xmlPath); },
-			project->shapePhysicsFiles,
-			warnings);
-
-		for (auto& warning : warnings)
-			wxLogWarning("Physics: %s", warning);
-
+		size_t systemCount = BuildSystems();
 		if (systemCount == 0) {
 			frame.statusBar->SetStatusText(_("No physics XMLs found in loaded meshes"));
 			controller->Clear();
@@ -390,12 +391,16 @@ void PhysicsPreview::UpdateState() {
 
 		if (!playing)
 			StartPump();
+
+		// The list now shows what was built rather than what is linked. An XML that resolves to nothing builds nothing.
+		frame.physicsXml->RefreshList();
 	}
 	else if (!desired && running) {
 		// Drop the overrides before the pose is applied again, or the frame
 		// that is supposed to restore the user pose still shows the simulated
 		// one.
 		running = false;
+		rebuildTimer.Stop();
 		project->physicsPose = nullptr;
 		controller->UpdateDebugVis(frame.glView->gls, false);
 		controller->Clear();
@@ -413,6 +418,7 @@ void PhysicsPreview::UpdateState() {
 		// catches the BVH up with what is displayed: the pump skipped the
 		// rebuild on every tick.
 		frame.ApplyPose();
+		frame.physicsXml->RefreshList();
 	}
 	else if (running) {
 		// Animation playback took over or ended: while playing, ApplyPose
@@ -452,6 +458,103 @@ void PhysicsPreview::StepWithAnimation() {
 void PhysicsPreview::ResetDynamics() {
 	if (running)
 		controller->ResetDynamics();
+}
+
+size_t PhysicsPreview::BuildSystems() {
+	OutfitProject* project = frame.project;
+	Physics::XmlEditSession& session = frame.physicsXml->Session();
+
+	// Everything the builder resolves goes through the edit session, which adopts each XML on the way and serves
+	// what the editor holds from then on
+	session.ClearWarnings();
+	std::vector<std::string> warnings;
+	size_t systemCount = controller->BuildFromNif(project->GetWorkNif(), project->GetWorkAnim(), session.Resolver(), project->shapePhysicsFiles, warnings);
+
+	// Files the session couldn't take over first: they explain why the editor shows fewer documents than run
+	for (auto& warning : session.Warnings())
+		wxLogWarning("Physics: %s", warning);
+	for (auto& warning : warnings)
+		wxLogWarning("Physics: %s", warning);
+
+	return systemCount;
+}
+
+std::vector<Physics::SystemInfo> PhysicsPreview::ListSystems() const {
+	if (running)
+		return controller->Systems();
+
+	OutfitProject* project = frame.project;
+	if (!project)
+		return {};
+
+	return Physics::CollectPhysicsXmlLinks(project->GetWorkNif(), project->shapePhysicsFiles);
+}
+
+bool PhysicsPreview::PatchProperty(const Physics::PatchRequest& request) {
+	if (!running || !controller->PatchProperty(request))
+		return false;
+
+	// The change is in the simulation, but only the pump repaints, and it doesn't run during animation playback
+	if (!pumpActive)
+		frame.glView->Render();
+
+	return true;
+}
+
+void PhysicsPreview::RequestRebuild() {
+	if (!running)
+		return;
+
+	// Long enough that dragging a value doesn't rebuild on the way, short enough that letting go looks immediate
+	constexpr int rebuildDelayMS = 250;
+	rebuildTimer.StartOnce(rebuildDelayMS);
+}
+
+void PhysicsPreview::OnRebuildTimer(wxTimerEvent& WXUNUSED(event)) {
+	Rebuild();
+}
+
+void PhysicsPreview::Rebuild() {
+	rebuildTimer.Stop();
+
+	OutfitProject* project = frame.project;
+	if (!running || !project)
+		return;
+
+	// The grab holds rigid bodies of the systems about to be thrown away
+	if (controller->IsGrabbing())
+		frame.glView->EndPhysicsGrab();
+
+	const Physics::DynamicState state = controller->CaptureDynamicState();
+
+	// The overrides are the controller's, cleared and refilled by the build
+	project->physicsPose = nullptr;
+
+	const size_t systemCount = BuildSystems();
+	if (systemCount == 0) {
+		// Unchecking the box with "running" still set takes UpdateState down its teardown path, which takes the
+		// overrides back off the pose
+		frame.statusBar->SetStatusText(_("Physics stopped: the edited XMLs build no systems"));
+		cbPhysics->SetValue(false);
+		UpdateState();
+		return;
+	}
+
+	project->physicsPose = &controller->PoseOverrides();
+	UpdateShapes();
+
+	// Puts the cloth back where it was and moving as it was, instead of dropping it onto the pose
+	controller->RestoreDynamicState(state);
+
+	// The rebuilt systems know none of the current settings
+	ApplyWind();
+	UpdateProbeState();
+	frame.physicsXml->RefreshList();
+
+	if (cbVis)
+		controller->UpdateDebugVis(frame.glView->gls, cbVis->IsChecked());
+
+	frame.statusBar->SetStatusText(wxString::Format(_("Physics rebuilt: %zu system(s)"), systemCount));
 }
 
 void PhysicsPreview::StartPump() {

@@ -692,6 +692,9 @@
     <None Include="res\xrc\EditUV.xrc">
       <Filter>Resources</Filter>
     </None>
+    <None Include="res\xrc\PhysicsEditor.xrc">
+      <Filter>Resources</Filter>
+    </None>
     <None Include="res\xrc\ImportDialog.xrc">
       <Filter>Resources</Filter>
     </None>
@@ -883,6 +886,21 @@
     <ClInclude Include="src\physics\SystemBuilder.h">
       <Filter>Physics</Filter>
     </ClInclude>
+    <ClInclude Include="src\physics\LivePatch.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\XmlDocument.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\XmlEditSession.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\XmlProfiles.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\XmlSchema.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
     <ClInclude Include="src\physics\hdt\XmlReader.h">
       <Filter>Physics\hdt</Filter>
     </ClInclude>
@@ -974,6 +992,9 @@
       <Filter>Outfit Studio</Filter>
     </ClInclude>
     <ClInclude Include="src\outfitstudio\PhysicsPreview.h">
+      <Filter>Outfit Studio</Filter>
+    </ClInclude>
+    <ClInclude Include="src\outfitstudio\PhysicsXmlEditor.h">
       <Filter>Outfit Studio</Filter>
     </ClInclude>
     <ClInclude Include="src\outfitstudio\PosePanel.h">
@@ -1676,6 +1697,9 @@
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="src\ui\outfitstudio\EditUV.h">
+      <Filter>UI\Outfit Studio</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ui\outfitstudio\PhysicsEditorDialog.h">
       <Filter>UI\Outfit Studio</Filter>
     </ClInclude>
     <ClInclude Include="src\components\RefTemplates.h">
@@ -2427,6 +2451,21 @@
     <ClCompile Include="src\physics\SystemBuilder.cpp">
       <Filter>Physics</Filter>
     </ClCompile>
+    <ClCompile Include="src\physics\LivePatch.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\XmlDocument.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\XmlEditSession.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\XmlProfiles.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\XmlSchema.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
     <ClCompile Include="src\physics\hdt\XmlReader.cpp">
       <Filter>Physics\hdt</Filter>
     </ClCompile>
@@ -2530,6 +2569,9 @@
       <Filter>Outfit Studio</Filter>
     </ClCompile>
     <ClCompile Include="src\outfitstudio\PhysicsPreview.cpp">
+      <Filter>Outfit Studio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\outfitstudio\PhysicsXmlEditor.cpp">
       <Filter>Outfit Studio</Filter>
     </ClCompile>
     <ClCompile Include="src\outfitstudio\FramePack.cpp">
@@ -2694,6 +2736,9 @@
     <ClCompile Include="src\ui\outfitstudio\EditUV.cpp">
       <Filter>UI\Outfit Studio</Filter>
     </ClCompile>
+    <ClCompile Include="src\ui\outfitstudio\PhysicsEditorDialog.cpp">
+      <Filter>UI\Outfit Studio</Filter>
+    </ClCompile>
     <ClCompile Include="src\components\RefTemplates.cpp">
       <Filter>Components</Filter>
     </ClCompile>
@@ -2839,6 +2884,9 @@
       <Filter>MCP</Filter>
     </ClCompile>
     <ClCompile Include="src\mcp\McpToolsPhysics.cpp">
+      <Filter>MCP</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mcp\McpToolsPhysicsXml.cpp">
       <Filter>MCP</Filter>
     </ClCompile>
     <ClCompile Include="src\mcp\McpSnapshots.cpp">

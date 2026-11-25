@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "PosePanel.h"
 #include "SegmentPartitionEditor.h"
 #include "PhysicsPreview.h"
+#include "PhysicsXmlEditor.h"
 #include "AnimationPlayer.h"
 #include "ui/AppSetup.h"
 #include "FrameHelpers.h"
@@ -397,6 +398,7 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	dispatcher = std::make_unique<MainThreadDispatcher>([this]() { CallAfter([this]() { dispatcher->ProcessPending(); }); });
 	animation = std::make_unique<AnimationPlayer>(*this);
 	physicsPreview = std::make_unique<PhysicsPreview>(*this);
+	physicsXml = std::make_unique<PhysicsXmlEditor>(*this);
 	segPartEditor = std::make_unique<SegmentPartitionEditor>(*this);
 	posePanel = std::make_unique<PosePanel>(*this);
 
@@ -602,6 +604,7 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 
 	animation->Init();
 	physicsPreview->Init();
+	physicsXml->Init();
 	animation->ResetList();
 
 	wxWindow* leftPanel = FindWindowByName("leftSplitPanel");

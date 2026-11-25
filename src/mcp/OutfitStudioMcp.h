@@ -134,6 +134,7 @@ void AddFittingTools(OutfitStudioMcp& mcp);
 void AddTextureTools(OutfitStudioMcp& mcp);
 void AddGameTools(OutfitStudioMcp& mcp);
 void AddPhysicsTools(OutfitStudioMcp& mcp);
+void AddPhysicsXmlTools(OutfitStudioMcp& mcp);
 void AddGuideTools(OutfitStudioMcp& mcp);
 
 struct AutomationStep;

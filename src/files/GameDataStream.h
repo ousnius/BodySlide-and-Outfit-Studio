@@ -31,6 +31,13 @@ std::string FindAssetPath(const std::string& relPath);
 // The same with another folder in place of the game data folder
 std::string FindAssetPath(const std::string& relPath, const std::string& baseDataPath);
 
+// Where an asset was found: the full path of a loose file, or the data folder relative path inside an
+// archive, which can't be written back to.
+struct FoundAt {
+	std::string path;
+	bool inArchive = false;
+};
+
 // Opens a file at an absolute or working-directory relative path.
 std::unique_ptr<std::istream> OpenLoose(const std::string& fullPath);
 
@@ -44,7 +51,7 @@ std::unique_ptr<std::istream> OpenArchive(const std::string& relPath, const std:
 // the game data folder, then relative to "nifFilePath" (the NIF the link came
 // from, for mods previewed straight out of their own folder), then in the
 // archives. Returns nullptr when it cannot be found.
-std::unique_ptr<std::istream> OpenPhysicsXml(const std::string& xmlPath, const std::string& nifFilePath);
+std::unique_ptr<std::istream> OpenPhysicsXml(const std::string& xmlPath, const std::string& nifFilePath, FoundAt* foundAt = nullptr);
 
 // Opens the .mesh file a Starfield shape keeps its geometry in, by the path
 // the shape references (usually "<hash>\<hash>", relative to "geometries\").

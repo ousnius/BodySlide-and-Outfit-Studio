@@ -8,6 +8,7 @@ See the included LICENSE file
 #include "OutfitStudioFrame.h"
 #include "SegmentPartitionEditor.h"
 #include "PhysicsPreview.h"
+#include "PhysicsXmlEditor.h"
 #include "AnimationPlayer.h"
 #include "ui/outfitstudio/EditUV.h"
 #include "ShapeTreeItems.h"
@@ -975,6 +976,10 @@ void OutfitStudioFrame::SetPendingChanges(bool pending) {
 }
 
 bool OutfitStudioFrame::CheckPendingChanges() {
+	// Physics XMLs are files of their own that saving the project doesn't write, so they get their own question
+	if (!physicsXml->CheckPendingChanges())
+		return false;
+
 	if (pendingChanges) {
 		wxMessageDialog dlg(this,
 							wxString::Format(_("You have unsaved changes to '%s'. Would you like to save them now?"), project->OutfitName()),

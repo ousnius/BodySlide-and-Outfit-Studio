@@ -11,6 +11,7 @@ See the included LICENSE file
 #include "components/ConformOptions.h"
 #include "components/Mesh.h"
 #include "components/UndoState.h"
+#include "files/GameDataStream.h"
 #include "files/ObjFile.h"
 #include "files/PhysicsXmlFile.h"
 #include "files/SFMaterialResolver.h"
@@ -309,6 +310,9 @@ public:
 	// Records the physics XML files linked to the given shapes of a NIF that
 	// is about to be merged into the work NIF, keyed by shape name.
 	void CapturePhysicsFiles(nifly::NifFile& nif, const std::vector<nifly::NiShape*>& shapes);
+	// Links a physics XML to the named shapes of the work NIF, for the preview, and adds it to the links the output
+	// can carry on its root node, the only place the game reads one from. Returns how many shapes gained the link.
+	int LinkPhysicsFile(const std::string& xmlPath, const std::vector<std::string>& shapeNames);
 
 	// Without a host, the project runs unattended and answers prompts with their defaults.
 	// Copy of the editable project data, to return to after trying out a change.
@@ -412,7 +416,8 @@ public:
 	// Resolves a physics XML path referenced by a "HDT Skinned Mesh Physics
 	// Object" extra data to a readable stream (loose game data folder file,
 	// relative to the project's input NIF, or from loaded archives).
-	std::unique_ptr<std::istream> GetPhysicsXmlStream(const std::string& xmlPath);
+	// "foundAt" reports where it was found, for editing it in place.
+	std::unique_ptr<std::istream> GetPhysicsXmlStream(const std::string& xmlPath, GameDataStream::FoundAt* foundAt = nullptr);
 	// Reads the physics XML files linked to a shape (shapePhysicsFiles), by path. Paths that can't be found or
 	// parsed go to outMissing.
 	std::vector<std::pair<std::string, PhysicsXmlFile>> ReadPhysicsXmls(const std::string& shapeName, std::vector<std::string>* outMissing = nullptr);
