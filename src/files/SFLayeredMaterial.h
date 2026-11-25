@@ -171,6 +171,8 @@ struct SFLayeredMaterial {
     // Whether the shader model is one of the eye models or the 1LayerMouth one
     bool IsEye() const;
     bool IsMouth() const;
+    // Body and hands (BodySkin1Layer, BodySkin2Layer), what the skin tint shader is in the older games
+    bool IsBodySkin() const;
 
     // The texture files of the slots that the texture grid and the other games' material
     // pipeline call 0-7, from the first layer that has any.

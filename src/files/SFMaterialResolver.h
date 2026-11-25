@@ -26,6 +26,10 @@ public:
     // Drops the loaded material databases, so that the next lookup reads them from the archives again
     void Clear();
 
+    // Whether the material a shader names is body skin (SFLayeredMaterial::IsBodySkin). Remembers each
+    // answer and can be called from several threads, like the parallel BodySlide builds do.
+    static bool IsBodySkinMaterial(const std::string& shaderName, const std::string& dataPath);
+
     // "materials/....mat" for whatever form a shader stores its material path in
     static std::string NormalizeMaterialPath(std::string matFile, const std::string& extension);
     // "textures/..." for whatever form a material or NIF stores a texture path in

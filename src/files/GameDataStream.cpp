@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "GameDataStream.h"
+#include "SFMaterialResolver.h"
 
 #include "utils/ConfigurationManager.h"
 #include "utils/GameUtil.h"
@@ -199,5 +200,20 @@ void PrepareGeometryForSave(nifly::NifFile& nif, bool internalGeometry) {
 		if (internalGeometry)
 			bsGeom->SetInternalGeomData(true);
 	}
+}
+
+bool IsSkinShape(nifly::NifFile& nif, nifly::NiShape* shape) {
+	if (!shape)
+		return false;
+
+	nifly::NiShader* shader = nif.GetShader(shape);
+	if (!shader)
+		return false;
+
+	// Starfield shaders only name their material, which holds the shader model
+	if (nif.GetHeader().GetVersion().IsSF())
+		return SFMaterialResolver::IsBodySkinMaterial(shader->name.get(), Config["GameDataPath"]);
+
+	return shader->IsSkinTinted();
 }
 }

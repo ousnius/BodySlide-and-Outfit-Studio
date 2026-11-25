@@ -12,6 +12,7 @@ See the included LICENSE file
 
 namespace nifly {
 class NifFile;
+class NiShape;
 }
 
 // Opening game asset files the way the game's resource system does: loose files
@@ -62,4 +63,8 @@ std::vector<std::string> LoadExternalGeometry(nifly::NifFile& nif, const std::st
 // that have none (new shapes, or ones whose triangles changed), and with "internalGeometry"
 // stores all meshes inside the NIF. Does nothing for the other games.
 void PrepareGeometryForSave(nifly::NifFile& nif, bool internalGeometry);
+
+// Whether a shape is skin, which the reference body and clipping fixes look for: a skin tint shader, or for
+// Starfield a body skin material (looked up in the game data folder).
+bool IsSkinShape(nifly::NifFile& nif, nifly::NiShape* shape);
 }

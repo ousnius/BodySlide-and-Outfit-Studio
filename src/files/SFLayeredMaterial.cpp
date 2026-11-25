@@ -162,6 +162,10 @@ bool SFLayeredMaterial::IsMouth() const {
     return shaderModel == "1LayerMouth";
 }
 
+bool SFLayeredMaterial::IsBodySkin() const {
+    return shaderModel.rfind("BodySkin", 0) == 0;
+}
+
 std::vector<std::string> SFLayeredMaterial::GetPrimaryTextureFiles(size_t numTextures) const {
     std::vector<std::string> textureFiles(numTextures);
     constexpr size_t numSlots = 8;

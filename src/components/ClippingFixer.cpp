@@ -5,6 +5,8 @@ See the included LICENSE file
 
 #include "ClippingFixer.h"
 
+#include "files/GameDataStream.h"
+
 #include "utils/AABBTree.h"
 
 #include "utils/ParallelFor.h"
@@ -164,8 +166,7 @@ std::vector<Vector3> Oriented(std::vector<Vector3> normals, float normalSign) {
 
 NiShape* ClippingFixer::FindReferenceShape(NifFile& nif) {
 	for (auto& shape : nif.GetShapes()) {
-		NiShader* shader = nif.GetShader(shape);
-		if (shader && shader->IsSkinTinted())
+		if (GameDataStream::IsSkinShape(nif, shape))
 			return shape;
 	}
 	return nullptr;
@@ -178,8 +179,7 @@ bool ClippingFixer::IsEligibleForFix(NifFile& nif, NiShape* shape) {
 	if ((shape->flags & 1) != 0)
 		return false;
 
-	NiShader* shader = nif.GetShader(shape);
-	if (!shader || shader->IsSkinTinted())
+	if (!nif.GetShader(shape) || GameDataStream::IsSkinShape(nif, shape))
 		return false;
 
 	return true;

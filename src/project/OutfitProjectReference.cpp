@@ -6,6 +6,7 @@ See the included LICENSE file
 // OutfitProject: loading the reference, slider sets and base projects
 
 #include "OutfitProject.h"
+#include "files/GameDataStream.h"
 #include "ProjectNifHelpers.h"
 #include "components/AddOnSliders.h"
 #include "components/SliderDataFileUtil.h"
@@ -493,8 +494,7 @@ int OutfitProject::LoadFromSliderSet(const std::string& fileName,
 			std::string shapeName = activeSet.TargetToShape(target);
 			auto shape = workNif.FindBlockByName<NiShape>(shapeName);
 			if (shape) {
-				NiShader* shader = workNif.GetShader(shape);
-				if (shader && shader->IsSkinTinted()) {
+				if (GameDataStream::IsSkinShape(workNif, shape)) {
 					newBaseShape = shape;
 					break;
 				}
@@ -507,8 +507,7 @@ int OutfitProject::LoadFromSliderSet(const std::string& fileName,
 		for (auto shapeTarget = activeSet.ShapesBegin(); shapeTarget != activeSet.ShapesEnd(); ++shapeTarget) {
 			auto shape = workNif.FindBlockByName<NiShape>(shapeTarget->first);
 			if (shape) {
-				NiShader* shader = workNif.GetShader(shape);
-				if (shader && shader->IsSkinTinted()) {
+				if (GameDataStream::IsSkinShape(workNif, shape)) {
 					newBaseShape = shape;
 					break;
 				}
@@ -962,8 +961,7 @@ int OutfitProject::AddFromSliderSet(const std::string& fileName,
 			std::string shapeName = addSet.TargetToShape(target);
 			auto shape = workNif.FindBlockByName<NiShape>(shapeName);
 			if (shape) {
-				NiShader* shader = workNif.GetShader(shape);
-				if (shader && shader->IsSkinTinted()) {
+				if (GameDataStream::IsSkinShape(workNif, shape)) {
 					newBaseShape = shape;
 					break;
 				}
@@ -975,8 +973,7 @@ int OutfitProject::AddFromSliderSet(const std::string& fileName,
 			for (auto shapeTarget = addSet.ShapesBegin(); shapeTarget != addSet.ShapesEnd(); ++shapeTarget) {
 				auto shape = workNif.FindBlockByName<NiShape>(shapeTarget->first);
 				if (shape) {
-					NiShader* shader = workNif.GetShader(shape);
-					if (shader && shader->IsSkinTinted()) {
+					if (GameDataStream::IsSkinShape(workNif, shape)) {
 						newBaseShape = shape;
 						break;
 					}

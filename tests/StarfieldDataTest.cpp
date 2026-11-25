@@ -1,9 +1,12 @@
+#include "components/ClippingFixer.h"
 #include "components/StarfieldSpace.h"
 #include "files/GameDataStream.h"
 #include "files/SFMaterialResolver.h"
 #include "files/SFMorphFile.h"
 #include "project/GameImport.h"
 #include "project/OutfitProject.h"
+
+#include "SFTestMaterials.h"
 #include "utils/ConfigurationManager.h"
 
 #include "FSEngine/FSManager.h"
@@ -875,4 +878,50 @@ TEST_CASE("Starfield geometry gets meshlets and goes inside the NIF when readied
 
 	GameDataStream::PrepareGeometryForSave(nif, true);
 	CHECK(shape->HasInternalGeomData());
+}
+
+TEST_CASE("Starfield shapes with a body skin material are skin", "[starfield][skin]") {
+	TempDir data("BSOSTests-SFSkin");
+	// The mod's body material, and the same one with a standard shader model
+	auto writeMaterial = [&](const std::string& name, const std::string& shaderModel) {
+		std::string json = NakedBodyMaterialJson;
+		json.replace(json.find("BodySkin2Layer"), std::string("BodySkin2Layer").size(), shaderModel);
+		fs::create_directories(data.path / "materials" / "test");
+		std::ofstream mat(data.path / "materials" / "test" / (name + ".mat"));
+		mat << json;
+	};
+	writeMaterial("skin", "BodySkin2Layer");
+	writeMaterial("cloth", "2LayerStandard");
+
+	const std::string previousDataPath = Config["GameDataPath"];
+	Config.SetValue("GameDataPath", data.path.u8string() + "/");
+
+	NifFile nif;
+	nif.Create(NiVersion::getSF());
+	std::vector<Vector3> verts{{0, 0, 0}, {10, 0, 0}, {0, 10, 0}};
+	std::vector<Triangle> tris{{0, 1, 2}};
+	auto addShape = [&](const std::string& name, const std::string& material) {
+		NiShape* shape = nif.CreateShapeFromData(name, &verts, &tris, nullptr);
+		nif.GetShader(shape)->name.get() = material;
+		return shape;
+	};
+	NiShape* cloth = addShape("Cloth", "Materials\\Test\\Cloth.mat");
+	NiShape* body = addShape("Body", "Materials\\Test\\Skin.mat");
+	NiShape* noMaterial = addShape("NoMaterial", "");
+
+	const bool clothIsSkin = GameDataStream::IsSkinShape(nif, cloth);
+	const bool bodyIsSkin = GameDataStream::IsSkinShape(nif, body);
+	const bool noMaterialIsSkin = GameDataStream::IsSkinShape(nif, noMaterial);
+	NiShape* reference = ClippingFixer::FindReferenceShape(nif);
+	const bool clothEligible = ClippingFixer::IsEligibleForFix(nif, cloth);
+	const bool bodyEligible = ClippingFixer::IsEligibleForFix(nif, body);
+	Config.SetValue("GameDataPath", previousDataPath);
+
+	CHECK_FALSE(clothIsSkin);
+	CHECK(bodyIsSkin);
+	CHECK_FALSE(noMaterialIsSkin);
+	// The clipping fix fits the other shapes to the skin
+	CHECK(reference == body);
+	CHECK(clothEligible);
+	CHECK_FALSE(bodyEligible);
 }

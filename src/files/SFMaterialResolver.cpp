@@ -13,6 +13,8 @@ See the included LICENSE file
 #include "FSEngine/FSManager.h"
 
 #include <fstream>
+#include <map>
+#include <mutex>
 #include <regex>
 #include <set>
 
@@ -126,6 +128,29 @@ bool SFMaterialResolver::Resolve(const std::string& shaderName, const std::strin
 
     material.ResolveTexturePaths(NormalizeTexturePath);
     return true;
+}
+
+bool SFMaterialResolver::IsBodySkinMaterial(const std::string& shaderName, const std::string& dataPath) {
+    if (shaderName.empty())
+        return false;
+
+    static std::mutex mutex;
+    static SFMaterialResolver resolver;
+    static std::map<std::string, bool> answers;
+
+    const std::string key = dataPath + "|" + ToLower(NormalizeMaterialPath(shaderName, ".mat"));
+
+    std::lock_guard<std::mutex> lock(mutex);
+    auto answer = answers.find(key);
+    if (answer != answers.end())
+        return answer->second;
+
+    SFLayeredMaterial material;
+    resolver.Resolve(shaderName, dataPath, material);
+
+    // The answers are kept, the material databases (about 100 MB for the game's) aren't
+    resolver.Clear();
+    return answers[key] = material.IsBodySkin();
 }
 
 void SFMaterialResolver::Clear() {
