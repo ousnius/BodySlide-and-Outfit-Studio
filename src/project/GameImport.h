@@ -35,7 +35,7 @@ struct Report {
 	std::string sourceGame;
 	std::string sourceFile;
 	// Per shape: name, source, vertices, triangles, sourceSpace, translationToGlobal, vertexColors, sourceBones,
-	// warning, and either material (file, target with applied and notes, or error) or textures
+	// warning, spaceWarning, materialNote, and either material (file, target with applied and notes, or error) or textures
 	nlohmann::json shapes = nlohmann::json::array();
 	std::vector<std::string> slidersWithData;
 	std::vector<std::string> slidersAdded;

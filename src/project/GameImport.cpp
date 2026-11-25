@@ -6,6 +6,9 @@ See the included LICENSE file
 #include "GameImport.h"
 #include "components/DiffData.h"
 #include "components/SliderSet.h"
+#include "components/StarfieldSpace.h"
+#include "files/GameDataStream.h"
+#include "utils/ConfigurationManager.h"
 
 #include <wx/filename.h>
 
@@ -259,6 +262,18 @@ OpResult Import(OutfitProject& project, const Options& options, Report& outRepor
 	if (nif.Load(nifPath) != 0)
 		return OpResult::Fail("'" + nifPath + "' couldn't be loaded as a NIF file.");
 
+	const bool fromStarfield = nif.GetHeader().GetVersion().IsSF();
+	if (fromStarfield) {
+		// Starfield shapes keep their geometry in .mesh files: beside the NIF's meshes folder, in the data folder or the archives
+		const std::string dataPath = options.dataFolders.empty() ? Config["GameDataPath"] : options.dataFolders.front();
+		auto missing = GameDataStream::LoadExternalGeometry(nif, dataPath, nifPath);
+		if (!missing.empty())
+			return OpResult::Fail("The geometry of '" + nifPath + "' is in .mesh files that weren't found: " + json(missing).dump());
+	}
+
+	for (NiShape* shape : nif.GetShapes())
+		nif.TriangulateShape(shape);
+
 	const std::string& sliderMode = options.sliders;
 	if (sliderMode != "local" && sliderMode != "all" && sliderMode != "zaps" && sliderMode != "none")
 		return OpResult::Fail("The slider data to take over has to be \"local\", \"all\", \"zaps\" or \"none\", not '" + sliderMode + "'.");
@@ -309,7 +324,11 @@ OpResult Import(OutfitProject& project, const Options& options, Report& outRepor
 		MatTransform toGlobal;
 		std::string space = "global";
 		MatTransform globalToSkin;
-		if (source->IsSkinned() && nif.CalcShapeTransformGlobalToSkin(source, globalToSkin)) {
+		if (fromStarfield && source->IsSkinned()) {
+			// The skin space is only known from the Starfield skeleton, the NIF has no bone nodes
+			space = "starfieldSkin";
+		}
+		else if (source->IsSkinned() && nif.CalcShapeTransformGlobalToSkin(source, globalToSkin)) {
 			toGlobal = globalToSkin.InverseTransform();
 			space = "skin";
 		}
@@ -319,6 +338,10 @@ OpResult Import(OutfitProject& project, const Options& options, Report& outRepor
 				toGlobal = parent->GetTransformToParent().ComposeTransforms(toGlobal);
 			space = "node";
 		}
+
+		// Starfield transforms are in meters, its vertices in the older games' units
+		if (fromStarfield)
+			toGlobal.translation *= sfHavokScale;
 
 		for (auto& v : verts)
 			v = toGlobal.ApplyTransform(v);
@@ -353,12 +376,18 @@ OpResult Import(OutfitProject& project, const Options& options, Report& outRepor
 		};
 		if (shape->GetNumVertices() < verts.size() || shape->GetNumTriangles() < tris.size())
 			shapeOut["warning"] = "The target game's vertex or triangle limit was exceeded, the rest was dropped. Slider data was not imported.";
+		if (space == "starfieldSkin")
+			shapeOut["spaceWarning"] = "Starfield NIFs don't store where the skin space of a shape is, so it stays in it. Move it into place or conform it.";
 
 		// Shader: the source material file if there is one, else the source shader's textures
 		NiShader* sourceShader = nif.GetShader(source);
 		const std::string materialPath = sourceShader ? sourceShader->name.get() : std::string();
-		std::string materialFile = FindMaterialFile(materialPath, options.dataFolders);
-		if (!materialFile.empty()) {
+		std::string materialFile = fromStarfield ? std::string() : FindMaterialFile(materialPath, options.dataFolders);
+		if (fromStarfield) {
+			if (!materialPath.empty())
+				shapeOut["material"] = {{"path", materialPath}, {"error", "Starfield materials aren't converted, set up the shader by hand."}};
+		}
+		else if (!materialFile.empty()) {
 			MaterialFile mat(materialFile);
 			if (!mat.Failed())
 				shapeOut["material"] = {{"file", materialFile}, {"target", ApplyMaterial(work, shape, mat)}};
@@ -378,6 +407,8 @@ OpResult Import(OutfitProject& project, const Options& options, Report& outRepor
 			if (!materialPath.empty())
 				shapeOut["material"] = {{"path", materialPath}, {"error", "Not found in the data folders, only the shader's texture paths were copied."}};
 		}
+		if (work.GetHeader().GetVersion().IsSF())
+			shapeOut["materialNote"] = "Starfield shapes get their look from a .mat material, which has to be chosen in the shape's properties.";
 		project.SetTextures(shape);
 
 		// Slider data, turned like the positions

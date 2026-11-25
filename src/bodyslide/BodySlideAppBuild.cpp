@@ -9,6 +9,7 @@ See the included LICENSE file
 #include "BodySlideFrame.h"
 #include "ui/bodyslide/PreviewPanel.h"
 #include "PreviewWindow.h"
+#include "files/GameDataStream.h"
 #include "files/TriFile.h"
 #include "components/ClippingFixer.h"
 #include "utils/PlatformUtil.h"
@@ -162,6 +163,12 @@ void BodySlideApp::FinishBuiltShapes(NifFile& nifBig,
 		if (nifSmall)
 			finishShape(*nifSmall, nifSmall->FindBlockByName<NiShape>(it->first), it->second, shapeZaps);
 	}
+
+	// BodySlide doesn't write .mesh files, so Starfield geometry goes inside the NIFs, with the meshlets
+	// of shapes that need them (zapped or refined triangles)
+	GameDataStream::PrepareGeometryForSave(nifBig, true);
+	if (nifSmall)
+		GameDataStream::PrepareGeometryForSave(*nifSmall, true);
 }
 
 bool BodySlideApp::WriteBuildMorphs(SliderSet& set,
@@ -530,12 +537,9 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 
 	refNormalsCache.clear();
 
-	std::fstream file;
-	PlatformUtil::OpenFileStream(file, inputFileName, std::ios::in | std::ios::binary);
-
-	int error = nifBig.Load(file);
-	if (error) {
-		wxLogError("Failed to load '%s' (%d)!", inputFileName, error);
+	// Also loads the external geometry of Starfield files, like the preview
+	if (!LoadNifFile(inputFileName, nifBig)) {
+		wxLogError("Failed to load '%s'!", inputFileName);
 		return 1;
 	}
 
@@ -1018,12 +1022,9 @@ int BodySlideApp::BuildListBodies(
 		}
 
 		/* Load input NIFs */
-		std::fstream file;
-		PlatformUtil::OpenFileStream(file, currentSet.GetInputFileName(), std::ios::in | std::ios::binary);
-
 		NifFile nifBig;
 		NifFile nifSmall;
-		if (nifBig.Load(file)) {
+		if (!LoadNifFile(currentSet.GetInputFileName(), nifBig)) {
 			recordFailure(outfit, _("Unable to load input nif: ") + currentSet.GetInputFileName());
 			return;
 		}

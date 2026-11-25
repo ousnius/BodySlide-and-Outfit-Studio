@@ -1163,10 +1163,7 @@ void wxGLPanel::ClickSplitEdge() {
 	bool shiftDown = wxGetKeyState(WXK_SHIFT);
 
 	constexpr uint16_t maxVertIndex = std::numeric_limits<uint16_t>().max();
-	uint32_t maxTriIndex = std::numeric_limits<uint16_t>().max();
-
-	if (workNif->GetHeader().GetVersion().IsFO4() || workNif->GetHeader().GetVersion().IsFO76())
-		maxTriIndex = std::numeric_limits<uint32_t>().max();
+	uint32_t maxTriIndex = static_cast<uint32_t>(workNif->GetTriangleLimit());
 
 	if (shape->GetNumVertices() > maxVertIndex - 2) {
 		wxMessageBox(_("The shape has reached the vertex count limit."), _("Error"), wxICON_ERROR, os);

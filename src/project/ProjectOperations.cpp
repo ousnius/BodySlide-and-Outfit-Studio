@@ -525,9 +525,7 @@ OpResult ProjectOperations::PrepareAdaptiveRefine(const std::vector<NiShape*>& s
 	}
 
 	constexpr size_t maxVerts = std::numeric_limits<uint16_t>::max();
-	size_t maxTris = std::numeric_limits<uint16_t>::max();
-	if (nif->GetHeader().GetVersion().IsFO4() || nif->GetHeader().GetVersion().IsFO76())
-		maxTris = std::numeric_limits<uint32_t>::max();
+	size_t maxTris = nif->GetTriangleLimit();
 
 	auto edgeKey = [](int a, int b) {
 		if (a > b)

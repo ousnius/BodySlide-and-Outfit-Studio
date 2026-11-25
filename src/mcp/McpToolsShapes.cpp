@@ -449,9 +449,7 @@ McpToolResult EditTopology(OutfitStudioMcp& mcp, const json& args) {
 	}
 	else if (op == "split_edge") {
 		Edge edge = edgeArg();
-		uint32_t maxTris = std::numeric_limits<uint16_t>::max();
-		if (project.GetWorkNif()->GetHeader().GetVersion().IsFO4() || project.GetWorkNif()->GetHeader().GetVersion().IsFO76())
-			maxTris = std::numeric_limits<uint32_t>::max();
+		uint32_t maxTris = static_cast<uint32_t>(project.GetWorkNif()->GetTriangleLimit());
 		if (shape->GetNumVertices() > std::numeric_limits<uint16_t>::max() - 2u || shape->GetNumTriangles() > maxTris - 2u)
 			throw McpToolError("The shape has reached the vertex or triangle limit.");
 

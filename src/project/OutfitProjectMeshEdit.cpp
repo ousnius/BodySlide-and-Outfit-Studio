@@ -1500,9 +1500,7 @@ void OutfitProject::CheckMerge(const std::string& sourceName, const std::string&
 		return;
 
 	constexpr size_t maxVertIndex = std::numeric_limits<uint16_t>().max();
-	size_t maxTriIndex = std::numeric_limits<uint16_t>().max();
-	if (workNif.GetHeader().GetVersion().IsFO4() || workNif.GetHeader().GetVersion().IsFO76())
-		maxTriIndex = std::numeric_limits<uint32_t>().max();
+	size_t maxTriIndex = workNif.GetTriangleLimit();
 
 	size_t snVerts = source->GetNumVertices();
 	size_t tnVerts = target->GetNumVertices();
@@ -1587,7 +1585,7 @@ void OutfitProject::CheckMerge(const std::string& sourceName, const std::string&
 			// Shader type differs
 			e.shaderMismatch = true;
 		}
-		else if (workNif.GetHeader().GetVersion().IsFO4() || workNif.GetHeader().GetVersion().IsFO76()) {
+		else if (workNif.GetHeader().GetVersion().IsFO4() || workNif.GetHeader().GetVersion().IsFO76() || workNif.GetHeader().GetVersion().IsSF()) {
 			if (!StringsEqualInsens(sShader->name.get().c_str(), tShader->name.get().c_str())
 				|| !StringsEqualInsens(sShader->GetWetMaterialName().c_str(), tShader->GetWetMaterialName().c_str())) {
 				// Material file paths differ

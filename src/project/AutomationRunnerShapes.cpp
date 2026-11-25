@@ -178,9 +178,7 @@ int AutomationRunner::ExecuteStepRefineMesh(const AutomationStep& step) {
 	}
 
 	constexpr size_t maxVertIndex = std::numeric_limits<uint16_t>().max();
-	size_t maxTriIndex = std::numeric_limits<uint16_t>().max();
-	if (workNif->GetHeader().GetVersion().IsFO4() || workNif->GetHeader().GetVersion().IsFO76())
-		maxTriIndex = std::numeric_limits<uint32_t>().max();
+	size_t maxTriIndex = workNif->GetTriangleLimit();
 
 	for (auto* shape : shapes) {
 		size_t nverts = shape->GetNumVertices();

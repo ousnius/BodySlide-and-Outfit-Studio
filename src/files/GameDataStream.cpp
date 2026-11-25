@@ -169,17 +169,35 @@ std::vector<std::string> LoadExternalGeometry(nifly::NifFile& nif, const std::st
 	for (auto& shape : nif.GetShapes()) {
 		uint8_t meshIndex = 0;
 		for (auto meshPath : nif.GetExternalGeometryPathRefs(shape)) {
+			// The paths are in mesh slot order, a missing one still takes its slot
+			const uint8_t slot = meshIndex++;
+
 			auto meshStream = OpenExternalGeometry(meshPath.get(), dataPath, nifFilePath);
 			if (!meshStream) {
 				missing.push_back(meshPath.get());
 				continue;
 			}
 
-			nif.LoadExternalShapeData(shape, *meshStream, meshIndex);
-			meshIndex++;
+			nif.LoadExternalShapeData(shape, *meshStream, slot);
 		}
 	}
 
 	return missing;
+}
+
+void PrepareGeometryForSave(nifly::NifFile& nif, bool internalGeometry) {
+	if (!nif.GetHeader().GetVersion().IsSF())
+		return;
+
+	for (auto& shape : nif.GetShapes()) {
+		auto bsGeom = dynamic_cast<nifly::BSGeometry*>(shape);
+		if (!bsGeom)
+			continue;
+
+		bsGeom->GenerateMeshlets();
+
+		if (internalGeometry)
+			bsGeom->SetInternalGeomData(true);
+	}
 }
 }

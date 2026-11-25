@@ -393,19 +393,8 @@ void OutfitProject::ForceInternalGeometry(NifFile& nif) {
 }
 
 void OutfitProject::GenerateStarfieldMeshlets(NifFile& nif) {
-	if (!nif.GetHeader().GetVersion().IsSF()) {
-		return;
-	}
-
 	// Generate meshlets for any BSGeometry that lacks them (freshly authored shapes, or shapes whose meshlets were dropped by an edit that changed the triangle list).
-	std::vector<NiShape*> toConvert;
-	for (auto& s : nif.GetShapes()) {
-		auto bsgeo = dynamic_cast<BSGeometry*>(s);
-        if (!bsgeo || bsgeo->HasMeshlets()) {
-            continue;
-		}
-		bsgeo->GenerateMeshlets();
-	}
+	GameDataStream::PrepareGeometryForSave(nif, false);
 }
 
 void OutfitProject::ConfigureInternalGeometry(NifFile& nif, const std::string& nifFileName, std::optional<bool> useInternalGeom) {

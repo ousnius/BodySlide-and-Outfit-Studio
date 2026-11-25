@@ -57,4 +57,9 @@ std::unique_ptr<std::istream> OpenExternalGeometry(const std::string& meshPath, 
 // references its .mesh files until then. Returns the paths of the meshes that
 // could not be found, whose shapes are left without geometry.
 std::vector<std::string> LoadExternalGeometry(nifly::NifFile& nif, const std::string& dataPath, const std::string& nifFilePath);
+
+// Readies the geometry of a Starfield NIF for saving: generates the meshlets of the shapes
+// that have none (new shapes, or ones whose triangles changed), and with "internalGeometry"
+// stores all meshes inside the NIF. Does nothing for the other games.
+void PrepareGeometryForSave(nifly::NifFile& nif, bool internalGeometry);
 }

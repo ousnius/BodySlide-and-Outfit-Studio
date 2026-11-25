@@ -8,6 +8,7 @@ See the included LICENSE file
 #include "OutfitProject.h"
 #include "components/SliderDataFileUtil.h"
 #include "components/SliderSetIndex.h"
+#include "files/GameDataStream.h"
 #include "files/TriFile.h"
 #include "utils/PlatformUtil.h"
 #include "utils/StringStuff.h"
@@ -364,8 +365,8 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 		clone.SetShapeOrder(GetShapeOrder());
 		clone.GetHeader().SetExportInfo("Exported using Outfit Studio.");
 
-		// Project ShapeData NIFs always use internal geometry for simplicity
-		ForceInternalGeometry(clone);
+		// Project ShapeData NIFs always use internal geometry for simplicity, with meshlets like exported NIFs
+		GameDataStream::PrepareGeometryForSave(clone, true);
 
 		std::fstream file;
 		PlatformUtil::OpenFileStream(file, saveFileName, std::ios::out | std::ios::binary);

@@ -2,6 +2,8 @@
 #include "files/GameDataStream.h"
 #include "files/SFMaterialResolver.h"
 #include "files/SFMorphFile.h"
+#include "project/GameImport.h"
+#include "project/OutfitProject.h"
 #include "utils/ConfigurationManager.h"
 
 #include "FSEngine/FSManager.h"
@@ -12,6 +14,7 @@
 #include <catch2/generators/catch_generators.hpp>
 
 #include <algorithm>
+#include <cfloat>
 #include <cmath>
 #include <cstdlib>
 #include <filesystem>
@@ -822,4 +825,54 @@ TEST_CASE("Recalculated Starfield tangents match the vanilla ones", "[starfield]
 	}
 	CHECK(dotSum / vanillaTangents.size() > 0.99);
 	CHECK(sameW == vanillaWs.size());
+}
+
+TEST_CASE("Starfield shapes are imported into another game with their geometry", "[starfield][gamedata][GameImport]") {
+	const int previousGame = Config.GetIntValue("TargetGame");
+	Config.SetValue("TargetGame", static_cast<int>(SKYRIMSE));
+
+	AnimSkeleton skeleton;
+	NonInteractiveHost host;
+	OutfitProject project{skeleton, &host, false};
+
+	GameImport::Options options;
+	options.file = Swimsuit().nifPath;
+	options.dataFolders = {dataDir};
+	GameImport::Report report;
+	const OpResult result = GameImport::Import(project, options, report);
+	Config.SetValue("TargetGame", previousGame);
+	INFO(result.error);
+	REQUIRE(result.ok);
+
+	auto shape = project.GetWorkNif()->FindBlockByName<NiShape>(Swimsuit().shapeName);
+	REQUIRE(shape);
+	REQUIRE(shape->HasType<BSTriShape>());
+	CHECK(shape->GetNumVertices() == Swimsuit().vertCount);
+	CHECK(shape->GetNumTriangles() == Swimsuit().triCount);
+
+	REQUIRE(report.shapes.size() == 1);
+	const auto& shapeReport = report.shapes[0];
+	// The NIF has no bone nodes and the other game's skeleton is loaded, so the shape stays in its skin space
+	CHECK(shapeReport["sourceSpace"] == "starfieldSkin");
+	CHECK(shapeReport.contains("spaceWarning"));
+	CHECK(shapeReport["material"]["path"] == Swimsuit().materialPath);
+	CHECK(shapeReport["material"].contains("error"));
+}
+
+TEST_CASE("Starfield geometry gets meshlets and goes inside the NIF when readied for saving", "[starfield]") {
+	NifFile nif;
+	nif.Create(NiVersion::getSF());
+	std::vector<Vector3> verts{{0, 0, 0}, {10, 0, 0}, {0, 10, 0}};
+	std::vector<Triangle> tris{{0, 1, 2}};
+	auto shape = dynamic_cast<BSGeometry*>(nif.CreateShapeFromData("Tri", &verts, &tris, nullptr));
+	REQUIRE(shape);
+	REQUIRE_FALSE(shape->HasMeshlets());
+	REQUIRE_FALSE(shape->HasInternalGeomData());
+
+	GameDataStream::PrepareGeometryForSave(nif, false);
+	CHECK(shape->HasMeshlets());
+	CHECK_FALSE(shape->HasInternalGeomData());
+
+	GameDataStream::PrepareGeometryForSave(nif, true);
+	CHECK(shape->HasInternalGeomData());
 }

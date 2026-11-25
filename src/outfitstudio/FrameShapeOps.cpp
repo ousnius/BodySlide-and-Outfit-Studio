@@ -805,10 +805,7 @@ void OutfitStudioFrame::OnRefineMesh(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	constexpr size_t maxVertIndex = std::numeric_limits<uint16_t>().max();
-	size_t maxTriIndex = std::numeric_limits<uint16_t>().max();
-
-	if (workNif->GetHeader().GetVersion().IsFO4() || workNif->GetHeader().GetVersion().IsFO76())
-		maxTriIndex = std::numeric_limits<uint32_t>().max();
+	size_t maxTriIndex = workNif->GetTriangleLimit();
 
 	// Check if we'll overflow the vertex or triangle arrays.
 	// Note that the actual number of vertices added could be as low as

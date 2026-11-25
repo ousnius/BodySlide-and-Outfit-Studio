@@ -7,6 +7,7 @@ See the included LICENSE file
 
 #include "OutfitProject.h"
 #include "files/FBXWrangler.h"
+#include "files/GameDataStream.h"
 #include "files/ObjFile.h"
 #include "files/TriFile.h"
 #include "files/SFMorphFile.h"
@@ -382,6 +383,9 @@ bool OutfitProject::SetSliderFromNIF(const std::string& sliderName, NiShape* sha
 	NifFile nif;
 	if (nif.Load(file) != 0)
 		return false;
+
+	for (const auto& meshPath : GameDataStream::LoadExternalGeometry(nif, Config["GameDataPath"], fileName))
+		wxLogWarning("Unable to locate external mesh data '%s' of nif file: %s", meshPath, fileName);
 
 	// File needs at least one shape
 	auto shapeNames = nif.GetShapeNames();
