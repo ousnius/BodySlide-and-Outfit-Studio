@@ -13,6 +13,7 @@
 #include <cmath>
 
 #include <filesystem>
+#include <fstream>
 #include <map>
 #include <memory>
 #include <random>
@@ -2092,4 +2093,149 @@ TEST_CASE("Mirrored bones go to the other side and the mesh stays", "[OutfitProj
 
 	f.project.ApplyBoneXforms(xforms, false);
 	CHECK(skel.GetBonePtr("MirChain3")->xformToGlobal.IsNearlyEqualTo(MirrorTransformX(before["3"])));
+}
+
+TEST_CASE("OBJ files imported into a Starfield project become Starfield geometry", "[OutfitProject]") {
+	TargetGameScope targetGame{SF};
+	TempFolder folder;
+	AnimSkeleton skeleton;
+	MeshHost host;
+	OutfitProject project{skeleton, &host, false};
+	host.project = &project;
+
+	const bool withNormals = GENERATE(true, false);
+	INFO("Normals in the file: " << withNormals);
+
+	// 10 by 10 quad, 100 by 100 units after the import scale, so more than a meter across
+	const auto objPath = folder.path / "Quad.obj";
+	{
+		std::ofstream obj(objPath);
+		obj << "g Quad\n"
+			<< "v 0 0 0\nv 10 0 0\nv 0 10 0\nv 10 10 0\n"
+			<< "vt 0 0\nvt 1 0\nvt 0 1\nvt 1 1\n";
+		if (withNormals)
+			obj << "vn 0 0 1\n"
+				<< "f 1/1/1 2/2/1 3/3/1\nf 2/2/1 4/4/1 3/3/1\n";
+		else
+			obj << "f 1/1 2/2 3/3\nf 2/2 4/4 3/3\n";
+	}
+
+	REQUIRE(project.ImportOBJ(objPath.string(), ObjImportOptions{}) == 0);
+	// No warning about vertices or triangles that didn't fit
+	CHECK(host.GetMessages().empty());
+
+	NifFile* nif = project.GetWorkNif();
+	REQUIRE(nif->GetHeader().GetVersion().IsSF());
+	auto shape = nif->FindBlockByName<nifly::BSGeometry>("Quad");
+	REQUIRE(shape);
+	CHECK(shape->GetNumVertices() == 4);
+	CHECK(shape->GetNumTriangles() == 2);
+	// Like the game's meshes, the geometry goes to an external .mesh file
+	CHECK_FALSE(shape->HasInternalGeomData());
+
+	// The shader only names a material, there's no texture set
+	auto shader = dynamic_cast<nifly::BSLightingShaderProperty*>(nif->GetShader(shape));
+	REQUIRE(shader);
+	CHECK(shader->TextureSetRef()->IsEmpty());
+
+	auto checkMesh = [](const nifly::BSGeometryMeshData& data) {
+		REQUIRE(data.vertices.size() == 4);
+		REQUIRE(data.tris.size() == 2);
+		REQUIRE(data.normals.size() == 4);
+		REQUIRE(data.tangents.size() == 4);
+		REQUIRE(data.tangentWs.size() == 4);
+		REQUIRE(data.uvSets.size() >= 1);
+		REQUIRE(data.uvSets[0].size() == 4);
+		CHECK(data.vertices[3].x == Catch::Approx(100.0f).margin(0.01f));
+		CHECK(data.vertices[3].y == Catch::Approx(100.0f).margin(0.01f));
+		for (size_t i = 0; i < 4; i++) {
+			CHECK(data.normals[i].z == Catch::Approx(1.0f).margin(0.01f));
+			// The tangent follows +U, the bitangent +V. The import flips V, so V runs down: W is 0.
+			CHECK(data.tangents[i].x == Catch::Approx(1.0f).margin(0.01f));
+			CHECK(data.tangentWs[i] == 0);
+		}
+	};
+
+	auto meshData = dynamic_cast<nifly::BSGeometryMeshData*>(shape->GetGeomData());
+	REQUIRE(meshData);
+	checkMesh(*meshData);
+	CHECK(meshData->version == 2);
+	CHECK(meshData->nWeightsPerVert == 0);
+	// The positions are packed relative to the extent in whole meters
+	CHECK(meshData->scale == 2.0f);
+
+	// Written and read back with the mesh in the NIF, prepared the way saving the project does
+	shape->SetInternalGeomData(true);
+	project.GenerateStarfieldMeshlets(*nif);
+	std::stringstream stream(std::ios::in | std::ios::out | std::ios::binary);
+	REQUIRE(nif->Save(stream) == 0);
+	NifFile reloaded;
+	REQUIRE(reloaded.Load(stream) == 0);
+	auto reloadedShape = reloaded.FindBlockByName<nifly::BSGeometry>("Quad");
+	REQUIRE(reloadedShape);
+	auto reloadedData = dynamic_cast<nifly::BSGeometryMeshData*>(reloadedShape->GetGeomData());
+	REQUIRE(reloadedData);
+	checkMesh(*reloadedData);
+	CHECK(reloadedData->tris == meshData->tris);
+	CHECK(reloadedData->HasMeshlets());
+}
+
+TEST_CASE("Starfield meshes grow their position scale for vertices moved past it", "[OutfitProject]") {
+	NifFile nif;
+	nif.Create(nifly::NiVersion::getSF());
+	std::vector<Vector3> verts{{0, 0, 0}, {10, 0, 0}, {0, 10, 0}};
+	std::vector<Triangle> tris{{0, 1, 2}};
+	auto shape = dynamic_cast<nifly::BSGeometry*>(nif.CreateShapeFromData("Tri", &verts, &tris, nullptr));
+	REQUIRE(shape);
+	shape->SetInternalGeomData(true);
+	auto meshData = dynamic_cast<nifly::BSGeometryMeshData*>(shape->GetGeomData());
+	REQUIRE(meshData);
+	REQUIRE(meshData->scale == 1.0f);
+
+	// 300 units are more than 4 meters
+	verts[1].x = 300.0f;
+	nif.SetVertsForShape(shape, verts);
+
+	std::stringstream stream(std::ios::in | std::ios::out | std::ios::binary);
+	REQUIRE(nif.Save(stream) == 0);
+	NifFile reloaded;
+	REQUIRE(reloaded.Load(stream) == 0);
+	auto reloadedData = dynamic_cast<nifly::BSGeometryMeshData*>(reloaded.FindBlockByName<nifly::BSGeometry>("Tri")->GetGeomData());
+	REQUIRE(reloadedData);
+	CHECK(reloadedData->scale == 5.0f);
+	REQUIRE(reloadedData->vertices.size() == 3);
+	CHECK(reloadedData->vertices[1].x == Catch::Approx(300.0f).margin(0.05f));
+}
+
+TEST_CASE("Duplicated Starfield shapes get their own mesh file once they differ", "[OutfitProject]") {
+	TargetGameScope targetGame{SF};
+	AnimSkeleton skeleton;
+	MeshHost host;
+	OutfitProject project{skeleton, &host, false};
+	host.project = &project;
+
+	std::vector<Vector3> verts{{0, 0, 0}, {10, 0, 0}, {0, 10, 0}};
+	std::vector<Triangle> tris{{0, 1, 2}};
+	auto source = project.CreateNifShapeFromData("Source", &verts, &tris, nullptr);
+	REQUIRE(source);
+	NifFile* nif = project.GetWorkNif();
+	project.ConfigureInternalGeometry(*nif, "Outfit.nif");
+	REQUIRE(nif->GetExternalGeometryPathRefs(source)[0].get() == "Outfit\\Source_0");
+
+	auto copy = project.DuplicateShape(source, "Copy");
+	REQUIRE(copy);
+	auto copyPath = [&] { return nif->GetExternalGeometryPathRefs(copy)[0].get(); };
+	REQUIRE(copyPath() == "Outfit\\Source_0");
+
+	SECTION("Unchanged copies share the file") {
+		project.ConfigureInternalGeometry(*nif, "Outfit.nif");
+		CHECK(copyPath() == "Outfit\\Source_0");
+	}
+	SECTION("A changed copy gets its own file") {
+		verts[2].z = 5.0f;
+		nif->SetVertsForShape(copy, verts);
+		project.ConfigureInternalGeometry(*nif, "Outfit.nif");
+		CHECK(nif->GetExternalGeometryPathRefs(source)[0].get() == "Outfit\\Source_0");
+		CHECK(copyPath() == "Outfit\\Copy_0");
+	}
 }

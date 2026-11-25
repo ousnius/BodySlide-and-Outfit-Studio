@@ -426,6 +426,29 @@ void OutfitProject::ConfigureInternalGeometry(NifFile& nif, const std::string& n
 	wxFileName nifPath(wxString::FromUTF8(nifFileName));
 	std::string folderName = nifPath.GetName().ToUTF8().data();
 
+	auto sanitize = [](std::string& str) {
+		for (char& c : str) {
+			if (c == ' ' || c == '/' || c == ':' || c == '*' || c == '?' || c == '"' || c == '<' || c == '>' || c == '|')
+				c = '_';
+		}
+	};
+	sanitize(folderName);
+
+	auto pathKey = [](std::string path) {
+		std::replace(path.begin(), path.end(), '/', '\\');
+		std::transform(path.begin(), path.end(), path.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+		return path;
+	};
+
+	auto meshBytes = [&nif](NiShape* shape, uint8_t index) {
+		std::ostringstream stream(std::ios::binary);
+		nif.SaveExternalShapeData(shape, stream, index);
+		return stream.str();
+	};
+
+	// The shape and mesh slot that writes each external mesh path
+	std::unordered_map<std::string, std::pair<NiShape*, uint8_t>> pathOwners;
+
 	for (auto& s : nif.GetShapes()) {
 		auto bsgeo = dynamic_cast<BSGeometry*>(s);
 		if (!bsgeo)
@@ -440,21 +463,32 @@ void OutfitProject::ConfigureInternalGeometry(NifFile& nif, const std::string& n
 			// Ensure external mesh paths are set
 			for (uint8_t i = 0; i < bsgeo->MeshCount(); i++) {
 				auto mesh = bsgeo->SelectMesh(i);
-				if (mesh && mesh->meshName.get().empty()) {
+				bsgeo->ReleaseMesh();
+				if (!mesh)
+					continue;
+
+				std::string& meshPath = mesh->meshName.get();
+
+				// A duplicated shape keeps the mesh path of its source. Once their data differs, one of them needs
+				// its own file or saving would write both to the same one. Identical data can keep sharing it.
+				bool needsPath = meshPath.empty();
+				if (!needsPath) {
+					auto owner = pathOwners.find(pathKey(meshPath));
+					needsPath = owner != pathOwners.end() && meshBytes(owner->second.first, owner->second.second) != meshBytes(s, i);
+				}
+
+				if (needsPath) {
 					// Generate mesh path: NifName\ShapeName_Index
 					std::string shapeName = s->name.get();
-					auto sanitize = [](std::string& str) {
-						for (char& c : str) {
-							if (c == ' ' || c == '/' || c == ':' || c == '*' || c == '?' || c == '"' || c == '<' || c == '>' || c == '|')
-								c = '_';
-						}
-					};
-					std::string folder = folderName;
-					sanitize(folder);
 					sanitize(shapeName);
-					mesh->meshName.get() = folder + "\\" + shapeName + "_" + std::to_string(i);
+					const std::string generated = folderName + "\\" + shapeName + "_" + std::to_string(i);
+
+					meshPath = generated;
+					for (int n = 2; pathOwners.count(pathKey(meshPath)) > 0; n++)
+						meshPath = generated + "_" + std::to_string(n);
 				}
-				bsgeo->ReleaseMesh();
+
+				pathOwners.emplace(pathKey(meshPath), std::make_pair(s, i));
 			}
 		}
 	}

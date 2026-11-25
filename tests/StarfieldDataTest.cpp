@@ -799,3 +799,27 @@ TEST_CASE("Starfield game archives provide the vanilla body and its layered mate
 
 	FSManager::del();
 }
+
+TEST_CASE("Recalculated Starfield tangents match the vanilla ones", "[starfield][gamedata]") {
+	auto nif = LoadWithGeometry(Body());
+	NiShape* shape = nif->GetShapes()[0];
+	BSGeometryMeshData& meshData = MeshData(shape);
+	const auto vanillaTangents = meshData.tangents;
+	const auto vanillaWs = meshData.tangentWs;
+	REQUIRE(vanillaTangents.size() == Body().vertCount);
+
+	nif->CalcTangentsForShape(shape);
+	REQUIRE(meshData.tangents.size() == vanillaTangents.size());
+	REQUIRE(meshData.tangentWs.size() == vanillaWs.size());
+
+	// The game's tangents follow +U and the W bits give the direction of +V
+	double dotSum = 0.0;
+	size_t sameW = 0;
+	for (size_t i = 0; i < vanillaTangents.size(); i++) {
+		dotSum += meshData.tangents[i].dot(vanillaTangents[i]);
+		if (meshData.tangentWs[i] == vanillaWs[i])
+			sameW++;
+	}
+	CHECK(dotSum / vanillaTangents.size() > 0.99);
+	CHECK(sameW == vanillaWs.size());
+}
