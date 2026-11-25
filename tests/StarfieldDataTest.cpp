@@ -905,8 +905,9 @@ TEST_CASE("Starfield shapes with a body skin material are skin", "[starfield][sk
 		nif.GetShader(shape)->name.get() = material;
 		return shape;
 	};
-	NiShape* cloth = addShape("Cloth", "Materials\\Test\\Cloth.mat");
-	NiShape* body = addShape("Body", "Materials\\Test\\Skin.mat");
+	// Loose files are looked up with the case the shader names them in, which matters on Linux
+	NiShape* cloth = addShape("Cloth", "materials\\test\\cloth.mat");
+	NiShape* body = addShape("Body", "materials\\test\\skin.mat");
 	NiShape* noMaterial = addShape("NoMaterial", "");
 
 	const bool clothIsSkin = GameDataStream::IsSkinShape(nif, cloth);
